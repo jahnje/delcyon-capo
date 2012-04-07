@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<server:Capo xmlns:server="http://www.delcyon.com/capo-server"
+             xmlns:client="http://www.delcyon.com/capo-client"
+             xmlns:resource="http://www.delcyon.com/capo/resource"
+             mainGroup="default"
+             name="main">
+    
+   
+    
+    <server:group name="default">
+        <server:choose>
+            <server:when test="//var[@name = 'os.name' and @value = 'Linux']">
+                <server:call ref="server:group('linux_group')"/>
+            </server:when>
+            <server:when test="//var[@name = 'os.name' and matches(@value,'.*win.*','i')]">        
+                <server:call ref="server:group('windows_group')"/>
+            </server:when>
+            <server:when test=".[matches('${os.name}','Mac OS X','i')]">                
+                <server:call ref="server:group('osx_group')"/>        
+            </server:when>
+            <server:otherwise>
+                <server:call ref="server:group('other_group')"/>            
+            </server:otherwise>
+        </server:choose>      
+    </server:group>
+    
+    <server:group name="osx_group" returns="MAC,hostname">
+        <server:log message="Processing OSX Group" output="STDOUT"/>    
+        <client:command exec="/sbin/ifconfig" name="osx_ifconfig"/>       
+        <server:transform name="osx_ifconfig_transform" ref="${osx_ifconfig}"
+                        stylesheet="file:osx_ifconfig_command_stdout_parser.xsl"/>        
+        <server:var eval="${osx_ifconfig_transform}/link[@dev = 'en0']/@ether" name="MAC"/>    
+        <client:command exec="/bin/hostname" name="hostname"/>
+        <server:var eval="${hostname}/stdout" name="hostname"/>
+        
+        <server:create elementName="id" name="MAC" value="${MAC}"/>
+        <server:create elementName="id" name="hostname" value="${hostname}"/>
+
+        
+    </server:group>
+    
+    
+    
+</server:Capo>

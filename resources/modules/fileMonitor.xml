@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<server:task  xmlns:server="http://www.delcyon.com/capo-server"  state="START" initialGroup="initial">
+    
+    <server:group name="initial" returns="${attribute},state">
+        <server:choose>
+            <server:when test=".['${state}' = 'START']">
+                <server:call ref="server:group('START')"/>
+            </server:when>
+            <server:when test=".['${state}' = 'WATCH']">        
+                <server:call ref="server:group('WATCH')"/>
+            </server:when>                
+        </server:choose>        
+    </server:group>
+    
+    <server:group name="START" returns="${attribute},state">
+        <server:resourceMetaData attributes="${attribute}" resource="file:${fileName}"/>
+        <server:var name="lastModified" eval="../server:resourceMetaData/@${attribute}"/>               
+        <server:var name="state" value="WATCH"/>
+        <server:call ref="server:group('WATCH')"/>
+    </server:group>
+    
+    <server:group name="WATCH" returns="${attribute},state">
+        <server:resourceMetaData attributes="${attribute}" resource="file:${fileName}"/>
+        <server:var name="currentModified" eval="../server:resourceMetaData/@${attribute}"/>
+        <server:when test=".['${currentModified}' != '${${attribute}}']">
+            <server:log message="File Changed current:${currentModified} last:${${attribute}}" output="STDERR"/>
+            <server:var name="${attribute}" value="${currentModified}"/>
+        </server:when>                
+    </server:group>
+    
+    
+</server:task>

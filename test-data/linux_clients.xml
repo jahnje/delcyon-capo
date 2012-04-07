@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<table  name="clients">    
+    <entry key="00:e0:81:b0:14:7a" ipAddress="6.8.7.1" other="JJJJJJJJJJJJJJJJJCDSS" clientName="client_one"/>
+    <entry key="00:e0:81:b0:14:7b" ipAddress="6.8.7.2" other="JJJJJJJJJJJJJJJJJCB" clientName="client_2twww"/>
+    <entry key="00:e0:81:b0:14:7c" ipAddress="6.8.7.3" other="JJJJJJJJJJJJJJJJJCB" clientName="client_three"/>
+    <entry key="00:e0:81:b0:14:7d" ipAddress="6.8.7.4" other="JJJJJJJJJJJJJJJJJCB" clientName="client_four"/>
+    <entry key="00:21:e9:d9:f9:a0" ipAddress="206.80.71.222" other="JJJJJJJJJJJJJJJJJCB" clientName="client_five"/>
+    <entry key="00:30:48:9e:19:60" ipAddress="3.2.3." other="XXXXXXXCB" clientName="client_six" memberships="group1,frank,adam,sam"/>
+    <entry key="00:00:00:00:00:00" ipAddress="0.0.0.0" other="JJJJJJJJJJJJJJJJJC" clientName="client_eight"/>
+    <entry key="d4:9a:20:dd:6c:a6" ipAddress="0.0.0.0" other="JJJJJJJJJJJJJJJJJC" clientName="client_eight" memberships="bob"/>
+</table>

@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>/com/delcyon/capo/</key>
+	<dict>
+		<key>BUFFER_SIZE</key>
+		<string>4096</string>
+		<key>CLIENT_MODE</key>
+		<string>dynamic</string>
+		<key>CONFIG_DIR</key>
+		<string>config</string>
+		<key>COPYSOURCE_DIR</key>
+		<string>copysource</string>
+		<key>DATA_MANAGER</key>
+		<string>com.delcyon.capo.FileSystemDataManager</string>
+		<key>DATA_MANAGER_ARGUMENTS</key>
+		<string>capo-data</string>
+		<key>HEADER_BUFFER_SIZE</key>
+		<string>16192</string>
+		<key>KEYSTORE</key>
+		<string>capo-data/config/keystore</string>
+		<key>KEYSTORE_PASSWORD</key>
+		<string>password</string>
+		<key>MODE</key>
+		<string>client</string>
+		<key>port</key>
+		<string>8080</string>
+		<key>REPORT_DIR</key>
+		<string>reports</string>
+		<key>SERVER_LIST</key>
+		<string>127.0.0.1</string>
+		<key>SERVER_PORT</key>
+		<string>8080</string>
+		<key>STATUS_DIR</key>
+		<string>status</string>
+		<key>UPDATES_DIR</key>
+		<string>updates</string>
+	</dict>
+</dict>
+</plist>

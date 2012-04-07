@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<server:Capo name="main" mainGroup="default"
+    xmlns:server="http://www.delcyon.com/capo-server"
+    xmlns:client="http://www.delcyon.com/capo-client"
+    xmlns:resource="http://www.delcyon.com/capo/resource">
+    
+    
+    
+    <server:group name="default">
+        <server:log message="clientID = ${clientID}" output="STDERR"/>
+        <server:resource uri="clients:${clientID}" name="client" />
+        <server:resourceMetaData resource="client"/>
+       
+       
+        <server:choose>
+            <server:when test="//var[@name = 'os.name' and @value = 'Linux']">
+                <server:call ref="server:group('linux_group')"/>
+            </server:when>
+            <server:when test="//var[@name = 'os.name' and matches(@value,'.*win.*','i')]">        
+                <server:call ref="server:group('windows_group')"/>
+            </server:when>
+            <server:when test=".[matches('${os.name}','Mac OS X','i')]">                
+                <server:call ref="server:group('osx_group')"/>        
+            </server:when>
+            <server:otherwise>
+                <server:call ref="server:group('other_group')"/>            
+            </server:otherwise>
+        </server:choose>
+        <server:log output="STDERR" message="hostname = ${hostname} MAC = ${MAC}"/>
+    </server:group>
+    
+    <server:group name="linux_group">
+     	<server:log message="We found a linux client" output="STDOUT"/>
+    </server:group>
+    
+    <server:group name="windows_group">
+    	<server:log message="We found a windows client" output="STDOUT"/>
+    </server:group>
+    
+    <server:group name="osx_group">
+    	<server:log message="We found a Mac client" output="STDOUT"/>
+    </server:group>
+    
+    <server:group name="other_group">
+    	<server:log message="We found something else!" output="STDOUT"/>
+    </server:group>
+    
+    
+    
+</server:Capo>
+

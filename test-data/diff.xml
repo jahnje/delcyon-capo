@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Diff>
+    <chunk baseStart="1" baseStop="1" otherStart="1" otherStop="6" side="OTHER">This is an important
+        notice! It should
+        therefore be located at
+        the beginning of this
+        document!
+        
+    </chunk>
+    <chunk baseStart="1" baseStop="7" otherStart="7" otherStop="13" side="BOTH">This part of the
+        document has stayed the
+        same from version to
+        version.  It shouldn't
+        be shown if it doesn't
+        change.  Otherwise, that
+        would not be helping to
+    </chunk>
+    <chunk baseStart="8" baseStop="14" otherStart="14" otherStop="14" side="BASE">compress the size of the
+        changes.
+        
+        This paragraph contains
+        text that is outdated.
+        It will be deleted in the
+        near future.
+    </chunk>
+    <chunk baseStart="15" baseStop="15" otherStart="14" otherStop="14" side="OTHER">compress anything.
+    </chunk>
+    <chunk baseStart="15" baseStop="16" otherStart="15" otherStop="16" side="BOTH">
+        It is important to spell
+    </chunk>
+    <chunk baseStart="17" baseStop="17" otherStart="17" otherStop="17" side="BASE">check this dokument. On
+    </chunk>
+    <chunk baseStart="18" baseStop="18" otherStart="17" otherStop="17" side="OTHER">check this document. On
+    </chunk>
+    <chunk baseStart="18" baseStop="25" otherStart="18" otherStop="25" side="BOTH">the other hand, a
+        misspelled word isn't
+        the end of the world.
+        Nothing in the rest of
+        this paragraph needs to
+        be changed. Things can
+        be added after it.
+        
+    </chunk>
+    <chunk baseStart="26" baseStop="30" otherStart="26" otherStop="26" side="BASE">This is an important
+        notice! It should
+        therefore be located at
+        the beginning of this
+        document!
+    </chunk>
+    <chunk baseStart="31" baseStop="31" otherStart="26" otherStop="28" side="OTHER">This paragraph contains
+        important new additions
+        to this document.
+    </chunk>
+    <chunk baseStart="31" baseStop="38" otherStart="29" otherStop="36" side="BOTH">
+        This part of the
+        document has stayed the
+        same from version to
+        version.  It shouldn't
+        be shown if it doesn't
+        change.  Otherwise, that
+        would not be helping to
+    </chunk>
+    <chunk baseStart="39" baseStop="39" otherStart="37" otherStop="37" side="BASE">compress anything.
+    </chunk>
+    <chunk baseStart="40" baseStop="40" otherStart="37" otherStop="43" side="OTHER">compress the size of the
+        changes.
+        
+        This paragraph contains
+        text that is outdated.
+        It will be deleted in the
+        near future.
+    </chunk>
+    <chunk baseStart="40" baseStop="41" otherStart="44" otherStop="45" side="BOTH">
+        It is important to spell
+    </chunk>
+    <chunk baseStart="42" baseStop="42" otherStart="46" otherStop="46" side="BASE">check this document. On
+    </chunk>
+    <chunk baseStart="43" baseStop="43" otherStart="46" otherStop="46" side="OTHER">check this dokument. On
+    </chunk>
+    <chunk baseStart="43" baseStop="48" otherStart="47" otherStop="52" side="BOTH">the other hand, a
+        misspelled word isn't
+        the end of the world.
+        Nothing in the rest of
+        this paragraph needs to
+        be changed. Things can
+    </chunk>
+</Diff>

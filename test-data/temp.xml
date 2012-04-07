@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ResourceMonitors>
+    <ResourceMonitor type="FILE" ID="abspath" lastAccessTime="" PollInterval="" expirationInterval="">
+        <Resource>
+            <CapoFileDescriptor/>        
+        </Resource>
+        <ResourceDependents>
+            <Dependent ID="" removeOnChange="true" lastAccessTime="">
+                <SomeElement/>
+            </Dependent>
+        </ResourceDependents>
+        <ResourceListeners>
+            <ResourceListener ID=""/>
+        </ResourceListeners>
+    </ResourceMonitor>
+</ResourceMonitors>

@@ -1,0 +1,144 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root xmlns:test="t" xmlns:xdiff="http://www.delcyon.com/xdiff" joe="2"
+    xdiff:element="BASE != MOD">
+    <xdiff:attribute xdiff:attribute="BASE" xdiff:name="harry" xdiff:value="1"/>
+    <xdiff:attribute xdiff:BASE="1" xdiff:MOD="2" xdiff:name="lenny"/>
+    <xdiff:attribute xdiff:attribute="MOD" xdiff:name="fred" xdiff:value="1"/>
+    <a xdiff:element="MOD">text2 <c/> text</a>
+    <a xdiff:element="BASE != MOD">
+        <xdiff:text xdiff:text="BASE">text </xdiff:text>
+        <c xdiff:element="BASE"/>
+        <xdiff:text xdiff:text="BASE"> text</xdiff:text>
+    </a>
+    <b bob="1" xdiff:element="BASE != MOD">
+        <xdiff:attribute xdiff:BASE="3" xdiff:MOD="2" xdiff:name="test:frank"/>
+        <c xdiff:element="MOD">
+            <d/>
+        </c>
+        <e xdiff:element="MOD">this is a <c/> test</e>
+    </b>
+    <test:b xdiff:element="BASE = MOD"/>
+    <c xdiff:element="BASE != MOD">
+        <xdiff:text xdiff:tokenList="NEW_LINE">
+            <xdiff:diff xdiff:baseStart="1" xdiff:baseStop="1" xdiff:diff="BASE" xdiff:modStart="1"
+                xdiff:modStop="1">This part of the
+            </xdiff:diff>
+            <xdiff:diff xdiff:baseStart="2" xdiff:baseStop="2" xdiff:diff="MOD" xdiff:modStart="1"
+                xdiff:modStop="7">This is an important
+                notice! It should
+                therefore be located at
+                the beginning of this
+                document!
+                
+                This part of the
+            </xdiff:diff>
+            <xdiff:diff xdiff:baseStart="2" xdiff:baseStop="7" xdiff:diff="BASE = MOD"
+                xdiff:modStart="8"
+                xdiff:modStop="13">        document has stayed the
+                same from version to
+                version.  It shouldn't
+                be shown if it doesn't
+                change.  Otherwise, that
+                would not be helping to
+            </xdiff:diff>
+            <xdiff:diff xdiff:baseStart="8" xdiff:baseStop="14" xdiff:diff="BASE" xdiff:modStart="14"
+                xdiff:modStop="14">        compress the size of the
+                changes.
+                
+                This paragraph contains
+                text that is outdated.
+                It will be deleted in the
+                near future.
+            </xdiff:diff>
+            <xdiff:diff xdiff:baseStart="15" xdiff:baseStop="15" xdiff:diff="MOD" xdiff:modStart="14"
+                xdiff:modStop="14">        compress anything.
+            </xdiff:diff>
+            <xdiff:diff xdiff:baseStart="15" xdiff:baseStop="16" xdiff:diff="BASE = MOD"
+                xdiff:modStart="15"
+                xdiff:modStop="16">        
+                It is important to spell
+            </xdiff:diff>
+            <xdiff:diff xdiff:baseStart="17" xdiff:baseStop="17" xdiff:diff="BASE" xdiff:modStart="17"
+                xdiff:modStop="17">        check this dokument. On
+            </xdiff:diff>
+            <xdiff:diff xdiff:baseStart="18" xdiff:baseStop="18" xdiff:diff="MOD" xdiff:modStart="17"
+                xdiff:modStop="17">        check this document. On
+            </xdiff:diff>
+            <xdiff:diff xdiff:baseStart="18" xdiff:baseStop="25" xdiff:diff="BASE = MOD"
+                xdiff:modStart="18"
+                xdiff:modStop="25">        the other hand, a
+                misspelled word isn't
+                the end of the world.
+                Nothing in the rest of
+                this paragraph needs to
+                be changed. Things can
+                be added after it.
+                
+            </xdiff:diff>
+            <xdiff:diff xdiff:baseStart="26" xdiff:baseStop="30" xdiff:diff="BASE" xdiff:modStart="26"
+                xdiff:modStop="26">        This is an important
+                notice! It should
+                therefore be located at
+                the beginning of this
+                document!
+            </xdiff:diff>
+            <xdiff:diff xdiff:baseStart="31" xdiff:baseStop="31" xdiff:diff="MOD" xdiff:modStart="26"
+                xdiff:modStop="28">        This paragraph contains
+                important new additions
+                to this document.
+            </xdiff:diff>
+            <xdiff:diff xdiff:baseStart="31" xdiff:baseStop="38" xdiff:diff="BASE = MOD"
+                xdiff:modStart="29"
+                xdiff:modStop="36">        
+                This part of the
+                document has stayed the
+                same from version to
+                version.  It shouldn't
+                be shown if it doesn't
+                change.  Otherwise, that
+                would not be helping to
+            </xdiff:diff>
+            <xdiff:diff xdiff:baseStart="39" xdiff:baseStop="39" xdiff:diff="BASE" xdiff:modStart="37"
+                xdiff:modStop="37">        compress anything.
+            </xdiff:diff>
+            <xdiff:diff xdiff:baseStart="40" xdiff:baseStop="40" xdiff:diff="MOD" xdiff:modStart="37"
+                xdiff:modStop="43">        compress the size of the
+                changes.
+                
+                This paragraph contains
+                text that is outdated.
+                It will be deleted in the
+                near future.
+            </xdiff:diff>
+            <xdiff:diff xdiff:baseStart="40" xdiff:baseStop="41" xdiff:diff="BASE = MOD"
+                xdiff:modStart="44"
+                xdiff:modStop="45">        
+                It is important to spell
+            </xdiff:diff>
+            <xdiff:diff xdiff:baseStart="42" xdiff:baseStop="42" xdiff:diff="BASE" xdiff:modStart="46"
+                xdiff:modStop="46">        check this document. On
+            </xdiff:diff>
+            <xdiff:diff xdiff:baseStart="43" xdiff:baseStop="43" xdiff:diff="MOD" xdiff:modStart="46"
+                xdiff:modStop="46">        check this dokument. On
+            </xdiff:diff>
+            <xdiff:diff xdiff:baseStart="43" xdiff:baseStop="49" xdiff:diff="BASE = MOD"
+                xdiff:modStart="47"
+                xdiff:modStop="53">        the other hand, a
+                misspelled word isn't
+                the end of the world.
+                Nothing in the rest of
+                this paragraph needs to
+                be changed. Things can
+                be added after it.
+            </xdiff:diff>
+            <xdiff:diff xdiff:baseStart="50" xdiff:baseStop="54" xdiff:diff="BASE" xdiff:modStart="54"
+                xdiff:modStop="54">        
+                This paragraph contains
+                important new additions
+                to this document.
+            </xdiff:diff>
+            <xdiff:diff xdiff:baseStart="55" xdiff:baseStop="55" xdiff:diff="MOD" xdiff:modStart="54"
+                xdiff:modStop="54"/>
+        </xdiff:text>
+    </c>
+</root>

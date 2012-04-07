@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<server:group name="update_test"  xmlns:server="http://www.delcyon.com/capo-server">
+    <server:resourceMetaData resource="file:lib" depth="2" useRelativePaths="true" attributes="MD5" requiredAttributes="MD5"/>    
+    <server:var name="updater.lib.md5" scope="APPLICATION" eval="../server:resourceMetaData/@MD5"/>
+</server:group>

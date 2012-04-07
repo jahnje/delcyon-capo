@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ClientRequest RequestType="STATUS_CHECK">
+    <var name="USER" value="root" />
+    <var name="NLSPATH" value="/usr/dt/lib/nls/msg/%L/%N.cat" />
+    <var name="XFILESEARCHPATH" value="/usr/dt/app-defaults/%L/Dt" />
+    <var name="HOME" value="/root" />
+    <var name="PWD" value="/root" />
+    <var name="_" value="/usr/bin/java" />
+    <var name="SHLVL" value="1" />
+    <var name="LD_LIBRARY_PATH" value="/usr/java/jdk1.5.0_13/jre/lib/i386/client:/usr/java/jdk1.5.0_13/jre/lib/i386:/usr/java/jdk1.5.0_13/jre/../lib/i386" />
+    <var name="SHELL" value="/bin/sh" />
+    <var name="PATH" value="/usr/bin:/bin" />
+    <var name="LOGNAME" value="root" />
+    <var name="java.runtime.name" value="Java(TM) 2 Runtime Environment, Standard Edition" />
+    <var name="sun.boot.library.path" value="/usr/java/jdk1.5.0_13/jre/lib/i386" />
+    <var name="java.vm.version" value="1.5.0_13-b05" />
+    <var name="java.util.prefs.syncInterval" value="2000000" />
+    <var name="java.vm.vendor" value="Sun Microsystems Inc." />
+    <var name="java.vendor.url" value="http://java.sun.com/" />
+    <var name="path.separator" value=":" />
+    <var name="java.vm.name" value="Java HotSpot(TM) Client VM" />
+    <var name="file.encoding.pkg" value="sun.io" />
+    <var name="sun.java.launcher" value="SUN_STANDARD" />
+    <var name="user.country" value="US" />
+    <var name="sun.os.patch.level" value="unknown" />
+    <var name="java.vm.specification.name" value="Java Virtual Machine Specification" />
+    <var name="user.dir" value="/root" />
+    <var name="java.runtime.version" value="1.5.0_13-b05" />
+    <var name="java.awt.graphicsenv" value="sun.awt.X11GraphicsEnvironment" />
+    <var name="java.endorsed.dirs" value="/usr/java/jdk1.5.0_13/jre/lib/endorsed" />
+    <var name="os.arch" value="i386" />
+    <var name="java.io.tmpdir" value="/tmp" />
+    <var name="line.separator" value=" " />
+    <var name="java.vm.specification.vendor" value="Sun Microsystems Inc." />
+    <var name="os.name" value="Linux" />
+    <var name="sun.jnu.encoding" value="ANSI_X3.4-1968" />
+    <var name="java.library.path" value="/usr/java/jdk1.5.0_13/jre/lib/i386/client:/usr/java/jdk1.5.0_13/jre/lib/i386:/usr/java/jdk1.5.0_13/jre/../lib/i386" />
+    <var name="java.specification.name" value="Java Platform API Specification" />
+    <var name="java.class.version" value="49.0" />
+    <var name="sun.management.compiler" value="HotSpot Client Compiler" />
+    <var name="os.version" value="2.6.18-164.el5" />
+    <var name="user.home" value="/root" />
+    <var name="user.timezone" value="" />
+    <var name="java.awt.printerjob" value="sun.print.PSPrinterJob" />
+    <var name="file.encoding" value="ANSI_X3.4-1968" />
+    <var name="java.specification.version" value="1.5" />
+    <var name="java.class.path" value="/var/central-services-client/central-services-client.jar" />
+    <var name="user.name" value="root" />
+    <var name="java.vm.specification.version" value="1.0" />
+    <var name="java.home" value="/usr/java/jdk1.5.0_13/jre" />
+    <var name="sun.arch.data.model" value="32" />
+    <var name="user.language" value="en" />
+    <var name="java.specification.vendor" value="Sun Microsystems Inc." />
+    <var name="java.vm.info" value="mixed mode, sharing" />
+    <var name="java.version" value="1.5.0_13" />
+    <var name="java.ext.dirs" value="/usr/java/jdk1.5.0_13/jre/lib/ext" />
+    <var name="sun.boot.class.path" value="/usr/java/jdk1.5.0_13/jre/lib/rt.jar:/usr/java/jdk1.5.0_13/jre/lib/i18n.jar:/usr/java/jdk1.5.0_13/jre/lib/sunrsasign.jar:/usr/java/jdk1.5.0_13/jre/lib/jsse.jar:/usr/java/jdk1.5.0_13/jre/lib/jce.jar:/usr/java/jdk1.5.0_13/jre/lib/charsets.jar:/usr/java/jdk1.5.0_13/jre/classes" />
+    <var name="java.vendor" value="Sun Microsystems Inc." />
+    <var name="file.separator" value="/" />
+    <var name="java.vendor.url.bug" value="http://java.sun.com/cgi-bin/bugreport.cgi" />
+    <var name="sun.io.unicode.encoding" value="UnicodeLittle" />
+    <var name="sun.cpu.endian" value="little" />
+    <var name="sun.cpu.isalist" value="" />
+    <var name="MAC" value="00:30:48:9e:19:60" />
+    <var name="CLIENT_NAME" value="judici-adams" />
+    <var name="RELEASE" value="CentOS release 5.3 (Final)" />
+    <var name="release" exec="/bin/cat /etc/redhat-release">CentOS release 5.3 (Final)</var>
+    
+</ClientRequest>

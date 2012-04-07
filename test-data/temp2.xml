@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<client:request xmlns:client="http://www.delcyon.com/capo-client"
+    xmlns="http://www.delcyon.com/capo"
+    type="XML">
+    <UpdaterRequest type="VERSION_DOCUMENT_REQUEST"/>
+</client:request>

@@ -1,0 +1,190 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<server:Capo xmlns:server="http://www.delcyon.com/capo-server"
+             xmlns:client="http://www.delcyon.com/capo-client"
+             xmlns:resource="http://www.delcyon.com/capo/resource"
+             mainGroup="default"
+             name="main">
+    
+    <server:include src="file:linux_clients.xml"/>
+    
+    <server:group name="default">
+        <server:log message="clientID = ${clientID}" output="STDERR"/>
+        <server:resource uri="clients:${clientID}" name="client" />
+        <server:resourceMetaData resource="client"/>
+        <server:log ref=".." output="STDOUT"/>
+        
+        <server:call ref="server:group('monitor_test_group')"/>
+        <!--<server:choose>
+            <server:when test="//var[@name = 'os.name' and @value = 'Linux']">
+                <server:call ref="server:group('linux_group')"/>
+            </server:when>
+            <server:when test="//var[@name = 'os.name' and matches(@value,'.*win.*','i')]">        
+                <server:call ref="server:group('windows_group')"/>
+            </server:when>
+            <server:when test=".[matches('${os.name}','Mac OS X','i')]">                
+                <server:call ref="server:group('osx_group')"/>               
+            </server:when>
+            <server:otherwise>
+                <server:call ref="server:group('other_group')"/>            
+            </server:otherwise>
+        </server:choose>
+        <server:log message="hostname = ${hostname} MAC = ${MAC}" output="STDERR"/>-->        
+    </server:group>
+    
+    <server:group name="monitor_test_group">
+        <server:fileMonitor pollInterval="15000" name="test_monitor" local="true" fileName="test.txt" attribute="lastModified"/>
+        <server:task  name="test_task"  state="START" pollInterval="0">
+            <server:log message="Processed Task"/>     
+        </server:task>
+        
+        
+        
+
+    </server:group>
+    
+    
+    <server:group name="osx_group" returns="MAC,hostname">
+        <server:log message="Processing OSX Group" output="STDOUT"/>           
+        <server:call ref="server:group('osx_client_group')"/>
+        
+        <resource name="arin" uri="remote:http://whois.arin.net/rest/net/NET-206-80-71-224-1.xml">
+            <resource:parameter name="testValue" value="${value}" context="DELAYED"/>
+        </resource>
+        <server:var name="value" value="BOBBERT!!!" xmlns:arin="http://www.arin.net/whoisrws/core/v1"/>
+        <server:import name="test" src="resource:arin"/>
+        <server:export dest="remote:arin.xml" ref="../server:import[@name= 'test']" />
+        <!-- test out personal breed of file uri -->
+        <server:diff base="file:capo/server/copysource/test.txt" mod="resource:arin" />
+
+        <!-- <server:log ref=".." output="STDERR"/>-->
+        
+        <!-- Test DB resources-->
+        <resource name="DBConnection" uri="remote:jdbc:postgresql://localhost/capo" lifecycle="GROUP" step="true">
+            <resource:parameter name="user" value="capo" context="NOW"/>
+            <resource:parameter name="password" value="capo" context="NOW"/>
+            <resource:parameter name="insert" value="insert into test_data values ('${value}')" context="DELAYED"/>
+            <resource:parameter name="query" value="select * from test_data" context="DELAYED"/>
+        </resource>
+        
+        <server:open resource="resource:DBConnection">
+            <resource:parameter name="sql" value="${query}"/>    
+        </server:open>
+        
+        <server:step resource="resource:DBConnection" />
+        
+        <server:import name="testQuery" src="resource:DBConnection"/>
+            
+        <server:step resource="resource:DBConnection" />
+        
+        <server:import name="testQuery" src="resource:DBConnection"/>
+       
+        
+       
+        <!-- get a value from the imported data. add a namespace to search on -->
+        <server:var name="testvar" eval="${import.test}/arin:net/arin:registrationDate" xmlns:arin="http://www.arin.net/whoisrws/core/v1"/>
+        
+        <!-- try inserting arin query into db here -->
+        <!--<server:export name="testInsert" dest="resource:DBConnection">            
+            <resource:parameter name="value" value="${testvar}"/>
+            <resource:parameter name="sql" value="${insert}"/>
+        </server:export>-->
+        
+       <!-- <server:diff base="capo/server/controller/main.xml" mod="file:capo/server/identity_scripts/main.xml" />-->
+       
+        
+        <server:remoteGroup name="remoteTest" returns="test,lsoutput">
+            <server:command exec="ls -l" name="lsoutput"/>
+            <server:var name="test" value="${testvar}"/>
+        </server:remoteGroup>
+        <server:resourceMetaData resource="remote:file:capo/server/identity_scripts/main.xml" forceRead="true" useLastRead="true"/>
+        <server:resourceMetaData resource="remote:file:capo/server/copysource" />
+        
+       
+        
+        <server:log ref=".." output="STDOUT"/>
+        <server:log message="${test}" output="STDERR"/>
+        
+        
+        <!--<server:call ref="server:group('shelltest')"/>-->
+        
+    </server:group>
+    
+    <server:group entry="//table[@name = 'clients']/entry[@key = '${MAC}']"
+                 name="osx_client_group"
+                 returns="hostname">
+        <server:choose>
+            <server:when test=".[string-length('${clientName}') &gt; 0]">
+                <server:log message="found ${clientName}" output="STDOUT"/> 
+               
+                <server:sync dest="remote:file:test.txt.copy" src="file:test.txt">
+                    <server:triggerFilter replacement="${clientName}" trigger="TEST2"/>
+                    <server:regexFilter regex="t" replacement="${os.name}"/>
+                </server:sync>
+                <server:sync dest="file:test.txt.copy.dest" src="remote:file:test.txt.copy"/>                                    
+            </server:when>
+            <server:otherwise>
+                <server:log message="DOH!" output="STDERR"/>
+            </server:otherwise>
+        </server:choose>
+        <server:log message="hostname = ${hostname} MAC = ${MAC}" output="STDERR"/>
+        <server:repeat name="repeat_test" nodeset="//table[@name = 'clients']/entry">
+            <server:log message="${index}" eval="${context}/@key" output="STDOUT"/>
+        </server:repeat>
+    </server:group>
+    
+   
+    <server:group name="shelltest">
+        <resource name="ssh_shell" step="true" uri="remote:shell:/bin/bash -i -l">
+            <resource:parameter name="REMOVE_CR" value="true"/>
+        </resource>
+        <server:open resource="ssh_shell"/>
+        <server:step resource="ssh_shell" until=".*jeremiah\$ "/>
+        <server:import name="firstread1" src="resource:ssh_shell"/>        
+        <server:export dest="resource:ssh_shell" output="method:text">ls -l\n</server:export>       
+        <server:step resource="ssh_shell" until=".*jeremiah\$ "/>
+        <server:export dest="resource:ssh_shell" output="method:text">cd tests\n</server:export>       
+        <server:step resource="ssh_shell" until=".*jeremiah\$ "/>
+        <server:export dest="resource:ssh_shell" output="method:text">ls\n</server:export>       
+        <server:step resource="ssh_shell" until=".*jeremiah\$ "/>
+        <server:export dest="resource:ssh_shell" output="method:text">ssh -t -t 10.10.4.242\n</server:export>       
+        <server:step resource="ssh_shell" until=".*\]\$ "/>
+        <server:export dest="resource:ssh_shell" output="method:text">ssh -t -t ssh\n</server:export>       
+        <server:step resource="ssh_shell" until=".*\]\$ "/>
+        <server:export dest="resource:ssh_shell" output="method:text">ssh -t -t 10.10.5.2\n</server:export>       
+        <server:step resource="ssh_shell" until=".*\]\$ "/>
+        <server:export dest="resource:ssh_shell" output="method:text">newrole -r sysadm_r -t sysadm_t\n</server:export>       
+        <server:step resource="ssh_shell" until=".*assword: "/>
+        <server:export dest="resource:ssh_shell" output="method:text">mypassword\n</server:export>               
+        <server:step resource="ssh_shell" until=".*\]\$ "/>
+        <server:export dest="resource:ssh_shell" output="method:text">su -\n</server:export>
+        <server:step resource="ssh_shell" until=".*assword: "/>
+        <server:export dest="resource:ssh_shell" output="method:text">myrootpassword\n</server:export>
+        <server:step resource="ssh_shell" until=".*\]# "/>
+        <server:export dest="resource:ssh_shell" output="method:text">getenforce\n</server:export>
+        <server:step resource="ssh_shell" until=".*\]# "/>
+        <server:import name="firstread2" src="resource:ssh_shell"/>
+        <server:export dest="resource:ssh_shell" output="method:text">exit\n</server:export>
+        <server:step resource="ssh_shell" until=".*\]\$ "/>
+        <server:export dest="resource:ssh_shell" output="method:text">exit\n</server:export>
+        <server:step resource="ssh_shell" until=".*\]\$ "/>
+        <server:export dest="resource:ssh_shell" output="method:text">exit\n</server:export>
+        <server:step resource="ssh_shell" until=".*\]\$ "/>
+        <server:export dest="resource:ssh_shell" output="method:text">exit\n</server:export>
+        <server:step resource="ssh_shell" until=".*\]\$ "/>
+        <server:export dest="resource:ssh_shell" output="method:text">exit\n</server:export>
+        <server:step resource="ssh_shell" until=".*jeremiah\$ "/>
+        <server:export dest="resource:ssh_shell" output="method:text">exit\n</server:export>        
+        
+
+        <resource name="ssh_shell2" step="false" uri="remote:shell:/bin/bash -i -l">
+            <resource:parameter name="REMOVE_CR" value="true"/>
+        </resource>
+        <server:open resource="ssh_shell2"/>
+              
+        <server:export dest="resource:ssh_shell2" output="method:text">ls -l\n</server:export>
+      
+        <server:import name="firstread3" src="resource:ssh_shell2"/>
+        <server:log ref=".." output="STDOUT"/>
+    </server:group>
+    
+</server:Capo>

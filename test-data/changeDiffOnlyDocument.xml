@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root>
+    <a>test</a>
+    <b>test content</b>
+    <c>equal
+        <a>
+            <c>
+                
+            </c> 
+        </a>
+        <b>
+            <c>
+                
+            </c> 
+        </b>
+    </c>
+    <c>deep not equal
+        <a>
+            <c>
+                
+            </c> 
+        </a>
+        <b>
+            <c>
+                here
+            </c> 
+        </b>
+    </c>
+    <d>test content</d>
+    <d/>
+    <d/>
+    <d/>
+    test1  
+    <a attr1="true" attr2="true"/>
+    test2   
+    test2
+    test2
+    <a/>
+    <a attr1="true" attr2="true"/>
+    test2
+    <a/>
+    test22
+    <b/>
+    <b/>
+    <b/>
+    test3
+    <c/>
+</root>

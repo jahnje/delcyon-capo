@@ -1,0 +1,461 @@
+<project name="Capo Server Build File" default="all" basedir=".">
+
+	<!-- Load project specific properties from file-->
+	<property file="${app}.build.properties" />
+
+	<!--START STANDARD BUILD PROPERTIES-->
+	<property name="ant.dir" value="ant" />
+	<property name="src.dir" value="./java" />
+	<property name="distribution.dir" value="${app}.distribution" />
+	<property name="build.dir" value="${distribution.dir}/classes" />
+	<property name="package.src.dir" value="${build.dir}" />
+	<property name="lib.dir" value="./lib" />
+	<property name="resource.dir" value="resources" />
+
+	<property name="build_number.file" value="${app}.build.number" />
+	<property name="temp_build_number.file" value="build.number.tmp" />
+	<property name="otherlib.dir" value="./lib-other" />
+	<property name="main.class" value="${main.class.path}.${main.class.name}" />
+	<property name="test.dir" value="tests" />
+	<property name="test_resources.dir" value="test_resources" />
+	<property name="test_build.dir" value="test_build" />
+	<property name="build.test_classes" value="${test_build.dir}/test_classes" />
+	<property name="build.test_resources" value="${test_build.dir}/resource_classes" />
+	<property name="build.test_application" value="${test_build.dir}/application_classes" />
+	<property name="jarFileExtension" value="jar" />
+	<property name="webmodule.name" value="webmodule.war" />
+
+	<!--END STANDARD BUILD PROPERTIES-->
+
+	<!--START CLASSPATH Setup the standard class paths for the project -->
+	<path id="compile.classpath">
+		<fileset dir="${lib.dir}">
+			<include name="**/*.jar" />
+		</fileset>
+		<fileset dir="${otherlib.dir}">
+			<include name="**/*.jar" />
+		</fileset>
+	</path>
+	<!-- END CLASSPATH -->
+
+	<!--START CUSTOM TASK DEFS -->
+	<!--These have to come after the initial class path def, since they depend on it -->
+	<!--This makes sure that we always use the correct libraries to build the project -->
+	<taskdef name="RequiredLibrariesBuildTask" classname="com.delcyon.updater.client.RequiredLibrariesBuildTask" classpathref="compile.classpath" />
+	<!--This makes sure that we always include the proper libraries in the final distribution of the project. This is only for applications, and not for libraries -->
+	<taskdef name="InstallerBuildTask" classname="com.delcyon.updater.client.InstallerBuildTask" classpathref="compile.classpath" />
+	<!--END CUSTOM TASK DEFS -->
+
+	<!--START TEST BUILD CLASSPATH -->
+	<!-- class paths for building any test classes-->
+	<path id="compile_tests.classpath">
+		<!--fileset dir="${test_build.dir}">
+			<include name="**/*.jar"/>
+			<include name="${build.test_classes}"/>
+			</fileset-->
+		<fileset dir="${otherlib.dir}">
+			<include name="**/*.jar" />
+		</fileset>
+		<dirset dir="${build.test_resources}" />
+		<fileset dir="${build.test_application}">
+			<include name="**/*.jar" />
+		</fileset>
+		<dirset dir="${build.test_application}" />
+	</path>
+	<!--END TEST BUILD  CLASSPATH -->
+
+	<!--START TEST BUILD RESOURCE CLASSPATH -->
+	<!-- class paths for building any test resources -->
+	<path id="compile_test_resources.classpath">
+		<fileset dir="${test_build.dir}">
+			<include name="**/*.jar" />
+		</fileset>
+		<fileset dir="${otherlib.dir}">
+			<include name="**/*.jar" />
+		</fileset>
+		<dirset dir="${build.test_application}" />
+	</path>
+	<!--END TEST BUILD RESOURCE CLASSPATH -->
+
+	<!--START TEST RUN CLASSPATH -->
+	<!-- class paths for running any tests -->
+	<path id="test_run.classpath">
+		<fileset dir="${test_build.dir}">
+			<include name="**/*.jar" />
+		</fileset>
+		<fileset dir="${otherlib.dir}">
+			<include name="**/*.jar" />
+		</fileset>
+		<dirset dir="${build.test_resources}" />
+		<dirset dir="${build.test_classes}" />
+		<fileset dir="${build.test_application}">
+			<include name="**/*.jar" />
+		</fileset>
+		<dirset dir="${build.test_application}" />
+	</path>
+	<!--END TEST RUN CLASSPATH -->
+	<!--END CLASS PATH -->
+
+	<!--START SVN TARGETS-->
+
+	<!--issue an svn commit to make, and create a new version/copy that we can branch off of if we need to-->
+	<target name="svn_commit">
+		<exec executable="svn" failifexecutionfails="true">
+			<arg value="commit" />
+			<arg value="-m" />
+			<arg value="VERSION: ${version}.${build.number}.${patch.number}  MD5=${md5}" />
+		</exec>				
+	</target>
+
+	<!-- run svn update -->
+	<target name="svn_update">
+		<exec executable="svn" failifexecutionfails="true">
+			<arg value="update" />
+		</exec>
+	</target>
+
+	<!--END SVN TARGETS-->
+
+	<!--START VERSIONING TARGETS-->
+
+	<!-- This checks to see if we actually need to rebuild anything. It checks all of the source and library files with the exception of the version file, since it gets updated to late to be valid -->
+	<target name="up2datecheck">
+		<property file="${distribution.dir}/lastbuild.properties" />
+		<echo>Checking ${built}</echo>
+		<uptodate property="isUptodate" targetfile="${built}" taskname="up2date_exit">
+			<srcfiles dir="${lib.dir}">
+				<include name="**/*.jar" />
+			</srcfiles>
+			<srcfiles dir="${otherlib.dir}">
+				<include name="**/*.jar" />
+			</srcfiles>
+			<srcfiles dir="${resource.dir}">
+				<exclude name="version.properties" />
+			</srcfiles>
+			<srcfiles dir="${src.dir}" />
+		</uptodate>
+		<!-- call the bail out code here if things are already up to date -->
+		<fail message="Build already up to date" if="isUptodate" />
+	</target>
+
+	<!-- this prepares everything esp version information if we are not up to date -->
+	<target name="prepare" depends="up2datecheck">
+
+		<!-- register all of the libraries needed to run the application-->
+		<RequiredLibrariesBuildTask propertyname="required.libraries" verbose="true">
+			<fileset dir=".">
+				<include name="lib/*.jar" />
+			</fileset>
+		</RequiredLibrariesBuildTask>
+
+		<!--Make sure that we have all of the required directories we will need to build and test the project. This is here mostly to prevent compilation errors -->
+		<mkdir dir="${build.dir}" />
+		<mkdir dir="${distribution.dir}" />
+		<mkdir dir="${build.dir}/help" />
+		<mkdir dir="${lib.dir}" />
+		<mkdir dir="${otherlib.dir}" />
+		<mkdir dir="${resource.dir}" />
+		<mkdir dir="${test_resources.dir}" />
+		<mkdir dir="${test.dir}" />
+
+
+
+		<!-- Now for the really complicated stuff-->
+		<!--
+			The reason that all of this crap is some complicated, is that once a property is set in ANT, it cannot be chnaged, so we have a towers of hanoi problem 
+			that we try to solve by saving things under a different file name and then reloading it as a different property name. 
+			Also you can't selectivly load properties from a file, you get them all, and there values are set in stone for the remainder of the build.
+		-->
+
+		<!-- This block of conditionals is to determine what we want to do to each version number based on the dist/patch/build/major/minor argument to the build-->
+		<!--If the build is a patch we want to increment the patch number by loading the patch number from the build file with an addition argument-->
+		<condition property="patch.number.operation" else="=" value="+">
+			<istrue value="${isPatch}" />
+		</condition>
+		<!-- if the build is a patch,major, or minor build, we want to leave the build number alone, if it's a build then we increment it.-->
+		<condition property="build.number.operation" else="+" value="=">
+			<or>
+				<istrue value="${isPatch}" />
+				<istrue value="${isMajor}" />
+				<istrue value="${isMinor}" />
+			</or>
+		</condition>
+		<!-- leave the mjor number alone unless this is a major build-->
+		<condition property="major.number.operation" else="=" value="+">
+			<istrue value="${isMajor}" />
+		</condition>
+		<!-- leave the minor number alone unless this is a minor build-->
+		<condition property="minor.number.operation" else="=" value="+">
+			<istrue value="${isMinor}" />
+		</condition>
+
+
+		<!-- copy build.number file to the temp build number file, so we can mess with it without chnaging anything unless the whole build goes well-->
+		<copy overwrite="true" tofile="${temp_build_number.file}" file="${build_number.file}" />
+		<!--mess with the version info from the temp file, and increment them based on the conditionals from above-->
+		<propertyfile file="${temp_build_number.file}">
+			<entry key="_version.major" type="int" operation="${major.number.operation}" default="0" />
+			<entry key="_version.minor" type="int" operation="${minor.number.operation}" default="0" />
+			<entry key="_build.number" type="int" operation="${build.number.operation}" default="0" />
+			<entry key="_patch.number" type="int" operation="${patch.number.operation}" default="0" />
+		</propertyfile>
+
+		<!-- load our newly messed with values from the temp file properties-->
+		<property file="${temp_build_number.file}" />
+
+		<!-- 
+			reset the version numbers for anything less important than the build level in the CL argument.
+			Example: if we ask for a new minor build, the patch,and build properties will be set to 0 while 
+			the major number will be left alone and the minor number will be incremented  
+		-->
+		<condition property="__version.minor" value="0" else="${_version.minor}">
+			<istrue value="${isMajor}" />
+		</condition>
+
+		<condition property="__build.number" value="0" else="${_build.number}">
+			<or>
+				<istrue value="${isMajor}" />
+				<istrue value="${isMinor}" />
+			</or>
+		</condition>
+
+		<condition property="__patch.number" value="0" else="${_patch.number}">
+			<or>
+				<istrue value="${isMajor}" />
+				<istrue value="${isMinor}" />
+				<isfalse value="${isPatch}" />
+			</or>
+		</condition>
+
+		<!--  Remodify build file with new in mem properties, sotore the new values in the temp build file-->
+		<propertyfile file="${temp_build_number.file}">
+			<entry key="_version.major" type="int" value="${_version.major}" />
+			<entry key="_version.minor" type="int" value="${__version.minor}" />
+			<entry key="_build.number" type="int" value="${__build.number}" />
+			<entry key="_patch.number" type="int" value="${__patch.number}" />
+		</propertyfile>
+
+
+		<!-- Set real properties, now that we have determined what they are supposed to be-->
+		<property name="version.major" value="${_version.major}" />
+		<property name="version.minor" value="${__version.minor}" />
+		<property name="build.number" value="${__build.number}" />
+		<property name="patch.number" value="${__patch.number}" />
+
+		<!-- set the actual version property -->
+		<property name="version" value="${version.major}.${version.minor}" />
+		<echo>Building version ${version}.${build.number}.${patch.number} </echo>
+		<antcall target="updateVersionFile" />
+		<!-- Store the version property file in the build path so that applications can use it to discover what version they are -->
+		<propertyfile file="${build.dir}/version.properties">
+			<entry key="version.date" type="date" value="now" />
+			<entry key="version" value="${version}.${build.number}.${patch.number}" />
+			<entry key="product.name" value="${product.name}" />
+		</propertyfile>
+		<antcall target="deleteTempBuildFile" />
+	</target>
+	<!--END complicated shit-->
+
+	<!--This is done as a target, so that we don't rewire the version file unless we are actually chnaging the version-->
+	<target name="updateVersionFile" if="target">
+		<echo>Storing version file</echo>
+		<!--Store the version property in the resources dir so that we have it saveds somewhere-->
+		<propertyfile file="${resource.dir}/version.properties">
+			<entry key="version.date" type="date" value="now" />
+			<entry key="version" value="${version}.${build.number}.${patch.number}" />
+			<entry key="product.name" value="${product.name}" />
+		</propertyfile>
+	</target>
+	<!-- So our versioning doesn't get messed we delete the temp build file when we are not changing the version. If we are changing the version it gets deleted after we update the real build number file-->
+	<target name="deleteTempBuildFile" unless="target">
+		<delete file="${temp_build_number.file}" failonerror="false" />
+	</target>
+
+	<!--This is the target that updates the real prject build number file-->
+	<target name="saveBuildNumber">
+		<echo>replaceing temp build number with temp</echo>
+		<copy overwrite="true" file="${temp_build_number.file}" tofile="${build_number.file}" />
+		<delete verbose="true" file="${temp_build_number.file}" />
+		<!--An application build will add '-dist' to the file name , while a library build should leav off the '-dist' part-->
+		<condition property="distExtension" value="-dist" else="">
+			<istrue value="${isApplication}" />
+		</condition>
+		<propertyfile file="${distribution.dir}/lastbuild.properties">
+			<entry key="built" value="${distribution.dir}/${product.name}-${version}.${build.number}.${patch.number}${distExtension}.${jarFileExtension}" />
+		</propertyfile>
+	</target>
+
+
+	<!--
+		START stupid shit, this targets are simply to set the "what kind of build this is property. 
+		This properties have to be set before the build target can run any of it dependencies. 
+		because of this, they must be set as a the first dependency for the build targets
+	-->
+	<target name="prepBuild">
+		<property name="target" value="build" />
+		<property name="isPatch" value="false" />
+	</target>
+
+	<target name="prepPatch">
+		<property name="target" value="patch" />
+		<property name="isPatch" value="true" />
+	</target>
+	<target name="prepMajor">
+		<property name="target" value="major" />
+		<property name="isMajor" value="true" />
+	</target>
+	<target name="prepMinor">
+		<property name="target" value="minor" />
+		<property name="isMinor" value="true" />
+	</target>
+	<!--END STUPID SHIT-->
+
+	<!--START REAL TARGETS-->
+	<!-- this builds all of the different components it just basically defaults to the dist target unless versioning and testing are needed-->
+	<target name="all" depends="dist" />
+	<!-- this removes all compiled code -->
+	<target name="clean">
+		<delete dir="${build.dir}" />
+		<delete dir="${distribution.dir}" />
+	</target>
+	<!--
+		The general over view is as follows:
+		set the isSomeKindOfBuild property.
+		See if we need to build it, and if so version it, then build it.
+		Test it if we need to.
+		If all of that went okay, move the temp build file to the real build file, then commit it.
+	-->
+	<target name="build" depends="prepBuild,dist,test">
+		<fail unless="md5" />
+		<antcall inheritall="yes" target="saveBuildNumber" />
+		<antcall inheritall="yes" target="svn_commit" />
+	</target>
+
+	<target name="patch" depends="prepPatch,dist,test">
+		<fail unless="md5" />
+		<antcall inheritall="yes" target="saveBuildNumber" />
+		<antcall inheritall="yes" target="svn_commit" />
+	</target>
+
+	<target name="major" depends="prepMajor,dist,test">
+
+		<antcall inheritall="yes" target="saveBuildNumber" />
+		<antcall inheritall="yes" target="svn_commit" />
+	</target>
+
+	<target name="minor" depends="prepMinor,dist,test">
+		<antcall inheritall="yes" target="saveBuildNumber" />
+		<antcall inheritall="yes" target="svn_commit" />
+	</target>
+	<!--END REAL TARGETS-->
+	<!--END VERSIONING TARGETS-->
+
+	<!--START MAIN BUILD TARGET-->
+	<!-- this compiles everything, pretty standard. Compile everything, and move anything in the resources directory into the build directory so it can be accessed by the application -->
+	<target name="compile" depends="prepare">
+		<javac debug="on" srcdir="${src.dir}" destdir="${build.dir}">
+			<classpath refid="compile.classpath" />
+		</javac>
+		<copy todir="${build.dir}">
+			<fileset dir="${resource.dir}" />
+		</copy>
+	</target>
+	<!--
+	 	This is the main versioning independant build my damn jar and compile everything target.
+	 	First it makes sure overything has been built
+	 	Then it copies all of the libraries to the build dir in the lib dir.
+	 	Jars up anything in the compilation directory and the resources directory
+	 	Makes a symbolic link or copy depending on OS to the simplified name of the application jar
+	 	then create an execuetable jar file that will install the application 
+	-->
+	<target name="dist" depends="compile">
+		<echo>Building ${distribution.dir}/${product.name}-${version}.${build.number}.${patch.number}.${jarFileExtension}</echo>
+		<copy todir="${distribution.dir}/lib">
+			<fileset dir="${lib.dir}" />
+		</copy>
+		<antcall target="include_webmodule" />
+		<antcall target="include_xsl" />
+		<antcall target="jar" />
+		<antcall target="war" />
+		<copy file="${distribution.dir}/${product.name}-${version}.${build.number}.${patch.number}.${jarFileExtension}" tofile="${distribution.dir}/${product.name}.${jarFileExtension}" />
+		<checksum file="${distribution.dir}/${product.name}-${version}.${build.number}.${patch.number}.${jarFileExtension}" property="md5" />
+		<antcall target="makeInstaller" />
+	</target>
+
+	<target name="include_webmodule" if="webmodule.dir">
+		<jar destfile="${distribution.dir}/lib/${webmodule.name}" basedir="${webmodule.dir}" />
+	</target>
+
+	<target name="include_xsl" if="xsl.dir">
+		<copy verbose="true" overwrite="yes" todir="${build.dir}">
+			<fileset dir="${xsl.dir}" />
+		</copy>
+	</target>
+
+	<target name="war" if="isWebapplication">
+		<jar destfile="${distribution.dir}/${product.name}-${version}.${build.number}.${patch.number}.${jarFileExtension}" basedir="${package.src.dir}" />
+	</target>
+
+	<target name="jar" unless="isWebapplication">
+		<jar destfile="${distribution.dir}/${product.name}-${version}.${build.number}.${patch.number}.${jarFileExtension}" basedir="${package.src.dir}">
+			<manifest>
+				<attribute name="Main-Class" value="${main.class}" />
+				<attribute name="Class-Path" value="${required.libraries}" />
+			</manifest>
+		</jar>
+	</target>
+
+	<!-- This make a distributiuon archive, it will only be run is the isApplication property is set. The installBuildTask is a custom build task. See the updater project for deatils-->
+	<target name="makeInstaller" if="isApplication">
+		<InstallerBuildTask distributionfilename="${distribution.dir}/${product.name}-${version}.${build.number}.${patch.number}-dist.${jarFileExtension}">
+			<fileset dir="${distribution.dir}">
+				<include name="${product.name}.${jarFileExtension}" />
+				<include name="lib/**" />
+			</fileset>
+			<applicationDescriptor name="${main.class.path}" installDirectory="${product.name}" executable="${product.name}.${jarFileExtension}" ignoredDirectories="capo"/>
+		</InstallerBuildTask>
+	</target>
+
+	<!--END MAIN BUILD TARGET-->
+
+	<!--START TEST BUILD TARGETS-->
+	<!--require_testing property must be set in order for any of these to run-->
+	<target name="prepare_tests" if="require_testing">
+		<delete dir="${test_build.dir}" />
+		<mkdir dir="${test_build.dir}" />
+		<mkdir dir="${build.test_classes}" />
+		<mkdir dir="${build.test_resources}" />
+		<mkdir dir="${build.test_application}" />
+	</target>
+
+	<target name="compile_test_resources" if="require_testing">
+		<unjar dest="${build.test_application}" src="${distribution.dir}/${product.name}-${version}.${build.number}.${patch.number}-dist.${jarFileExtension}" />
+		<javac srcdir="${test_resources.dir}" destdir="${build.test_resources}" debug="on">
+			<classpath refid="compile_test_resources.classpath" />
+		</javac>
+	</target>
+
+	<target name="compile_tests" depends="prepare_tests,dist,compile_test_resources" if="require_testing">
+		<javac srcdir="${test.dir}" destdir="${build.test_classes}" debug="on">
+			<classpath refid="compile_tests.classpath" />
+		</javac>
+	</target>
+
+	<target name="test" depends="compile_tests" if="require_testing">
+		<junit showoutput="no" printsummary="withOutAndErr" haltonerror="true" haltonfailure="true" forkmode="perBatch" dir="${build.test_classes}">
+			<classpath refid="test_run.classpath" />
+			<formatter type="plain" />
+			<batchtest fork="yes" todir="${test_build.dir}">
+				<fileset dir="${build.test_classes}">
+					<include name="**/*Test.class" />
+				</fileset>
+			</batchtest>
+		</junit>
+		<delete dir="${test_build.dir}" />
+	</target>
+	<!--END TEST BUILD TARGET-->
+
+	
+	
+
+</project>
