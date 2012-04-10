@@ -1,3 +1,5 @@
+License: GPLv3, parts (eu.medsea) are under the Apache license. 
+
 Documentation: http://capo.delcyon.com
 
 Source Code: http://github.com/jahnje/delcyon-capo
