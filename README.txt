@@ -1,3 +1,9 @@
+Runtime Requirements: Java 6 or better.
+
+IDE Requirements: Eclipse
+
+Build Requirements: ant
+
 License: GPLv3, parts (eu.medsea) are under the Apache license. 
 
 Documentation: http://capo.delcyon.com
