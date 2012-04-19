@@ -218,7 +218,7 @@ public abstract class CapoApplication extends ContextThread
 		}
 	}
 
-    
+    public abstract boolean isReady();
 
 	
 	

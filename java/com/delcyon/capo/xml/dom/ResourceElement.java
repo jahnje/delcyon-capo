@@ -1,5 +1,8 @@
 package com.delcyon.capo.xml.dom;
 
+import java.util.List;
+import java.util.logging.Level;
+
 import org.w3c.dom.Attr;
 import org.w3c.dom.DOMException;
 import org.w3c.dom.Document;
@@ -10,16 +13,41 @@ import org.w3c.dom.NodeList;
 import org.w3c.dom.TypeInfo;
 import org.w3c.dom.UserDataHandler;
 
+import com.delcyon.capo.CapoApplication;
+import com.delcyon.capo.resourcemanager.ContentFormatType;
 import com.delcyon.capo.resourcemanager.ResourceDescriptor;
+import com.delcyon.capo.resourcemanager.ResourceManager;
+import com.delcyon.capo.resourcemanager.types.ContentMetaData;
 
 public class ResourceElement extends ResourceNode implements Element
 {
 
     private ResourceDescriptor resourceDescriptor;
-
-    public ResourceElement(ResourceDescriptor resourceDescriptor)
+    
+    private String namespaceURI = null;
+    private String localName = null;
+    private List<ContentMetaData> childResourceContentMetaData;
+    private ContentMetaData contentMetaData;
+    private ResourceNodeList nodeList = new ResourceNodeList();
+    
+    public ResourceElement(ResourceDescriptor resourceDescriptor) throws Exception
     {
         this.resourceDescriptor = resourceDescriptor;
+        namespaceURI = resourceDescriptor.getResourceURI();
+        localName = resourceDescriptor.getLocalName();
+        contentMetaData = resourceDescriptor.getContentMetaData(null);
+        
+        List<String> supportedAttributeList = contentMetaData.getSupportedAttributes();
+        for (String attributeName : supportedAttributeList)
+        {
+            if (contentMetaData.getValue(attributeName) != null)
+            {                
+                ResourceAttr resourceAttr = new ResourceAttr(this,attributeName, contentMetaData.getValue(attributeName));
+                nodeList.add(resourceAttr);
+            }
+        }
+        
+                
     }
 
     @Override
@@ -58,9 +86,44 @@ public class ResourceElement extends ResourceNode implements Element
     @Override
     public NodeList getChildNodes()
     {
-        // TODO Auto-generated method stub
-        
-        throw new UnsupportedOperationException();
+        if (childResourceContentMetaData == null)
+        {
+            childResourceContentMetaData = contentMetaData.getContainedResources();
+            for (ContentMetaData childContentMetaData : childResourceContentMetaData)
+            {
+                
+                try
+                {
+                    nodeList.add(new ResourceElement(CapoApplication.getDataManager().getResourceDescriptor(null, childContentMetaData.getResourceURI())));
+                }
+                catch (Exception e)
+                {
+                   CapoApplication.logger.log(Level.WARNING,"couldn't load resource: "+childContentMetaData.getResourceURI(),e);
+                }
+            }
+            if (contentMetaData.isContainer() == false)
+            {
+                System.err.println(contentMetaData.getResourceURI()+" has data!");
+                if (contentMetaData.getContentFormatType() == ContentFormatType.XML)
+                {
+                    try
+                    {
+                        Element xmlElement = resourceDescriptor.readXML(null);
+                        
+                        nodeList.add(xmlElement);
+                    }
+                    catch (Exception e)
+                    {
+                        CapoApplication.logger.log(Level.WARNING,"couldn't load resource data: "+contentMetaData.getResourceURI(),e);
+                    }
+                }
+                else 
+                {
+                    
+                }
+            }
+        }
+        return nodeList;
     }
 
     @Override
@@ -94,8 +157,7 @@ public class ResourceElement extends ResourceNode implements Element
     @Override
     public NamedNodeMap getAttributes()
     {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+        return new ResourceNamedNodeMap(nodeList,Node.ATTRIBUTE_NODE);
     }
 
     @Override
@@ -136,8 +198,7 @@ public class ResourceElement extends ResourceNode implements Element
     @Override
     public boolean hasChildNodes()
     {
-        // TODO Auto-generated method stub
-        return false;
+        return true;
     }
 
     @Override
@@ -164,8 +225,7 @@ public class ResourceElement extends ResourceNode implements Element
     @Override
     public String getNamespaceURI()
     {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+        return namespaceURI;
     }
 
     @Override
@@ -185,8 +245,7 @@ public class ResourceElement extends ResourceNode implements Element
     @Override
     public String getLocalName()
     {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+        return this.localName;
     }
 
     @Override

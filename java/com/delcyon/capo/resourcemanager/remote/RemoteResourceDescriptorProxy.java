@@ -392,6 +392,14 @@ public class RemoteResourceDescriptorProxy  implements ResourceDescriptor,Client
 		
 	}
 
+	/** returns last piece of URI **/
+    @Override
+    public String getLocalName()
+    {
+        String[] splitURI = this.resourceURI.split("/");
+        return splitURI[splitURI.length-1];
+    }
+	
 	@Override
 	public boolean isRemoteResource()
 	{	

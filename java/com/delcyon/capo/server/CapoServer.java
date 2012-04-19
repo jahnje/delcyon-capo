@@ -150,7 +150,7 @@ public class CapoServer extends CapoApplication
 	
 	private ServerSocket serverSocket;
 	private boolean attemptSSL = true;
-	
+	private boolean isReady = false;
 
 	public CapoServer() throws Exception
 	{
@@ -222,6 +222,8 @@ public class CapoServer extends CapoApplication
 		serverSocket = new ServerSocket(getConfiguration().getIntValue(PREFERENCE.PORT));
 		
 		runStartupScript(getConfiguration().getValue(PREFERENCE.STARTUP_SCRIPT));
+		
+		this.isReady = true;
 	}
 
 	
@@ -272,6 +274,8 @@ public class CapoServer extends CapoApplication
 		
 		sslContext.init(keyManagerFactory.getKeyManagers(), trustManagerFactory.getTrustManagers(), new java.security.SecureRandom());
 		SSLSocketFactory sslSocketFactory = sslContext.getSocketFactory();
+		
+		
 		
 		while (true)
 		{
@@ -510,6 +514,12 @@ public class CapoServer extends CapoApplication
 			e.printStackTrace();
 		}
 		return false;
+	}
+	
+	@Override
+	public boolean isReady()
+	{
+	    return this.isReady;
 	}
 	
 	@Override

@@ -13,312 +13,306 @@ import org.w3c.dom.UserDataHandler;
 public class ResourceAttr extends ResourceNode implements Attr
 {
 
+    private ResourceElement parentElement = null;
+    private String name = null;
+    private String value = null;
+    public ResourceAttr(ResourceElement parentElement, String name, String value)
+    {
+        this.parentElement = parentElement;
+        this.name = name;
+        this.value = value;
+    }
+
     @Override
     public String getNodeName()
-    {
-        // TODO Auto-generated method stub
-        return null;
+    {        
+        return name;
     }
 
     @Override
     public String getNodeValue() throws DOMException
     {
-        // TODO Auto-generated method stub
-        return null;
+        return value;
     }
 
     @Override
     public void setNodeValue(String nodeValue) throws DOMException
     {
-        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException();
 
     }
 
     @Override
     public short getNodeType()
     {
-        // TODO Auto-generated method stub
-        return 0;
+        return ATTRIBUTE_NODE;
     }
 
     @Override
     public Node getParentNode()
     {
-        // TODO Auto-generated method stub
-        return null;
+        return parentElement;
     }
 
     @Override
     public NodeList getChildNodes()
     {
-        // TODO Auto-generated method stub
-        return null;
+        throw new UnsupportedOperationException();
     }
 
     @Override
     public Node getFirstChild()
-    {
-        // TODO Auto-generated method stub
+    {        
         return null;
     }
 
     @Override
     public Node getLastChild()
     {
-        // TODO Auto-generated method stub
-        return null;
+        return null;   
     }
 
     @Override
     public Node getPreviousSibling()
     {
-        // TODO Auto-generated method stub
-        return null;
+        throw new UnsupportedOperationException();
     }
 
     @Override
     public Node getNextSibling()
-    {
-        // TODO Auto-generated method stub
-        return null;
+    {        
+        throw new UnsupportedOperationException();        
     }
 
     @Override
     public NamedNodeMap getAttributes()
-    {
-        // TODO Auto-generated method stub
+    {        
         return null;
     }
 
     @Override
     public Document getOwnerDocument()
-    {
-        // TODO Auto-generated method stub
-        return null;
+    {        
+        return parentElement.getOwnerDocument();
     }
 
     @Override
     public Node insertBefore(Node newChild, Node refChild) throws DOMException
     {
-        // TODO Auto-generated method stub
-        return null;
+        throw new UnsupportedOperationException();
+        
     }
 
     @Override
     public Node replaceChild(Node newChild, Node oldChild) throws DOMException
     {
-        // TODO Auto-generated method stub
-        return null;
+        throw new UnsupportedOperationException();
+        
     }
 
     @Override
     public Node removeChild(Node oldChild) throws DOMException
     {
-        // TODO Auto-generated method stub
-        return null;
+        throw new UnsupportedOperationException();
+        
     }
 
     @Override
     public Node appendChild(Node newChild) throws DOMException
     {
-        // TODO Auto-generated method stub
-        return null;
+        throw new UnsupportedOperationException();
+        
     }
 
     @Override
     public boolean hasChildNodes()
-    {
-        // TODO Auto-generated method stub
+    {        
         return false;
     }
 
     @Override
     public Node cloneNode(boolean deep)
     {
-        // TODO Auto-generated method stub
-        return null;
+        throw new UnsupportedOperationException();
+        
     }
 
     @Override
     public void normalize()
     {
-        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException();
 
     }
 
     @Override
     public boolean isSupported(String feature, String version)
     {
-        // TODO Auto-generated method stub
-        return false;
+        throw new UnsupportedOperationException();
+        
     }
 
     @Override
     public String getNamespaceURI()
     {
-        // TODO Auto-generated method stub
-        return null;
+        return parentElement.getNamespaceURI();
+        
     }
 
     @Override
     public String getPrefix()
     {
-        // TODO Auto-generated method stub
-        return null;
+        throw new UnsupportedOperationException();
+        
     }
 
     @Override
     public void setPrefix(String prefix) throws DOMException
     {
-        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException();
 
     }
 
     @Override
     public String getLocalName()
-    {
-        // TODO Auto-generated method stub
-        return null;
+    {        
+        return name;
     }
 
     @Override
     public boolean hasAttributes()
     {
-        // TODO Auto-generated method stub
-        return false;
+        throw new UnsupportedOperationException();
+        
     }
 
     @Override
     public String getBaseURI()
     {
-        // TODO Auto-generated method stub
-        return null;
+        throw new UnsupportedOperationException();
+        
     }
 
     @Override
     public short compareDocumentPosition(Node other) throws DOMException
     {
-        // TODO Auto-generated method stub
-        return 0;
+        throw new UnsupportedOperationException();
+        
     }
 
     @Override
     public String getTextContent() throws DOMException
     {
-        // TODO Auto-generated method stub
-        return null;
+        throw new UnsupportedOperationException();
+        
     }
 
     @Override
     public void setTextContent(String textContent) throws DOMException
     {
-        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException();
 
     }
 
     @Override
     public boolean isSameNode(Node other)
     {
-        // TODO Auto-generated method stub
-        return false;
+        throw new UnsupportedOperationException();
+        
     }
 
     @Override
     public String lookupPrefix(String namespaceURI)
     {
-        // TODO Auto-generated method stub
-        return null;
+        throw new UnsupportedOperationException();
+        
     }
 
     @Override
     public boolean isDefaultNamespace(String namespaceURI)
     {
-        // TODO Auto-generated method stub
-        return false;
+        throw new UnsupportedOperationException();
+        
     }
 
     @Override
     public String lookupNamespaceURI(String prefix)
     {
-        // TODO Auto-generated method stub
-        return null;
+        throw new UnsupportedOperationException();
+        
     }
 
     @Override
     public boolean isEqualNode(Node arg)
     {
-        // TODO Auto-generated method stub
-        return false;
+        throw new UnsupportedOperationException();
+        
     }
 
     @Override
     public Object getFeature(String feature, String version)
     {
-        // TODO Auto-generated method stub
-        return null;
+        throw new UnsupportedOperationException();
+        
     }
 
     @Override
     public Object setUserData(String key, Object data, UserDataHandler handler)
     {
-        // TODO Auto-generated method stub
-        return null;
+        throw new UnsupportedOperationException();
+        
     }
 
     @Override
     public Object getUserData(String key)
     {
-        // TODO Auto-generated method stub
-        return null;
+        throw new UnsupportedOperationException();
+        
     }
 
     @Override
     public String getName()
     {
-        // TODO Auto-generated method stub
-        return null;
+        return this.name;
     }
 
     @Override
     public boolean getSpecified()
     {
-        // TODO Auto-generated method stub
-        return false;
+        throw new UnsupportedOperationException();
+       
     }
 
     @Override
     public String getValue()
     {
-        // TODO Auto-generated method stub
-        return null;
+        return this.value;
     }
 
     @Override
     public void setValue(String value) throws DOMException
     {
-        // TODO Auto-generated method stub
+       this.value = value;
 
     }
 
     @Override
     public Element getOwnerElement()
     {
-        // TODO Auto-generated method stub
-        return null;
+        return parentElement;
     }
 
     @Override
     public TypeInfo getSchemaTypeInfo()
     {
-        // TODO Auto-generated method stub
-        return null;
+        throw new UnsupportedOperationException();
+        
     }
 
     @Override
     public boolean isId()
     {
-        // TODO Auto-generated method stub
-        return false;
+        throw new UnsupportedOperationException();
+        
     }
 
 }

@@ -28,11 +28,13 @@ public class ResourceDocument extends ResourceNode implements Document
     
     private ResourceDescriptor resourceDescriptor;
     private Element documentElement;
-
+    private ResourceNodeList resourceNodeList = new ResourceNodeList();
     //TODO remove me, for testing only
     public ResourceDocument(ResourceDescriptor resourceDescriptor) throws Exception
     {
        this.resourceDescriptor = resourceDescriptor;
+       this.documentElement = new ResourceElement(resourceDescriptor);
+       resourceNodeList.add(documentElement);
     }
 
     @Override
@@ -64,15 +66,13 @@ public class ResourceDocument extends ResourceNode implements Document
     @Override
     public Node getParentNode()
     {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+        return null;
     }
 
     @Override
     public NodeList getChildNodes()
     {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+        return resourceNodeList;
     }
 
     @Override
@@ -313,11 +313,7 @@ public class ResourceDocument extends ResourceNode implements Document
 
     @Override
     public Element getDocumentElement()
-    {
-        if (this.documentElement == null)
-        {
-            this.documentElement = new ResourceElement(resourceDescriptor);
-        }
+    {        
         return this.documentElement;
     }
 

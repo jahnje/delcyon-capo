@@ -38,7 +38,9 @@ import com.delcyon.capo.datastream.NullOutputStream;
 import com.delcyon.capo.datastream.StreamEventFilterOutputStream;
 import com.delcyon.capo.datastream.StreamEventListener;
 import com.delcyon.capo.datastream.StreamUtil;
+import com.delcyon.capo.resourcemanager.ContentFormatType;
 import com.delcyon.capo.resourcemanager.ResourceDescriptor;
+import com.delcyon.capo.resourcemanager.ResourceManager;
 import com.delcyon.capo.resourcemanager.ResourceParameter;
 import com.delcyon.capo.resourcemanager.ResourceParameter.EvaluationContext;
 import com.delcyon.capo.resourcemanager.ResourceParameter.Source;
@@ -186,6 +188,14 @@ public abstract class AbstractResourceDescriptor implements ResourceDescriptor
 	public void setResourceURI(String resourceURI)
 	{
 		this.resourceURI = resourceURI;
+	}
+	
+	/** returns last piece of URI **/
+	@Override
+	public String getLocalName()
+	{
+	    String[] splitURI = this.resourceURI.split("/");
+	    return splitURI[splitURI.length-1];
 	}
 	
 	@Override
@@ -502,7 +512,14 @@ public abstract class AbstractResourceDescriptor implements ResourceDescriptor
 		{
 			ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
 			StreamUtil.readInputStreamIntoOutputStream(getInputStream(variableContainer, resourceParameters), byteArrayOutputStream) ;
-			dataElement.setTextContent(new String(byteArrayOutputStream.toByteArray()));			
+			if (getContentMetaData(variableContainer, resourceParameters).getContentFormatType() == ContentFormatType.XML)
+			{
+			    dataElement = CapoApplication.getDocumentBuilder().parse(new ByteArrayInputStream(byteArrayOutputStream.toByteArray())).getDocumentElement();
+			}
+			else
+			{
+			    dataElement.setTextContent(new String(byteArrayOutputStream.toByteArray()));
+			}
 		}
 		else
 		{

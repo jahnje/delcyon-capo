@@ -122,6 +122,7 @@ public class CapoClient extends CapoApplication
 	
 	
 	private HashMap<String, String> idHashMap = new HashMap<String, String>();
+    private boolean isReady = false;
 	
 	public CapoClient() throws Exception
 	{
@@ -161,6 +162,7 @@ public class CapoClient extends CapoApplication
 		setDataManager(CapoDataManager.loadDataManager(getConfiguration().getValue(PREFERENCE.RESOURCE_MANAGER)));
 		getDataManager().init();
 		runStartupScript(getConfiguration().getValue(PREFERENCE.STARTUP_SCRIPT));
+		this.isReady = true;
 	}
 
 	private void runStartupScript(String startupScriptName) throws Exception
@@ -339,6 +341,12 @@ public class CapoClient extends CapoApplication
 		return APPLICATION_DIRECTORY_NAME;
 	}
 
+	@Override
+	public boolean isReady()
+	{
+	    return this.isReady;
+	}
+	
 	public void clearIDMap()
 	{
 		idHashMap.clear();		

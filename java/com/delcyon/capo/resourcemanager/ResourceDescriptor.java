@@ -162,6 +162,8 @@ public interface ResourceDescriptor
 	/** get the official name URN of our resource*/
 	public abstract String getResourceURI();
 
+	public abstract String getLocalName();
+	
 	public abstract void setResourceURI(String resourceURI);
 
 	public ResourceType getResourceType();	
