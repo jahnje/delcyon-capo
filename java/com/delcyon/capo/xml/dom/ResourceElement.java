@@ -16,7 +16,6 @@ import org.w3c.dom.UserDataHandler;
 import com.delcyon.capo.CapoApplication;
 import com.delcyon.capo.resourcemanager.ContentFormatType;
 import com.delcyon.capo.resourcemanager.ResourceDescriptor;
-import com.delcyon.capo.resourcemanager.ResourceManager;
 import com.delcyon.capo.resourcemanager.types.ContentMetaData;
 
 public class ResourceElement extends ResourceNode implements Element
@@ -33,10 +32,10 @@ public class ResourceElement extends ResourceNode implements Element
     public ResourceElement(ResourceDescriptor resourceDescriptor) throws Exception
     {
         this.resourceDescriptor = resourceDescriptor;
-        namespaceURI = resourceDescriptor.getResourceURI();
+        namespaceURI = "http://capo.delcyon.com/resource";
         localName = resourceDescriptor.getLocalName();
         contentMetaData = resourceDescriptor.getContentMetaData(null);
-        
+        nodeList.add(new ResourceAttr(this,"uri", contentMetaData.getResourceURI()));
         List<String> supportedAttributeList = contentMetaData.getSupportedAttributes();
         for (String attributeName : supportedAttributeList)
         {

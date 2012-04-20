@@ -60,8 +60,13 @@ public class ResourceDocumentTest
         
         ResourceDocumentBuilder documentBuilder = new ResourceDocumentBuilder();
         Document document = documentBuilder.buildDocument(resourceDescriptor);
-        XPath.dumpNode(document, System.out);
-        NodeList nodeList = XPath.selectNodes(document, "//server:id[@name = 'hostname']/@value");
+       //XPath.dumpNode(document, System.out);
+        NodeList nodeList = XPath.selectNSNodes(document, "/file:capo/*:server/file:clients/*[matches(local-name(),'cli')]/file:identity.xml/server:identity/*","file=http://capo.delcyon.com/resource","server=http://www.delcyon.com/capo-server");///file:capo/file:server/file:clients/*/*/server:id[@name = 'hostname']/@value");
+        for(int index = 0; index < nodeList.getLength(); index++)
+        {
+            System.out.println(nodeList.item(index));
+        }
+        nodeList = XPath.selectNSNodes(document, "/file:capo/*:server/file:clients/*[matches(local-name(),'cli')]/file:identity.xml/server:identity/*","file=http://capo.delcyon.com/resource","server=http://www.delcyon.com/capo-server");///file:capo/file:server/file:clients/*/*/server:id[@name = 'hostname']/@value");
         for(int index = 0; index < nodeList.getLength(); index++)
         {
             System.out.println(nodeList.item(index));
