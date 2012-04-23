@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<server:identity xmlns:server="http://www.delcyon.com/capo-server">
+   <server:id name="MAC" value="00:e0:81:b0:14:7f"/>
+   <server:id name="hostname" value="bluejay.goodinassociates.com"/>
+</server:identity>

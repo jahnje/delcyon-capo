@@ -1,11 +1,10 @@
 package com.delcyon.capo.tests.util;
-import java.io.File;
-import java.net.URL;
 import java.net.URLClassLoader;
-import java.util.Vector;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 import org.junit.Test;
+
+import com.delcyon.capo.tests.util.external.Util;
 
 /**
 Copyright (c) 2012 Delcyon, Inc.
@@ -38,17 +37,9 @@ public class ExternalTestClient extends ClassLoader
 	@SuppressWarnings({ "deprecation" })
 	public ExternalTestClient() throws Exception
 	{
-		Vector<URL> classPathURLVector = new Vector<URL>();
-		classPathURLVector.add(new File("build").toURL());
-		File libFile = new File("lib");
-		File[] libFiles = libFile.listFiles();
-		for (File file : libFiles)
-		{
-			classPathURLVector.add(file.toURL());
-		}
-		URL[] classpathURLs = classPathURLVector.toArray(new URL[]{});
+		
 
-		clientClassLoader = new URLClassLoader(classpathURLs,null);
+		clientClassLoader = Util.getIndependentClassLoader();
 		testClientClass = clientClassLoader.loadClass("com.delcyon.capo.tests.util.TestClient");
 	}
 	

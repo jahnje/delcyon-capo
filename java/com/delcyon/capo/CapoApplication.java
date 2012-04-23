@@ -60,7 +60,7 @@ public abstract class CapoApplication extends ContextThread
 	}
 	
 	private static CapoApplication capoApplication;
-	public static Level LOGGING_LEVEL = Level.CONFIG;
+	public static Level LOGGING_LEVEL = Level.INFO;
 	public static Logger logger = null;
 	private static LeveledConsoleHandler leveledConsoleHandler;
 	private static FileHandler fileHandler;

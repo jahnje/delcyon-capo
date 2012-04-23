@@ -1,13 +1,11 @@
 package com.delcyon.capo.tests.util;
-import java.io.File;
-import java.net.URL;
 import java.net.URLClassLoader;
-import java.util.Vector;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 import org.junit.Test;
 
 import com.delcyon.capo.client.CapoClient;
+import com.delcyon.capo.tests.util.external.Util;
 
 /**
 Copyright (c) 2012 Delcyon, Inc.
@@ -30,26 +28,19 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  * @author jeremiah
  * Starts up the test server in a different class loader to make testing of clients results possible 
  */
-public class ExternalTestServer extends ClassLoader
+public class ExternalTestServer
 {
 	
 	private URLClassLoader serverClassLoader;
-	private Class testServerClass;
+	@SuppressWarnings("rawtypes")
+    private Class testServerClass;
 
-	@SuppressWarnings({ "deprecation", "unchecked" })
+	@SuppressWarnings({ "deprecation"})
 	public ExternalTestServer() throws Exception
 	{
-		Vector<URL> classPathURLVector = new Vector<URL>();
-		classPathURLVector.add(new File("build").toURL());
-		File libFile = new File("lib");
-		File[] libFiles = libFile.listFiles();
-		for (File file : libFiles)
-		{
-			classPathURLVector.add(file.toURL());
-		}
-		URL[] classpathURLs = classPathURLVector.toArray(new URL[]{});
+		
 
-		serverClassLoader = new URLClassLoader(classpathURLs,null);
+		serverClassLoader = Util.getIndependentClassLoader();
 		testServerClass = serverClassLoader.loadClass("com.delcyon.capo.tests.util.TestServer");
 	}
 	
@@ -73,8 +64,8 @@ public class ExternalTestServer extends ClassLoader
 	}
 	
 	@Test
-	public void testExternalServer() throws Exception{
-		
+	public void testExternalServer() throws Exception{		
+	    Util.copyTree("test-data/capo", "capo");	    
 		ExternalTestServer externalTestServer = new ExternalTestServer();
 		externalTestServer.startServer();
 		CapoClient.main(new String[]{});

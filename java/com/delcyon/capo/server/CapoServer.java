@@ -181,7 +181,7 @@ public class CapoServer extends CapoApplication
 	 * @throws Exception
 	 * @throws SecurityException
 	 */
-	protected void init(String[] programArgs) throws SecurityException, Exception
+	public void init(String[] programArgs) throws SecurityException, Exception
 	{
 		setConfiguration(new Configuration(programArgs));
 
@@ -272,7 +272,7 @@ public class CapoServer extends CapoApplication
 	 * @param programArgs
 	 * @throws Exception
 	 */
-	protected void start(String[] programArgs) throws Exception
+	public void start(String[] programArgs) throws Exception
 	{
 		SynchronousQueue<Runnable> synchronousQueue = new SynchronousQueue<Runnable>();
 		ThreadPoolExecutor threadPoolExecutor = new ThreadPoolExecutor(getConfiguration().getIntValue(Preferences.START_THREADPOOL_SIZE), getConfiguration().getIntValue(Preferences.MAX_THREADPOOL_SIZE), getConfiguration().getIntValue(Preferences.THREAD_IDLE_TIME), TimeUnit.MILLISECONDS, synchronousQueue);

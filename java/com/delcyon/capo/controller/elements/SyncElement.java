@@ -18,6 +18,9 @@ package com.delcyon.capo.controller.elements;
 
 import java.io.OutputStream;
 import java.util.HashMap;
+import java.util.List;
+import java.util.Map.Entry;
+import java.util.Set;
 import java.util.logging.Level;
 
 import org.w3c.dom.Attr;
@@ -35,7 +38,10 @@ import com.delcyon.capo.datastream.StreamUtil;
 import com.delcyon.capo.datastream.TriggerFilterOutputStream;
 import com.delcyon.capo.datastream.stream_attribute_filter.MD5FilterOutputStream;
 import com.delcyon.capo.resourcemanager.ResourceDescriptor;
+import com.delcyon.capo.resourcemanager.ResourceDescriptor.Action;
+import com.delcyon.capo.resourcemanager.ResourceParameter;
 import com.delcyon.capo.resourcemanager.ResourceParameterBuilder;
+import com.delcyon.capo.resourcemanager.types.ContentMetaData;
 import com.delcyon.capo.server.CapoServer;
 
 @ControlElementProvider(name="sync")
@@ -58,9 +64,9 @@ public class SyncElement extends AbstractControl
 		}
 	}
 	
-	private enum Attributes
+	public enum Attributes
 	{
-		name,ref, src,dest, destMD5, srcMD5, varMD5,onCopy
+		name,src,dest,onCopy,recursive,prune
 	}
 	
 	private static final String[] supportedNamespaces = {GroupElement.SERVER_NAMESPACE_URI};
@@ -80,7 +86,7 @@ public class SyncElement extends AbstractControl
 	@Override
 	public Attributes[] getRequiredAttributes()
 	{
-		return new Attributes[]{Attributes.dest};
+		return new Attributes[]{Attributes.dest,Attributes.src};
 	}
 
 	
@@ -113,8 +119,8 @@ public class SyncElement extends AbstractControl
 		if (sourceResourceDescriptor != null && sourceResourceDescriptor.getContentMetaData(getParentGroup(), ResourceParameterBuilder.getResourceParameters(getControlElementDeclaration())).exists())
 		{
 			
-			String destMD5 = null;			
-			String varMD5 = getVarMD5ForCopyElement(tempCopyElement);
+//			String destMD5 = null;			
+//			String varMD5 = getVarMD5ForCopyElement(tempCopyElement);
 			//commented out until we can find a good reason to cache, other than for the sake of caching!
 //			if (varMD5 != null)
 //			{
@@ -139,24 +145,12 @@ public class SyncElement extends AbstractControl
 //			}
 //			else //were not doing anything complicated, so just use the src md5 as the expected dest md5;
 //			{
-				destMD5 = sourceResourceDescriptor.getContentMetaData(getParentGroup(), ResourceParameterBuilder.getResourceParameters(getControlElementDeclaration())).getMD5();
+				
 			//}
 			
 			ResourceDescriptor destinationResourceDescriptor =  getParentGroup().openResourceDescriptor(this, getAttributeValue(Attributes.dest));
-			String currentDestinationMD5 = destinationResourceDescriptor.getContentMetaData(getParentGroup(), ResourceParameterBuilder.getResourceParameters(getControlElementDeclaration())).getMD5();
-			if (currentDestinationMD5 == null || currentDestinationMD5.equals(destMD5) == false)
-			{
-				CapoApplication.logger.log(Level.INFO, "Syncing file: "+sourceResourceDescriptor.getResourceURI()+" ==> "+destinationResourceDescriptor.getResourceURI());
-				OutputStream filteredOutputStream = wrapOutputStream(destinationResourceDescriptor.getOutputStream(getParentGroup(), ResourceParameterBuilder.getResourceParameters(getControlElementDeclaration())),getControlElementDeclaration());
-				StreamUtil.readInputStreamIntoOutputStream(sourceResourceDescriptor.getInputStream(getParentGroup(),ResourceParameterBuilder.getResourceParameters(getControlElementDeclaration())), filteredOutputStream);
-				filteredOutputStream.flush();
-				filteredOutputStream.close();
-				CapoApplication.logger.log(Level.INFO, "Done Syncing");
-				if(getAttributeValue(Attributes.onCopy).isEmpty() == false)
-				{
-					getParentGroup().set(getAttributeValue(Attributes.onCopy), "true");
-				}
-			}
+			syncTree(sourceResourceDescriptor,destinationResourceDescriptor);
+			
 		}
 		else
 		{
@@ -166,13 +160,102 @@ public class SyncElement extends AbstractControl
 		
 		return null;
 	}
-
-
-	
 	
 	
 
-	private OutputStream wrapOutputStream(OutputStream outputStream, Element copyElement)
+	public void syncTree(ResourceDescriptor sourceResourceDescriptor, ResourceDescriptor destinationResourceDescriptor) throws Exception
+    {
+	    ContentMetaData sourceContentMetaData = sourceResourceDescriptor.getContentMetaData(getParentGroup(), ResourceParameterBuilder.getResourceParameters(getControlElementDeclaration()));
+	    ContentMetaData destinationContentMetaData = destinationResourceDescriptor.getContentMetaData(getParentGroup(), ResourceParameterBuilder.getResourceParameters(getControlElementDeclaration()));
+	    
+	    
+        if (sourceContentMetaData.exists() == false)
+        {
+            throw new Exception(" src='"+ sourceContentMetaData.getResourceURI() +"' does not exist, can't sync.");
+        }
+        if (sourceContentMetaData.isContainer() == true )
+        {
+            
+            if (destinationContentMetaData.exists() == true && destinationContentMetaData.isContainer() == false)
+            {
+                CapoApplication.logger.log(Level.WARNING, "Removing dst resource: "+destinationResourceDescriptor.getResourceURI());
+                destinationResourceDescriptor.performAction(null, Action.DELETE);
+                destinationResourceDescriptor.performAction(null, Action.CREATE,new ResourceParameter(ResourceDescriptor.DefaultParameters.CONTAINER, "true"));
+                destinationResourceDescriptor.close(null);
+                destinationResourceDescriptor.open(null);
+            }
+            
+            //see if the opposing container exists, and if not, create it.
+            if (destinationContentMetaData.exists() == false)
+            {
+                destinationResourceDescriptor.performAction(null, Action.CREATE,new ResourceParameter(ResourceDescriptor.DefaultParameters.CONTAINER, "true"));
+                destinationResourceDescriptor.close(null);
+                destinationResourceDescriptor.open(null);
+            }
+            
+            if (getAttributeBooleanValue(Attributes.recursive) == true)
+            {
+                //process children here
+                List<ContentMetaData> sourceContainedResources = sourceContentMetaData.getContainedResources();
+                List<ContentMetaData> destinationContainedResources = destinationContentMetaData.getContainedResources();
+
+
+
+                HashMap<String, ContentMetaData> destinationContainedResourceHashMap = new HashMap<String, ContentMetaData>();
+                for (ContentMetaData contentMetaData : destinationContainedResources)
+                {
+                    String localName = contentMetaData.getResourceURI().replaceAll(destinationContentMetaData.getResourceURI(), "");                
+                    destinationContainedResourceHashMap.put(localName, contentMetaData);
+                } 
+
+
+                for (ContentMetaData contentMetaData : sourceContainedResources)
+                {
+                    String localName = contentMetaData.getResourceURI().replaceAll(sourceContentMetaData.getResourceURI(), "");                
+                    ResourceDescriptor childDestinationResourceDescriptor = destinationResourceDescriptor.getChildResourceDescriptor(this, localName);
+                    ResourceDescriptor childSourceResourceDescriptor = sourceResourceDescriptor.getChildResourceDescriptor(this, localName);
+                    destinationContainedResourceHashMap.remove(localName);
+                    syncTree(childSourceResourceDescriptor, childDestinationResourceDescriptor);
+                }
+
+                if (getAttributeBooleanValue(Attributes.prune) == true)
+                {
+                    Set<Entry<String, ContentMetaData>> unknownDestinationResourceEntrySet = destinationContainedResourceHashMap.entrySet();
+                    for (Entry<String, ContentMetaData> entry : unknownDestinationResourceEntrySet)
+                    {
+                        ResourceDescriptor childDestinationResourceDescriptor = destinationResourceDescriptor.getChildResourceDescriptor(this, entry.getKey());
+                        CapoApplication.logger.log(Level.WARNING, "Removing dst resource: "+childDestinationResourceDescriptor.getResourceURI());
+                        childDestinationResourceDescriptor.performAction(null, Action.DELETE);
+                    }
+                }
+            }
+            
+        }
+        else
+        {
+            String srcMD5 = sourceResourceDescriptor.getContentMetaData(getParentGroup(), ResourceParameterBuilder.getResourceParameters(getControlElementDeclaration())).getMD5();
+            String destMD5 = destinationResourceDescriptor.getContentMetaData(getParentGroup(), ResourceParameterBuilder.getResourceParameters(getControlElementDeclaration())).getMD5();
+            if (destMD5 == null || destMD5.equals(srcMD5) == false)
+            {
+                CapoApplication.logger.log(Level.INFO, "Syncing file: "+sourceResourceDescriptor.getResourceURI()+" ==> "+destinationResourceDescriptor.getResourceURI());
+                OutputStream filteredOutputStream = wrapOutputStream(destinationResourceDescriptor.getOutputStream(getParentGroup(), ResourceParameterBuilder.getResourceParameters(getControlElementDeclaration())),getControlElementDeclaration());
+                StreamUtil.readInputStreamIntoOutputStream(sourceResourceDescriptor.getInputStream(getParentGroup(),ResourceParameterBuilder.getResourceParameters(getControlElementDeclaration())), filteredOutputStream);
+                filteredOutputStream.flush();
+                filteredOutputStream.close();
+                CapoApplication.logger.log(Level.INFO, "Done Syncing");
+                if(getAttributeValue(Attributes.onCopy).isEmpty() == false)
+                {
+                    getParentGroup().set(getAttributeValue(Attributes.onCopy), "true");
+                }
+            }
+        }
+    }
+
+
+
+
+
+    private OutputStream wrapOutputStream(OutputStream outputStream, Element copyElement)
 	{
 		
 		OutputStream lastOutputStream = outputStream;
@@ -217,7 +300,8 @@ public class SyncElement extends AbstractControl
 		
 	}
 
-	private String getVarMD5ForCopyElement(Element tempCopyElement) throws Exception
+	@SuppressWarnings("unused")
+    private String getVarMD5ForCopyElement(Element tempCopyElement) throws Exception
 	{
 		String md5 = "";
 		MD5FilterOutputStream md5FilterOutputStream = new MD5FilterOutputStream(new NullOutputStream());
@@ -272,7 +356,8 @@ public class SyncElement extends AbstractControl
 	}
 	
 	//This runs sync through a quick test to determine what the final md5 will look like on the other side. We do this since local processing is cheaper than just saying we don't know, and running it over the network
-	private String getDestMD5ForCopyElement(ResourceDescriptor fileResourceDescriptor, Element copyElement) throws Exception
+	@SuppressWarnings("unused")
+    private String getDestMD5ForCopyElement(ResourceDescriptor fileResourceDescriptor, Element copyElement) throws Exception
 	{
 
 		NullOutputStream nullOutputStream = new NullOutputStream();

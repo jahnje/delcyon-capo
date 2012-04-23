@@ -165,7 +165,7 @@ public class Configuration
 	}
 
 	@SuppressWarnings({ "unchecked", "static-access" })
-	public Configuration(String[] programArgs) throws Exception
+	public Configuration(String... programArgs) throws Exception
 	{
 
 		DocumentBuilderFactory documentBuilderFactory = DocumentBuilderFactory.newInstance();

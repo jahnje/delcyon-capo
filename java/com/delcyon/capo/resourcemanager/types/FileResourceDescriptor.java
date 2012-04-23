@@ -239,8 +239,12 @@ public class FileResourceDescriptor extends AbstractResourceDescriptor implement
 	public boolean performAction(VariableContainer variableContainer,Action action,ResourceParameter... resourceParameters) throws Exception
 	{
 	    super.addResourceParameters(variableContainer, resourceParameters);
-
-	    File file = new File(new URI(getResourceURI()));
+	    URI uri = new URI(getResourceURI());
+	    if (uri.isAbsolute() == false)
+	    {
+	        CapoApplication.logger.log(Level.WARNING, "URI isn't absolute! "+uri);
+	    }
+	    File file = new File(uri);
 	    boolean success = false;
 
 	    if (action == Action.CREATE)
@@ -271,7 +275,7 @@ public class FileResourceDescriptor extends AbstractResourceDescriptor implement
         {
             if (file.exists())
             {
-                success = file.delete();
+                success = delete(file);
             }
             else
             {
@@ -285,5 +289,25 @@ public class FileResourceDescriptor extends AbstractResourceDescriptor implement
 		return success;
 	}
 	
-	
+	private boolean delete(File file) throws Exception
+	{
+	    
+	    if (file.exists())
+	    {
+	        if(file.isDirectory())
+	        {
+	            File[] children = file.listFiles();
+	            for (File child : children)
+                {	                
+                    delete(child);
+                }
+	        }
+	        
+	        return file.delete();
+	    }
+	    else
+	    {
+	        return true;
+	    }
+	}
 }

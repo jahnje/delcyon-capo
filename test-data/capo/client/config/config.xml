@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<config>
+    
+   <entry key="port" value="8080"/>
+   <entry key="SERVER_PORT" value="8080"/>
+   <entry key="SERVER_LIST" value="127.0.0.1"/>
+   <entry key="BUFFER_SIZE" value="4096"/>
+   <entry key="RESOURCE_MANAGER" value="com.delcyon.capo.resourcemanager.ResourceManager"/>
+   <entry key="DATA_MANAGER_ARGUMENTS" value="capo-data"/>
+   <entry key="CAPO_DIR" value="capo"/>
+   <entry key="CONFIG_DIR" value="config"/>
+   <entry key="STATUS_DIR" value="status"/>
+   <entry key="UPDATES_DIR" value="updates"/>
+   <entry key="MODULE_DIR" value="modules"/>
+   <entry key="RESOURCE_DIR" value="resources"/>
+   <entry key="CONTROLLER_DIR" value="controller"/>
+   <entry key="RESPONSE_DIR" value="responses"/>
+   <entry key="KEYSTORE" value="keystore"/>
+   <entry key="KEYSTORE_PASSWORD" value="password"/>
+   <entry key="MODE" value="client"/>
+   <entry key="CLIENT_MODE" value="dynamic"/>
+   <entry key="STARTUP_SCRIPT" value="startup.xml"/>
+   <entry key="UPDATE_SCRIPT" value="update.xml"/>
+   <entry key="DEFAULT_RESOURCE_TYPE" value="file"/>
+   <entry key="TASK_DIR" value="tasks"/>
+   <entry key="CLIENT_AS_SERVICE" value="false"/>
+   <entry key="OUTPUT_STREAM_TIMEOUT" value="30"/>
+   <entry key="KEY_SIZE" value="1024"/>
+   <entry key="CLIENT_ID" value="capo.client.1"/>
+</config>
