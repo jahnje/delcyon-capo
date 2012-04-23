@@ -93,6 +93,7 @@ public class StreamHandler extends Thread
 	private BufferedInputStream inputStream;
 	private OutputStream outputStream;
 	private Vector<StreamFinalizer> streamFinalizerVector = new Vector<StreamFinalizer>();
+	@SuppressWarnings("unused")
 	private HashMap<String, String> sessionHashMap;
 	
 	public StreamHandler(StreamProcessor streamProcessor) throws Exception
@@ -149,6 +150,12 @@ public class StreamHandler extends Thread
 					streamFinalizer.shutdown();
 				}
 			}catch (Exception e){};
+			
+			
+			if (CapoApplication.getApplication().getExceptionList() != null)
+			{
+				CapoApplication.getApplication().getExceptionList().add(exception);
+			}
 		}
 		
 	}

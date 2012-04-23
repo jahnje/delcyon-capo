@@ -123,6 +123,9 @@ public class CapoClient extends CapoApplication
 	
 	private HashMap<String, String> idHashMap = new HashMap<String, String>();
     private boolean isReady = false;
+
+
+	private boolean isDone = false;
 	
 	public CapoClient() throws Exception
 	{
@@ -191,7 +194,12 @@ public class CapoClient extends CapoApplication
 	@Override
 	protected void start(String[] programArgs) throws Exception
 	{
-		start();		
+		start();
+		//keep this thread running until the client thread is done. 
+		while(isDone == false)
+		{
+			Thread.sleep(500);			
+		}		
 	}
 	
 	@Override
@@ -251,6 +259,7 @@ public class CapoClient extends CapoApplication
 			e.printStackTrace();
 			System.exit(1);
 		}
+		isDone  = true;
 	}
 
 	
@@ -487,6 +496,15 @@ public class CapoClient extends CapoApplication
 		else
 		{
 			loadKeystore();
+		}
+		
+	}
+
+	public void shutdown() throws Exception
+	{
+		while(isDone == false)
+		{
+			Thread.sleep(500);
 		}
 		
 	}

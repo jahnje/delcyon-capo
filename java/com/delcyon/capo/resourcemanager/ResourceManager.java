@@ -354,7 +354,9 @@ public class ResourceManager extends CapoDataManager
 	    ResourceDescriptor documentResourceDescriptor = findDocumentResourceDescriptor(documentName, clientID, directoryPreference);
 	    if (documentResourceDescriptor != null)
 	    {
-	        return CapoApplication.getDocumentBuilder().parse(documentResourceDescriptor.getInputStream(null));
+	    	Document document = CapoApplication.getDocumentBuilder().parse(documentResourceDescriptor.getInputStream(null));
+	    	document.setDocumentURI(documentResourceDescriptor.getResourceURI());
+	        return document;
 	    }
 	    else
         {
@@ -367,7 +369,9 @@ public class ResourceManager extends CapoDataManager
             URL moduleURL = ClassLoader.getSystemResource(CapoApplication.getConfiguration().getValue(directoryPreference)+"/"+documentName);
             if (moduleURL != null)
             {
-                return CapoApplication.getDocumentBuilder().parse(moduleURL.openStream());
+            	Document document = CapoApplication.getDocumentBuilder().parse(moduleURL.openStream());
+            	document.setDocumentURI(moduleURL.toString());
+                return document;
             }
         }
 	    

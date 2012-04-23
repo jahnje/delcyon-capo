@@ -1,16 +1,33 @@
+/**
+Copyright (c) 2012 Delcyon, Inc.
+This library is free software; you can redistribute it and/or
+modify it under the terms of the GNU Lesser General Public
+License as published by the Free Software Foundation; either
+version 2.1 of the License, or (at your option) any later version.
+
+This library is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+Lesser General Public License for more details.
+
+You should have received a copy of the GNU Lesser General Public
+License along with this library; if not, write to the Free Software
+Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ */
 package com.delcyon.capo.xml.dom;
 
 
+import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.w3c.dom.Document;
 import org.w3c.dom.NodeList;
 
-import com.delcyon.capo.CapoApplication;
 import com.delcyon.capo.resourcemanager.ResourceDescriptor;
 import com.delcyon.capo.resourcemanager.types.FileResourceType;
 import com.delcyon.capo.server.CapoServer;
+import com.delcyon.capo.tests.util.TestServer;
 import com.delcyon.capo.xml.XPath;
 
 public class ResourceDocumentTest
@@ -19,34 +36,16 @@ public class ResourceDocumentTest
     static CapoServer capoServer = null;
     @BeforeClass
     public static void setUpBeforeClass() throws Exception
-    {
-        
-        Thread thread = new Thread(){
-            @Override
-            public void run()
-            {
-                
-                try
-                {
-                    capoServer = new CapoServer();
-                    capoServer.main(new String[]{});
-                }
-                catch (Exception e)
-                {
-                    // TODO Auto-generated catch block
-                    e.printStackTrace();
-                }
-               
-            }
-        };
-        thread.start();
-        while(CapoApplication.getApplication() == null || CapoApplication.getApplication().isReady() == false)
-        {            
-            Thread.sleep(1000);
-        }
-        
+    {        
+        TestServer.start();        
     }
 
+    @AfterClass
+    public static void shutdownAfterClass() throws Exception
+    {        
+        TestServer.shutdown();       
+    }
+    
     @Before
     public void setUp() throws Exception
     {

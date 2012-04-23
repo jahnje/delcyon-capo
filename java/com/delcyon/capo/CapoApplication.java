@@ -21,6 +21,7 @@ import java.security.KeyStore;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.logging.FileHandler;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -64,8 +65,9 @@ public abstract class CapoApplication extends ContextThread
 	private static LeveledConsoleHandler leveledConsoleHandler;
 	private static FileHandler fileHandler;
 	private static String logFileName = null;	
-	public Transformer transformer;
+	private Transformer transformer;
 	private Map<String, Set<String>> annotaionMap;
+	private CopyOnWriteArrayList<Exception> exceptionList;
 	private static HashMap<String, String> applicationVariableHashMap = new HashMap<String, String>();
 	private static KeyStore keyStore = null;
 	private static CapoDataManager dataManager = null;
@@ -219,6 +221,16 @@ public abstract class CapoApplication extends ContextThread
 	}
 
     public abstract boolean isReady();
+
+    public void setExceptionList(CopyOnWriteArrayList<Exception> exceptionList)
+    {
+    	this.exceptionList = exceptionList;
+    }
+    
+	public CopyOnWriteArrayList<Exception> getExceptionList()
+	{
+		return exceptionList;
+	}
 
 	
 	

@@ -93,6 +93,7 @@ public class ControllerClientRequestProcessor implements ClientRequestProcessor
 	private transient ClientRequestXMLProcessor clientRequestXMLProcessor;
 	private String sessionID;
     private HashMap<String, String> sessionHashMap = null;
+    private String documentURI = null;
 
 	
 	
@@ -101,6 +102,10 @@ public class ControllerClientRequestProcessor implements ClientRequestProcessor
 	{
 		this.clientRequestXMLProcessor = clientRequestXMLProcessor;
 		this.clientControlerDocument = loadClientControlDocument(requestName,sessionHashMap.get("clientID"));
+		if (this.clientControlerDocument != null)
+		{
+			this.documentURI = this.clientControlerDocument.getDocumentURI();
+		}
 		this.sessionID = sessionID;
 		this.sessionHashMap = sessionHashMap;
 	}
@@ -186,15 +191,34 @@ public class ControllerClientRequestProcessor implements ClientRequestProcessor
 		}
 		catch (ControllerProcessingException controllerProcessingException)
 		{
-			CapoServer.logger.log(Level.SEVERE, "error running "+requestType+" request for client: "+clientID+"\n"+controllerProcessingException.getMessage());
+			String message = "error running "+requestType+" ("+documentURI+") request for client: "+clientID+"\n"+controllerProcessingException.getMessage();
+			CapoServer.logger.log(Level.SEVERE, message);
+			
+			if (CapoApplication.getApplication().getExceptionList() != null)
+			{
+				CapoApplication.getApplication().getExceptionList().add(new Exception(message));
+			}
 		}
 		catch (MissingAttributeException missingAttributeException)
 		{
-			CapoServer.logger.log(Level.SEVERE, "error running "+requestType+" request for client: "+clientID+"\n"+missingAttributeException.getMessage());
+			String message = "error running "+requestType+" ("+documentURI+") request for client: "+clientID+"\n"+missingAttributeException.getMessage();
+			CapoServer.logger.log(Level.SEVERE, message);
+			
+			if (CapoApplication.getApplication().getExceptionList() != null)
+			{
+				CapoApplication.getApplication().getExceptionList().add(new Exception(message));
+			}
+			
 		}
 		catch (Exception exception)
 		{
-			CapoServer.logger.log(Level.SEVERE, "error running "+requestType+" request for client: "+clientID, exception);
+			String message = "error running "+requestType+" ("+documentURI+") request for client: "+clientID;
+			CapoServer.logger.log(Level.SEVERE, message, exception);
+			
+			if (CapoApplication.getApplication().getExceptionList() != null)
+			{
+				CapoApplication.getApplication().getExceptionList().add(new Exception(message, exception));
+			}
 		}	
 	}
 	

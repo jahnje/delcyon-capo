@@ -22,13 +22,14 @@ import java.io.OutputStream;
 import java.math.BigInteger;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.net.SocketException;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.KeyStore;
-import java.security.KeyStore.PrivateKeyEntry;
-import java.security.KeyStore.TrustedCertificateEntry;
 import java.security.Security;
 import java.security.Signature;
+import java.security.KeyStore.PrivateKeyEntry;
+import java.security.KeyStore.TrustedCertificateEntry;
 import java.security.cert.Certificate;
 import java.security.cert.X509Certificate;
 import java.util.Arrays;
@@ -151,6 +152,7 @@ public class CapoServer extends CapoApplication
 	private ServerSocket serverSocket;
 	private boolean attemptSSL = true;
 	private boolean isReady = false;
+	private boolean isShutdown = false;
 
 	public CapoServer() throws Exception
 	{
@@ -252,6 +254,18 @@ public class CapoServer extends CapoApplication
 		
 	}
 
+	
+	public void shutdown() throws Exception
+	{
+		isShutdown = true;
+		serverSocket.close();
+		while(isReady == true)
+		{
+			Thread.sleep(100);
+		}
+		logger.log(Level.INFO, "Server Shutdown");
+	}
+	
 	/**
 	 * Start Server Listening
 	 * 
@@ -281,7 +295,19 @@ public class CapoServer extends CapoApplication
 		{
 			
 			logger.log(Level.FINER, "waiting for connection");
-			Socket socket = serverSocket.accept();
+			Socket socket = null;
+			try 
+			{
+				socket = serverSocket.accept();
+			} catch (SocketException socketException)
+			{
+				if (isShutdown == true && serverSocket.isClosed())
+				{
+					logger.log(Level.INFO, "Shutting down server");
+					isReady = false;
+					return;
+				}
+			}
 			logger.log(Level.FINE, "got connection: "+socket);
 			socket = new BufferedSocket(socket);
 			InputStream inputStream = socket.getInputStream();
@@ -587,5 +613,7 @@ public class CapoServer extends CapoApplication
         keyStoreFileOutputStream.close();
         keystoreFile.close(null);
 	}
+
+	
 	
 }
