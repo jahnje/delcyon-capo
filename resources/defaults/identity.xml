@@ -31,8 +31,8 @@
         <server:transform name="osx_ifconfig_transform" ref="${osx_ifconfig}"
             stylesheet="osx_ifconfig_command_stdout_parser.xsl"/>        
         <server:var eval="${osx_ifconfig_transform}/link[@dev = 'en0']/@ether" name="localMAC"/>    
-        <client:command exec="/bin/hostname" name="hostname"/>
-        <server:var eval="${hostname}/stdout" name="localHostname"/>
+        <client:command exec="/bin/hostname" name="hostname.cmd"/>
+        <server:var eval="${hostname.cmd}/stdout" name="localHostname"/>
         
         <server:setID name="MAC" value="${localMAC}"/>
         <server:setID name="hostname" value="${localHostname}"/>        
@@ -41,8 +41,8 @@
     <server:group name="linux_group" returns="MAC,hostname">
         <server:log message="Processing Linux Group" output="STDOUT"/>    
         <client:command exec="/sbin/ip link show eth0" name="linux_eth0_link"/>       
-        <client:command exec="/bin/hostname" name="hostname"/>
-        <server:var eval="${hostname}/stdout" name="localHostname"/>
+        <client:command exec="/bin/hostname" name="hostname.cmd"/>
+        <server:var eval="${hostname.cmd}/stdout" name="localHostname"/>
         <server:var eval="replace(${linux_eth0_link}/stdout,'.*ether (.*) brd.*','$1','ms')" name="localMAC"/>        
         <server:setID name="MAC" value="${localMAC}"/>
         <server:setID name="hostname" value="${localHostname}"/>        

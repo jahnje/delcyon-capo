@@ -28,6 +28,7 @@ import org.junit.Test;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
+import com.delcyon.capo.tests.util.Util;
 import com.delcyon.capo.util.diff.Diff.Side;
 import com.delcyon.capo.util.diff.InputStreamTokenizer.TokenList;
 import com.delcyon.capo.xml.XMLDiff;
@@ -58,6 +59,7 @@ public class XMLDiffTest
 	@Before
 	public void setUp() throws Exception
 	{
+		Util.startMinimalCapoApplication();
 		DocumentBuilderFactory documentBuilderFactory = DocumentBuilderFactory.newInstance();
 		documentBuilderFactory.setNamespaceAware(true);
 		documentBuilder = documentBuilderFactory.newDocumentBuilder();
@@ -85,6 +87,7 @@ public class XMLDiffTest
 		
 	}
 
+	
 	/**
 	 * This test calculates the differences between the baseDocument and the changeDocument.
 	 * It then uses the produced difference document to get the original document for the base side.

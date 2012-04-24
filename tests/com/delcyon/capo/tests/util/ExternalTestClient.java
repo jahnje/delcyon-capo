@@ -64,13 +64,15 @@ public class ExternalTestClient extends ClassLoader
 	
 	@Test
 	public void testExternalClient() throws Exception{
-		
+		Util.deleteTree("capo");
+	    Util.copyTree("test-data/capo", "capo");
 		TestServer.start();
 		ExternalTestClient externalTestClient = new ExternalTestClient();
 		externalTestClient.startClient();
 		
 		//Thread.sleep(10000);
 		externalTestClient.shutdown();
+		TestServer.shutdown();
 		CopyOnWriteArrayList<Exception> exceptionList = externalTestClient.getExceptionList();
 		if (exceptionList.isEmpty() == false)
 		{

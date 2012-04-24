@@ -32,6 +32,7 @@ import org.w3c.dom.Element;
 import org.w3c.dom.Text;
 
 import com.delcyon.capo.datastream.StreamUtil;
+import com.delcyon.capo.tests.util.Util;
 import com.delcyon.capo.util.diff.Diff.Side;
 import com.delcyon.capo.util.diff.InputStreamTokenizer.TokenList;
 import com.delcyon.capo.xml.XPath;
@@ -59,6 +60,7 @@ public class DiffTest
 	@Before
 	public void setUp() throws Exception
 	{
+		Util.startMinimalCapoApplication();
 	}
 
 	/**

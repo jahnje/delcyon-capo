@@ -64,7 +64,9 @@ public class ExternalTestServer
 	}
 	
 	@Test
-	public void testExternalServer() throws Exception{		
+	public void testExternalServer() throws Exception
+	{
+		Util.deleteTree("capo");
 	    Util.copyTree("test-data/capo", "capo");	    
 		ExternalTestServer externalTestServer = new ExternalTestServer();
 		externalTestServer.startServer();

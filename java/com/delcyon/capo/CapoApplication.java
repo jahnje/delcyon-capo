@@ -18,6 +18,7 @@ package com.delcyon.capo;
 
 import java.net.URL;
 import java.security.KeyStore;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
@@ -81,26 +82,34 @@ public abstract class CapoApplication extends ContextThread
 		System.setProperty("javax.xml.xpath.XPathFactory", "net.sf.saxon.xpath.XPathFactoryImpl");
 		System.setProperty("javax.xml.transform.TransformerFactory", "net.sf.saxon.TransformerFactoryImpl");
 		//System.setProperty("javax.net.debug", "ssl");
-		logger = Logger.getLogger(this.getClass().getName());
-		logger.setLevel(LOGGING_LEVEL);
-		if (leveledConsoleHandler == null)
+		if (logger == null)
 		{
-			leveledConsoleHandler = new LeveledConsoleHandler();
-			leveledConsoleHandler.setLevel(LOGGING_LEVEL);
-			leveledConsoleHandler.setOutputForLevel(Output.STDERR, Level.FINER);
-			logger.setUseParentHandlers(false);
-			logger.addHandler(leveledConsoleHandler);			
-		}
-		logger.log(Level.INFO, "Starting Capo "+getApplication().getApplicationDirectoryName());
+			logger = Logger.getLogger(this.getClass().getName());
+			logger.setLevel(LOGGING_LEVEL);
+			if (logger.getHandlers().length == 0) //this is here for testing so that we don't just keep adding handlers everytime we start something.
+			{
+				if (leveledConsoleHandler == null)
+				{
+					leveledConsoleHandler = new LeveledConsoleHandler();
+					leveledConsoleHandler.setLevel(LOGGING_LEVEL);
+					leveledConsoleHandler.setOutputForLevel(Output.STDERR, Level.FINER);
+					logger.setUseParentHandlers(false);
+					logger.addHandler(leveledConsoleHandler);				
+				}
 
-		if (fileHandler == null)
-		{
-			logFileName = getApplication().getApplicationDirectoryName().replaceAll(" ", "_").toLowerCase() + ".log";
-			logger.log(Level.FINE, "Opening LogElement File:" + logFileName);
-			fileHandler = new FileHandler(logFileName);
-			fileHandler.setLevel(LOGGING_LEVEL);
-			logger.addHandler(fileHandler);
+
+				if (fileHandler == null)
+				{
+					logFileName = getApplication().getApplicationDirectoryName().replaceAll(" ", "_").toLowerCase() + ".log";
+					logger.log(Level.FINE, "Opening LogElement File:" + logFileName);
+					fileHandler = new FileHandler(logFileName);
+					fileHandler.setLevel(LOGGING_LEVEL);
+					logger.addHandler(fileHandler);
+				}
+			}
 		}
+		
+		logger.log(Level.INFO, "Starting Capo "+getApplication().getApplicationDirectoryName());
 		
 		//setup Mime Type Processing
 		MimeUtil.registerMimeDetector("eu.medsea.mimeutil.detector.MagicMimeMimeDetector");
