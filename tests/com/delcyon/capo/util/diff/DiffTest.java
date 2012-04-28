@@ -60,7 +60,7 @@ public class DiffTest
 	@Before
 	public void setUp() throws Exception
 	{
-		Util.startMinimalCapoApplication();
+		
 	}
 
 	/**

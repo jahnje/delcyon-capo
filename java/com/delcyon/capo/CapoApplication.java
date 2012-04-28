@@ -18,7 +18,6 @@ package com.delcyon.capo;
 
 import java.net.URL;
 import java.security.KeyStore;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
@@ -41,6 +40,8 @@ import com.delcyon.capo.resourcemanager.CapoDataManager;
 import com.delcyon.capo.server.CapoServer;
 import com.delcyon.capo.util.LeveledConsoleHandler;
 import com.delcyon.capo.util.LeveledConsoleHandler.Output;
+import com.delcyon.capo.xml.CapoXPathFunctionResolver;
+import com.delcyon.capo.xml.XPath;
 
 import eu.medsea.mimeutil.MimeUtil;
 
@@ -129,6 +130,9 @@ public abstract class CapoApplication extends ContextThread
 		
 		annotationDB.scanArchives(urls);
 		annotaionMap = annotationDB.getAnnotationIndex();
+		
+		//setup XPathFunction Resolvers		
+		XPath.setXPathFunctionResolver(new CapoXPathFunctionResolver());
 		
 	}
 	
@@ -240,7 +244,5 @@ public abstract class CapoApplication extends ContextThread
 	{
 		return exceptionList;
 	}
-
-	
 	
 }

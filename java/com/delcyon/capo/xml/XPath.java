@@ -58,47 +58,10 @@ public class XPath
 {
 
 	private static final XPathFactory xPathFactory = XPathFactory.newInstance();
-	//private static final String functionMatcher = "\\(([A-Za-z0-9_,:'!\"#$%&'*+,-./:;<=>?@\\[\\]^_`{|}~]+)\\).*";
-
-	private static HashMap<String, XPathFunctionProcessor> xpathFunctionProcessorHashMap = new HashMap<String, XPathFunctionProcessor>();
-	static
+	
+	public static void setXPathFunctionResolver(XPathFunctionResolver xPathFunctionResolver)
 	{
-		//TODO xpath function functionality should be moved to it's own class, as we may want to use this class outside of the application
-		if (CapoApplication.getAnnotationMap() != null)
-		{
-			Set<String> xPathFunctionProviderSet =  CapoApplication.getAnnotationMap().get(XPathFunctionProvider.class.getCanonicalName());
-			for (String className : xPathFunctionProviderSet)
-			{
-				try
-				{
-					Object object = Class.forName(className).newInstance();
-					XPathFunctionProcessor xPathFunctionProcessor = (XPathFunctionProcessor) object;
-					String[] functionNames = xPathFunctionProcessor.getXPathFunctionNames();
-					for (String functionName : functionNames)
-					{
-						xpathFunctionProcessorHashMap.put(functionName, xPathFunctionProcessor);
-						CapoApplication.logger.log(Level.CONFIG, "Loaded XPathFunctionProcessor "+functionName+"() from "+xPathFunctionProcessor.getClass().getSimpleName());
-					}
-				} catch (Exception e)
-				{
-					CapoApplication.logger.log(Level.WARNING, "Couldn't load "+className+" as an XPathFunctionProcessor", e);
-				}
-			}
-			XPathFunctionResolver xPathFunctionResolver = new XPathFunctionResolver()
-			{
-				
-				@Override
-				public XPathFunction resolveFunction(QName functionName, int arity)
-				{
-					if (xpathFunctionProcessorHashMap.containsKey(functionName.getLocalPart()))
-					{
-						return new CapoXPathFunction(functionName.getLocalPart(),xpathFunctionProcessorHashMap.get(functionName.getLocalPart()));
-					}
-					return null;
-				}
-			};
-			xPathFactory.setXPathFunctionResolver(xPathFunctionResolver);
-		}
+		xPathFactory.setXPathFunctionResolver(xPathFunctionResolver);
 	}
 	
 	public static Node selectSingleNode(Node node, String path) throws Exception

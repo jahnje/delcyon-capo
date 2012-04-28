@@ -59,7 +59,7 @@ public class XMLDiffTest
 	@Before
 	public void setUp() throws Exception
 	{
-		Util.startMinimalCapoApplication();
+		
 		DocumentBuilderFactory documentBuilderFactory = DocumentBuilderFactory.newInstance();
 		documentBuilderFactory.setNamespaceAware(true);
 		documentBuilder = documentBuilderFactory.newDocumentBuilder();
