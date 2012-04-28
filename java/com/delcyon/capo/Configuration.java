@@ -18,10 +18,11 @@ package com.delcyon.capo;
 
 import java.io.File;
 import java.io.FileOutputStream;
+import java.util.Arrays;
 import java.util.HashMap;
-import java.util.Map.Entry;
 import java.util.Set;
 import java.util.Vector;
+import java.util.Map.Entry;
 import java.util.logging.Level;
 import java.util.prefs.BackingStoreException;
 import java.util.prefs.Preferences;
@@ -65,6 +66,7 @@ public class Configuration
 	public enum PREFERENCE implements Preference
 	{
 		RETAIN("r", "retain", "overwrite values in configuration file with option from command line", null, null),
+		DISABLE_CONFIG_AUTOSYNC("DISABLE_CONFIG_AUTOSYNC", "DISABLE_CONFIG_AUTOSYNC", "Turns off Automaticaly syncing new preferences to filesystem or creating default directories. Useful for testing only!", null,null),
 		PORT("port", "port", "port to listen on", "8080", new String[] { "portNumber" }),
 		SERVER_PORT("sp", "SERVER_PORT", "server port to connect to. default 8080", "8080", new String[] { "portNumber" }),
 		SERVER_LIST("sl", "SERVER_LIST", "server addresses. comma seperated. default 127.0.0.1", "127.0.0.1", new String[] { "address" }),
@@ -156,12 +158,14 @@ public class Configuration
 	private DocumentBuilder documentBuilder;
 	private File capoConfigFile;
 	private HashMap<String, String> preferenceValueHashMap = new HashMap<String, String>();
-	private HashMap<String, Preference> preferenceHashMap = new HashMap<String, Preference>();	
+	private HashMap<String, Preference> preferenceHashMap = new HashMap<String, Preference>();
+	private boolean disableAutoSync;
+	
 	
 
 	public Configuration() throws Exception
 	{
-		this(null);
+		this(new String[]{}); 
 	}
 
 	@SuppressWarnings({ "unchecked", "static-access" })
@@ -267,33 +271,56 @@ public class Configuration
 			}				
 		}
 		
+		disableAutoSync = hasOption(PREFERENCE.DISABLE_CONFIG_AUTOSYNC);
+		
+		
 		File capoDirFile = new File(capoDirString);
 		if (capoDirFile.exists() == false)
 		{
-			capoDirFile.mkdirs();
+			if (disableAutoSync == false)
+			{
+				capoDirFile.mkdirs();
+System.err.println(hasOption(PREFERENCE.DISABLE_CONFIG_AUTOSYNC)+"==>"+Arrays.toString(commandLine.getArgs()));
+				
+				Thread.dumpStack();
+			}
 		}
 		File configDir = new File(capoDirFile,CapoApplication.getApplication().getApplicationDirectoryName()+File.separatorChar+PREFERENCE.CONFIG_DIR.defaultValue);
 		if (configDir.exists() == false)
 		{
-			configDir.mkdirs();
-		}
-			
-		capoConfigFile = new File(configDir,CONFIG_FILENAME);
-		if (capoConfigFile.exists() == false)
-		{
-			
-			
-			Document configDocument = CapoApplication.getDefaultDocument("config.xml");
-			
-			FileOutputStream configFileOutputStream = new FileOutputStream(capoConfigFile);
-			TransformerFactory tFactory = TransformerFactory.newInstance();
-			Transformer transformer = tFactory.newTransformer();
-			transformer.setOutputProperty(OutputKeys.INDENT, "yes");
-			transformer.transform(new DOMSource(configDocument), new StreamResult(configFileOutputStream));			
-			configFileOutputStream.close();
+			if (disableAutoSync == false)
+			{
+				configDir.mkdirs();
+System.err.println(hasOption(PREFERENCE.DISABLE_CONFIG_AUTOSYNC)+"==>"+Arrays.toString(commandLine.getArgs()));
+				
+				Thread.dumpStack();
+			}
 		}
 		
-		configDocument = documentBuilder.parse(capoConfigFile);
+		if (disableAutoSync == false)
+		{
+			capoConfigFile = new File(configDir,CONFIG_FILENAME);
+			if (capoConfigFile.exists() == false)
+			{
+
+
+				Document configDocument = CapoApplication.getDefaultDocument("config.xml");
+
+				FileOutputStream configFileOutputStream = new FileOutputStream(capoConfigFile);
+				TransformerFactory tFactory = TransformerFactory.newInstance();
+				Transformer transformer = tFactory.newTransformer();
+				transformer.setOutputProperty(OutputKeys.INDENT, "yes");
+				transformer.transform(new DOMSource(configDocument), new StreamResult(configFileOutputStream));			
+				configFileOutputStream.close();				
+			}
+
+			configDocument = documentBuilder.parse(capoConfigFile);
+		}
+		else //going memory only, because of disabled auto sync
+		{
+			configDocument = CapoApplication.getDefaultDocument("config.xml");
+		}
+		
 		loadPreferences();
 		//print out preferences
 		//this also has the effect of persisting all of the default values if a values doesn't already exist
@@ -367,6 +394,12 @@ public class Configuration
 		
 	}
 
+	public boolean getBooleanValue(Preference preference)
+	{		
+		return Boolean.parseBoolean(getValue(preference));
+		
+	}
+	
 	public long getLongValue(Preference preference)
 	{
 	    return Long.parseLong(getValue(preference));
@@ -429,6 +462,7 @@ public class Configuration
 	
 	private synchronized void sync() throws BackingStoreException
 	{
+
 		try
 		{
 			Set<Entry<String, String>> preferenceEntrySet = preferenceValueHashMap.entrySet();
@@ -436,17 +470,21 @@ public class Configuration
 			{
 				putXmlPref(entry.getKey(), entry.getValue());
 			}
-			FileOutputStream configFileOutputStream = new FileOutputStream(capoConfigFile);
-			TransformerFactory tFactory = TransformerFactory.newInstance();
-			Transformer transformer = tFactory.newTransformer();
-			transformer.setOutputProperty(OutputKeys.INDENT, "yes");
-			transformer.transform(new DOMSource(configDocument), new StreamResult(configFileOutputStream));			
-			configFileOutputStream.close();
+			if (disableAutoSync == false)
+			{
+				FileOutputStream configFileOutputStream = new FileOutputStream(capoConfigFile);
+				TransformerFactory tFactory = TransformerFactory.newInstance();
+				Transformer transformer = tFactory.newTransformer();
+				transformer.setOutputProperty(OutputKeys.INDENT, "yes");
+				transformer.transform(new DOMSource(configDocument), new StreamResult(configFileOutputStream));			
+				configFileOutputStream.close();
+			}
 		}
 		catch (Exception exception)
 		{
 			throw new BackingStoreException(exception.getMessage());
 		}
+
 	}
 	
 	private void loadPreferences() throws Exception

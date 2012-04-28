@@ -5,6 +5,7 @@ import org.w3c.dom.Element;
 
 import com.delcyon.capo.CapoApplication;
 import com.delcyon.capo.Configuration;
+import com.delcyon.capo.Configuration.PREFERENCE;
 import com.delcyon.capo.controller.Group;
 import com.delcyon.capo.controller.elements.SyncElement;
 import com.delcyon.capo.resourcemanager.ResourceDescriptor;
@@ -15,13 +16,16 @@ import com.delcyon.capo.resourcemanager.types.FileResourceType;
 public class Util
 {
     
-    
+    public static CapoApplication minmalApplication = null;
     
     public static void startMinimalCapoApplication() throws Exception
     {        
-        new TestCapoApplication();
-        CapoApplication.setConfiguration(new Configuration(new String[]{}));        
-        CapoApplication.setDataManager(new ResourceManager());
+    	if (minmalApplication == null)
+    	{
+    		minmalApplication = new TestCapoApplication();
+    		CapoApplication.setConfiguration(new Configuration(new String[]{"-"+PREFERENCE.DISABLE_CONFIG_AUTOSYNC.toString()}));        
+    		CapoApplication.setDataManager(new ResourceManager());
+    	}
     }
     
     

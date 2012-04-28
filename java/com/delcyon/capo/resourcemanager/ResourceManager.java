@@ -124,10 +124,14 @@ public class ResourceManager extends CapoDataManager
 		ContentMetaData dataDirContentMetaData = dataDir.getContentMetaData(null);
 		if (dataDirContentMetaData.exists() == false)
         {
-            
-            dataDir.performAction(null, Action.CREATE,new ResourceParameter(ResourceDescriptor.DefaultParameters.CONTAINER, "true"));
-            dataDir.close(null);
-            dataDir.open(null);
+			
+			//don't create this directory if auto sync is disabled.  
+			if(CapoApplication.getConfiguration().hasOption(PREFERENCE.DISABLE_CONFIG_AUTOSYNC) == false)
+			{
+				dataDir.performAction(null, Action.CREATE,new ResourceParameter(ResourceDescriptor.DefaultParameters.CONTAINER, "true"));
+				dataDir.close(null);
+				dataDir.open(null);
+			}
         }
 		directoryHashMap.put(PREFERENCE.CAPO_DIR.toString(), dataDir);
 		
@@ -147,8 +151,7 @@ public class ResourceManager extends CapoDataManager
             
             ContentMetaData dynamicDirContentMetaData = dynamicDir.getContentMetaData(null);
             if (dynamicDirContentMetaData.exists() == false)
-            {
-                
+            {            	
                 dynamicDir.performAction(null, Action.CREATE,new ResourceParameter(ResourceDescriptor.DefaultParameters.CONTAINER, "true"));
                 dynamicDir.close(null);
                 dynamicDir.open(null);
@@ -187,6 +190,7 @@ public class ResourceManager extends CapoDataManager
 			}
             
         }
+        
 		TaskManagerThread.startTaskManagerThread(this);		
 	}
 	
