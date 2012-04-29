@@ -27,7 +27,7 @@ public class TestCapoApplication extends CapoApplication
     @Override
     public String getApplicationDirectoryName()
     {       
-        return "test";
+        return "TestApp";
     }
 
     @Override
@@ -37,4 +37,11 @@ public class TestCapoApplication extends CapoApplication
         return false;
     }
 
+    @Override
+    public void shutdown() throws Exception
+    {
+    	// TODO Auto-generated method stub
+    	
+    }
+    
 }

@@ -17,6 +17,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 package com.delcyon.capo.tests.util;
 
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.logging.Level;
 
 import com.delcyon.capo.CapoApplication;
 import com.delcyon.capo.server.CapoServer;
@@ -34,7 +35,7 @@ public class TestServer
 	private static Thread serverThread = null;
 	private static CapoServer capoServer;
 	
-	public static void start() throws Exception
+	public static CapoServer start() throws Exception
 	{
 		
 		if (serverThread != null)
@@ -42,7 +43,7 @@ public class TestServer
 			System.err.println("found an existing server" + serverThread);
 			System.exit(0);
 		}
-		serverThread  = new Thread()
+		serverThread  = new Thread("ServerThread")
 		{
 			@Override
 			public void run()
@@ -66,6 +67,7 @@ public class TestServer
 		}
 		capoServer = (CapoServer) CapoApplication.getApplication();
 		capoServer.setExceptionList(new CopyOnWriteArrayList<Exception>());
+		return capoServer;
 	}
 	
 	
@@ -75,6 +77,14 @@ public class TestServer
 		{
 			capoServer.shutdown();
 		}
+		if (serverThread != null)
+		{
+			while (serverThread.isAlive())
+			{
+				CapoApplication.logger.log(Level.INFO, "waiting for server thread to die");
+				Thread.sleep(500);
+			}
+		}
 	}
 	
 	public static CopyOnWriteArrayList<Exception> getExceptionList()
@@ -82,6 +92,12 @@ public class TestServer
 		return capoServer.getExceptionList();
 	}
 	
+	public static void cleanup() throws Exception
+	{
+		shutdown();
+		serverThread = null;
+		capoServer = null;
+	}
 	
 	
 }

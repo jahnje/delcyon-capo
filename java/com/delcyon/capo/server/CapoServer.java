@@ -85,6 +85,7 @@ import com.delcyon.capo.resourcemanager.ResourceDescriptor;
 import com.delcyon.capo.resourcemanager.ResourceParameter;
 import com.delcyon.capo.resourcemanager.ResourceDescriptor.Action;
 import com.delcyon.capo.resourcemanager.types.FileResourceType;
+import com.delcyon.capo.tasks.TaskManagerThread;
 import com.delcyon.capo.xml.XPath;
 
 /**
@@ -153,6 +154,8 @@ public class CapoServer extends CapoApplication
 	private boolean attemptSSL = true;
 	private boolean isReady = false;
 	private boolean isShutdown = false;
+	private ThreadPoolExecutor threadPoolExecutor;
+	private ClientRequestProcessorSessionManager clientRequestProcessorSessionManager;
 
 	public CapoServer() throws Exception
 	{
@@ -193,13 +196,14 @@ public class CapoServer extends CapoApplication
 		
 		
 
-		ClientRequestProcessorSessionManager clientRequestProcessorSessionManager = new ClientRequestProcessorSessionManager();
+		clientRequestProcessorSessionManager = new ClientRequestProcessorSessionManager();
 		clientRequestProcessorSessionManager.start();
 		
 		//setup resource manager
 		setDataManager(CapoDataManager.loadDataManager(getConfiguration().getValue(PREFERENCE.RESOURCE_MANAGER)));
 		getDataManager().init();
 		
+		TaskManagerThread.startTaskManagerThread();	
 		
 		Security.addProvider(new BouncyCastleProvider());
 		KeyStore keyStore = KeyStore.getInstance(KeyStore.getDefaultType());
@@ -257,10 +261,52 @@ public class CapoServer extends CapoApplication
 	
 	public void shutdown() throws Exception
 	{
+		logger.log(Level.INFO, "Shuting Down Server");
 		isShutdown = true;
-		serverSocket.close();
+		if (serverSocket != null)
+		{
+			logger.log(Level.INFO, "Closing Socket");
+			serverSocket.close();
+		}
+		
+		if (threadPoolExecutor != null)
+		{
+			logger.log(Level.INFO, "Stopping thread pool");
+			threadPoolExecutor.shutdown();
+			
+			while(threadPoolExecutor.isTerminated() == false)
+			{
+				logger.log(Level.INFO, "Waiting for thread pool to shutdown...");
+				sleep(1000);
+			}
+		}
+		
+		if (TaskManagerThread.getTaskManagerThread() != null)
+		{
+			logger.log(Level.INFO, "Stopping Task Manager");
+			TaskManagerThread.getTaskManagerThread().interrupt();
+			while(TaskManagerThread.getTaskManagerThread().isAlive())
+			{
+				logger.log(Level.INFO, "Waiting for Task Manager to shutdown...");
+				sleep(1000);
+			}
+			
+		}
+		
+		if (clientRequestProcessorSessionManager != null)
+		{
+			logger.log(Level.INFO, "Stopping Session Manager");
+			clientRequestProcessorSessionManager.shutdown();
+			while(clientRequestProcessorSessionManager.isAlive())
+			{
+				logger.log(Level.INFO, "Waiting for Session Manager to shutdown...");
+				sleep(1000);
+			}
+		}
+		
 		while(isReady == true)
 		{
+			logger.log(Level.INFO, "Waiting for final shutdown...");
 			Thread.sleep(100);
 		}
 		logger.log(Level.INFO, "Server Shutdown");
@@ -275,7 +321,7 @@ public class CapoServer extends CapoApplication
 	public void start(String[] programArgs) throws Exception
 	{
 		SynchronousQueue<Runnable> synchronousQueue = new SynchronousQueue<Runnable>();
-		ThreadPoolExecutor threadPoolExecutor = new ThreadPoolExecutor(getConfiguration().getIntValue(Preferences.START_THREADPOOL_SIZE), getConfiguration().getIntValue(Preferences.MAX_THREADPOOL_SIZE), getConfiguration().getIntValue(Preferences.THREAD_IDLE_TIME), TimeUnit.MILLISECONDS, synchronousQueue);
+		threadPoolExecutor = new ThreadPoolExecutor(getConfiguration().getIntValue(Preferences.START_THREADPOOL_SIZE), getConfiguration().getIntValue(Preferences.MAX_THREADPOOL_SIZE), getConfiguration().getIntValue(Preferences.THREAD_IDLE_TIME), TimeUnit.MILLISECONDS, synchronousQueue);
 		threadPoolExecutor.setThreadFactory(new CapoThreadFactory());
 		
 		SSLContext sslContext = SSLContext.getInstance("SSL");

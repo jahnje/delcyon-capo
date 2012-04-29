@@ -127,6 +127,8 @@ public class TaskManagerThread extends ContextThread
 	private TaskManagerDocumentUpdaterThread tasksDocumentUpdaterThread;
 	private DocumentBuilder documentBuilder;
 	private ConcurrentHashMap<String,HashMap<String, String>> taskConcurrentHashMap = new ConcurrentHashMap<String, HashMap<String,String>>();
+
+	private boolean interrupted = false;
 	private static TaskManagerThread taskManagerThread = null;
 
 	/**
@@ -134,7 +136,7 @@ public class TaskManagerThread extends ContextThread
 	 * @param capoDataManager
 	 * @throws Exception
 	 */
-	public synchronized static void startTaskManagerThread(CapoDataManager capoDataManager) throws Exception
+	public synchronized static void startTaskManagerThread() throws Exception
 	{
 
 		if (taskManagerThread == null)
@@ -156,7 +158,7 @@ public class TaskManagerThread extends ContextThread
 				}
 			}
 			
-			taskManagerThread = new TaskManagerThread(capoDataManager);
+			taskManagerThread = new TaskManagerThread();
 			taskManagerThread.start(); //if this is NOT a service, the thread will only run once.			
 		}
 
@@ -176,10 +178,10 @@ public class TaskManagerThread extends ContextThread
 	 * @param capoDataManager
 	 * @throws Exception
 	 */
-	private TaskManagerThread(CapoDataManager capoDataManager) throws Exception
+	private TaskManagerThread() throws Exception
 	{
 		super(TaskManagerThread.class.getName());
-		this.capoDataManager = capoDataManager;
+		this.capoDataManager = CapoApplication.getDataManager();
 		
 		
 		//this sets up our basic identity transform, that removes indentation and extraneous spaces
@@ -216,12 +218,22 @@ public class TaskManagerThread extends ContextThread
 	}
 	
 	
+	public void interrupt()
+	{
+		this.interrupted  = true;
+		synchronized (this)
+		{
+			super.interrupt();	
+		}		
+		tasksDocumentUpdaterThread.interrupt();
+	}
+	
 	//SORT OF DONE
 	@Override
 	public void run()
 	{
 		
-		while(true)
+		while(interrupted == false)
 		{
 			try
 			{
@@ -356,8 +368,11 @@ public class TaskManagerThread extends ContextThread
 					/* TODO this should be a configuration option, this should also override-able, on a per resource level
 					 * probably by having a timing thread, and a list of values checking for the last time the resource was checked. 
 					 */
-					  
-					Thread.sleep(CapoApplication.getConfiguration().getIntValue(Preferences.TASK_INTERVAL));
+					
+					try
+					{
+						Thread.sleep(CapoApplication.getConfiguration().getIntValue(Preferences.TASK_INTERVAL));
+					} catch (InterruptedException interruptedException) {} //someone asked us to stop sleeping, not an error
 				}
 				else //this is not a service, so exit the thread.
 				{
@@ -406,15 +421,23 @@ public class TaskManagerThread extends ContextThread
 	private class TaskManagerDocumentUpdaterThread extends Thread
 	{
 	    private ConcurrentLinkedQueue<DocumentUpdate> documentUpdateQueue = new ConcurrentLinkedQueue<TaskManagerThread.DocumentUpdate>();
+		private boolean interrupted = false;
 	    
 		public TaskManagerDocumentUpdaterThread()
 		{
 			super("TaskDocumentUpdater");
 		}
+		
+		@Override
+		public void interrupt()
+		{
+			this.interrupted  = true;
+		}
+		
 		@Override
 		public void run()
 		{
-			while(true)
+			while(interrupted == false)
 			{
 				try
 				{

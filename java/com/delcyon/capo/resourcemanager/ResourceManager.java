@@ -191,7 +191,7 @@ public class ResourceManager extends CapoDataManager
             
         }
         
-		TaskManagerThread.startTaskManagerThread(this);		
+			
 	}
 	
 	private void loadResourceTypes() throws Exception

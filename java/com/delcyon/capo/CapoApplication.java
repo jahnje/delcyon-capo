@@ -235,6 +235,8 @@ public abstract class CapoApplication extends ContextThread
 
     public abstract boolean isReady();
 
+    public abstract void shutdown() throws Exception;
+    
     public void setExceptionList(CopyOnWriteArrayList<Exception> exceptionList)
     {
     	this.exceptionList = exceptionList;

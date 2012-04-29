@@ -62,9 +62,10 @@ import com.delcyon.capo.protocol.client.CapoConnection;
 import com.delcyon.capo.protocol.client.Request;
 import com.delcyon.capo.resourcemanager.CapoDataManager;
 import com.delcyon.capo.resourcemanager.ResourceDescriptor;
-import com.delcyon.capo.resourcemanager.ResourceDescriptor.Action;
 import com.delcyon.capo.resourcemanager.ResourceParameter;
+import com.delcyon.capo.resourcemanager.ResourceDescriptor.Action;
 import com.delcyon.capo.resourcemanager.types.FileResourceType;
+import com.delcyon.capo.tasks.TaskManagerThread;
 
 /**
  * @author jeremiah
@@ -164,6 +165,9 @@ public class CapoClient extends CapoApplication
 
 		setDataManager(CapoDataManager.loadDataManager(getConfiguration().getValue(PREFERENCE.RESOURCE_MANAGER)));
 		getDataManager().init();
+		
+		TaskManagerThread.startTaskManagerThread();
+		
 		runStartupScript(getConfiguration().getValue(PREFERENCE.STARTUP_SCRIPT));
 		this.isReady = true;
 	}
@@ -502,6 +506,10 @@ public class CapoClient extends CapoApplication
 
 	public void shutdown() throws Exception
 	{
+		if (TaskManagerThread.getTaskManagerThread() != null)
+		{
+			TaskManagerThread.getTaskManagerThread().interrupt();
+		}
 		while(isDone == false)
 		{
 			Thread.sleep(500);

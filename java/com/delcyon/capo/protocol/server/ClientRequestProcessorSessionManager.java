@@ -135,6 +135,9 @@ public class ClientRequestProcessorSessionManager extends Thread
 	{
 		registerClientRequestProcessor(clientRequestProcessor,clientRequestProcessor.getSessionId());
 	}
+
+	private boolean interrupted = false;
+	private boolean isFinished = false;
 	
 
 	public ClientRequestProcessorSessionManager()
@@ -142,10 +145,20 @@ public class ClientRequestProcessorSessionManager extends Thread
 		super("Client Request Processor Session Manager Thread");
 	}
 	
+	
+	public void shutdown() throws Exception
+	{
+		this.interrupted  = true;
+		while(isFinished  == false)
+		{
+			Thread.sleep(1000);
+		}
+	}
+	
 	@Override
 	public void run()
 	{
-		while(true)
+		while(interrupted == false)
 		{
 			try
 			{
@@ -168,6 +181,10 @@ public class ClientRequestProcessorSessionManager extends Thread
 			catch (Exception exception)
 			{
 				CapoApplication.logger.log(Level.WARNING, "Error in SessionManager", exception);
+			}
+			finally
+			{
+				isFinished = true;
 			}
 		}
 	}

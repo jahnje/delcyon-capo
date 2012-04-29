@@ -18,7 +18,7 @@ package com.delcyon.capo;
 
 import java.io.File;
 import java.io.FileOutputStream;
-import java.util.Arrays;
+import java.lang.reflect.Field;
 import java.util.HashMap;
 import java.util.Set;
 import java.util.Vector;
@@ -256,6 +256,7 @@ public class Configuration
 		
 		
 		Preferences systemPreferences = Preferences.systemNodeForPackage(this.getClass());
+		
 		String capoDirString = systemPreferences.get(PREFERENCE.CAPO_DIR.longOption,null);
 		if (capoDirString == null)
 		{
@@ -280,9 +281,6 @@ public class Configuration
 			if (disableAutoSync == false)
 			{
 				capoDirFile.mkdirs();
-System.err.println(hasOption(PREFERENCE.DISABLE_CONFIG_AUTOSYNC)+"==>"+Arrays.toString(commandLine.getArgs()));
-				
-				Thread.dumpStack();
 			}
 		}
 		File configDir = new File(capoDirFile,CapoApplication.getApplication().getApplicationDirectoryName()+File.separatorChar+PREFERENCE.CONFIG_DIR.defaultValue);
@@ -291,9 +289,6 @@ System.err.println(hasOption(PREFERENCE.DISABLE_CONFIG_AUTOSYNC)+"==>"+Arrays.to
 			if (disableAutoSync == false)
 			{
 				configDir.mkdirs();
-System.err.println(hasOption(PREFERENCE.DISABLE_CONFIG_AUTOSYNC)+"==>"+Arrays.toString(commandLine.getArgs()));
-				
-				Thread.dumpStack();
 			}
 		}
 		
