@@ -24,7 +24,7 @@ public class SyncElementTest
     @BeforeClass
     public static void setUpBeforeClass() throws Exception
     {
-        Util.deleteTree("capo");
+        
         com.delcyon.capo.tests.util.Util.startMinimalCapoApplication();
     }
 
@@ -36,6 +36,7 @@ public class SyncElementTest
     @Test
     public void testProcessServerSideElement() throws Exception
     {
+    	Util.deleteTree("capo");
         String src = "test-data/capo";
         String dest = "capo";
         SyncElement syncControlElement = new SyncElement();
@@ -75,6 +76,82 @@ public class SyncElementTest
         
     }
 
+    @Test
+    public void testPrune() throws Exception
+    {
+    	Util.deleteTree("capo");
+    	 String src = "test-data/capo";
+         String dest = "capo";
+         Util.copyTree(src, dest+"/"+dest);
+         //create sync element
+         SyncElement syncControlElement = new SyncElement();
+         Document document = CapoApplication.getDocumentBuilder().newDocument();
+         Element syncElement = document.createElement("sync");
+         syncElement.setAttribute(SyncElement.Attributes.src.toString(), src);
+         syncElement.setAttribute(SyncElement.Attributes.dest.toString(), dest);
+         syncElement.setAttribute(SyncElement.Attributes.recursive.toString(), "true");
+         syncElement.setAttribute(SyncElement.Attributes.syncAttributes.toString(), "lastModified");
+         
+         Group group = new Group("test", null, null, null);
+         syncControlElement.init(syncElement, null, group, null);
+         syncControlElement.processServerSideElement();
+         
+         
+         ResourceDescriptor sourceResourceDescriptor = new FileResourceType().getResourceDescriptor(src);
+         ResourceDescriptor destinationResourceDescriptor = new FileResourceType().getResourceDescriptor(dest);
+         
+         //use resource document to get results from both sides
+         ResourceDocument baseDocument = new ResourceDocument(sourceResourceDescriptor);
+         //XPath.dumpNode(baseDocument, System.out);
+         ResourceDocument modDocument = new ResourceDocument(destinationResourceDescriptor);
+         //XPath.dumpNode(modDocument, System.out);
+         
+         //use xml diff to generate diff between both side
+         XMLDiff xmlDiff = new XMLDiff();
+         xmlDiff.addIgnoreableAttribute(CapoApplication.RESOURCE_NAMESPACE_URI,ContentMetaData.Attributes.path.toString());
+         xmlDiff.addIgnoreableAttribute(CapoApplication.RESOURCE_NAMESPACE_URI,ContentMetaData.Attributes.uri.toString());
+         Document diffDocument = xmlDiff.getDifferences(baseDocument, modDocument);
+         
+         //verify that root element of xml diff contains mod != base
+         //make sure things are differrent before we prune 
+         if (diffDocument.getDocumentElement().getAttributeNS(XMLDiff.XDIFF_NAMESPACE_URI, XMLDiff.XDIFF_ELEMENT_ATTRIBUTE_NAME).equals(XMLDiff.INEQUALITY) == false)
+         {
+         	XPath.dumpNode(diffDocument, System.out);
+         }
+         Assert.assertEquals("There is no difference between "+src+" and "+dest,XMLDiff.INEQUALITY,diffDocument.getDocumentElement().getAttributeNS(XMLDiff.XDIFF_NAMESPACE_URI, XMLDiff.XDIFF_ELEMENT_ATTRIBUTE_NAME));
+     
+         syncElement.setAttribute(SyncElement.Attributes.prune.toString(), "true");
+         
+syncControlElement.processServerSideElement();
+         
+         
+          sourceResourceDescriptor = new FileResourceType().getResourceDescriptor(src);
+          destinationResourceDescriptor = new FileResourceType().getResourceDescriptor(dest);
+         
+         //use resource document to get results from both sides
+          baseDocument = new ResourceDocument(sourceResourceDescriptor);
+         //XPath.dumpNode(baseDocument, System.out);
+          modDocument = new ResourceDocument(destinationResourceDescriptor);
+         //XPath.dumpNode(modDocument, System.out);
+         
+         //use xml diff to generate diff between both side
+          xmlDiff = new XMLDiff();
+         xmlDiff.addIgnoreableAttribute(CapoApplication.RESOURCE_NAMESPACE_URI,ContentMetaData.Attributes.path.toString());
+         xmlDiff.addIgnoreableAttribute(CapoApplication.RESOURCE_NAMESPACE_URI,ContentMetaData.Attributes.uri.toString());
+          diffDocument = xmlDiff.getDifferences(baseDocument, modDocument);
+         
+         //verify that root element of xml diff contains mod != base
+         //make sure things are differrent before we prune 
+         if (diffDocument.getDocumentElement().getAttributeNS(XMLDiff.XDIFF_NAMESPACE_URI, XMLDiff.XDIFF_ELEMENT_ATTRIBUTE_NAME).equals(XMLDiff.EQUALITY) == false)
+         {
+         	XPath.dumpNode(diffDocument, System.out);
+         }
+         Assert.assertEquals("There is a difference between "+src+" and "+dest,XMLDiff.EQUALITY,diffDocument.getDocumentElement().getAttributeNS(XMLDiff.XDIFF_NAMESPACE_URI, XMLDiff.XDIFF_ELEMENT_ATTRIBUTE_NAME));
+     
+         
+    }
+    
+    
     @AfterClass
     public static void afterClass() throws Exception
     {

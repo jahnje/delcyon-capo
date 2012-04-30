@@ -206,6 +206,7 @@ public class XPath
 			NamespaceContextMap namespaceContextMap = new NamespaceContextMap();
 			namespaceContextMap.addNamespace("server", GroupElement.SERVER_NAMESPACE_URI);
 			namespaceContextMap.addNamespace("client", GroupElement.CLIENT_NAMESPACE_URI);
+			namespaceContextMap.addNamespace("resource", CapoApplication.RESOURCE_NAMESPACE_URI);
 			for (String namespace : namespaces)
 			{
 				String[] namespaceDecl = namespace.split("=");
@@ -218,6 +219,11 @@ public class XPath
 		} catch (Exception exception)
 		{	
 			//keep this from looping out of control when things are weird
+			if (exception.getCause() == null || exception.getCause().getMessage() == null)
+			{
+				CapoServer.logger.log(Level.SEVERE, "Error evaluating xpath '"+path+"'");
+				throw exception;
+			}
 			if (exception.getCause().getMessage().matches(".*context.*item.*for.*axis.*step.*is.*undefined.*"))
 			{
 				CapoServer.logger.log(Level.SEVERE, "Error evaluating xpath '"+path+"'");

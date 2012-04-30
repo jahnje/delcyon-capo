@@ -28,27 +28,30 @@ public class ResourceElement extends ResourceNode implements Element
     private List<ContentMetaData> childResourceContentMetaData;
     private ContentMetaData contentMetaData;
     private ResourceNodeList nodeList = new ResourceNodeList();
-
+    private ResourceNamedNodeMap attributeList = new ResourceNamedNodeMap();
 	private String prefix;
 
-	private ResourceDocument ownerDocument;
+	private ResourceNode parentNode;
+
+	
     
-    public ResourceElement(ResourceDocument ownerDocument,ResourceDescriptor resourceDescriptor) throws Exception
+    
+    public ResourceElement(ResourceNode parentNode,ResourceDescriptor resourceDescriptor) throws Exception
     {
         this.resourceDescriptor = resourceDescriptor;
-        this.ownerDocument = ownerDocument;
+        this.parentNode = parentNode;
         namespaceURI = CapoApplication.RESOURCE_NAMESPACE_URI;
         prefix = "resource";
         localName = resourceDescriptor.getLocalName();
         contentMetaData = resourceDescriptor.getContentMetaData(null);
-        nodeList.add(new ResourceAttr(this,"uri", contentMetaData.getResourceURI()));
+        attributeList.add(new ResourceAttr(this,"uri", contentMetaData.getResourceURI()));
         List<String> supportedAttributeList = contentMetaData.getSupportedAttributes();
         for (String attributeName : supportedAttributeList)
         {
             if (contentMetaData.getValue(attributeName) != null)
             {                
                 ResourceAttr resourceAttr = new ResourceAttr(this,attributeName, contentMetaData.getValue(attributeName));
-                nodeList.add(resourceAttr);
+                attributeList.add(resourceAttr);
             }
         }
         
@@ -72,7 +75,7 @@ public class ResourceElement extends ResourceNode implements Element
     public void setNodeValue(String nodeValue) throws DOMException
     {
         // TODO Auto-generated method stub
-
+    	throw new UnsupportedOperationException();
     }
 
     @Override
@@ -84,8 +87,7 @@ public class ResourceElement extends ResourceNode implements Element
     @Override
     public Node getParentNode()
     {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+        return this.parentNode;
     }
 
     @Override
@@ -99,7 +101,7 @@ public class ResourceElement extends ResourceNode implements Element
                 
                 try
                 {
-                    nodeList.add(new ResourceElement(ownerDocument,CapoApplication.getDataManager().getResourceDescriptor(null, childContentMetaData.getResourceURI())));
+                    nodeList.add(new ResourceElement(this,CapoApplication.getDataManager().getResourceDescriptor(null, childContentMetaData.getResourceURI())));
                 }
                 catch (Exception e)
                 {
@@ -134,8 +136,16 @@ public class ResourceElement extends ResourceNode implements Element
     @Override
     public Node getFirstChild()
     {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+    	NodeList childNodes = getChildNodes();
+    	if (childNodes.getLength() > 0)
+    	{
+    		return childNodes.item(0);
+    	}
+    	else
+    	{
+    		return null;
+    	}
+        
     }
 
     @Override
@@ -155,20 +165,45 @@ public class ResourceElement extends ResourceNode implements Element
     @Override
     public Node getNextSibling()
     {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+    
+       NodeList siblingList = parentNode.getChildNodes();
+       int myPosition = 0;
+       for(int index = 0; index < siblingList.getLength(); index++)
+       {
+    	   Node siblingNode = siblingList.item(index);
+    	   if (siblingNode.isSameNode(this))
+    	   {
+    		   myPosition = index;
+    		   break;
+    	   }
+       }
+       if (myPosition+1 < siblingList.getLength())
+       {
+    	   return siblingList.item(myPosition+1);
+       }
+       else
+       {
+    	   return null;
+       }
     }
 
     @Override
     public NamedNodeMap getAttributes()
     {
-        return new ResourceNamedNodeMap(nodeList,Node.ATTRIBUTE_NODE);
+        return attributeList;
     }
 
     @Override
     public Document getOwnerDocument()
     {
-        return ownerDocument;
+        if (parentNode instanceof Document)
+        {
+        	return (Document) parentNode;
+        }
+        else
+        {
+        	return parentNode.getOwnerDocument();
+        }
     }
 
     @Override
@@ -202,7 +237,7 @@ public class ResourceElement extends ResourceNode implements Element
     @Override
     public boolean hasChildNodes()
     {
-        return true;
+        return getChildNodes().getLength() > 0;
     }
 
     @Override
@@ -216,7 +251,7 @@ public class ResourceElement extends ResourceNode implements Element
     public void normalize()
     {
         // TODO Auto-generated method stub
-
+    	throw new UnsupportedOperationException();
     }
 
     @Override
@@ -282,13 +317,13 @@ public class ResourceElement extends ResourceNode implements Element
     public void setTextContent(String textContent) throws DOMException
     {
         // TODO Auto-generated method stub
-
+    	throw new UnsupportedOperationException();
     }
 
     @Override
     public boolean isSameNode(Node other)
-    {
-    	throw new UnsupportedOperationException();
+    {    	
+    	return this.equals(other);
     }
 
     @Override
@@ -348,8 +383,14 @@ public class ResourceElement extends ResourceNode implements Element
     @Override
     public String getAttribute(String name)
     {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+    	if (hasAttribute(name))
+    	{
+    		return getAttributes().getNamedItem(name).getNodeValue();
+    	}
+    	else
+    	{
+    		return "";
+    	}
     }
 
     @Override
@@ -403,7 +444,7 @@ public class ResourceElement extends ResourceNode implements Element
     	}
     	else
     	{
-    		return null;
+    		return "";
     	}
     }
 
@@ -445,7 +486,7 @@ public class ResourceElement extends ResourceNode implements Element
     @Override
     public boolean hasAttribute(String name)
     {
-    	throw new UnsupportedOperationException();
+    	return getAttributes().getNamedItem(name) != null;
     }
 
     @Override

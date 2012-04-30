@@ -9,16 +9,7 @@ import org.w3c.dom.Node;
 public class ResourceNamedNodeMap extends ArrayList<Node> implements NamedNodeMap
 {
 
-    public ResourceNamedNodeMap(ResourceNodeList nodeList, short attributeNode)
-    {
-        for (Node node : nodeList)
-        {
-            if (node.getNodeType() == Node.ATTRIBUTE_NODE)
-            {
-                add(node);
-            }
-        }
-    }
+    
 
     @Override
     public Node getNamedItem(String name)

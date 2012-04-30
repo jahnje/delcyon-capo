@@ -378,7 +378,15 @@ public class XMLDiff
 				int otherWindowItemsIndex = 0;
 				while(otherWindowItems.size() > otherWindowItemsIndex && otherWindowItems.get(otherWindowItemsIndex).getStreamPosition() < otherWindowChainStartPosition)
 				{
-					Node outputNode = differenceDocument.importNode((Node) otherWindowItems.get(otherWindowItemsIndex).getObject(),true);
+					Node outputNode = null;
+//					try
+//					{
+						outputNode = differenceDocument.importNode((Node) otherWindowItems.get(otherWindowItemsIndex).getObject(),true);
+//					} catch(DOMException domException)
+//					{
+//						XPath.dumpNode((Node) otherWindowItems.get(otherWindowItemsIndex).getObject(), System.err);
+//						
+//					}
 					if (outputNode instanceof Element)
 					{
 						differenceElement.appendChild(outputNode);

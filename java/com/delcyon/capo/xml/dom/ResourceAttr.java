@@ -15,12 +15,12 @@ public class ResourceAttr extends ResourceNode implements Attr
 
     private ResourceElement parentElement = null;
     private String name = null;
-    private String value = null;
+    private ResourceText value = null;
     public ResourceAttr(ResourceElement parentElement, String name, String value)
     {
         this.parentElement = parentElement;
         this.name = name;
-        this.value = value;
+        this.value = new ResourceText(this,value);
     }
 
     @Override
@@ -32,7 +32,7 @@ public class ResourceAttr extends ResourceNode implements Attr
     @Override
     public String getNodeValue() throws DOMException
     {
-        return value;
+        return value.getNodeValue();
     }
 
     @Override
@@ -63,13 +63,13 @@ public class ResourceAttr extends ResourceNode implements Attr
     @Override
     public Node getFirstChild()
     {        
-        return null;
+        return value;
     }
 
     @Override
     public Node getLastChild()
     {
-        return null;   
+        return getFirstChild();   
     }
 
     @Override
@@ -87,7 +87,7 @@ public class ResourceAttr extends ResourceNode implements Attr
     @Override
     public NamedNodeMap getAttributes()
     {        
-        return null;
+    	throw new UnsupportedOperationException();
     }
 
     @Override
@@ -275,23 +275,27 @@ public class ResourceAttr extends ResourceNode implements Attr
         return this.name;
     }
 
+    /**
+     * http://www.w3.org/2003/01/dom2-javadoc/org/w3c/dom/Attr.html#getSpecified__
+     * //because our dom is always readonly, this can only be true
+     */
     @Override
     public boolean getSpecified()
-    {
-        throw new UnsupportedOperationException();
+    {    	
+        return true;
        
     }
 
     @Override
     public String getValue()
     {
-        return this.value;
+        return this.value.getNodeValue();
     }
 
     @Override
     public void setValue(String value) throws DOMException
     {
-       this.value = value;
+       this.value = new ResourceText(this,value);
 
     }
 
