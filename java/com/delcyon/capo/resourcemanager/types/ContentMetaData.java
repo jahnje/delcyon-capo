@@ -36,7 +36,8 @@ public interface ContentMetaData
 		writeable,
 		container,
 		lastModified,
-		path
+		path, 
+		uri
 	}
 
 	public enum Parameters {

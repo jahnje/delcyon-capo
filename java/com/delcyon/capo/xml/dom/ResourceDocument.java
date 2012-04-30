@@ -29,11 +29,13 @@ public class ResourceDocument extends ResourceNode implements Document
     private ResourceDescriptor resourceDescriptor;
     private Element documentElement;
     private ResourceNodeList resourceNodeList = new ResourceNodeList();
-    //TODO remove me, for testing only
+    private ResourceDOMImplemetation resourceDOMImplemetation = new ResourceDOMImplemetation();
+    
+    
     public ResourceDocument(ResourceDescriptor resourceDescriptor) throws Exception
     {
        this.resourceDescriptor = resourceDescriptor;
-       this.documentElement = new ResourceElement(resourceDescriptor);
+       this.documentElement = new ResourceElement(this,resourceDescriptor);
        resourceNodeList.add(documentElement);
     }
 
@@ -307,8 +309,7 @@ public class ResourceDocument extends ResourceNode implements Document
     @Override
     public DOMImplementation getImplementation()
     {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+    	return resourceDOMImplemetation;
     }
 
     @Override

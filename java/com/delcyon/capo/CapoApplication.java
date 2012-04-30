@@ -60,6 +60,9 @@ public abstract class CapoApplication extends ContextThread
 		default_request,
 		config
 	}
+
+	public static final String RESOURCE_NAMESPACE_URI = "http://www.delcyon.com/capo/resource";
+	public static final String CAPO_NAMESPACE_URI = "http://www.delcyon.com/capo";
 	
 	private static CapoApplication capoApplication;
 	public static Level LOGGING_LEVEL = Level.INFO;

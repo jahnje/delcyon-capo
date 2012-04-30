@@ -28,11 +28,17 @@ public class ResourceElement extends ResourceNode implements Element
     private List<ContentMetaData> childResourceContentMetaData;
     private ContentMetaData contentMetaData;
     private ResourceNodeList nodeList = new ResourceNodeList();
+
+	private String prefix;
+
+	private ResourceDocument ownerDocument;
     
-    public ResourceElement(ResourceDescriptor resourceDescriptor) throws Exception
+    public ResourceElement(ResourceDocument ownerDocument,ResourceDescriptor resourceDescriptor) throws Exception
     {
         this.resourceDescriptor = resourceDescriptor;
-        namespaceURI = "http://capo.delcyon.com/resource";
+        this.ownerDocument = ownerDocument;
+        namespaceURI = CapoApplication.RESOURCE_NAMESPACE_URI;
+        prefix = "resource";
         localName = resourceDescriptor.getLocalName();
         contentMetaData = resourceDescriptor.getContentMetaData(null);
         nodeList.add(new ResourceAttr(this,"uri", contentMetaData.getResourceURI()));
@@ -52,7 +58,7 @@ public class ResourceElement extends ResourceNode implements Element
     @Override
     public String getNodeName()
     {
-        return resourceDescriptor.getResourceURI();
+        return resourceDescriptor.getLocalName();
     }
 
     @Override
@@ -93,7 +99,7 @@ public class ResourceElement extends ResourceNode implements Element
                 
                 try
                 {
-                    nodeList.add(new ResourceElement(CapoApplication.getDataManager().getResourceDescriptor(null, childContentMetaData.getResourceURI())));
+                    nodeList.add(new ResourceElement(ownerDocument,CapoApplication.getDataManager().getResourceDescriptor(null, childContentMetaData.getResourceURI())));
                 }
                 catch (Exception e)
                 {
@@ -162,8 +168,7 @@ public class ResourceElement extends ResourceNode implements Element
     @Override
     public Document getOwnerDocument()
     {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+        return ownerDocument;
     }
 
     @Override
@@ -230,14 +235,13 @@ public class ResourceElement extends ResourceNode implements Element
     @Override
     public String getPrefix()
     {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+       return prefix;
     }
 
     @Override
     public void setPrefix(String prefix) throws DOMException
     {
-        // TODO Auto-generated method stub
+        this.prefix = prefix;
 
     }
 
@@ -250,8 +254,8 @@ public class ResourceElement extends ResourceNode implements Element
     @Override
     public boolean hasAttributes()
     {
-        // TODO Auto-generated method stub
-        return false;
+        //all resources have attributes, be cause they have content data, even if it's just to say they don't exist.
+        return true;
     }
 
     @Override
@@ -264,8 +268,7 @@ public class ResourceElement extends ResourceNode implements Element
     @Override
     public short compareDocumentPosition(Node other) throws DOMException
     {
-        // TODO Auto-generated method stub
-        return 0;
+    	throw new UnsupportedOperationException();
     }
 
     @Override
@@ -285,8 +288,7 @@ public class ResourceElement extends ResourceNode implements Element
     @Override
     public boolean isSameNode(Node other)
     {
-        // TODO Auto-generated method stub
-        return false;
+    	throw new UnsupportedOperationException();
     }
 
     @Override
@@ -299,8 +301,7 @@ public class ResourceElement extends ResourceNode implements Element
     @Override
     public boolean isDefaultNamespace(String namespaceURI)
     {
-        // TODO Auto-generated method stub
-        return false;
+    	throw new UnsupportedOperationException();
     }
 
     @Override
@@ -313,8 +314,7 @@ public class ResourceElement extends ResourceNode implements Element
     @Override
     public boolean isEqualNode(Node arg)
     {
-        // TODO Auto-generated method stub
-        return false;
+    	throw new UnsupportedOperationException();
     }
 
     @Override
@@ -356,14 +356,14 @@ public class ResourceElement extends ResourceNode implements Element
     public void setAttribute(String name, String value) throws DOMException
     {
         // TODO Auto-generated method stub
-
+    	throw new UnsupportedOperationException();
     }
 
     @Override
     public void removeAttribute(String name) throws DOMException
     {
         // TODO Auto-generated method stub
-
+    	throw new UnsupportedOperationException();
     }
 
     @Override
@@ -397,22 +397,28 @@ public class ResourceElement extends ResourceNode implements Element
     @Override
     public String getAttributeNS(String namespaceURI, String localName) throws DOMException
     {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+    	if (this.namespaceURI.equalsIgnoreCase(namespaceURI))
+    	{
+    		return contentMetaData.getValue(localName);
+    	}
+    	else
+    	{
+    		return null;
+    	}
     }
 
     @Override
     public void setAttributeNS(String namespaceURI, String qualifiedName, String value) throws DOMException
     {
         // TODO Auto-generated method stub
-
+    	throw new UnsupportedOperationException();
     }
 
     @Override
     public void removeAttributeNS(String namespaceURI, String localName) throws DOMException
     {
         // TODO Auto-generated method stub
-
+    	throw new UnsupportedOperationException();
     }
 
     @Override
@@ -439,15 +445,20 @@ public class ResourceElement extends ResourceNode implements Element
     @Override
     public boolean hasAttribute(String name)
     {
-        // TODO Auto-generated method stub
-        return false;
+    	throw new UnsupportedOperationException();
     }
 
     @Override
     public boolean hasAttributeNS(String namespaceURI, String localName) throws DOMException
     {
-        // TODO Auto-generated method stub
-        return false;
+    	if (this.namespaceURI.equalsIgnoreCase(namespaceURI))
+    	{
+    		return (contentMetaData.getValue(localName) != null);
+    	}
+    	else
+    	{
+    		return false;
+    	}
     }
 
     @Override
@@ -461,21 +472,21 @@ public class ResourceElement extends ResourceNode implements Element
     public void setIdAttribute(String name, boolean isId) throws DOMException
     {
         // TODO Auto-generated method stub
-
+    	throw new UnsupportedOperationException();
     }
 
     @Override
     public void setIdAttributeNS(String namespaceURI, String localName, boolean isId) throws DOMException
     {
         // TODO Auto-generated method stub
-
+    	throw new UnsupportedOperationException();
     }
 
     @Override
     public void setIdAttributeNode(Attr idAttr, boolean isId) throws DOMException
     {
         // TODO Auto-generated method stub
-
+    	throw new UnsupportedOperationException();
     }
 
 }

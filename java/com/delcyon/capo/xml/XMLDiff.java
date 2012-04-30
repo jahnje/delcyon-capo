@@ -17,6 +17,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 package com.delcyon.capo.xml;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -71,6 +72,9 @@ public class XMLDiff
 
 	private static final String XDIFF_DIFF_ATTRIBUTE_NAME = "diff";
 	
+	public static final String EQUALITY = Side.BASE+" = "+Side.MOD;
+	public static final String INEQUALITY = Side.BASE+" != "+Side.MOD;
+	
 	
 
 	
@@ -88,6 +92,7 @@ public class XMLDiff
 	private DocumentBuilder documentBuilder;
 	private TextDiffType textDiffType = TextDiffType.USE_DIFFERENCE_BASED_ON_LENGTH;
 	private int useDiffTextLength = DEFAULT_USE_DIFF_TEXT_LENGTH;
+	private HashMap<String, String> ignoreableAttributeMap = new HashMap<String, String>();
 	
 	public XMLDiff() throws Exception
 	{
@@ -177,7 +182,7 @@ public class XMLDiff
 		String baseNamespaceURI = baseElement.getNamespaceURI();
 		
 		Element differenceElement = createElement(differenceDocument, baseNamespaceURI, basePrefix, baseLocalName);		
-		setAttribute(differenceElement, XDIFF_NAMESPACE_URI, XDIFF_PREFIX, XDIFF_ELEMENT_ATTRIBUTE_NAME, Side.BASE+" = "+Side.MOD);
+		setAttribute(differenceElement, XDIFF_NAMESPACE_URI, XDIFF_PREFIX, XDIFF_ELEMENT_ATTRIBUTE_NAME, EQUALITY);
 		if (parentDifferenceElement != null)
 		{
 			parentDifferenceElement.appendChild(differenceElement);
@@ -187,13 +192,13 @@ public class XMLDiff
 		boolean attributesAreEqual = processAttributes(differenceDocument,differenceElement,baseElement,otherElement,Side.BASE);
 		if (attributesAreEqual == false)
 		{			
-			setAttribute(differenceElement, XDIFF_NAMESPACE_URI, XDIFF_PREFIX, XDIFF_ELEMENT_ATTRIBUTE_NAME, Side.BASE+" != "+Side.MOD);
+			setAttribute(differenceElement, XDIFF_NAMESPACE_URI, XDIFF_PREFIX, XDIFF_ELEMENT_ATTRIBUTE_NAME, INEQUALITY);
 		}
 
 		attributesAreEqual = processAttributes(differenceDocument,differenceElement,otherElement,baseElement,Side.MOD);
 		if (attributesAreEqual == false)
 		{			
-			setAttribute(differenceElement, XDIFF_NAMESPACE_URI, XDIFF_PREFIX, XDIFF_ELEMENT_ATTRIBUTE_NAME, Side.BASE+" != "+Side.MOD);
+			setAttribute(differenceElement, XDIFF_NAMESPACE_URI, XDIFF_PREFIX, XDIFF_ELEMENT_ATTRIBUTE_NAME, INEQUALITY);
 		}
 		
 		//process children
@@ -345,7 +350,7 @@ public class XMLDiff
 					{
 						Element tempDifferenceElement = (Element) differenceDocument.importNode(outputNode, true);
 						differenceElement.appendChild(tempDifferenceElement);
-						setAttribute(differenceElement, XDIFF_NAMESPACE_URI, XDIFF_PREFIX, XDIFF_ELEMENT_ATTRIBUTE_NAME, Side.BASE+" != "+Side.MOD);
+						setAttribute(differenceElement, XDIFF_NAMESPACE_URI, XDIFF_PREFIX, XDIFF_ELEMENT_ATTRIBUTE_NAME, INEQUALITY);
 						setAttribute((Element)tempDifferenceElement, XDIFF_NAMESPACE_URI, XDIFF_PREFIX, XDIFF_ELEMENT_ATTRIBUTE_NAME, baseWindowItems.get(currentIndex).getSide());
 					}
 					else if (outputNode instanceof Text)
@@ -354,14 +359,14 @@ public class XMLDiff
 						setAttribute(differenceTextElement, XDIFF_NAMESPACE_URI, XDIFF_PREFIX, XDIFF_TEXT_ATTRIBUTE_NAME, Side.BASE);
 						differenceTextElement.appendChild(differenceDocument.importNode(outputNode, true));
 						differenceElement.appendChild(differenceTextElement);
-						setAttribute(differenceElement, XDIFF_NAMESPACE_URI, XDIFF_PREFIX, XDIFF_ELEMENT_ATTRIBUTE_NAME, Side.BASE+" != "+Side.MOD);
+						setAttribute(differenceElement, XDIFF_NAMESPACE_URI, XDIFF_PREFIX, XDIFF_ELEMENT_ATTRIBUTE_NAME, INEQUALITY);
 					}
 
 					baseWindowItemsIndex++;				
 					baseStreamPosition++;
 					if (parentDifferenceElement != null)
 					{
-						setAttribute(parentDifferenceElement, XDIFF_NAMESPACE_URI, XDIFF_PREFIX, XDIFF_ELEMENT_ATTRIBUTE_NAME, Side.BASE+" != "+Side.MOD);
+						setAttribute(parentDifferenceElement, XDIFF_NAMESPACE_URI, XDIFF_PREFIX, XDIFF_ELEMENT_ATTRIBUTE_NAME, INEQUALITY);
 					}
 				}
 			}
@@ -378,7 +383,7 @@ public class XMLDiff
 					{
 						differenceElement.appendChild(outputNode);
 						setAttribute((Element)outputNode, XDIFF_NAMESPACE_URI, XDIFF_PREFIX, XDIFF_ELEMENT_ATTRIBUTE_NAME, Side.MOD);
-						setAttribute(differenceElement, XDIFF_NAMESPACE_URI, XDIFF_PREFIX, XDIFF_ELEMENT_ATTRIBUTE_NAME, Side.BASE+" != "+Side.MOD);
+						setAttribute(differenceElement, XDIFF_NAMESPACE_URI, XDIFF_PREFIX, XDIFF_ELEMENT_ATTRIBUTE_NAME, INEQUALITY);
 					}
 					else if (outputNode instanceof Text)
 					{
@@ -386,7 +391,7 @@ public class XMLDiff
 						setAttribute(differenceTextElement, XDIFF_NAMESPACE_URI, XDIFF_PREFIX, XDIFF_TEXT_ATTRIBUTE_NAME, Side.MOD);
 						differenceTextElement.appendChild(outputNode);
 						differenceElement.appendChild(differenceTextElement);
-						setAttribute(differenceElement, XDIFF_NAMESPACE_URI, XDIFF_PREFIX, XDIFF_ELEMENT_ATTRIBUTE_NAME, Side.BASE+" != "+Side.MOD);
+						setAttribute(differenceElement, XDIFF_NAMESPACE_URI, XDIFF_PREFIX, XDIFF_ELEMENT_ATTRIBUTE_NAME, INEQUALITY);
 					}
 					
 					otherWindowItemsIndex++;				
@@ -394,7 +399,7 @@ public class XMLDiff
 					otherStreamPosition++;
 					if (parentDifferenceElement != null)
 					{
-						setAttribute(parentDifferenceElement, XDIFF_NAMESPACE_URI, XDIFF_PREFIX, XDIFF_ELEMENT_ATTRIBUTE_NAME, Side.BASE+" != "+Side.MOD);
+						setAttribute(parentDifferenceElement, XDIFF_NAMESPACE_URI, XDIFF_PREFIX, XDIFF_ELEMENT_ATTRIBUTE_NAME, INEQUALITY);
 					}
 				}
 			}
@@ -412,11 +417,11 @@ public class XMLDiff
 						//XXX this may not work at all!!!
 						//this is based on the assumption, that any child node that finds itself not equal, will set it's parent to not equal
 						//since the difference element at this point is the parent, after we get done processing, we check to see if it is not equal, and if so, set it's parent to not equal
-						if (differenceElement.getAttributeNS(XDIFF_NAMESPACE_URI, XDIFF_ELEMENT_ATTRIBUTE_NAME).equals(Side.BASE+" != "+Side.MOD))
+						if (differenceElement.getAttributeNS(XDIFF_NAMESPACE_URI, XDIFF_ELEMENT_ATTRIBUTE_NAME).equals(INEQUALITY))
 						{
 							if (parentDifferenceElement != null)
 							{
-								setAttribute(parentDifferenceElement, XDIFF_NAMESPACE_URI, XDIFF_PREFIX, XDIFF_ELEMENT_ATTRIBUTE_NAME, Side.BASE+" != "+Side.MOD);
+								setAttribute(parentDifferenceElement, XDIFF_NAMESPACE_URI, XDIFF_PREFIX, XDIFF_ELEMENT_ATTRIBUTE_NAME, INEQUALITY);
 							}
 						}
 					}
@@ -451,7 +456,7 @@ public class XMLDiff
 								differenceOtherTextElement.appendChild(differenceDocument.importNode(otherOutputNode, true));
 								differenceElement.appendChild(differenceOtherTextElement);
 							}
-							setAttribute(differenceElement, XDIFF_NAMESPACE_URI, XDIFF_PREFIX, XDIFF_ELEMENT_ATTRIBUTE_NAME, Side.BASE+" != "+Side.MOD);								
+							setAttribute(differenceElement, XDIFF_NAMESPACE_URI, XDIFF_PREFIX, XDIFF_ELEMENT_ATTRIBUTE_NAME, INEQUALITY);								
 						}
 					}
 					//TODO check for child differences
@@ -472,7 +477,10 @@ public class XMLDiff
 				otherWindow.removeUntil(otherWindowChainEndPosition);
 			}
 		}
-		
+		if (parentDifferenceElement != null && parentDifferenceElement.hasAttributeNS(XDIFF_NAMESPACE_URI, XDIFF_ELEMENT_ATTRIBUTE_NAME) == false)
+		{
+			setAttribute(parentDifferenceElement, XDIFF_NAMESPACE_URI, XDIFF_PREFIX, XDIFF_ELEMENT_ATTRIBUTE_NAME, EQUALITY);
+		}
 		return differenceElement;
 	}
 	
@@ -510,6 +518,13 @@ public class XMLDiff
 			String attributeLocalName = attribute.getLocalName();
 			
 			String attributeNamesapceURI = attribute.getNamespaceURI();
+			
+			//see if we are supposed to ignore this
+			if (ignoreableAttributeMap.containsKey(attributeNamesapceURI+":"+attributeLocalName))
+			{				
+				continue;
+			}
+			
 			String attributeValue = attribute.getValue();
 			String attributeName = attribute.getName();
 			if (otherElement.hasAttributeNS(attributeNamesapceURI, attributeLocalName) == false)
@@ -807,7 +822,7 @@ public class XMLDiff
 						{
 							if (nodeList.item(currentNode) instanceof Element)
 							{
-								if (((Element) nodeList.item(currentNode)).getAttributeNS(XDIFF_NAMESPACE_URI, XDIFF_DIFF_ATTRIBUTE_NAME).equals(Side.BASE+" = "+Side.MOD))
+								if (((Element) nodeList.item(currentNode)).getAttributeNS(XDIFF_NAMESPACE_URI, XDIFF_DIFF_ATTRIBUTE_NAME).equals(EQUALITY))
 								{
 									differenceElement.removeChild(nodeList.item(currentNode));
 									currentNode--;
@@ -833,16 +848,16 @@ public class XMLDiff
 			//remove content, since this data for the other side, and will not be in the document for this side
 			XPath.removeContent(differenceElement);
 		}		
-		else if (elementAttributeValue.equals(Side.BASE+" = "+Side.MOD))
+		else if (elementAttributeValue.equals(EQUALITY))
 		{
 			//remove content, since we can get it from the original document			
 			XPath.removeContent(differenceElement);
 			//remove any attributes
 			XPath.removeAttributes(differenceElement);
 			//put original diff attribute back, since we need it to un-trim
-			differenceElement.setAttributeNS(XDIFF_NAMESPACE_URI, XDIFF_PREFIX+":"+XDIFF_ELEMENT_ATTRIBUTE_NAME,Side.BASE+" = "+Side.MOD);
+			differenceElement.setAttributeNS(XDIFF_NAMESPACE_URI, XDIFF_PREFIX+":"+XDIFF_ELEMENT_ATTRIBUTE_NAME,EQUALITY);
 		}
-		//Side.BASE+" != "+Side.MOD
+		//INEQUALITY
 		else 
 		{
 		
@@ -858,7 +873,7 @@ public class XMLDiff
 					if(attribute.getNodeValue().length() > 70)
 					{						
 						Element attributeElement = differenceElement.getOwnerDocument().createElementNS(XDIFF_NAMESPACE_URI, XDIFF_PREFIX+":"+XDIFF_ATTRIBUTE_ELEMENT_NAME);
-						attributeElement.setAttributeNS(XDIFF_NAMESPACE_URI, XDIFF_PREFIX+":"+XDIFF_ATTRIBUTE_ATTRIBUTE_NAME, Side.BASE+" = "+Side.MOD);
+						attributeElement.setAttributeNS(XDIFF_NAMESPACE_URI, XDIFF_PREFIX+":"+XDIFF_ATTRIBUTE_ATTRIBUTE_NAME, EQUALITY);
 						attributeElement.setAttributeNS(XDIFF_NAMESPACE_URI, XDIFF_PREFIX+":"+XDIFF_NAME_ATTRIBUTE_NAME, attribute.getName());
 						differenceElement.insertBefore(attributeElement, differenceElement.getFirstChild());
 						differenceElement.removeAttributeNode(attribute);						
@@ -941,16 +956,16 @@ public class XMLDiff
 							originalElement.removeChild(childOriginalElement);
 						}
 
-						if (differenceElementChildElement.getAttributeNS(XDIFF_NAMESPACE_URI, XDIFF_ELEMENT_ATTRIBUTE_NAME).equals(Side.BASE+" != "+Side.MOD))
+						if (differenceElementChildElement.getAttributeNS(XDIFF_NAMESPACE_URI, XDIFF_ELEMENT_ATTRIBUTE_NAME).equals(INEQUALITY))
 						{
 							repopulate(childOriginalElement, differenceElementChildElement, side);
 						}
-						else if (differenceElementChildElement.getAttributeNS(XDIFF_NAMESPACE_URI, XDIFF_ELEMENT_ATTRIBUTE_NAME).equals(Side.BASE+" = "+Side.MOD))
+						else if (differenceElementChildElement.getAttributeNS(XDIFF_NAMESPACE_URI, XDIFF_ELEMENT_ATTRIBUTE_NAME).equals(EQUALITY))
 						{
 							//get content from original and append into difference						
 							childOriginalElement = (Element) differenceElementChildElement.getOwnerDocument().adoptNode(childOriginalElement);
 							differenceElement.replaceChild(childOriginalElement, differenceElementChildElement);
-							childOriginalElement.setAttributeNS(XDIFF_NAMESPACE_URI, XDIFF_PREFIX+":"+XDIFF_ELEMENT_ATTRIBUTE_NAME, Side.BASE+" = "+Side.MOD);
+							childOriginalElement.setAttributeNS(XDIFF_NAMESPACE_URI, XDIFF_PREFIX+":"+XDIFF_ELEMENT_ATTRIBUTE_NAME, EQUALITY);
 						}
 					}
 				}
@@ -959,7 +974,7 @@ public class XMLDiff
 				{
 					//System.out.println(childDifferenceElement);
 					//at this point in time, if the attr was in both, then we didn't remove it, so no need to add it back in.
-					if ((Side.BASE+" = "+Side.MOD).equals(differenceElementChildElement.getAttributeNS(XDIFF_NAMESPACE_URI, XDIFF_ATTRIBUTE_ATTRIBUTE_NAME)))
+					if ((EQUALITY).equals(differenceElementChildElement.getAttributeNS(XDIFF_NAMESPACE_URI, XDIFF_ATTRIBUTE_ATTRIBUTE_NAME)))
 					{						
 						String attributeName = differenceElementChildElement.getAttributeNS(XDIFF_NAMESPACE_URI, XDIFF_NAME_ATTRIBUTE_NAME);
 						differenceElement.setAttributeNode((Attr) differenceElement.getOwnerDocument().adoptNode(originalElement.getAttributeNode(attributeName)));
@@ -1027,7 +1042,7 @@ public class XMLDiff
 				int start = 0;
 				int stop = 0;
 				Element equalsElement = diffElement.getOwnerDocument().createElementNS(XDIFF_NAMESPACE_URI,XDIFF_PREFIX+":"+XDIFF_DIFF_ELEMENT_NAME);
-				equalsElement.setAttributeNS(XDIFF_NAMESPACE_URI, XDIFF_PREFIX+":"+XDIFF_DIFF_ATTRIBUTE_NAME,Side.BASE+" = "+Side.MOD);
+				equalsElement.setAttributeNS(XDIFF_NAMESPACE_URI, XDIFF_PREFIX+":"+XDIFF_DIFF_ATTRIBUTE_NAME,EQUALITY);
 
 				int baseStart = Integer.parseInt(position[3]);
 				int modStart = Integer.parseInt(position[4])+1;
@@ -1085,5 +1100,10 @@ public class XMLDiff
 			}
 			diffElement.removeAttributeNS(XDIFF_NAMESPACE_URI, XDIFF_POSITION_ATTRIBUTE_NAME);
 		}
+	}
+
+	public void addIgnoreableAttribute(String namespaceURI, String localName)
+	{
+		ignoreableAttributeMap.put(namespaceURI+":"+localName, null);		
 	}
 }
