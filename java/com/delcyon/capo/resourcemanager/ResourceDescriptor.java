@@ -52,7 +52,8 @@ public interface ResourceDescriptor
 	public enum Action
 	{
 		CREATE,
-		DELETE
+		DELETE, 
+		SET_ATTRIBUTE
 	}
 	
 	public enum State

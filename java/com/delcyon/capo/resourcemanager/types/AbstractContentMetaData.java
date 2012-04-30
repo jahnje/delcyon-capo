@@ -190,6 +190,7 @@ public abstract class AbstractContentMetaData implements ContentMetaData
 			}
 		}
 		attributeHashMap.put(Attributes.path.toString(), getResourceURI()+"");
+		attributeHashMap.put(Attributes.uri.toString(), getResourceURI()+"");
 		return attributeHashMap;
 	}
 	

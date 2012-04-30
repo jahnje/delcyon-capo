@@ -19,6 +19,7 @@ package com.delcyon.capo.controller.elements;
 import java.io.OutputStream;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Vector;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.logging.Level;
@@ -66,7 +67,7 @@ public class SyncElement extends AbstractControl
 	
 	public enum Attributes
 	{
-		name,src,dest,onCopy,recursive,prune
+		name,src,dest,onCopy,recursive,prune, syncAttributes
 	}
 	
 	private static final String[] supportedNamespaces = {GroupElement.SERVER_NAMESPACE_URI};
@@ -228,7 +229,10 @@ public class SyncElement extends AbstractControl
                         childDestinationResourceDescriptor.performAction(null, Action.DELETE);
                     }
                 }
+                
             }
+            
+            copyContentMetaData(sourceContentMetaData,destinationResourceDescriptor);
             
         }
         else
@@ -242,6 +246,9 @@ public class SyncElement extends AbstractControl
                 StreamUtil.readInputStreamIntoOutputStream(sourceResourceDescriptor.getInputStream(getParentGroup(),ResourceParameterBuilder.getResourceParameters(getControlElementDeclaration())), filteredOutputStream);
                 filteredOutputStream.flush();
                 filteredOutputStream.close();
+                
+                copyContentMetaData(sourceContentMetaData,destinationResourceDescriptor);
+                
                 CapoApplication.logger.log(Level.INFO, "Done Syncing");
                 if(getAttributeValue(Attributes.onCopy).isEmpty() == false)
                 {
@@ -255,7 +262,54 @@ public class SyncElement extends AbstractControl
 
 
 
-    private OutputStream wrapOutputStream(OutputStream outputStream, Element copyElement)
+    private void copyContentMetaData(ContentMetaData sourceContentMetaData, ResourceDescriptor destinationResourceDescriptor) throws Exception
+	{
+    	String keepAttributesValue = getAttributeValue(Attributes.syncAttributes);
+        if (keepAttributesValue.isEmpty() == false)
+        {
+        	Vector<ContentMetaData.Attributes> copyAttributesList = new Vector<ContentMetaData.Attributes>();
+        	if (keepAttributesValue.equalsIgnoreCase("true"))
+        	{
+        		Set<String> attributeSet = sourceContentMetaData.getAttributeMap().keySet();
+        		for (String contentAttributeName : attributeSet)
+				{
+        			try
+        			{
+        				copyAttributesList.add(ContentMetaData.Attributes.valueOf(contentAttributeName));
+        			} catch (IllegalArgumentException illegalArgumentException)
+        			{
+        				CapoApplication.logger.log(Level.WARNING, "Couldn't find attribte name of "+contentAttributeName+" in content metadata");
+        			}
+				}
+        	}
+        	else
+        	{
+        		String[] keepAttributesArray = keepAttributesValue.split(",");
+        		for (String contentAttributeName : keepAttributesArray)
+				{
+        			try
+        			{
+        				copyAttributesList.add(ContentMetaData.Attributes.valueOf(contentAttributeName));
+        			} catch (IllegalArgumentException illegalArgumentException)
+        			{
+        				CapoApplication.logger.log(Level.WARNING, "Couldn't find attribte name of "+contentAttributeName+" in content metadata");
+        			}
+				}
+        	}
+        	
+        	for (ContentMetaData.Attributes attributes : copyAttributesList)
+			{            		
+            	destinationResourceDescriptor.performAction(null, Action.SET_ATTRIBUTE, new ResourceParameter(attributes,sourceContentMetaData.getValue(attributes.toString())));	
+			}
+        }
+		
+	}
+
+
+
+
+
+	private OutputStream wrapOutputStream(OutputStream outputStream, Element copyElement)
 	{
 		
 		OutputStream lastOutputStream = outputStream;

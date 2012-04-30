@@ -30,6 +30,7 @@ import com.delcyon.capo.resourcemanager.ResourceDescriptor;
 import com.delcyon.capo.resourcemanager.ResourceManager;
 import com.delcyon.capo.resourcemanager.ResourceParameter;
 import com.delcyon.capo.resourcemanager.ResourceType;
+import com.delcyon.capo.resourcemanager.types.ContentMetaData.Attributes;
 import com.delcyon.capo.resourcemanager.types.FileResourceType.Parameters;
 
 /**
@@ -282,6 +283,37 @@ public class FileResourceDescriptor extends AbstractResourceDescriptor implement
                 success = true;
             }
         }
+	    
+	    else if (action == Action.SET_ATTRIBUTE && resourceParameters.length > 0)
+        {
+	    	Attributes attribute = Attributes.valueOf(resourceParameters[0].getName());
+            if (file.exists())
+            {
+                switch (attribute)
+				{
+					case lastModified:
+						success = file.setLastModified(Long.parseLong(resourceParameters[0].getValue()));
+						break;
+					case executable:
+						success = file.setExecutable(Boolean.parseBoolean(resourceParameters[0].getValue()));
+						break;
+					case readable:
+						success = file.setReadable(Boolean.parseBoolean(resourceParameters[0].getValue()));
+						break;
+					case writeable:
+						success = file.setWritable(Boolean.parseBoolean(resourceParameters[0].getValue()));
+						break;					
+					default:
+						success = false;
+						break;
+				}
+            }
+            else
+            {
+                success = false;
+            }
+        }
+	    
 		if (success == true)
 		{
 			this.contentMetaData = buildContentMetatData(resourceParameters);
