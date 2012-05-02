@@ -133,16 +133,32 @@ public class CapoClient extends CapoApplication
 		super();
 	}
 	
-	/**
-	 * @param args
-	 */
-	public static void main(String[] args)
+	@Override
+	public Integer start(String[] programArgs)
 	{
 		try
 		{
 			CapoClient capoClient = new CapoClient();
-			capoClient.init(args);
-			capoClient.start(args);
+			capoClient.init(programArgs);
+			capoClient.startup(programArgs);
+		} catch (Exception e)
+		{
+			e.printStackTrace();
+			return 1;
+		}
+		return null;
+	}
+	
+	/**
+	 * @param programArgs
+	 */
+	public static void main(String[] programArgs)
+	{
+		try
+		{
+			CapoClient capoClient = new CapoClient();
+			capoClient.init(programArgs);
+			capoClient.startup(programArgs);
 		} catch (Exception e)
 		{
 			e.printStackTrace();
@@ -196,7 +212,7 @@ public class CapoClient extends CapoApplication
 	}
 	
 	@Override
-	protected void start(String[] programArgs) throws Exception
+	protected void startup(String[] programArgs) throws Exception
 	{
 		start();
 		//keep this thread running until the client thread is done. 

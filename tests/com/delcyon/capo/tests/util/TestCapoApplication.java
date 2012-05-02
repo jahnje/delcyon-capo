@@ -18,7 +18,7 @@ public class TestCapoApplication extends CapoApplication
     }
 
     @Override
-    protected void start(String[] programArgs) throws Exception
+    protected void startup(String[] programArgs) throws Exception
     {
         // TODO Auto-generated method stub
 
@@ -42,6 +42,13 @@ public class TestCapoApplication extends CapoApplication
     {
     	// TODO Auto-generated method stub
     	
+    }
+    
+    @Override
+    public Integer start(String[] programArgs)
+    {
+    	// TODO Auto-generated method stub
+    	return null;
     }
     
 }

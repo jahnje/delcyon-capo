@@ -34,6 +34,8 @@ import javax.xml.transform.TransformerFactory;
 
 import org.scannotation.AnnotationDB;
 import org.scannotation.ClasspathUrlFinder;
+import org.tanukisoftware.wrapper.WrapperListener;
+import org.tanukisoftware.wrapper.WrapperManager;
 import org.w3c.dom.Document;
 
 import com.delcyon.capo.resourcemanager.CapoDataManager;
@@ -50,7 +52,7 @@ import eu.medsea.mimeutil.MimeUtil;
  * This class pieces together the common functionality between the client and the server programs.
  * It takes care of logging, annotation processing, system properties, and always contains a reference to the running application so that decisions can be made based on client or server contexts. 
  */
-public abstract class CapoApplication extends ContextThread
+public abstract class CapoApplication extends ContextThread implements WrapperListener
 {
 	public enum DefaultDocument
 	{
@@ -139,9 +141,47 @@ public abstract class CapoApplication extends ContextThread
 		
 	}
 	
+	protected abstract void startup(String[] programArgs) throws Exception;
+	
 	protected abstract void init(String[] programArgs) throws Exception;
 	
-	protected abstract void start(String[] programArgs) throws Exception;
+	public abstract Integer start(String[] programArgs);
+	
+	public int stop( int exitCode )
+	{
+		try
+		{
+			shutdown();
+		} 
+		catch (Exception exception)
+		{			
+			exception.printStackTrace();
+			return 1;
+		}
+		return 0;
+	}
+	
+	public void controlEvent( int event )
+    {
+        if (( event == WrapperManager.WRAPPER_CTRL_LOGOFF_EVENT ) && ( WrapperManager.isLaunchedAsService() || WrapperManager.isIgnoreUserLogoffs() ) )
+        {
+                // Ignore
+        }
+        else
+        {
+                WrapperManager.stop( 0 );
+                // Will not get here.
+        }
+    }
+	
+	public void restart()
+	{
+		WrapperManager.restart();
+	}
+	
+	 public abstract boolean isReady();
+
+	 public abstract void shutdown() throws Exception;
 	
 	public static Configuration getConfiguration()
 	{
@@ -236,9 +276,7 @@ public abstract class CapoApplication extends ContextThread
 		}
 	}
 
-    public abstract boolean isReady();
-
-    public abstract void shutdown() throws Exception;
+   
     
     public void setExceptionList(CopyOnWriteArrayList<Exception> exceptionList)
     {

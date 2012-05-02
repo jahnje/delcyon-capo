@@ -162,6 +162,22 @@ public class CapoServer extends CapoApplication
 		super();		
 	}
 	
+	@Override
+	public Integer start(String[] programArgs)
+	{
+		try
+		{
+			CapoServer capoServer = new CapoServer();
+			capoServer.init(programArgs);
+			capoServer.startup(programArgs);
+		} catch (Exception e)
+		{
+			e.printStackTrace();
+			return 1;
+		}
+		return null;
+	}
+	
 	/**
 	 * @param args
 	 */
@@ -171,7 +187,7 @@ public class CapoServer extends CapoApplication
 		{
 			CapoServer capoServer = new CapoServer();
 			capoServer.init(args);
-			capoServer.start(args);
+			capoServer.startup(args);
 		} catch (Exception e)
 		{
 			e.printStackTrace();
@@ -318,7 +334,7 @@ public class CapoServer extends CapoApplication
 	 * @param programArgs
 	 * @throws Exception
 	 */
-	public void start(String[] programArgs) throws Exception
+	public void startup(String[] programArgs) throws Exception
 	{
 		SynchronousQueue<Runnable> synchronousQueue = new SynchronousQueue<Runnable>();
 		threadPoolExecutor = new ThreadPoolExecutor(getConfiguration().getIntValue(Preferences.START_THREADPOOL_SIZE), getConfiguration().getIntValue(Preferences.MAX_THREADPOOL_SIZE), getConfiguration().getIntValue(Preferences.THREAD_IDLE_TIME), TimeUnit.MILLISECONDS, synchronousQueue);
