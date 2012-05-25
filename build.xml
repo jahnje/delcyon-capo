@@ -96,25 +96,7 @@
 	<!--END TEST RUN CLASSPATH -->
 	<!--END CLASS PATH -->
 
-	<!--START SVN TARGETS-->
-
-	<!--issue an svn commit to make, and create a new version/copy that we can branch off of if we need to-->
-	<target name="svn_commit">
-		<exec executable="svn" failifexecutionfails="true">
-			<arg value="commit" />
-			<arg value="-m" />
-			<arg value="VERSION: ${version}.${build.number}.${patch.number}  MD5=${md5}" />
-		</exec>				
-	</target>
-
-	<!-- run svn update -->
-	<target name="svn_update">
-		<exec executable="svn" failifexecutionfails="true">
-			<arg value="update" />
-		</exec>
-	</target>
-
-	<!--END SVN TARGETS-->
+	
 
 	<!--START VERSIONING TARGETS-->
 
@@ -327,25 +309,20 @@
 	-->
 	<target name="build" depends="prepBuild,dist,test">
 		<fail unless="md5" />
-		<antcall inheritall="yes" target="saveBuildNumber" />
-		<antcall inheritall="yes" target="svn_commit" />
+		<antcall inheritall="yes" target="saveBuildNumber" />		
 	</target>
 
 	<target name="patch" depends="prepPatch,dist,test">
 		<fail unless="md5" />
-		<antcall inheritall="yes" target="saveBuildNumber" />
-		<antcall inheritall="yes" target="svn_commit" />
+		<antcall inheritall="yes" target="saveBuildNumber" />		
 	</target>
 
 	<target name="major" depends="prepMajor,dist,test">
-
-		<antcall inheritall="yes" target="saveBuildNumber" />
-		<antcall inheritall="yes" target="svn_commit" />
+		<antcall inheritall="yes" target="saveBuildNumber" />		
 	</target>
 
 	<target name="minor" depends="prepMinor,dist,test">
-		<antcall inheritall="yes" target="saveBuildNumber" />
-		<antcall inheritall="yes" target="svn_commit" />
+		<antcall inheritall="yes" target="saveBuildNumber" />		
 	</target>
 	<!--END REAL TARGETS-->
 	<!--END VERSIONING TARGETS-->
@@ -373,27 +350,10 @@
 		<copy todir="${distribution.dir}/lib">
 			<fileset dir="${lib.dir}" />
 		</copy>
-		<antcall target="include_webmodule" />
-		<antcall target="include_xsl" />
 		<antcall target="jar" />
-		<antcall target="war" />
 		<copy file="${distribution.dir}/${product.name}-${version}.${build.number}.${patch.number}.${jarFileExtension}" tofile="${distribution.dir}/${product.name}.${jarFileExtension}" />
 		<checksum file="${distribution.dir}/${product.name}-${version}.${build.number}.${patch.number}.${jarFileExtension}" property="md5" />
 		<antcall target="makeInstaller" />
-	</target>
-
-	<target name="include_webmodule" if="webmodule.dir">
-		<jar destfile="${distribution.dir}/lib/${webmodule.name}" basedir="${webmodule.dir}" />
-	</target>
-
-	<target name="include_xsl" if="xsl.dir">
-		<copy verbose="true" overwrite="yes" todir="${build.dir}">
-			<fileset dir="${xsl.dir}" />
-		</copy>
-	</target>
-
-	<target name="war" if="isWebapplication">
-		<jar destfile="${distribution.dir}/${product.name}-${version}.${build.number}.${patch.number}.${jarFileExtension}" basedir="${package.src.dir}" />
 	</target>
 
 	<target name="jar" unless="isWebapplication">
@@ -411,8 +371,12 @@
 			<fileset dir="${distribution.dir}">
 				<include name="${product.name}.${jarFileExtension}" />
 				<include name="lib/**" />
+				
 			</fileset>
-			<applicationDescriptor name="${main.class.path}" installDirectory="${product.name}" executable="${product.name}.${jarFileExtension}" ignoredDirectories="capo"/>
+			<fileset  dir=".">
+				<include name="${app}.install.xml" />
+			</fileset>
+			<applicationDescriptor name="${main.class.path}" applicationDirectory="${product.name}" executable="${product.name}.${jarFileExtension}" installDocumentPath="${app}.install.xml"/>
 		</InstallerBuildTask>
 	</target>
 

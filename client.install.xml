@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<install>
+    <pref path="/com/updater/test" get="INSTALL_DIR" var="install.dir"/>
+    <ask if="'${install.dir}' = '' or '${install.dir}' = '.'" message="please enter the path to install in" default="${user.dir}/${applicationDirectory}" var="install.dir"/>
+    <pref path="/com/updater/test" set="INSTALL_DIR" var="install.dir"/>
+    <pref path="/com/updater/test" get="JAVA_EXECUTABLE" var="java_command"/>
+    <ask if="'${java_command}' = ''" var="java_command"  message="Please enter the path to the java command:" default="${java.home}/bin/java"/>
+    <pref path="/com/updater/test" set="JAVA_EXECUTABLE" var="java_command"/>
+    <copy src="config/wrapper.conf" dest="${install.dir}/config/wrapper.conf" onAction="test.cmd.prop">
+        <filter replacement="${java_command}" trigger="java_cmd" />                
+    </copy>
+    <copy if="'${os.name}' = 'windows'" src="lib/windows/x86-32/wrapper-windows-x86-32.dll" dest="${install.dir}/lib/windows/x86-32/wrapper-windows-x86-32.dll"/>
+    <copy if="'${os.name}' = 'windows'" src="bin/windows/x86-32/wrapper-windows-x86-32.exe" dest="${install.dir}/bin/windows/x86-32/wrapper-windows-x86-32.exe"/>
+    <copy if="'${os.name}' = 'Mac OS X'" src="lib/osx/x86-64/libwrapper-macosx-universal-64.jnilib" dest="${install.dir}/lib/osx/x86-64/libwrapper-macosx-universal-64.jnilib" chmod="755"/>
+    <copy if="'${os.name}' = 'Mac OS X'" src="bin/osx/x86-64/wrapper-macosx-universal-64" dest="${install.dir}/bin/osx/x86-64/wrapper-macosx-universal-64" chmod="755"/>
+    <copy if="fn:matches('${os.name}','(?i)Linux') and '${os.arch}' = 'x86_32'" src="lib/linux/x86-32/libwrapper-linux-x86-32.so" dest="${install.dir}/lib/linux/x86-32/libwrapper-linux-x86-32.so" chmod="+x"/>
+    <copy if="fn:matches('${os.name}','(?i)Linux') and '${os.arch}' = 'x86_32'" src="bin/linux/x86-32/wrapper-linux-x86-32" dest="${install.dir}/bin/linux/x86-32/wrapper-linux-x86-32" chmod="+x"/>
+    <copy if="fn:matches('${os.name}','(?i)Linux') and '${os.arch}' = 'amd64'" src="lib/linux/x86-64/libwrapper-linux-x86-64.so" dest="${install.dir}/lib/linux/x86-64/libwrapper-linux-x86-64.so" chmod="+x"/>
+    <copy if="fn:matches('${os.name}','(?i)Linux') and '${os.arch}' = 'amd64'" src="bin/linux/x86-64/wrapper-linux-x86-64" dest="${install.dir}/bin/linux/x86-64/wrapper-linux-x86-64" chmod="+x"/>
+    <CopyOtherFiles  dest="concat('${install.dir}/',@dest)"/>          
+    <shellcommand name="test.cmd" exec="uptime" if="test.cmd.prop"/>
+</install>
