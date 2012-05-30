@@ -118,20 +118,20 @@ public class ResourceManager extends CapoDataManager
 		transformer = tFactory.newTransformer();
 		transformer.setOutputProperty(OutputKeys.INDENT, "yes");
 		
-		//Build and load directories
+		//Build and load directories		
 		//no place should use append resource URI's like this except here where the resource manager hasn't been loaded yet, so auto resolution can't happen.
-		dataDir =  getResourceDescriptor(null,CapoApplication.getConfiguration().getValue(PREFERENCE.CAPO_DIR)+File.separatorChar+CapoApplication.getApplication().getApplicationDirectoryName());
+		dataDir =  getResourceDescriptor(null,CapoApplication.getConfiguration().getValue(PREFERENCE.CAPO_DIR));
 		ContentMetaData dataDirContentMetaData = dataDir.getContentMetaData(null);
 		if (dataDirContentMetaData.exists() == false)
         {
-			
+		    
 			//don't create this directory if auto sync is disabled.  
 			if(CapoApplication.getConfiguration().hasOption(PREFERENCE.DISABLE_CONFIG_AUTOSYNC) == false)
 			{
 				dataDir.performAction(null, Action.CREATE,new ResourceParameter(ResourceDescriptor.DefaultParameters.CONTAINER, "true"));
 				dataDir.close(null);
 				dataDir.open(null);
-			}
+			}			
         }
 		directoryHashMap.put(PREFERENCE.CAPO_DIR.toString(), dataDir);
 		
@@ -165,14 +165,14 @@ public class ResourceManager extends CapoDataManager
         {
             if (defaultDocumentProvider.location() != Location.BOTH)
             {
-        	if (defaultDocumentProvider.location() == Location.CLIENT && CapoApplication.isServer() == true)
-        	{
-        	    continue;
-        	}
-        	if (defaultDocumentProvider.location() == Location.SERVER && CapoApplication.isServer() == false)
-        	{
-        	    continue;
-        	}
+                if (defaultDocumentProvider.location() == Location.CLIENT && CapoApplication.isServer() == true)
+                {
+                    continue;
+                }
+                if (defaultDocumentProvider.location() == Location.SERVER && CapoApplication.isServer() == false)
+                {
+                    continue;
+                }
             }
         	
             Preference preference = CapoApplication.getConfiguration().getPreference(defaultDocumentProvider.directoryPreferenceName());

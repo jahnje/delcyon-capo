@@ -10,6 +10,8 @@
 	<property name="build.dir" value="${distribution.dir}/classes" />
 	<property name="package.src.dir" value="${build.dir}" />
 	<property name="lib.dir" value="./lib" />
+	<property name="bin.dir" value="./bin" />
+	<property name="config.dir" value="./config" />
 	<property name="resource.dir" value="resources" />
 
 	<property name="build_number.file" value="${app}.build.number" />
@@ -23,7 +25,7 @@
 	<property name="build.test_resources" value="${test_build.dir}/resource_classes" />
 	<property name="build.test_application" value="${test_build.dir}/application_classes" />
 	<property name="jarFileExtension" value="jar" />
-	<property name="webmodule.name" value="webmodule.war" />
+	
 
 	<!--END STANDARD BUILD PROPERTIES-->
 
@@ -135,6 +137,8 @@
 		<mkdir dir="${distribution.dir}" />
 		<mkdir dir="${build.dir}/help" />
 		<mkdir dir="${lib.dir}" />
+		<mkdir dir="${config.dir}" />
+		<mkdir dir="${bin.dir}" />
 		<mkdir dir="${otherlib.dir}" />
 		<mkdir dir="${resource.dir}" />
 		<mkdir dir="${test_resources.dir}" />
@@ -348,7 +352,13 @@
 	<target name="dist" depends="compile">
 		<echo>Building ${distribution.dir}/${product.name}-${version}.${build.number}.${patch.number}.${jarFileExtension}</echo>
 		<copy todir="${distribution.dir}/lib">
-			<fileset dir="${lib.dir}" />
+			<fileset dir="${lib.dir}" />			
+		</copy>
+		<copy todir="${distribution.dir}/bin">
+			<fileset dir="${bin.dir}" />			
+		</copy>
+		<copy todir="${distribution.dir}/config">
+			<fileset dir="${config.dir}" />			
 		</copy>
 		<antcall target="jar" />
 		<copy file="${distribution.dir}/${product.name}-${version}.${build.number}.${patch.number}.${jarFileExtension}" tofile="${distribution.dir}/${product.name}.${jarFileExtension}" />
@@ -371,12 +381,13 @@
 			<fileset dir="${distribution.dir}">
 				<include name="${product.name}.${jarFileExtension}" />
 				<include name="lib/**" />
-				
+				<include name="bin/**" />
+				<include name="config/**" />
 			</fileset>
 			<fileset  dir=".">
 				<include name="${app}.install.xml" />
 			</fileset>
-			<applicationDescriptor name="${main.class.path}" applicationDirectory="${product.name}" executable="${product.name}.${jarFileExtension}" installDocumentPath="${app}.install.xml"/>
+			<applicationDescriptor name="${main.class.path}" applicationDirectory="capo/${app}" executable="${product.name}.${jarFileExtension}" installDocumentPath="${app}.install.xml"/>
 		</InstallerBuildTask>
 	</target>
 

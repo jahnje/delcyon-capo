@@ -18,11 +18,10 @@ package com.delcyon.capo;
 
 import java.io.File;
 import java.io.FileOutputStream;
-import java.lang.reflect.Field;
 import java.util.HashMap;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.Vector;
-import java.util.Map.Entry;
 import java.util.logging.Level;
 import java.util.prefs.BackingStoreException;
 import java.util.prefs.Preferences;
@@ -255,7 +254,7 @@ public class Configuration
 		
 		
 		
-		Preferences systemPreferences = Preferences.systemNodeForPackage(this.getClass());
+		Preferences systemPreferences = Preferences.systemNodeForPackage(CapoApplication.getApplication().getClass());
 		
 		String capoDirString = systemPreferences.get(PREFERENCE.CAPO_DIR.longOption,null);
 		if (capoDirString == null)
@@ -317,6 +316,7 @@ public class Configuration
 		}
 		
 		loadPreferences();
+		preferenceValueHashMap.put(PREFERENCE.CAPO_DIR.longOption, capoDirString);
 		//print out preferences
 		//this also has the effect of persisting all of the default values if a values doesn't already exist
 		for (PREFERENCE preference : preferences)
