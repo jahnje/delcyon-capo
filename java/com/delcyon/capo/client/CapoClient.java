@@ -43,6 +43,7 @@ import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 
+import org.tanukisoftware.wrapper.WrapperManager;
 import org.w3c.dom.Document;
 
 import com.delcyon.capo.CapoApplication;
@@ -65,6 +66,7 @@ import com.delcyon.capo.resourcemanager.ResourceDescriptor;
 import com.delcyon.capo.resourcemanager.ResourceParameter;
 import com.delcyon.capo.resourcemanager.ResourceDescriptor.Action;
 import com.delcyon.capo.resourcemanager.types.FileResourceType;
+import com.delcyon.capo.server.CapoServer;
 import com.delcyon.capo.tasks.TaskManagerThread;
 
 /**
@@ -124,7 +126,7 @@ public class CapoClient extends CapoApplication
 	
 	private HashMap<String, String> idHashMap = new HashMap<String, String>();
     private boolean isReady = false;
-
+    private boolean interupted = false;
 
 	private boolean isDone = false;
 	
@@ -138,9 +140,8 @@ public class CapoClient extends CapoApplication
 	{
 		try
 		{
-			CapoClient capoClient = new CapoClient();
-			capoClient.init(programArgs);
-			capoClient.startup(programArgs);
+			init(programArgs);			
+			startup(programArgs);			
 		} catch (Exception e)
 		{
 			e.printStackTrace();
@@ -155,11 +156,10 @@ public class CapoClient extends CapoApplication
 	public static void main(String[] programArgs)
 	{
 		try
-		{
-			CapoClient capoClient = new CapoClient();
-			capoClient.init(programArgs);
-			capoClient.startup(programArgs);
-		} catch (Exception e)
+		{		    		   
+		    WrapperManager.start( new CapoClient(), programArgs );		    
+		} 
+		catch (Exception e)
 		{
 			e.printStackTrace();
 			System.exit(1);
@@ -524,13 +524,17 @@ public class CapoClient extends CapoApplication
 	{
 		if (TaskManagerThread.getTaskManagerThread() != null)
 		{
+		    CapoApplication.logger.log(Level.INFO,"Stopping Task Manager");
 			TaskManagerThread.getTaskManagerThread().interrupt();
+			CapoApplication.logger.log(Level.INFO,"Done Stopping Task Manager");
 		}
+		
+		CapoApplication.logger.log(Level.INFO,"Waiting for processing to finish.");
 		while(isDone == false)
 		{
 			Thread.sleep(500);
 		}
-		
+		CapoApplication.logger.log(Level.INFO,"Done.");
 	}
 	
 	

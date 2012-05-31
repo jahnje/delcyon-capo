@@ -282,7 +282,7 @@ public class Configuration
 				capoDirFile.mkdirs();
 			}
 		}
-		File configDir = new File(capoDirFile,CapoApplication.getApplication().getApplicationDirectoryName()+File.separatorChar+PREFERENCE.CONFIG_DIR.defaultValue);
+		File configDir = new File(capoDirFile,PREFERENCE.CONFIG_DIR.defaultValue);
 		if (configDir.exists() == false)
 		{
 			if (disableAutoSync == false)

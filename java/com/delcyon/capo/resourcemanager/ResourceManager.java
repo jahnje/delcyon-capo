@@ -16,7 +16,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 package com.delcyon.capo.resourcemanager;
 
-import java.io.File;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URL;
@@ -50,7 +49,6 @@ import com.delcyon.capo.resourcemanager.ResourceDescriptor.Action;
 import com.delcyon.capo.resourcemanager.remote.RemoteResourceType;
 import com.delcyon.capo.resourcemanager.types.ContentMetaData;
 import com.delcyon.capo.resourcemanager.types.FileResourceType;
-import com.delcyon.capo.tasks.TaskManagerThread;
 
 /**
  * @author jeremiah
