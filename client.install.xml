@@ -1,11 +1,25 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <install  main.class.name="com.delcyon.capo.client.CapoClient" app.name="capo-client">
+    <!-- Setup main capo dir -->
     <pref path="/com/delcyon/capo/client" get="CAPO_DIR" var="install.dir"/>
     <ask if="'${install.dir}' = '' or '${install.dir}' = '.'" message="please enter the path to install in" default="${user.dir}/${applicationDirectory}" var="install.dir"/>
     <pref path="/com/delcyon/capo/client" set="CAPO_DIR" var="install.dir"/>
+    
+    <!-- setup java execuatble -->
     <pref path="/com/delcyon/capo/client" get="JAVA_EXECUTABLE" var="java_command"/>
     <ask if="'${java_command}' = ''" var="java_command"  message="Please enter the path to the java command:" default="${java.home}/bin/java"/>
     <pref path="/com/delcyon/capo/client" set="JAVA_EXECUTABLE" var="java_command"/>
+    
+    <!-- Setup server lists -->
+    <pref path="/com/delcyon/capo/client" get="SERVER_LIST" var="server.list"/>
+    <ask if="'${server.list}' = ''" var="server.list"  message="Please enter the comma seperated list of servers" default="localhost"/>
+    <pref path="/com/delcyon/capo/client" set="SERVER_LIST" var="server.list"/>
+    
+    <!-- Setup server port -->
+    <pref path="/com/delcyon/capo/client" get="SERVER_PORT" var="server.port"/>
+    <ask if="'${server.port}' = ''" var="server.port"  message="Please enter the server port" default="8080"/>
+    <pref path="/com/delcyon/capo/client" set="SERVER_PORT" var="server.port"/>
+    
     <copy src="config/wrapper.conf" dest="${install.dir}/config/wrapper.conf" >
         <filter replacement="${java_command}" trigger="java_cmd" />
         <filter replacement="${main.class.name}" trigger="main.class.name" />

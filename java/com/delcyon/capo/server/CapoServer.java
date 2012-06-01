@@ -124,7 +124,7 @@ public class CapoServer extends CapoApplication
 		@Override
 		public String getDefaultValue()
 		{
-			return PreferenceInfoHelper.getInfo(this).defaultValue();
+		    return java.util.prefs.Preferences.systemNodeForPackage(CapoApplication.getApplication().getClass()).get(getLongOption(), PreferenceInfoHelper.getInfo(this).defaultValue());			
 		}
 
 		@Override

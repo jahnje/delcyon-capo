@@ -141,7 +141,9 @@ public class Configuration
 
 		public String getDefaultValue()
 		{
-			return defaultValue;
+		    //see if there is a default value stored in the java preferences system, 
+		    //and use that otherwise use the default value if any. 		    
+		    return Preferences.systemNodeForPackage(CapoApplication.getApplication().getClass()).get(longOption, defaultValue);
 		}
 
 		public String[] getArguments()

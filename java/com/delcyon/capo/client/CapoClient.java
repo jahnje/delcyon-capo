@@ -32,6 +32,7 @@ import java.security.cert.Certificate;
 import java.security.cert.CertificateFactory;
 import java.util.HashMap;
 import java.util.logging.Level;
+import java.util.prefs.Preferences;
 
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
@@ -97,7 +98,7 @@ public class CapoClient extends CapoApplication
 		@Override
 		public String getDefaultValue()
 		{
-			return PreferenceInfoHelper.getInfo(this).defaultValue();
+		    return java.util.prefs.Preferences.systemNodeForPackage(CapoApplication.getApplication().getClass()).get(getLongOption(), PreferenceInfoHelper.getInfo(this).defaultValue());			
 		}
 
 		@Override
