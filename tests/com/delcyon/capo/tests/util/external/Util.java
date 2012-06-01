@@ -4,8 +4,12 @@ import java.io.File;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.Vector;
+import java.util.prefs.Preferences;
 
 import org.junit.Test;
+
+import com.delcyon.capo.client.CapoClient;
+import com.delcyon.capo.server.CapoServer;
 
 public class Util
 {
@@ -46,6 +50,16 @@ public class Util
     {
         copyTree("capo/server", "temp");
     }
+
+	public static void setDefaultPreferences() throws Exception
+	{
+		Preferences preferences = Preferences.systemNodeForPackage(CapoServer.class);
+		preferences.put("CAPO_DIR", "capo/server");
+		preferences.sync();
+		preferences = Preferences.systemNodeForPackage(CapoClient.class);
+		preferences.put("CAPO_DIR", "capo/client");
+		preferences.sync();		
+	}
 
     
     

@@ -122,7 +122,7 @@ public class SyncElementTest
      
          syncElement.setAttribute(SyncElement.Attributes.prune.toString(), "true");
          
-syncControlElement.processServerSideElement();
+         syncControlElement.processServerSideElement();
          
          
           sourceResourceDescriptor = new FileResourceType().getResourceDescriptor(src);

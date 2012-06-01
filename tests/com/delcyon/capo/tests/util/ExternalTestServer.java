@@ -1,10 +1,12 @@
 package com.delcyon.capo.tests.util;
 import java.net.URLClassLoader;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.prefs.Preferences;
 
 import org.junit.Test;
 
 import com.delcyon.capo.client.CapoClient;
+import com.delcyon.capo.server.CapoServer;
 import com.delcyon.capo.tests.util.external.Util;
 
 /**
@@ -67,10 +69,13 @@ public class ExternalTestServer
 	public void testExternalServer() throws Exception
 	{
 		Util.deleteTree("capo");
-	    Util.copyTree("test-data/capo", "capo");	    
+	    Util.copyTree("test-data/capo", "capo");
+	    Util.setDefaultPreferences();	    
 		ExternalTestServer externalTestServer = new ExternalTestServer();
 		externalTestServer.startServer();
-		CapoClient.main(new String[]{});
+		CapoClient capoClient = new CapoClient();
+		capoClient.start(new String[]{});
+		//CapoClient.main();
 		//Thread.sleep(10000);
 		externalTestServer.shutdown();
 		CopyOnWriteArrayList<Exception> exceptionList = externalTestServer.getExceptionList();
