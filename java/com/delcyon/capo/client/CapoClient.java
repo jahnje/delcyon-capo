@@ -32,7 +32,6 @@ import java.security.cert.Certificate;
 import java.security.cert.CertificateFactory;
 import java.util.HashMap;
 import java.util.logging.Level;
-import java.util.prefs.Preferences;
 
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
@@ -67,7 +66,6 @@ import com.delcyon.capo.resourcemanager.ResourceDescriptor;
 import com.delcyon.capo.resourcemanager.ResourceParameter;
 import com.delcyon.capo.resourcemanager.ResourceDescriptor.Action;
 import com.delcyon.capo.resourcemanager.types.FileResourceType;
-import com.delcyon.capo.server.CapoServer;
 import com.delcyon.capo.tasks.TaskManagerThread;
 
 /**
@@ -488,9 +486,13 @@ public class CapoClient extends CapoApplication
             
             Certificate certificate = CertificateFactory.getInstance("X.509").generateCertificate(new ByteArrayInputStream(certificateEncoding));
             
-            System.out.println("Enter Password:");
-            BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
-            String serverPassword = br.readLine();
+            String serverPassword = CapoApplication.getConfiguration().getValue(PREFERENCE.CLIENT_VERIFICATION_PASSWORD);
+            if (serverPassword.isEmpty())
+            {
+            	System.out.println("Enter Password:");
+            	BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
+            	serverPassword = br.readLine();
+            }
             certificateRequest.setPayload(serverPassword);
             certificateRequest.setParameter(CertificateRequest.Attributes.CLIENT_PUBLIC_KEY, DatatypeConverter.printBase64Binary(rsaKeyPair.getPublic().getEncoded()));
             certificateRequest.resend();

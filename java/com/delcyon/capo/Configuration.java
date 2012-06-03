@@ -83,6 +83,7 @@ public class Configuration
 		RESPONSE_DIR("RESPONSE_DIR", "RESPONSE_DIR", "directory where responses to requests are stored, relative to root data dir, server only", "responses", new String[] { "dir" }),
 		KEYSTORE("KEYSTORE", "KEYSTORE", "location of java keystore default = keystore", "keystore", new String[] { "file" }),
 		KEYSTORE_PASSWORD("KEYSTORE_PASSWORD", "KEYSTORE_PASSWORD", "password for java keystore. default is 'password'", "password", new String[] { "password" }),
+		CLIENT_VERIFICATION_PASSWORD("CLIENT_VERIFICATION_PASSWORD", "CLIENT_VERIFICATION_PASSWORD", "Initial password for unknown clients to use. If left blank a random password will be generated for each client. default is blank", "", new String[] { "password" }),
 		MODE("m", "MODE", "mode to run capo in client, server, hybrid. default 'client'", "client", new String[] { "mode" }),
 		CLIENT_MODE("cm", "CLIENT_MODE", "what kind of client connection to use, persistant or dynamic. default is dynamic", "dynamic", new String[] { "client_mode" }), 
 		STARTUP_SCRIPT("STARTUP_SCRIPT","STARTUP_SCRIPT","Capo formatted XML file, relative to CONFIG_DIR, containing controls to run at startup, before server becomes available.","startup.xml",new String[] { "file" }), 

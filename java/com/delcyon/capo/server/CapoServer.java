@@ -26,10 +26,10 @@ import java.net.SocketException;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.KeyStore;
-import java.security.KeyStore.PrivateKeyEntry;
-import java.security.KeyStore.TrustedCertificateEntry;
 import java.security.Security;
 import java.security.Signature;
+import java.security.KeyStore.PrivateKeyEntry;
+import java.security.KeyStore.TrustedCertificateEntry;
 import java.security.cert.Certificate;
 import java.security.cert.X509Certificate;
 import java.util.Arrays;
@@ -83,8 +83,8 @@ import com.delcyon.capo.preferences.PreferenceProvider;
 import com.delcyon.capo.protocol.server.ClientRequestProcessorSessionManager;
 import com.delcyon.capo.resourcemanager.CapoDataManager;
 import com.delcyon.capo.resourcemanager.ResourceDescriptor;
-import com.delcyon.capo.resourcemanager.ResourceDescriptor.Action;
 import com.delcyon.capo.resourcemanager.ResourceParameter;
+import com.delcyon.capo.resourcemanager.ResourceDescriptor.Action;
 import com.delcyon.capo.resourcemanager.types.FileResourceType;
 import com.delcyon.capo.tasks.TaskManagerThread;
 import com.delcyon.capo.xml.XPath;
@@ -158,6 +158,7 @@ public class CapoServer extends CapoApplication
 	private ThreadPoolExecutor threadPoolExecutor;
 	private ClientRequestProcessorSessionManager clientRequestProcessorSessionManager;
     private SSLSocketFactory sslSocketFactory;
+	private ThreadGroup threadPoolGroup;
 
 	public CapoServer() throws Exception
 	{
@@ -280,6 +281,9 @@ public class CapoServer extends CapoApplication
 	
 	public void shutdown() throws Exception
 	{
+		long incrementalWaitTime = 2000;
+		long maxWaitTime = 30000;
+		long totalWaitTime = 0;
 		logger.log(Level.INFO, "Shuting Down Server");
 		isShutdown = true;
 		if (serverSocket != null)
@@ -293,10 +297,17 @@ public class CapoServer extends CapoApplication
 			logger.log(Level.INFO, "Stopping thread pool");
 			threadPoolExecutor.shutdown();
 			
+			 
 			while(threadPoolExecutor.isTerminated() == false)
 			{
 				logger.log(Level.INFO, "Waiting for thread pool to shutdown...");
-				sleep(1000);
+				sleep(incrementalWaitTime);
+				totalWaitTime += incrementalWaitTime;
+				if (totalWaitTime >= maxWaitTime)
+				{
+					logger.log(Level.WARNING, "Forcing thread pool to shutdown... ");
+					threadPoolExecutor.shutdownNow();
+				}
 			}
 		}
 		
@@ -307,7 +318,7 @@ public class CapoServer extends CapoApplication
 			while(TaskManagerThread.getTaskManagerThread().isAlive())
 			{
 				logger.log(Level.INFO, "Waiting for Task Manager to shutdown...");
-				sleep(1000);
+				sleep(incrementalWaitTime);
 			}
 			
 		}
@@ -319,14 +330,14 @@ public class CapoServer extends CapoApplication
 			while(clientRequestProcessorSessionManager.isAlive())
 			{
 				logger.log(Level.INFO, "Waiting for Session Manager to shutdown...");
-				sleep(1000);
+				sleep(incrementalWaitTime);
 			}
 		}
 		
 		while(isReady == true)
 		{
 			logger.log(Level.INFO, "Waiting for final shutdown...");
-			Thread.sleep(100);
+			Thread.sleep(incrementalWaitTime);
 		}
 		logger.log(Level.INFO, "Server Shutdown");
 	}
@@ -342,8 +353,9 @@ public class CapoServer extends CapoApplication
 	public void startup(String[] programArgs) throws Exception
 	{
 		SynchronousQueue<Runnable> synchronousQueue = new SynchronousQueue<Runnable>();
+		threadPoolGroup = new ThreadGroup("Thread Pool Group");
 		threadPoolExecutor = new ThreadPoolExecutor(getConfiguration().getIntValue(Preferences.START_THREADPOOL_SIZE), getConfiguration().getIntValue(Preferences.MAX_THREADPOOL_SIZE), getConfiguration().getIntValue(Preferences.THREAD_IDLE_TIME), TimeUnit.MILLISECONDS, synchronousQueue);
-		threadPoolExecutor.setThreadFactory(new CapoThreadFactory());
+		threadPoolExecutor.setThreadFactory(new CapoThreadFactory(threadPoolGroup));
 		
 		SSLContext sslContext = SSLContext.getInstance("SSL");
 

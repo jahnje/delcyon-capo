@@ -25,13 +25,18 @@ import java.util.concurrent.ThreadFactory;
 public class CapoThreadFactory implements ThreadFactory
 {
 
+	private ThreadGroup threadGroup;
+	public CapoThreadFactory(ThreadGroup threadGroup)
+	{
+		this.threadGroup = threadGroup;
+	}
 	/* (non-Javadoc)
 	 * @see java.util.concurrent.ThreadFactory#newThread(java.lang.Runnable)
 	 */
 	@Override
 	public Thread newThread(Runnable runnable)
-	{
-		return new ContextThread(runnable);
+	{		
+		return new ContextThread(threadGroup, runnable);
 	}
 
 }

@@ -26,13 +26,15 @@ import java.util.Map.Entry;
 import java.util.logging.Level;
 
 import com.delcyon.capo.CapoApplication;
+import com.delcyon.capo.ContextThread;
+import com.delcyon.capo.InterruptibleRunnable;
 
 /**
  * @author jeremiah
  *
  */
 @SuppressWarnings("unchecked")
-public class StreamHandler extends Thread 
+public class StreamHandler implements InterruptibleRunnable
 {
 	
 	
@@ -95,10 +97,11 @@ public class StreamHandler extends Thread
 	private Vector<StreamFinalizer> streamFinalizerVector = new Vector<StreamFinalizer>();
 	@SuppressWarnings("unused")
 	private HashMap<String, String> sessionHashMap;
+	boolean interruptAttempt = false;
 	
 	public StreamHandler(StreamProcessor streamProcessor) throws Exception
 	{
-		super(streamProcessor.getClass().getSimpleName());
+		super();
 		this.streamProcessor = streamProcessor;
 	}
 
@@ -113,9 +116,37 @@ public class StreamHandler extends Thread
 	@Override
 	public void run()
 	{
+			
+			if (Thread.currentThread() instanceof ContextThread)
+			{
+				((ContextThread)Thread.currentThread()).setInterruptible(this);
+			}
+			try
+			{
+				streamProcessor.processStream(inputStream, outputStream);
+			} 
+			catch (Exception exception)
+			{
+				CapoApplication.logger.log(Level.WARNING, "Exception thrown when processing stream with "+streamProcessor.getClass().getSimpleName(),exception);
+			}
+			finally
+			{
+				//remove ourselves from the context thread once we are about to shut down anyway.
+				if (Thread.currentThread() instanceof ContextThread)
+				{
+					((ContextThread)Thread.currentThread()).setInterruptible(null);
+				}
+				shutdown();
+			}
+		
+		
+		
+	}
+
+	public void shutdown()
+	{
 		try
-		{			
-			streamProcessor.processStream(inputStream, outputStream);
+		{						
 			outputStream.flush();
 			inputStream.close();
 			outputStream.close();
@@ -125,7 +156,7 @@ public class StreamHandler extends Thread
 			}
 		} catch (Exception exception)
 		{
-			CapoApplication.logger.log(Level.WARNING, "Exception thrown when processing stream with "+getName(),exception);
+			CapoApplication.logger.log(Level.WARNING, "Exception thrown when closing stream with "+streamProcessor.getClass().getSimpleName(),exception);
 			//close streams, other wise the client keeps the connection open
 			//TODO send an error message to the client here?
 			try
@@ -157,15 +188,32 @@ public class StreamHandler extends Thread
 				CapoApplication.getApplication().getExceptionList().add(exception);
 			}
 		}
-		
 	}
-
+	
 	public void add(StreamFinalizer streamFinalizer)
 	{
 		streamFinalizerVector.add(streamFinalizer);
 		
 	}
 
+	/**
+	 * This method must be called twice for it to work, this is due to the way ThreadPools work. 
+	 * We want to give things a chance to finish naturally, but if they are insistent, then shut things down hard.
+	 */
+	public void interrupt()
+	{	
+		Thread.dumpStack();
+		if (interruptAttempt == true)
+		{
+			CapoApplication.logger.log(Level.WARNING,"Insistant Interrupt attempt, forcing shutdown");
+			shutdown();
+		}
+		else
+		{
+			CapoApplication.logger.log(Level.WARNING,"Interrupt attempt, ignoreing");
+			interruptAttempt = true;
+		}
+	}
 	
 	
 }

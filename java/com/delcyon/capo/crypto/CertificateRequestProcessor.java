@@ -50,6 +50,7 @@ import org.w3c.dom.Element;
 
 import com.delcyon.capo.CapoApplication;
 import com.delcyon.capo.Configuration;
+import com.delcyon.capo.Configuration.PREFERENCE;
 import com.delcyon.capo.controller.server.ControllerProcessingException;
 import com.delcyon.capo.protocol.server.ClientRequest;
 import com.delcyon.capo.protocol.server.ClientRequestProcessor;
@@ -156,8 +157,13 @@ public class CertificateRequestProcessor implements ClientRequestProcessor
 			certificateRequestElement.setAttribute(CertificateRequest.Attributes.SERVER_ID.toString(), CapoApplication.getConfiguration().getValue(CapoServer.Preferences.SERVER_ID));
 			certificateRequestElement.setAttribute(CertificateRequest.Attributes.CLIENT_ID.toString(), clientID);
 			
-			String oneTimePassword = (new Random().nextInt(Integer.MAX_VALUE))+"";
-			CapoApplication.logger.log(Level.INFO, "One time client password = '"+oneTimePassword+"'");
+			String oneTimePassword = CapoApplication.getConfiguration().getValue(PREFERENCE.CLIENT_VERIFICATION_PASSWORD);
+			if (oneTimePassword.isEmpty())
+			{
+				oneTimePassword = (new Random().nextInt(Integer.MAX_VALUE))+"";
+				CapoApplication.logger.log(Level.INFO, "One time client verification password = '"+oneTimePassword+"'");
+			}
+			
 			clientRequest.getXmlStreamProcessor().writeDocument(clientRequest.getRequestDocument());
 			Document reuquestDocument = clientRequest.getXmlStreamProcessor().readNextDocument();
 			

@@ -16,6 +16,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 package com.delcyon.capo;
 
+
 /**
  * @author jeremiah
  *
@@ -23,7 +24,8 @@ package com.delcyon.capo;
 public class ContextThread extends Thread
 {
 
-	private Object context = null;
+	private Object context = null;	
+	private InterruptibleRunnable interruptibleRunnable = null;
 	
 	public ContextThread()
 	{
@@ -35,9 +37,10 @@ public class ContextThread extends Thread
 		super(threadName);
 	}
 	
-	public ContextThread(Runnable runnable)
+	public ContextThread(ThreadGroup threadGroup, Runnable runnable)
 	{
-		super(runnable, "ContextThread");
+		super(threadGroup, runnable, "ContextThread");		  
+		this.interruptibleRunnable = null;
 	}
 
 	public Object getContext()
@@ -50,4 +53,24 @@ public class ContextThread extends Thread
 		this.context = context;
 	}
 	
+	@Override
+	public void interrupt()
+	{
+		if (interruptibleRunnable != null)
+		{
+			interruptibleRunnable.interrupt();
+		}
+		super.interrupt();
+
+	}
+
+	/**
+	 * Make sure you set this to null once you're about to stop so that intterupt doesn't get called on already dead threads. 
+	 * @param interruptibleRunnable
+	 */
+	public void setInterruptible(InterruptibleRunnable interruptibleRunnable)
+	{
+		this.interruptibleRunnable = interruptibleRunnable;
+		
+	}
 }
