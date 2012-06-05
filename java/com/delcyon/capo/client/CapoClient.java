@@ -45,6 +45,7 @@ import javax.xml.transform.stream.StreamResult;
 
 import org.tanukisoftware.wrapper.WrapperManager;
 import org.w3c.dom.Document;
+import org.w3c.dom.Element;
 
 import com.delcyon.capo.CapoApplication;
 import com.delcyon.capo.Configuration;
@@ -67,6 +68,7 @@ import com.delcyon.capo.resourcemanager.ResourceParameter;
 import com.delcyon.capo.resourcemanager.ResourceDescriptor.Action;
 import com.delcyon.capo.resourcemanager.types.FileResourceType;
 import com.delcyon.capo.tasks.TaskManagerThread;
+import com.delcyon.capo.xml.XPath;
 
 /**
  * @author jeremiah
@@ -126,7 +128,6 @@ public class CapoClient extends CapoApplication
 	private HashMap<String, String> idHashMap = new HashMap<String, String>();
     private boolean isReady = false;
     private boolean interupted = false;
-
 	private boolean isDone = false;
 	
 	public CapoClient() throws Exception
@@ -275,8 +276,16 @@ public class CapoClient extends CapoApplication
 			runRequest(capoConnection, controllerRequest,sessionHashMap);
 		} catch (Exception e)
 		{
-			e.printStackTrace();
-			System.exit(1);
+			//if something else is monitoring this client, don't exit on error, leave it to the monitor to do so.
+			if (getExceptionList() != null)
+			{
+				getExceptionList().add(e);				
+			}
+			else //we're on our own here, so just exit.
+			{
+				CapoApplication.logger.log(Level.SEVERE, "Exception thrown in main processing loop. Exiting.",e);				
+				System.exit(1);
+			}
 		}
 		isDone  = true;
 	}
@@ -450,7 +459,7 @@ public class CapoClient extends CapoApplication
         trustManagerFactory.init(getKeyStore());
         
 		sslContext.init(keyManagerFactory.getKeyManagers(), trustManagerFactory.getTrustManagers(), new java.security.SecureRandom());		
-		CapoConnection.sslSocketFactory = sslContext.getSocketFactory();
+		setSslSocketFactory(sslContext.getSocketFactory());
 		
 	}
 	
@@ -496,6 +505,22 @@ public class CapoClient extends CapoApplication
             certificateRequest.setPayload(serverPassword);
             certificateRequest.setParameter(CertificateRequest.Attributes.CLIENT_PUBLIC_KEY, DatatypeConverter.printBase64Binary(rsaKeyPair.getPublic().getEncoded()));
             certificateRequest.resend();
+            
+            //we need to make sure that we wait for a server response here, so that we don't continue processing until the server has had time to update its keystore.
+            Element responseElement = certificateRequest.readResponse();
+            if (responseElement.hasAttribute("result") == false)
+            {
+            	throw new Exception("Server did NOT process key request, check logs.");
+            }
+            else if (responseElement.getAttribute("result").equals("WRONG_PASSWORD"))
+            {            	
+            	throw new Exception("Wrong Password.");
+            }
+            else if (responseElement.getAttribute("result").equals("SUCCESS") == false)
+            {
+            	XPath.dumpNode(responseElement, System.err);
+            	throw new Exception("Server did NOT process key request, check logs.");
+            }
             
 			keyStore.load(null, password);
 			

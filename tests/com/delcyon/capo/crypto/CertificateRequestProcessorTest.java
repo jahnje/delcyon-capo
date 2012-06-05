@@ -13,6 +13,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 
 import javax.xml.parsers.DocumentBuilderFactory;
 
+import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -22,6 +23,7 @@ import org.w3c.dom.Element;
 
 import com.delcyon.capo.client.CapoClient;
 import com.delcyon.capo.tests.util.ExternalTestServer;
+import com.delcyon.capo.tests.util.TestCapoApplication;
 import com.delcyon.capo.tests.util.external.Util;
 import com.delcyon.capo.xml.XPath;
 
@@ -45,6 +47,12 @@ public class CertificateRequestProcessorTest
 		persistantPassword = "This is a test password";
 	}
 
+	@AfterClass
+	public static void tearDownAfterClass()
+	{
+		TestCapoApplication.cleanup();
+	}
+	
 	@Test
 	public void testServerEmptyClientEmpty() throws Exception
 	{
@@ -258,9 +266,68 @@ public class CertificateRequestProcessorTest
 	}
 
 	@Test
-	public void testServerEmptyClientSet()
+	public void testServerEmptyClientSet() throws Exception
 	{
-		fail("Not yet implemented");
+		//setup
+		Util.deleteTree("capo");
+	    Util.copyTree("test-data/capo/server", "capo/server");
+	    Util.deleteTree("capo/server/clients");
+	    Util.setDefaultPreferences();
+//	    Document serverConfigDocument = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(new File("capo/server/config/config.xml"));
+//	    Element entryElement = serverConfigDocument.createElement("entry");
+//	   
+//	    entryElement.setAttribute("key", "CLIENT_VERIFICATION_PASSWORD");
+//	    entryElement.setAttribute("value", persistantPassword);
+//	    serverConfigDocument.getDocumentElement().appendChild(entryElement);
+//	    XPath.dumpNode(serverConfigDocument, new FileOutputStream("capo/server/config/config.xml"));
+		ExternalTestServer externalTestServer = new ExternalTestServer();
+		externalTestServer.startServer();
+		
+		capoClient = new CapoClient();
+		capoClient.setExceptionList(new CopyOnWriteArrayList<Exception>());
+		Thread clientThread = new Thread()
+		{
+			public void run() 
+			{
+				
+				try
+				{
+					
+					capoClient.start(new String[]{"-CLIENT_VERIFICATION_PASSWORD",persistantPassword});		
+				} catch (Exception e)
+				{
+					exception = e;					
+				}
+				
+			};
+		};
+		
+		
+		clientThread.start();
+		while(capoClient.isReady() == false)
+		{
+			Thread.sleep(1000);
+		}
+		
+		
+		
+		capoClient.shutdown();
+		CopyOnWriteArrayList<Exception> exceptionList = capoClient.getExceptionList();
+		Assert.assertEquals("Expecting one wrong password exception",1, exceptionList.size());
+		Assert.assertEquals("Expecting wrong password exception","Wrong Password.", exceptionList.get(0).getMessage());
+		
+		//shutdown
+		
+		externalTestServer.shutdown();
+		exceptionList = externalTestServer.getExceptionList();
+		if (exceptionList.isEmpty() == false)
+		{
+			throw exceptionList.get(0);
+		}
+		
+		Document configDocument = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(new File("capo/client/config/config.xml"));
+		String clientID = XPath.selectSingleNodeValue(configDocument.getDocumentElement(), "//entry[@key = 'CLIENT_ID']/@value");
+		Assert.assertEquals("client id not right!", "capo.client.2", clientID);
 	}
 
 	@Test

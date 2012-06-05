@@ -201,8 +201,16 @@ public class CertificateRequestProcessor implements ClientRequestProcessor
 				X509Certificate certificate = new JcaX509CertificateConverter().setProvider(BC).getCertificate(certificateBuilder.build(contentSigner));
 				CapoApplication.getKeyStore().setCertificateEntry(clientAlias, certificate);
 				((CapoServer)CapoApplication.getApplication()).writeKeyStore(CapoApplication.getKeyStore());
+				Document responseDocument = CapoApplication.getDefaultDocument("default_response.xml");
+				responseDocument.getDocumentElement().setAttribute("result", "SUCCESS");
+				clientRequest.getXmlStreamProcessor().writeDocument(responseDocument);
 			}
-
+			else
+			{
+				Document responseDocument = CapoApplication.getDefaultDocument("default_response.xml");
+				responseDocument.getDocumentElement().setAttribute("result", "WRONG_PASSWORD");
+				clientRequest.getXmlStreamProcessor().writeDocument(responseDocument);
+			}
 				
 		}
 	}

@@ -26,6 +26,7 @@ import java.util.logging.FileHandler;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import javax.net.ssl.SSLSocketFactory;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.transform.OutputKeys;
@@ -66,7 +67,7 @@ public abstract class CapoApplication extends ContextThread implements WrapperLi
 	public static final String RESOURCE_NAMESPACE_URI = "http://www.delcyon.com/capo/resource";
 	public static final String CAPO_NAMESPACE_URI = "http://www.delcyon.com/capo";
 	
-	private static CapoApplication capoApplication;
+	protected static CapoApplication capoApplication;
 	public static Level LOGGING_LEVEL = Level.INFO;
 	public static Logger logger = null;
 	private static LeveledConsoleHandler leveledConsoleHandler;
@@ -75,8 +76,9 @@ public abstract class CapoApplication extends ContextThread implements WrapperLi
 	private Transformer transformer;
 	private Map<String, Set<String>> annotaionMap;
 	private CopyOnWriteArrayList<Exception> exceptionList;
+	private SSLSocketFactory sslSocketFactory;
 	private static HashMap<String, String> applicationVariableHashMap = new HashMap<String, String>();
-	private static KeyStore keyStore = null;
+	private KeyStore keyStore = null;
 	private static CapoDataManager dataManager = null;
 	private static Configuration configuration = null;
     private static DocumentBuilderFactory documentBuilderFactory;
@@ -254,21 +256,31 @@ public abstract class CapoApplication extends ContextThread implements WrapperLi
 		return applicationVariableHashMap.remove(varName);
 	}
 
-	public static void setKeyStore(KeyStore keyStore)
+	public static SSLSocketFactory getSslSocketFactory()
 	{
-		CapoApplication.keyStore = keyStore;
+		return getApplication().sslSocketFactory;
+	}
+	
+	public void setSslSocketFactory(SSLSocketFactory sslSocketFactory)
+	{
+		this.sslSocketFactory = sslSocketFactory;
+	}
+	
+	public void setKeyStore(KeyStore keyStore)
+	{
+		this.keyStore = keyStore;
 	}
 	
 	public static KeyStore getKeyStore()
 	{
-		return keyStore;
+		return getApplication().keyStore;
 	}
 	
 	public static byte[] getCeritifcate() throws Exception
 	{
-		if (keyStore != null)
+		if (getApplication().keyStore != null)
 		{
-			return keyStore.getCertificate("capo.server.cert").getEncoded();
+			return getApplication().keyStore.getCertificate("capo.server.cert").getEncoded();
 		}
 		else
 		{

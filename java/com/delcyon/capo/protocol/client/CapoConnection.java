@@ -38,7 +38,7 @@ import com.delcyon.capo.client.CapoClient;
 public class CapoConnection
 {
 
-	public static SSLSocketFactory sslSocketFactory = null;
+	
 	
 	private Socket socket;	
 	private BufferedInputStream inputStream;
@@ -74,9 +74,9 @@ public class CapoConnection
 		{
 			
 			CapoClient.logger.log(Level.FINE, "Opening Socket to "+serverAddress+":"+port);
-			if (sslSocketFactory != null)
+			if (CapoApplication.getSslSocketFactory() != null)
 			{				
-				this.socket = sslSocketFactory.createSocket(serverAddress, port);
+				this.socket = CapoApplication.getSslSocketFactory().createSocket(serverAddress, port);
 			}
 	        else 
 	        {
@@ -87,7 +87,7 @@ public class CapoConnection
 		socket.setKeepAlive(true);
 		this.inputStream = new BufferedInputStream(socket.getInputStream()); 
 		this.outputStream = socket.getOutputStream();
-		if (CapoApplication.getKeyStore() != null && sslSocketFactory != null)
+		if (CapoApplication.getKeyStore() != null && CapoApplication.getSslSocketFactory() != null)
 		{
 			CapoApplication.logger.finer("SSL SID:"+DatatypeConverter.printHexBinary(((SSLSocket)socket).getSession().getId()));
 			String clientID = CapoApplication.getConfiguration().getValue(CapoClient.Preferences.CLIENT_ID);

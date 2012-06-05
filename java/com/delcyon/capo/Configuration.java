@@ -351,7 +351,7 @@ public class Configuration
 			{
 				putPref(preference.getLongOption(), commandLine.getOptionValue(preference.getOption()));
 				try
-				{
+				{					
 					sync();
 				} catch (BackingStoreException e)
 				{						
@@ -466,7 +466,16 @@ public class Configuration
 			Set<Entry<String, String>> preferenceEntrySet = preferenceValueHashMap.entrySet();
 			for (Entry<String, String> entry : preferenceEntrySet)
 			{
-				putXmlPref(entry.getKey(), entry.getValue());
+				//do not persist certain preferences
+				if (entry.getKey().equals(PREFERENCE.CLIENT_VERIFICATION_PASSWORD.getLongOption()) && CapoApplication.isServer() == false)
+				{
+					continue;
+				}
+				else
+				{
+					putXmlPref(entry.getKey(), entry.getValue());	
+				}
+				
 			}
 			if (disableAutoSync == false)
 			{

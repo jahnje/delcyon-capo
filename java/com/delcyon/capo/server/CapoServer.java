@@ -45,7 +45,6 @@ import java.util.logging.Level;
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSocket;
-import javax.net.ssl.SSLSocketFactory;
 import javax.net.ssl.TrustManagerFactory;
 import javax.xml.bind.DatatypeConverter;
 import javax.xml.transform.OutputKeys;
@@ -157,7 +156,7 @@ public class CapoServer extends CapoApplication
 	private boolean isShutdown = false;
 	private ThreadPoolExecutor threadPoolExecutor;
 	private ClientRequestProcessorSessionManager clientRequestProcessorSessionManager;
-    private SSLSocketFactory sslSocketFactory;
+   
 	private ThreadGroup threadPoolGroup;
 
 	public CapoServer() throws Exception
@@ -366,7 +365,7 @@ public class CapoServer extends CapoApplication
 		keyManagerFactory.init(getKeyStore(), getConfiguration().getValue(PREFERENCE.KEYSTORE_PASSWORD).toCharArray());
 		
 		sslContext.init(keyManagerFactory.getKeyManagers(), trustManagerFactory.getTrustManagers(), new java.security.SecureRandom());
-		sslSocketFactory = sslContext.getSocketFactory();
+		setSslSocketFactory(sslContext.getSocketFactory());
 
 		start();
 	}
@@ -428,7 +427,7 @@ public class CapoServer extends CapoApplication
 	                try
 	                {
 
-	                    socket = sslSocketFactory.createSocket(socket, socket.getLocalAddress().getHostAddress(), socket.getLocalPort(), true);
+	                    socket = CapoApplication.getSslSocketFactory().createSocket(socket, socket.getLocalAddress().getHostAddress(), socket.getLocalPort(), true);
 
 	                } 
 	                catch (Exception exception)

@@ -138,6 +138,7 @@ public class ClientRequestXMLProcessor implements XMLProcessor
 		{
 			
 			clientRequestProcessor.process(clientRequest);
+			//TODO send finished indicator
 		}
 		else
 		{
@@ -159,6 +160,7 @@ public class ClientRequestXMLProcessor implements XMLProcessor
 				clientRequestProcessor.process(clientRequest);
 				//because once a control main request processor runs, we no longer need to have a link reference to it, remove it. 
 				ClientRequestProcessorSessionManager.removeClientRequestProcessor(clientRequestProcessor);
+				//TODO send finished indicator
 			}
 			else
 			{
