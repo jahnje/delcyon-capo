@@ -29,9 +29,6 @@ public interface ControlElement
 {
 	
 	
-	public static final String CLIENT_NAMESPACE_URI = "http://www.delcyon.com/capo-client";
-	public static final String SERVER_NAMESPACE_URI = "http://www.delcyon.com/capo-server";
-	
 	public String[] getSupportedNamespaces();
 	
 	public String getElementName();

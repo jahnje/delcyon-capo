@@ -18,9 +18,9 @@ package com.delcyon.capo.tasks;
 
 import org.w3c.dom.Element;
 
+import com.delcyon.capo.CapoApplication;
 import com.delcyon.capo.controller.AbstractClientSideControl;
 import com.delcyon.capo.controller.ControlElementProvider;
-import com.delcyon.capo.controller.elements.GroupElement;
 import com.delcyon.capo.controller.server.ControllerResponse;
 
 /**
@@ -40,7 +40,7 @@ public class TaskElement extends AbstractClientSideControl
 	
 	
 	
-	private static final String[] supportedNamespaces = {GroupElement.SERVER_NAMESPACE_URI};
+	private static final String[] supportedNamespaces = {CapoApplication.SERVER_NAMESPACE_URI};
 	
 	@Override
 	public Attributes[] getAttributes()

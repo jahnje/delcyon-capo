@@ -84,6 +84,8 @@ public abstract class CapoApplication extends ContextThread implements WrapperLi
 	private SSLSocketFactory sslSocketFactory;
 	private static HashMap<String, String> applicationVariableHashMap = new HashMap<String, String>();
 	private KeyStore keyStore = null;
+	public static final String SERVER_NAMESPACE_URI = "http://www.delcyon.com/capo-server";
+	public static final String CLIENT_NAMESPACE_URI = "http://www.delcyon.com/capo-client";
 	private static CapoDataManager dataManager = null;
 	private static Configuration configuration = null;
     private static DocumentBuilderFactory documentBuilderFactory;

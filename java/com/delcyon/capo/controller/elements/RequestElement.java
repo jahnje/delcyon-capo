@@ -51,7 +51,7 @@ public class RequestElement extends AbstractControl
 	
 	
 	
-	private static final String[] supportedNamespaces = {GroupElement.SERVER_NAMESPACE_URI};
+	private static final String[] supportedNamespaces = {CapoApplication.SERVER_NAMESPACE_URI};
 	
 	@Override
 	public Attributes[] getAttributes()

@@ -70,7 +70,7 @@ public class SyncElement extends AbstractControl
 		name,src,dest,onCopy,recursive,prune, syncAttributes
 	}
 	
-	private static final String[] supportedNamespaces = {GroupElement.SERVER_NAMESPACE_URI};
+	private static final String[] supportedNamespaces = {CapoApplication.SERVER_NAMESPACE_URI};
 	
 	
 	

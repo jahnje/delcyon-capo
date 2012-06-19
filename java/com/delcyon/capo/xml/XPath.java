@@ -44,7 +44,6 @@ import org.w3c.dom.NodeList;
 import org.w3c.dom.Text;
 
 import com.delcyon.capo.CapoApplication;
-import com.delcyon.capo.controller.elements.GroupElement;
 import com.delcyon.capo.datastream.NullOutputStream;
 import com.delcyon.capo.datastream.stream_attribute_filter.MD5FilterOutputStream;
 import com.delcyon.capo.server.CapoServer;
@@ -76,8 +75,8 @@ public class XPath
 			//dumpNode(node.getOwnerDocument(), System.err);
 			javax.xml.xpath.XPath xPath = xPathFactory.newXPath();
 			NamespaceContextMap namespaceContextMap = new NamespaceContextMap();
-			namespaceContextMap.addNamespace("server", GroupElement.SERVER_NAMESPACE_URI);
-			namespaceContextMap.addNamespace("client", GroupElement.CLIENT_NAMESPACE_URI);
+			namespaceContextMap.addNamespace("server", CapoApplication.SERVER_NAMESPACE_URI);
+			namespaceContextMap.addNamespace("client", CapoApplication.CLIENT_NAMESPACE_URI);
 			xPath.setNamespaceContext(namespaceContextMap);
 			//String parsedXpath = processFunctions(path,prefix);
 			XPathExpression xPathExpression = xPath.compile(path);
@@ -176,8 +175,8 @@ public class XPath
 			
 			javax.xml.xpath.XPath xPath = xPathFactory.newXPath();
 			NamespaceContextMap namespaceContextMap = new NamespaceContextMap();
-			namespaceContextMap.addNamespace("server", GroupElement.SERVER_NAMESPACE_URI);
-			namespaceContextMap.addNamespace("client", GroupElement.CLIENT_NAMESPACE_URI);
+			namespaceContextMap.addNamespace("server", CapoApplication.SERVER_NAMESPACE_URI);
+			namespaceContextMap.addNamespace("client", CapoApplication.CLIENT_NAMESPACE_URI);
 			xPath.setNamespaceContext(namespaceContextMap);
 			XPathExpression xPathExpression = xPath.compile(path);
 			return (NodeList) xPathExpression.evaluate(node,XPathConstants.NODESET);
@@ -204,8 +203,8 @@ public class XPath
 			
 			javax.xml.xpath.XPath xPath = xPathFactory.newXPath();
 			NamespaceContextMap namespaceContextMap = new NamespaceContextMap();
-			namespaceContextMap.addNamespace("server", GroupElement.SERVER_NAMESPACE_URI);
-			namespaceContextMap.addNamespace("client", GroupElement.CLIENT_NAMESPACE_URI);
+			namespaceContextMap.addNamespace("server", CapoApplication.SERVER_NAMESPACE_URI);
+			namespaceContextMap.addNamespace("client", CapoApplication.CLIENT_NAMESPACE_URI);
 			namespaceContextMap.addNamespace("resource", CapoApplication.RESOURCE_NAMESPACE_URI);
 			for (String namespace : namespaces)
 			{

@@ -20,6 +20,7 @@ import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
+import com.delcyon.capo.CapoApplication;
 import com.delcyon.capo.controller.AbstractControl;
 import com.delcyon.capo.controller.ControlElementProvider;
 import com.delcyon.capo.controller.server.ServerSideControl;
@@ -33,7 +34,7 @@ public class ChooseElement extends AbstractControl
 {
 	
 	
-	private static final String[] supportedNamespaces = {GroupElement.SERVER_NAMESPACE_URI};
+	private static final String[] supportedNamespaces = {CapoApplication.SERVER_NAMESPACE_URI};
 	
 	@SuppressWarnings("unchecked")
 	@Override

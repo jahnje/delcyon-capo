@@ -60,7 +60,7 @@ public class TransformElement extends AbstractControl implements XPathFunctionPr
 		name,ref,stylesheet,type
 	}
 	
-	private static final String[] supportedNamespaces = {GroupElement.SERVER_NAMESPACE_URI};	
+	private static final String[] supportedNamespaces = {CapoApplication.SERVER_NAMESPACE_URI};	
 	private static final String[] functionNames = {"transform"};
 
 	

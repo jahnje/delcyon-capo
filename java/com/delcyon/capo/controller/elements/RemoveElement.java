@@ -16,6 +16,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 package com.delcyon.capo.controller.elements;
 
+import com.delcyon.capo.CapoApplication;
 import com.delcyon.capo.controller.AbstractControl;
 import com.delcyon.capo.controller.ControlElementProvider;
 import com.delcyon.capo.xml.XPath;
@@ -36,7 +37,7 @@ public class RemoveElement extends AbstractControl
 	}
 	
 	
-	private static final String[] supportedNamespaces = {GroupElement.SERVER_NAMESPACE_URI};
+	private static final String[] supportedNamespaces = {CapoApplication.SERVER_NAMESPACE_URI};
 	
 	
 	@Override

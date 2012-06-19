@@ -19,6 +19,7 @@ package com.delcyon.capo.controller.elements;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 
+import com.delcyon.capo.CapoApplication;
 import com.delcyon.capo.controller.AbstractControl;
 import com.delcyon.capo.controller.ControlElementProvider;
 import com.delcyon.capo.xml.XPath;
@@ -38,7 +39,7 @@ public class RepeatElement extends AbstractControl
 		nodeset,indexVar
 	}
 	
-	private static final String[] supportedNamespaces = {GroupElement.SERVER_NAMESPACE_URI};
+	private static final String[] supportedNamespaces = {CapoApplication.SERVER_NAMESPACE_URI};
 	
 	@Override
 	public Attributes[] getAttributes()

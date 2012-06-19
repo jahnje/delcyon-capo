@@ -19,6 +19,7 @@ package com.delcyon.capo.controller.elements;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 
+import com.delcyon.capo.CapoApplication;
 import com.delcyon.capo.controller.AbstractClientSideControl;
 import com.delcyon.capo.controller.ControlElementProvider;
 import com.delcyon.capo.controller.client.ClientSideControl;
@@ -49,7 +50,7 @@ public class CommandElement extends AbstractClientSideControl implements ClientS
 	}
 	
 	
-	private static final String[] supportedNamespaces = {GroupElement.SERVER_NAMESPACE_URI,GroupElement.CLIENT_NAMESPACE_URI};
+	private static final String[] supportedNamespaces = {CapoApplication.SERVER_NAMESPACE_URI,CapoApplication.CLIENT_NAMESPACE_URI};
 	
 	private static final String[] functionNames = {"command"};
 	
@@ -113,7 +114,7 @@ public class CommandElement extends AbstractClientSideControl implements ClientS
 	@Override
 	public Object processServerSideElement() throws Exception
 	{
-		if (getControlElementDeclaration().getNamespaceURI().equals(GroupElement.CLIENT_NAMESPACE_URI))
+		if (getControlElementDeclaration().getNamespaceURI().equals(CapoApplication.CLIENT_NAMESPACE_URI))
 		{
 			
 			Element newCommandElement = getControllerClientRequestProcessor().sendServerSideClientElement((Element) getParentGroup().replaceVarsInAttributeValues(getControlElementDeclaration().cloneNode(true)));

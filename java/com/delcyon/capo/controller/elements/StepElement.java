@@ -1,5 +1,6 @@
 package com.delcyon.capo.controller.elements;
 
+import com.delcyon.capo.CapoApplication;
 import com.delcyon.capo.controller.AbstractControl;
 import com.delcyon.capo.controller.ControlElementProvider;
 import com.delcyon.capo.resourcemanager.ResourceDescriptor;
@@ -23,7 +24,7 @@ public class StepElement extends AbstractControl
 		TIMEOUT
 	}
 	
-	private static final String[] supportedNamespaces = {GroupElement.SERVER_NAMESPACE_URI};
+	private static final String[] supportedNamespaces = {CapoApplication.SERVER_NAMESPACE_URI};
 		
 	@Override
 	public Attributes[] getAttributes()

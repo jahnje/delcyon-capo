@@ -52,10 +52,10 @@ public class ExportElement extends AbstractControl
 	}
 	
 	
-	private static final String[] supportedNamespaces = {GroupElement.SERVER_NAMESPACE_URI};
+	private static final String[] supportedNamespaces = {CapoApplication.SERVER_NAMESPACE_URI};
 	
 	
-	private static final String[] namespacesToRemove = {GroupElement.SERVER_NAMESPACE_URI,GroupElement.CLIENT_NAMESPACE_URI};
+	private static final String[] namespacesToRemove = {CapoApplication.SERVER_NAMESPACE_URI,CapoApplication.CLIENT_NAMESPACE_URI};
 
 	
 	@Override

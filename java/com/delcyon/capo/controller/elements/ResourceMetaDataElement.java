@@ -6,6 +6,7 @@ import java.util.logging.Level;
 
 import org.w3c.dom.Element;
 
+import com.delcyon.capo.CapoApplication;
 import com.delcyon.capo.controller.AbstractControl;
 import com.delcyon.capo.controller.ControlElementProvider;
 import com.delcyon.capo.datastream.NullOutputStream;
@@ -35,7 +36,7 @@ public class ResourceMetaDataElement extends AbstractControl
 	}
 	
 	
-	private static final String[] supportedNamespaces = {GroupElement.SERVER_NAMESPACE_URI};
+	private static final String[] supportedNamespaces = {CapoApplication.SERVER_NAMESPACE_URI};
 	
 	@Override
 	public Attributes[] getAttributes()

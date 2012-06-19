@@ -54,7 +54,7 @@ public class ResourceElement extends AbstractControl implements XPathFunctionPro
 	
 	private static final String[] functionNames = {"resource"};
 	
-	private static final String[] supportedNamespaces = {GroupElement.SERVER_NAMESPACE_URI};
+	private static final String[] supportedNamespaces = {CapoApplication.SERVER_NAMESPACE_URI};
 	
 	//TODO need to double check the necessity of this
 	public void process()

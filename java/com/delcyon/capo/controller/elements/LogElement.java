@@ -23,6 +23,7 @@ import java.util.logging.Level;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 
+import com.delcyon.capo.CapoApplication;
 import com.delcyon.capo.controller.AbstractControl;
 import com.delcyon.capo.controller.ControlElementProvider;
 import com.delcyon.capo.server.CapoServer;
@@ -48,7 +49,7 @@ public class LogElement extends AbstractControl
 		STDERR;				
 	}
 	
-	private static final String[] supportedNamespaces = {GroupElement.SERVER_NAMESPACE_URI,GroupElement.CLIENT_NAMESPACE_URI};
+	private static final String[] supportedNamespaces = {CapoApplication.SERVER_NAMESPACE_URI,CapoApplication.CLIENT_NAMESPACE_URI};
 	
 	
 	public LogElement()

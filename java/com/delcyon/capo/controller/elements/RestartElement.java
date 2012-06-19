@@ -16,28 +16,33 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 package com.delcyon.capo.controller.elements;
 
-import java.util.logging.Level;
-
+import org.tanukisoftware.wrapper.WrapperManager;
 import org.w3c.dom.Element;
 
 import com.delcyon.capo.CapoApplication;
-import com.delcyon.capo.controller.AbstractControl;
+import com.delcyon.capo.controller.AbstractClientSideControl;
 import com.delcyon.capo.controller.ControlElementProvider;
-import com.delcyon.capo.controller.server.ServerSideControl;
-import com.delcyon.capo.server.CapoServer;
-import com.delcyon.capo.xml.XPath;
+import com.delcyon.capo.controller.client.ClientSideControl;
+import com.delcyon.capo.xml.XPathFunctionProvider;
 
-@ControlElementProvider(name="call")
-public class CallElement extends AbstractControl
+/**
+ * @author jeremiah
+ *
+ */
+@ControlElementProvider(name="restart")
+public class RestartElement extends AbstractClientSideControl implements ClientSideControl
 {
 
-	public enum Attributes
+	
+	
+	private enum Attributes
 	{
-		ref
+		name
 	}
 	
 	
-	private static final String[] supportedNamespaces = {CapoApplication.SERVER_NAMESPACE_URI};
+	private static final String[] supportedNamespaces = {CapoApplication.SERVER_NAMESPACE_URI,CapoApplication.CLIENT_NAMESPACE_URI};
+	
 	
 	
 	@Override
@@ -46,11 +51,10 @@ public class CallElement extends AbstractControl
 		return Attributes.values();
 	}
 	
-	
 	@Override
 	public Attributes[] getRequiredAttributes()
 	{
-		return Attributes.values();
+		return new Attributes[]{};
 	}
 
 	
@@ -60,23 +64,33 @@ public class CallElement extends AbstractControl
 		return supportedNamespaces;
 	}
 
+	
+	
+	
+	
+
+	@Override
+	public Element processClientSideElement() throws Exception
+	{
+		WrapperManager.restart();
+		return null;
+	}
+	
+	
 	@Override
 	public Object processServerSideElement() throws Exception
 	{
-
-		Element referencedElement = (Element) XPath.selectSingleNode(getControlElementDeclaration().getOwnerDocument().getDocumentElement(), getAttributeValue(Attributes.ref),getControlElementDeclaration().getPrefix());
-		if (referencedElement != null)
-		{
-			ServerSideControl controlElement = (ServerSideControl) getControlElementInstanceForLocalName(referencedElement.getLocalName());
-			controlElement.init(referencedElement, this, getParentGroup(), getControllerClientRequestProcessor());
-			controlElement.processServerSideElement();		
+		if (getControlElementDeclaration().getNamespaceURI().equals(CapoApplication.CLIENT_NAMESPACE_URI))
+		{			
+			getControllerClientRequestProcessor().sendServerSideClientElement((Element) getParentGroup().replaceVarsInAttributeValues(getControlElementDeclaration().cloneNode(true)));
 		}
 		else
 		{
-			CapoServer.logger.log(Level.SEVERE," no element found matching: "+getAttributeValue(Attributes.ref));
+			WrapperManager.restart();
 		}
-	
+		
 		return null;
+
 	}
 
 	
