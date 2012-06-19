@@ -140,9 +140,14 @@ public class CapoServer extends CapoApplication
 
 		@Override
 		public String getOption()
-		{
-		
+		{		
 			return PreferenceInfoHelper.getInfo(this).option();
+		}
+		
+		@Override
+		public Location getLocation() 
+		{
+			return PreferenceInfoHelper.getInfo(this).location();
 		}
 		
 	}

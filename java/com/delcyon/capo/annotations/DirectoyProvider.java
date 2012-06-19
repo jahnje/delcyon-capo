@@ -21,6 +21,7 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
+import com.delcyon.capo.CapoApplication.Location;
 import com.delcyon.capo.preferences.Preference;
 
 /**
@@ -30,11 +31,7 @@ import com.delcyon.capo.preferences.Preference;
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.TYPE})
 public @interface DirectoyProvider
-{	
-    public enum Location
-    {
-        CLIENT,SERVER,BOTH
-    }
+{	    
 	String preferenceName();
 	Class<? extends Preference> preferences();
 	Location location() default Location.BOTH;

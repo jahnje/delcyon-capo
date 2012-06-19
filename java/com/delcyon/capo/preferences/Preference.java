@@ -16,6 +16,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 package com.delcyon.capo.preferences;
 
+import com.delcyon.capo.CapoApplication.Location;
+
 /**
  * @author jeremiah
  *
@@ -32,4 +34,6 @@ public interface Preference
 	public String getDefaultValue();
 
 	public String[] getArguments();
+	
+	public Location getLocation();
 }

@@ -26,6 +26,7 @@ import java.util.logging.Level;
 import org.w3c.dom.Document;
 
 import com.delcyon.capo.CapoApplication;
+import com.delcyon.capo.CapoApplication.Location;
 import com.delcyon.capo.controller.VariableContainer;
 import com.delcyon.capo.datastream.StreamUtil;
 import com.delcyon.capo.preferences.Preference;
@@ -81,11 +82,15 @@ public class RemoteResourceResponseProcessor implements XMLServerResponseProcess
 
 		@Override
 		public String getOption()
-		{
-		
+		{		
 			return PreferenceInfoHelper.getInfo(this).option();
 		}
 		
+		@Override
+		public Location getLocation() 
+		{
+			return PreferenceInfoHelper.getInfo(this).location();
+		}
 	}
     
 	private static Hashtable<String, ResourceDescriptor> resourceDescriptorHashtable = new Hashtable<String, ResourceDescriptor>();

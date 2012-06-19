@@ -9,11 +9,11 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
 import com.delcyon.capo.CapoApplication;
-import com.delcyon.capo.Configuration.PREFERENCE;
 import com.delcyon.capo.ContextThread;
+import com.delcyon.capo.CapoApplication.Location;
+import com.delcyon.capo.Configuration.PREFERENCE;
 import com.delcyon.capo.annotations.DefaultDocumentProvider;
 import com.delcyon.capo.annotations.DirectoyProvider;
-import com.delcyon.capo.annotations.DirectoyProvider.Location;
 import com.delcyon.capo.controller.elements.GroupElement;
 import com.delcyon.capo.exceptions.MissingAttributeException;
 import com.delcyon.capo.preferences.Preference;
@@ -25,8 +25,8 @@ import com.delcyon.capo.protocol.server.ClientRequestProcessor;
 import com.delcyon.capo.protocol.server.ClientRequestProcessorProvider;
 import com.delcyon.capo.protocol.server.ClientRequestXMLProcessor;
 import com.delcyon.capo.resourcemanager.ResourceDescriptor;
-import com.delcyon.capo.resourcemanager.ResourceDescriptor.Action;
 import com.delcyon.capo.resourcemanager.ResourceParameter;
+import com.delcyon.capo.resourcemanager.ResourceDescriptor.Action;
 import com.delcyon.capo.resourcemanager.types.FileResourceType;
 import com.delcyon.capo.server.CapoServer;
 import com.delcyon.capo.xml.XPath;
@@ -74,11 +74,15 @@ public class ControllerClientRequestProcessor implements ClientRequestProcessor
 
 		@Override
 		public String getOption()
-		{
-		
+		{		
 			return PreferenceInfoHelper.getInfo(this).option();
 		}
 		
+		@Override
+		public Location getLocation() 
+		{
+			return PreferenceInfoHelper.getInfo(this).location();
+		}
 	}
 	
 	public static final String REQUEST_TYPE_ATTRIBUTE = "type";

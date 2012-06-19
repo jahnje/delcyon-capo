@@ -7,9 +7,9 @@ import org.w3c.dom.Element;
 
 import com.delcyon.capo.CapoApplication;
 import com.delcyon.capo.Configuration;
+import com.delcyon.capo.CapoApplication.Location;
 import com.delcyon.capo.Configuration.PREFERENCE;
 import com.delcyon.capo.annotations.DirectoyProvider;
-import com.delcyon.capo.annotations.DirectoyProvider.Location;
 import com.delcyon.capo.modules.ModuleRequestProcessor.Attributes;
 import com.delcyon.capo.protocol.client.CapoConnection;
 

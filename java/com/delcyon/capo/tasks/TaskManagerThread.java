@@ -40,6 +40,7 @@ import org.w3c.dom.NodeList;
 
 import com.delcyon.capo.CapoApplication;
 import com.delcyon.capo.ContextThread;
+import com.delcyon.capo.CapoApplication.Location;
 import com.delcyon.capo.annotations.DirectoyProvider;
 import com.delcyon.capo.client.CapoClient;
 import com.delcyon.capo.controller.LocalRequestProcessor;
@@ -48,6 +49,7 @@ import com.delcyon.capo.preferences.Preference;
 import com.delcyon.capo.preferences.PreferenceInfo;
 import com.delcyon.capo.preferences.PreferenceInfoHelper;
 import com.delcyon.capo.preferences.PreferenceProvider;
+import com.delcyon.capo.protocol.client.CapoConnection;
 import com.delcyon.capo.resourcemanager.CapoDataManager;
 import com.delcyon.capo.resourcemanager.ResourceDescriptor;
 import com.delcyon.capo.resourcemanager.ResourceDescriptor.Action;
@@ -75,6 +77,8 @@ public class TaskManagerThread extends ContextThread
 		TASK_DIR,
 		@PreferenceInfo(arguments={}, defaultValue="30000", description="How long before a task is considered orphaned", longOption="TASK_LIFESPAN", option="TASK_LIFESPAN")
         TASK_DEFAULT_LIFESPAN,
+        @PreferenceInfo(arguments={}, defaultValue="30000", description="Delay between client update and task syncing", longOption="DEFAULT_CLIENT_SYNC_INTERVAL", option="DEFAULT_CLIENT_SYNC_INTERVAL",location=Location.CLIENT)
+        DEFAULT_CLIENT_SYNC_INTERVAL,
         @PreferenceInfo(arguments={}, defaultValue="DELETE", description="What to do when a task is considered orphaned (DELETE|IGNORE)", longOption="TASK_DEFAULT_ORPHAN_ACTION", option="TASK_DEFAULT_ORPHAN_ACTION")
         TASK_DEFAULT_ORPHAN_ACTION,
 		@PreferenceInfo(arguments={}, defaultValue="10000", description="Interval at witch overall task manager thread runs", longOption="TASK_INTERVAL", option="TASK_INTERVAL")
@@ -106,11 +110,15 @@ public class TaskManagerThread extends ContextThread
 
 		@Override
 		public String getOption()
-		{
-		
+		{		
 			return PreferenceInfoHelper.getInfo(this).option();
 		}
 		
+		@Override
+		public Location getLocation() 
+		{
+			return PreferenceInfoHelper.getInfo(this).location();
+		}
 	}
 	
 	private static boolean runAsService = true;
@@ -129,6 +137,8 @@ public class TaskManagerThread extends ContextThread
 	private ConcurrentHashMap<String,HashMap<String, String>> taskConcurrentHashMap = new ConcurrentHashMap<String, HashMap<String,String>>();
 
 	private boolean interrupted = false;
+
+	private long lastSyncTime;
 	private static TaskManagerThread taskManagerThread = null;
 
 	/**
@@ -232,6 +242,8 @@ public class TaskManagerThread extends ContextThread
 	@Override
 	public void run()
 	{
+		//setup initial lastSyncTime for default client syncing
+		this.lastSyncTime = System.currentTimeMillis();
 		
 		while(interrupted == false)
 		{
@@ -365,13 +377,32 @@ public class TaskManagerThread extends ContextThread
 			    lock.unlock();
 				if (runAsService == true)
 				{
-					/* TODO this should be a configuration option, this should also override-able, on a per resource level
-					 * probably by having a timing thread, and a list of values checking for the last time the resource was checked. 
-					 */
-					
+
 					try
 					{
-						Thread.sleep(CapoApplication.getConfiguration().getIntValue(Preferences.TASK_INTERVAL));
+						//sleep for a while, then do it all over again
+						Thread.sleep(CapoApplication.getConfiguration().getLongValue(Preferences.TASK_INTERVAL));
+						
+						if (CapoApplication.isServer() == false)
+						{
+							//check to see if we need to check in with the server
+							long defaultClientSyncInterval = CapoApplication.getConfiguration().getLongValue(Preferences.DEFAULT_CLIENT_SYNC_INTERVAL);
+							if (System.currentTimeMillis() - lastSyncTime > defaultClientSyncInterval)
+							{
+								//run the standard update and identity scripts. This is not configurable, because we want to make sure that the client always checks and for the basics.
+								HashMap<String, String> sessionHashMap = new HashMap<String, String>();
+								CapoConnection capoConnection = new CapoConnection();
+								((CapoClient)CapoApplication.getApplication()).runUpdateRequest(capoConnection, sessionHashMap);
+								capoConnection.close();
+								capoConnection = new CapoConnection();
+								((CapoClient)CapoApplication.getApplication()).runIdentityRequest(capoConnection, sessionHashMap);
+								capoConnection.close();
+								capoConnection = new CapoConnection();
+								((CapoClient)CapoApplication.getApplication()).runDefaultRequest(capoConnection, sessionHashMap);
+								capoConnection.close();
+								lastSyncTime = System.currentTimeMillis();
+							}
+						}
 					} catch (InterruptedException interruptedException) {} //someone asked us to stop sleeping, not an error
 				}
 				else //this is not a service, so exit the thread.

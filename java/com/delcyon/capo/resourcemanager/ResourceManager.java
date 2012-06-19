@@ -35,10 +35,10 @@ import org.w3c.dom.Document;
 
 import com.delcyon.capo.CapoApplication;
 import com.delcyon.capo.Configuration;
+import com.delcyon.capo.CapoApplication.Location;
 import com.delcyon.capo.Configuration.PREFERENCE;
 import com.delcyon.capo.annotations.DefaultDocumentProvider;
 import com.delcyon.capo.annotations.DirectoyProvider;
-import com.delcyon.capo.annotations.DirectoyProvider.Location;
 import com.delcyon.capo.controller.ControlElement;
 import com.delcyon.capo.controller.elements.ResourceElement;
 import com.delcyon.capo.preferences.Preference;
@@ -95,7 +95,12 @@ public class ResourceManager extends CapoDataManager
 		
 			return PreferenceInfoHelper.getInfo(this).option();
 		}
-		
+	
+		@Override
+		public Location getLocation() 
+		{
+			return PreferenceInfoHelper.getInfo(this).location();
+		}
 	}
 	
 	private ResourceDescriptor dataDir;

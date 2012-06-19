@@ -21,6 +21,8 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
+import com.delcyon.capo.CapoApplication.Location;
+
 /**
  * @author jeremiah
  *
@@ -35,4 +37,5 @@ public @interface PreferenceInfo
 	String description();
 	String defaultValue();
 	String[] arguments() default {};
+	Location location() default Location.BOTH;
 }

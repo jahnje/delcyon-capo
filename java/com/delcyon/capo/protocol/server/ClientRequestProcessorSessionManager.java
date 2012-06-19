@@ -23,6 +23,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
 
 import com.delcyon.capo.CapoApplication;
+import com.delcyon.capo.CapoApplication.Location;
 import com.delcyon.capo.preferences.Preference;
 import com.delcyon.capo.preferences.PreferenceInfo;
 import com.delcyon.capo.preferences.PreferenceInfoHelper;
@@ -68,11 +69,15 @@ public class ClientRequestProcessorSessionManager extends Thread
 
 		@Override
 		public String getOption()
-		{
-		
+		{		
 			return PreferenceInfoHelper.getInfo(this).option();
 		}
 		
+		@Override
+		public Location getLocation() 
+		{
+			return PreferenceInfoHelper.getInfo(this).location();
+		}
 	}
 	
 	

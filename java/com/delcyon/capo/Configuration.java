@@ -19,9 +19,9 @@ package com.delcyon.capo;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.util.HashMap;
-import java.util.Map.Entry;
 import java.util.Set;
 import java.util.Vector;
+import java.util.Map.Entry;
 import java.util.logging.Level;
 import java.util.prefs.BackingStoreException;
 import java.util.prefs.Preferences;
@@ -44,9 +44,9 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 
+import com.delcyon.capo.CapoApplication.Location;
 import com.delcyon.capo.annotations.DefaultDocumentProvider;
 import com.delcyon.capo.annotations.DirectoyProvider;
-import com.delcyon.capo.annotations.DirectoyProvider.Location;
 import com.delcyon.capo.preferences.Preference;
 import com.delcyon.capo.preferences.PreferenceProvider;
 import com.delcyon.capo.server.CapoServer;
@@ -152,6 +152,12 @@ public class Configuration
 			return arguments;
 		}
 
+		@Override
+		public Location getLocation() 
+		{		
+			return Location.BOTH;
+		}
+		
 	}
 
 	private CommandLine commandLine;
@@ -220,6 +226,18 @@ public class Configuration
 					{
 						
 						Preference preference = (Preference) enumObject;
+						//filter out any preferences that don't belong on this server or client.
+						if(preference.getLocation() != Location.BOTH)
+						{
+							if(CapoApplication.isServer() == true && preference.getLocation() == Location.CLIENT)
+							{
+								continue;
+							}
+							else if (CapoApplication.isServer() == false && preference.getLocation() == Location.SERVER)
+							{
+								continue;
+							}
+						}
 						preferenceHashMap.put(preference.toString(), preference);
 						boolean hasArgument = false;
 						if (preference.getArguments() == null || preference.getArguments().length == 0)

@@ -64,6 +64,11 @@ public abstract class CapoApplication extends ContextThread implements WrapperLi
 		config
 	}
 
+	public enum Location
+    {
+        CLIENT,SERVER,BOTH
+    }
+	
 	public static final String RESOURCE_NAMESPACE_URI = "http://www.delcyon.com/capo/resource";
 	public static final String CAPO_NAMESPACE_URI = "http://www.delcyon.com/capo";
 	

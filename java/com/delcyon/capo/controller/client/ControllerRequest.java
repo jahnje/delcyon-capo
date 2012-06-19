@@ -106,5 +106,9 @@ public class ControllerRequest extends XMLRequest
 		controllerRequestElement.setAttribute(ControllerClientRequestProcessor.REQUEST_TYPE_ATTRIBUTE, type);
 		
 	}
+
+	public String getType() {
+		return controllerRequestElement.getAttribute(ControllerClientRequestProcessor.REQUEST_TYPE_ATTRIBUTE);
+	}
 	
 }

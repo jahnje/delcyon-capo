@@ -115,19 +115,22 @@ public class CapoClient extends CapoApplication
 
 		@Override
 		public String getOption()
-		{
-		
+		{		
 			return PreferenceInfoHelper.getInfo(this).option();
 		}
 		
+		@Override
+		public Location getLocation() 
+		{
+			return PreferenceInfoHelper.getInfo(this).location();
+		}
 	}
 	
 	private static final String APPLICATION_DIRECTORY_NAME = "client";
 	
 	
 	private HashMap<String, String> idHashMap = new HashMap<String, String>();
-    private boolean isReady = false;
-    private boolean interupted = false;
+    private boolean isReady = false;    
 	private boolean isDone = false;
 	
 	public CapoClient() throws Exception
@@ -236,12 +239,7 @@ public class CapoClient extends CapoApplication
 
 
 			CapoConnection capoConnection = new CapoConnection();
-
-
-			ControllerRequest controllerRequest = new ControllerRequest(capoConnection.getOutputStream(),capoConnection.getInputStream());
-			controllerRequest.setType("update");
-			controllerRequest.loadSystemVariables();
-			runRequest(capoConnection, controllerRequest,sessionHashMap);
+			runUpdateRequest(capoConnection,sessionHashMap);
 			capoConnection.close();
 			
 			if (hasValidKeystore() == false)
@@ -262,18 +260,14 @@ public class CapoClient extends CapoApplication
 
 			//run identity scripts
 			capoConnection = new CapoConnection();
-			controllerRequest = new ControllerRequest(capoConnection.getOutputStream(),capoConnection.getInputStream());
-            controllerRequest.setType("identity");
-            controllerRequest.loadSystemVariables();
-			runRequest(capoConnection, controllerRequest,sessionHashMap);
+			runIdentityRequest(capoConnection,sessionHashMap);
 			capoConnection.close();
 
 
+			
 			capoConnection = new CapoConnection();
-			controllerRequest = new ControllerRequest(capoConnection.getOutputStream(),capoConnection.getInputStream());
-			//load client variables
-			controllerRequest.loadSystemVariables();
-			runRequest(capoConnection, controllerRequest,sessionHashMap);
+			runDefaultRequest(capoConnection,sessionHashMap);
+			capoConnection.close();
 		} catch (Exception e)
 		{
 			//if something else is monitoring this client, don't exit on error, leave it to the monitor to do so.
@@ -291,13 +285,39 @@ public class CapoClient extends CapoApplication
 	}
 
 	
+	public void runDefaultRequest(CapoConnection capoConnection, HashMap<String, String> sessionHashMap) throws Exception 
+	{
+		ControllerRequest controllerRequest = new ControllerRequest(capoConnection.getOutputStream(),capoConnection.getInputStream());
+		//load client variables
+		controllerRequest.loadSystemVariables();
+		runRequest(capoConnection, controllerRequest,sessionHashMap);
+		
+	}
+
+	public void runIdentityRequest(CapoConnection capoConnection, HashMap<String, String> sessionHashMap) throws Exception 
+	{
+		ControllerRequest controllerRequest = new ControllerRequest(capoConnection.getOutputStream(),capoConnection.getInputStream());
+        controllerRequest.setType("identity");
+        controllerRequest.loadSystemVariables();
+		runRequest(capoConnection, controllerRequest,sessionHashMap);
+	}
+
+	public void runUpdateRequest(CapoConnection capoConnection,HashMap<String, String> sessionHashMap) throws Exception
+	{
+		ControllerRequest controllerRequest = new ControllerRequest(capoConnection.getOutputStream(),capoConnection.getInputStream());
+		controllerRequest.setType("update");
+		controllerRequest.loadSystemVariables();
+		runRequest(capoConnection, controllerRequest,sessionHashMap);
+	}
+	
+	
 	public void runRequest(CapoConnection capoConnection, Request request, HashMap<String, String> sessionHashMap) throws Exception
 	{
 	    String initialRequestType = null;
 	    if (request instanceof ControllerRequest)
         {
-            initialRequestType = ((ControllerRequest) request).getRequestType();
-            if (initialRequestType == null)
+            initialRequestType = ((ControllerRequest) request).getType();
+            if (initialRequestType == null || initialRequestType.isEmpty())
             {
                 initialRequestType = "default";
             }

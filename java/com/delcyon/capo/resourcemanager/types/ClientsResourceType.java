@@ -20,8 +20,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 
 import com.delcyon.capo.CapoApplication;
+import com.delcyon.capo.CapoApplication.Location;
 import com.delcyon.capo.annotations.DirectoyProvider;
-import com.delcyon.capo.annotations.DirectoyProvider.Location;
 import com.delcyon.capo.resourcemanager.ResourceDescriptor;
 import com.delcyon.capo.resourcemanager.ResourceManager;
 import com.delcyon.capo.resourcemanager.ResourceType;
