@@ -122,6 +122,12 @@ public abstract class AbstractControl implements ServerSideControl
 			    continue;
 			}
 			
+			//skip ControllerRequest element as it's just here for xpath processing, but not control processing. 
+			if (controlElementDeclaration.getLocalName().equals("ControllerRequest"))
+			{
+			    continue;
+			}
+			
 			ControlElement controlElement = getControlElementInstanceForLocalName(controlElementDeclaration.getLocalName());
 			if (controlElement == null)
 			{

@@ -178,6 +178,7 @@ public class ControllerClientRequestProcessor implements ClientRequestProcessor
 			}
 			
 			//copy client request as first child to document element
+			//This is so we can have XPath access to any of the client vars 
 			Element mainGroupDocumentElement = mainGroupElement.getOwnerDocument().getDocumentElement(); 
 			mainGroupDocumentElement.insertBefore(mainGroupElement.getOwnerDocument().importNode(clientControllerRequest.getControllerRequestDocument().getDocumentElement(),true),mainGroupDocumentElement.getFirstChild());
             
