@@ -70,6 +70,7 @@ public class ExternalTestServer
 	{
 		Util.deleteTree("capo");
 	    Util.copyTree("test-data/capo", "capo");
+	    Util.copyTree("lib", "capo/server/lib");
 	    Util.setDefaultPreferences();	    
 		ExternalTestServer externalTestServer = new ExternalTestServer();
 		externalTestServer.startServer();

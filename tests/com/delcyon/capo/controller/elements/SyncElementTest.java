@@ -1,5 +1,7 @@
 package com.delcyon.capo.controller.elements;
 
+import java.io.File;
+
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Before;
@@ -11,6 +13,7 @@ import org.w3c.dom.Element;
 import com.delcyon.capo.CapoApplication;
 import com.delcyon.capo.controller.Group;
 import com.delcyon.capo.resourcemanager.ResourceDescriptor;
+import com.delcyon.capo.resourcemanager.ResourceParameter;
 import com.delcyon.capo.resourcemanager.types.ContentMetaData;
 import com.delcyon.capo.resourcemanager.types.FileResourceType;
 import com.delcyon.capo.tests.util.external.Util;
@@ -46,6 +49,10 @@ public class SyncElementTest
         syncElement.setAttribute(SyncElement.Attributes.dest.toString(), dest);
         syncElement.setAttribute(SyncElement.Attributes.recursive.toString(), "true");
         syncElement.setAttribute(SyncElement.Attributes.syncAttributes.toString(), "lastModified");
+        Element resourceParameterElement = document.createElementNS(CapoApplication.RESOURCE_NAMESPACE_URI, "resouce:parameter");
+        resourceParameterElement.setAttribute("name", FileResourceType.Parameters.ROOT_DIR.toString());
+        resourceParameterElement.setAttribute("value", new File(".").getCanonicalPath());
+        syncElement.appendChild(resourceParameterElement);
         Group group = new Group("test", null, null, null);
         syncControlElement.init(syncElement, null, group, null);
         syncControlElement.processServerSideElement();
@@ -91,14 +98,19 @@ public class SyncElementTest
          syncElement.setAttribute(SyncElement.Attributes.dest.toString(), dest);
          syncElement.setAttribute(SyncElement.Attributes.recursive.toString(), "true");
          syncElement.setAttribute(SyncElement.Attributes.syncAttributes.toString(), "lastModified");
-         
+         Element resourceParameterElement = document.createElementNS(CapoApplication.RESOURCE_NAMESPACE_URI, "resouce:parameter");
+         resourceParameterElement.setAttribute("name", FileResourceType.Parameters.ROOT_DIR.toString());
+         resourceParameterElement.setAttribute("value", new File(".").getCanonicalPath());
+         syncElement.appendChild(resourceParameterElement);
          Group group = new Group("test", null, null, null);
          syncControlElement.init(syncElement, null, group, null);
          syncControlElement.processServerSideElement();
          
          
          ResourceDescriptor sourceResourceDescriptor = new FileResourceType().getResourceDescriptor(src);
+         sourceResourceDescriptor.addResourceParameters(null, new ResourceParameter(FileResourceType.Parameters.ROOT_DIR,new File(".").getCanonicalPath()));
          ResourceDescriptor destinationResourceDescriptor = new FileResourceType().getResourceDescriptor(dest);
+         //destinationResourceDescriptor.addResourceParameters(null, new ResourceParameter(FileResourceType.Parameters.ROOT_DIR,new File(".").getCanonicalPath()));
          
          //use resource document to get results from both sides
          ResourceDocument baseDocument = new ResourceDocument(sourceResourceDescriptor);

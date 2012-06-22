@@ -25,6 +25,7 @@ import java.net.URI;
 import java.util.logging.Level;
 
 import com.delcyon.capo.CapoApplication;
+import com.delcyon.capo.Configuration.PREFERENCE;
 import com.delcyon.capo.controller.VariableContainer;
 import com.delcyon.capo.resourcemanager.ResourceDescriptor;
 import com.delcyon.capo.resourcemanager.ResourceManager;
@@ -66,20 +67,26 @@ public class FileResourceDescriptor extends AbstractResourceDescriptor implement
 		File parentDir = null;
 
 		
-		String parentDirParameter = null;
-		
-		
-		parentDirParameter = getVarValue(variableContainer, Parameters.PARENT_PROVIDED_DIRECTORY);	
-		
+		String parentDirParameter = getVarValue(variableContainer, Parameters.PARENT_PROVIDED_DIRECTORY);	
+		String rootDirParameter = getVarValue(variableContainer, Parameters.ROOT_DIR);
 
 		if (parentDirParameter != null && parentDirParameter.isEmpty() == false)
 		{
 		    //this must be converted to a URI before processing or file treats it as a string and append things wierdly. 
 			parentDir = new File(new URI(CapoApplication.getDataManager().getResourceDirectory(parentDirParameter).getResourceURI()));			
 		}
+		else if(rootDirParameter != null && rootDirParameter.isEmpty() == false)
+		{
+		    parentDir = new File(rootDirParameter.replaceFirst("file:(//){0,1}", ""));		    
+		}
+		//Set default dir to capo dir on file requests, if one wasn't specified, and we have everything running
+		else if(CapoApplication.getDataManager() != null && CapoApplication.getDataManager().getResourceDirectory(PREFERENCE.CAPO_DIR.toString()) != null)
+		{			
+			parentDir = new File(new URI(CapoApplication.getDataManager().getResourceDirectory(PREFERENCE.CAPO_DIR.toString()).getResourceURI()));
+		}
 				
 		//this lets us use custom relative URIs for files.
-		//file:filename and file:/filename file://filename
+		// file:filename and file:/filename file://filename
 		
 		if (ResourceManager.isOpaque(getResourceURI()) || ResourceManager.getAuthroity(getResourceURI()) != null || ResourceManager.getScheme(getResourceURI()) == null)
 		{
@@ -90,7 +97,14 @@ public class FileResourceDescriptor extends AbstractResourceDescriptor implement
 			}
 			else
 			{
-				 uri = new File(parentDir,getResourceURI().replaceFirst("file:(//){0,1}", "")).toURI().toString();
+			    //if the parent dir is already included in the URI, don't use it.
+			    //and we're not specifically adding it with the parentDir parameter.
+			    //The ROOT_DIR parameter will cascade down to child resource, so it has to be stripped out.
+			    uri = new File(parentDir,getResourceURI().replaceFirst("file:(//){0,1}", "")).toURI().toString();
+			    if (uri.toString().startsWith(parentDir.toURI().toString()) && rootDirParameter != null && rootDirParameter.trim().isEmpty() == false)
+			    {
+			        uri = new File(getResourceURI().replaceFirst("file:(//){0,1}", "")).toURI().toString();
+			    }
 			}
 			if (uri.endsWith(File.separator))
 			{

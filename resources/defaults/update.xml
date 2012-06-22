@@ -2,9 +2,9 @@
 <server:group name="update_test" xmlns:server="http://www.delcyon.com/capo-server">
     <!-- need to check CapoApplication.getVariableValue("updater.lib.md5").equals(remoteLibMD5) -->
     <server:resourceMetaData resource="file:lib" depth="2" useRelativePaths="true" attributes="MD5" requiredAttributes="MD5"/>
-    <server:resourceMetaData resource="remote:file:updatetest" depth="2" useRelativePaths="true" attributes="MD5" requiredAttributes="MD5"/>
+    <server:resourceMetaData resource="remote:file:lib" depth="2" useRelativePaths="true" attributes="MD5" requiredAttributes="MD5"/>
     
-    <server:diff name="diff.lib" base="ref:../server:resourceMetaData[@resource='file:lib']" mod="ref:../server:resourceMetaData[@resource = 'remote:file:updatetest']" />
+    <server:diff name="diff.lib" base="ref:../server:resourceMetaData[@resource='file:lib']" mod="ref:../server:resourceMetaData[@resource = 'remote:file:lib']" />
     
     <server:transform name="sync_transform" ref="${diff.diff.lib}" stylesheet="ref:xsl:stylesheet">
         <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
@@ -105,17 +105,18 @@
                     </xsl:if>
                     <!-- fixup the src uri if we have one -->
                     <xsl:if test="exists(@src)">
-                        <xsl:attribute name="src" select="concat($localRootPath,'/',@src)"/>
+                        <xsl:attribute name="src" select="concat($localRootPath,@src)"/>
                     </xsl:if>
                     <!-- fixup the dest uri if we have one -->
                     <xsl:if test="exists(@dest)">
-                        <xsl:attribute name="dest" select="concat($remoteRootPath,'/',@dest)"/>
+                        <xsl:attribute name="dest" select="concat($remoteRootPath,@dest)"/>
                     </xsl:if>
                 </server:sync>
                 
             </xsl:template>
         </xsl:stylesheet>
     </server:transform>
+    <server:log ref=".."/>
     <server:repeat name="sync_repeat" nodeset="${transform.sync_transform}/server:group/server:sync">
         <server:call ref="${context}"/>
     </server:repeat>    

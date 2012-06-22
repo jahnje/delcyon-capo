@@ -338,11 +338,17 @@ public class CapoServer extends CapoApplication
 			}
 		}
 		
+		logger.log(Level.INFO, "Removing Resource Manager");
+        setDataManager(null);
+		
 		while(isReady == true)
 		{
 			logger.log(Level.INFO, "Waiting for final shutdown...");
 			Thread.sleep(incrementalWaitTime);
 		}
+		
+		
+		
 		logger.log(Level.INFO, "Server Shutdown");
 	}
 	

@@ -768,6 +768,7 @@ public abstract class AbstractResourceDescriptor implements ResourceDescriptor
 	                return CapoApplication.getDataManager().getResourceDescriptor(callingControlElement, childContentMetaData.getResourceURI());
 	            }
 	        }
+	        //return CapoApplication.getDataManager().getResourceDescriptor(callingControlElement, getResourceURI()+(relativeURI.startsWith("/") ? relativeURI : "/"+relativeURI));
 	        return CapoApplication.getDataManager().getResourceDescriptor(callingControlElement, getResourceURI()+"/"+relativeURI);
 	    }
 	    else

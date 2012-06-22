@@ -155,7 +155,7 @@ public class SyncElement extends AbstractControl
 		}
 		else
 		{
-			CapoServer.logger.log(Level.WARNING, "couldn't process copy element: "+tempCopyElement.getAttribute("id"));
+			CapoServer.logger.log(Level.WARNING, "couldn't process sync element: "+tempCopyElement.getAttribute("id"));
 		}
 		
 		
@@ -323,6 +323,11 @@ public class SyncElement extends AbstractControl
 					Node elementNode = nodeList.item(currentNode);
 					if (elementNode instanceof Element)
 					{
+					    if (elementNode.getNamespaceURI() == null || elementNode.getNamespaceURI().equals(CapoApplication.SERVER_NAMESPACE_URI) == false)
+					    {
+					        //skip this if it's the wrong name space, cause its not a filter
+					        continue;
+					    }
 						Element element = (Element) getParentGroup().replaceVarsInAttributeValues(elementNode);
 						String name = element.getLocalName();
 						
