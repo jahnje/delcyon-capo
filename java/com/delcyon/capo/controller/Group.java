@@ -17,10 +17,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 package com.delcyon.capo.controller;
 
 import java.util.HashMap;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.Stack;
 import java.util.Vector;
-import java.util.Map.Entry;
 import java.util.logging.Level;
 
 import org.w3c.dom.Element;
@@ -32,10 +32,10 @@ import com.delcyon.capo.controller.elements.GroupElement;
 import com.delcyon.capo.controller.elements.ResourceElement;
 import com.delcyon.capo.controller.server.ControllerClientRequestProcessor;
 import com.delcyon.capo.resourcemanager.ResourceDescriptor;
-import com.delcyon.capo.resourcemanager.ResourceManager;
-import com.delcyon.capo.resourcemanager.ResourceParameterBuilder;
 import com.delcyon.capo.resourcemanager.ResourceDescriptor.LifeCycle;
 import com.delcyon.capo.resourcemanager.ResourceDescriptor.State;
+import com.delcyon.capo.resourcemanager.ResourceManager;
+import com.delcyon.capo.resourcemanager.ResourceParameterBuilder;
 import com.delcyon.capo.server.CapoServer;
 import com.delcyon.capo.xml.XPath;
 
@@ -226,7 +226,42 @@ public class Group implements VariableContainer
 
 	public void set(String varName, String value)
 	{
-		variableHashMap.put(varName,value);		
+	    if (varName.matches("\\$.*:.*"))
+	    {
+	        String[] scopedVariableArray = varName.split(":");
+	        if (scopedVariableArray.length != 2)
+	        {
+	            CapoApplication.logger.log(Level.WARNING, "Improper format of scoped variable name. '"+varName+"' should be '$<group name>:<var name>'. Going to use local group.");	            
+	        }
+	        else
+	        {
+	            //strip off $ char
+	            scopedVariableArray[0] = scopedVariableArray[0].replaceFirst("\\$", "");	           
+	            Group currentGroup = this;
+	            while (scopedVariableArray[0].equals(currentGroup.getGroupName()) == false)
+	            {
+	                currentGroup = currentGroup.parentGroup;
+	                if (currentGroup == null)
+	                {
+	                    break; //hit top of stack, so exit out
+	                }
+	            }
+	            
+	            if (currentGroup != null)
+	            {
+	                currentGroup.variableHashMap.put(scopedVariableArray[1], value);
+	            }
+	            else
+	            {
+	                CapoApplication.logger.log(Level.WARNING, "No parent group named "+scopedVariableArray[0]+" was found. Using local group and full var name '"+varName+"'");
+	                variableHashMap.put(varName,value);
+	            }
+	        }
+	    }
+	    else
+	    {
+	        variableHashMap.put(varName,value);
+	    }
 	}
 	
 	public GroupElement getGroupElement()

@@ -18,6 +18,7 @@ package com.delcyon.capo.protocol.client;
 
 import java.io.BufferedInputStream;
 import java.io.OutputStream;
+import java.net.ConnectException;
 import java.net.Socket;
 import java.security.PrivateKey;
 import java.security.Signature;
@@ -70,19 +71,26 @@ public class CapoConnection
 	public Socket open() throws Exception
 	{
 		
-		if (this.socket == null || socket.isClosed())
+		while (this.socket == null || socket.isClosed())
 		{
 			
 			CapoClient.logger.log(Level.FINE, "Opening Socket to "+serverAddress+":"+port);
-			if (CapoApplication.getSslSocketFactory() != null)
-			{				
-				this.socket = CapoApplication.getSslSocketFactory().createSocket(serverAddress, port);
+			try
+			{
+			    if (CapoApplication.getSslSocketFactory() != null)
+			    {				
+			        this.socket = CapoApplication.getSslSocketFactory().createSocket(serverAddress, port);
+			    }
+			    else 
+			    {
+			        this.socket = new Socket(serverAddress, port);
+			    }
+			} 
+			catch (ConnectException connectException)
+			{
+			    CapoApplication.logger.log(Level.WARNING, "Error opening socket, sleeping "+CapoApplication.getConfiguration().getLongValue(CapoClient.Preferences.CONNECTION_RETRY_INTERVAL)+"ms");
+			    Thread.sleep(CapoApplication.getConfiguration().getLongValue(CapoClient.Preferences.CONNECTION_RETRY_INTERVAL));
 			}
-	        else 
-	        {
-	        	this.socket = new Socket(serverAddress, port);
-	        }
-			
 		}
 		socket.setKeepAlive(true);
 		this.inputStream = new BufferedInputStream(socket.getInputStream()); 

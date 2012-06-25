@@ -88,7 +88,10 @@ public class CapoClient extends CapoApplication
 		@PreferenceInfo(arguments={}, defaultValue="1024", description="Encryption key size", longOption="KEY_SIZE", option="KEY_SIZE")
 		KEY_SIZE,
 		@PreferenceInfo(arguments={}, defaultValue="36", description="Number of Months before key expires", longOption="KEY_MONTHS_VALID", option="KEY_MONTHS_VALID")
-		KEY_MONTHS_VALID;
+		KEY_MONTHS_VALID,
+		@PreferenceInfo(arguments={}, defaultValue="1000", description="Milliseconds until retry, on connection failure", longOption="CONNECTION_RETRY_INTERVAL", option="CONNECTION_RETRY_INTERVAL")
+        CONNECTION_RETRY_INTERVAL;
+		
 		@Override
 		public String[] getArguments()
 		{
@@ -241,7 +244,11 @@ public class CapoClient extends CapoApplication
 			CapoConnection capoConnection = new CapoConnection();
 			runUpdateRequest(capoConnection,sessionHashMap);
 			capoConnection.close();
-			
+			if (WrapperManager.isShuttingDown()) //bail out if we're restarting
+            {
+			    isDone = true;
+			    return;
+            }
 			if (hasValidKeystore() == false)
 			{
 				//setup keystore
@@ -574,6 +581,20 @@ public class CapoClient extends CapoApplication
 		{
 		    CapoApplication.logger.log(Level.INFO,"Stopping Task Manager");
 			TaskManagerThread.getTaskManagerThread().interrupt();
+			while(TaskManagerThread.getTaskManagerThread().isAlive())
+			{
+			    try
+			    {
+			        CapoApplication.logger.log(Level.INFO,"Waiting for TaskManager to finish.");
+			        TaskManagerThread.getTaskManagerThread().dumpStack();
+			        Thread.sleep(500);
+			    }
+			    catch (InterruptedException interruptedException)
+			    {
+			        //??? ignore this for now
+			        CapoApplication.logger.log(Level.WARNING,"Ignoring InterruptedException");
+			    }
+			}
 			CapoApplication.logger.log(Level.INFO,"Done Stopping Task Manager");
 		}
 		

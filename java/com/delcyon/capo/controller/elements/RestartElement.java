@@ -72,8 +72,9 @@ public class RestartElement extends AbstractClientSideControl implements ClientS
 	@Override
 	public Element processClientSideElement() throws Exception
 	{
-		WrapperManager.restart();
-		return null;
+		WrapperManager.restartAndReturn();
+		//Return something here so that the server stops waiting for a document to read, and will shut down the connection. 
+		return (Element)(getControlElementDeclaration().cloneNode(true));
 	}
 	
 	

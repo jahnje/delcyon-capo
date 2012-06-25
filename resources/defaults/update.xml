@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<server:group name="update_test" xmlns:server="http://www.delcyon.com/capo-server">
+<server:group name="update" xmlns:server="http://www.delcyon.com/capo-server" xmlns:client="http://www.delcyon.com/capo-client">
     <!-- need to check CapoApplication.getVariableValue("updater.lib.md5").equals(remoteLibMD5) -->
     <server:resourceMetaData resource="file:lib" depth="2" useRelativePaths="true" attributes="MD5" requiredAttributes="MD5"/>
     <server:resourceMetaData resource="remote:file:lib" depth="2" useRelativePaths="true" attributes="MD5" requiredAttributes="MD5"/>
@@ -47,8 +47,8 @@
             </xsl:template>
             
             <xsl:template match="resource" >       
-                <xsl:if test="@xdiff:element = 'BASE != MOD'">
-                    <xsl:if test="xdiff:attribute[@xdiff:name = 'uri']">
+                <xsl:if test="@xdiff:element = 'BASE != MOD'"> 
+                    <xsl:if test="xdiff:attribute[@xdiff:name = 'uri']"> <!-- whole file exists on one side or the other -->
                         <server:sync>
                             <!-- if something  came from the base, we know it to have both a src and a destination so just make an even match out of it-->
                             <xsl:attribute name="src" select="xdiff:attribute[@xdiff:name = 'uri']/@xdiff:BASE"/>
@@ -59,7 +59,16 @@
                             <xsl:attribute name="src">MOD</xsl:attribute>
                             <xsl:attribute name="dest" select="xdiff:attribute[@xdiff:name = 'uri']/@xdiff:MOD"/>
                         </server:sync>
-                    </xsl:if>            
+                    </xsl:if>
+                    
+                    <xsl:if test="xdiff:attribute[@xdiff:name = 'MD5']"><!-- file has changed -->
+                        <server:sync>
+                            <!-- if something  came from the base, we know it to have both a src and a destination so just make an even match out of it-->
+                            <xsl:attribute name="src" select="@uri"/>
+                            <xsl:attribute name="dest" select="@uri"/>
+                        </server:sync>                       
+                    </xsl:if>
+                    
                 </xsl:if>
                 
                 <xsl:if test="@xdiff:element = 'BASE'">
@@ -98,7 +107,7 @@
             <xsl:template match="server:sync" mode="completeURIs">
                 <xsl:param name="localRootPath"/>
                 <xsl:param name="remoteRootPath"/>
-                <server:sync>
+                <server:sync onCopy="$update:requiresRestart">
                     <!-- copy over any delete information -->
                     <xsl:if test="exists(@delete)">
                         <xsl:copy-of select="@delete"/>
@@ -116,8 +125,12 @@
             </xsl:template>
         </xsl:stylesheet>
     </server:transform>
-    <server:log ref=".."/>
+    
     <server:repeat name="sync_repeat" nodeset="${transform.sync_transform}/server:group/server:sync">
         <server:call ref="${context}"/>
-    </server:repeat>    
+    </server:repeat>   
+    <server:log message="requiresRestart = ${requiresRestart}"/> 
+    <server:when test=".['${requiresRestart}' = 'true']">
+        <client:restart/>
+    </server:when>
 </server:group>

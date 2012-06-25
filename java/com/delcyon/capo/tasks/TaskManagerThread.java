@@ -32,6 +32,7 @@ import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 
+import org.tanukisoftware.wrapper.WrapperManager;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NamedNodeMap;
@@ -394,6 +395,10 @@ public class TaskManagerThread extends ContextThread
 								CapoConnection capoConnection = new CapoConnection();
 								((CapoClient)CapoApplication.getApplication()).runUpdateRequest(capoConnection, sessionHashMap);
 								capoConnection.close();
+								if (WrapperManager.isShuttingDown()) //bail out if we're restarting
+								{
+								    break;
+								}
 								capoConnection = new CapoConnection();
 								((CapoClient)CapoApplication.getApplication()).runIdentityRequest(capoConnection, sessionHashMap);
 								capoConnection.close();
