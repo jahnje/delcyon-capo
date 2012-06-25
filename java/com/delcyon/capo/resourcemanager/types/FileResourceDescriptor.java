@@ -42,8 +42,6 @@ public class FileResourceDescriptor extends AbstractResourceDescriptor implement
 
 	private FileResourceContentMetaData contentMetaData = null;
 	private FileResourceContentMetaData iterationContentMetaData = null;
-
-	
 	
 	private FileResourceContentMetaData buildContentMetatData(ResourceParameter...resourceParameters) throws Exception
 	{		
@@ -166,9 +164,8 @@ public class FileResourceDescriptor extends AbstractResourceDescriptor implement
 			open(variableContainer,resourceParameters);
 		}
 		
-		iterationContentMetaData = new FileResourceContentMetaData(getResourceURI());
-		
-		return iterationContentMetaData.wrapInputStream(new FileInputStream(new File(new URI(getResourceURI()))));
+		iterationContentMetaData = new FileResourceContentMetaData(getResourceURI());		
+		return trackInputStream(iterationContentMetaData.wrapInputStream(new FileInputStream(new File(new URI(getResourceURI())))));
 	}
 
 	@Override
@@ -185,10 +182,13 @@ public class FileResourceDescriptor extends AbstractResourceDescriptor implement
 		    new File(outputFile.getParent()).mkdirs();
 		    outputFile.createNewFile();
 		}
-		return contentMetaData.wrapOutputStream(new FileOutputStream(outputFile));		
+		
+		return trackOutputStream(contentMetaData.wrapOutputStream(new FileOutputStream(outputFile)));	
 	}
 	
-	@Override
+	
+
+    @Override
 	public void close(VariableContainer variableContainer,ResourceParameter... resourceParameters) throws Exception
 	{		
 		super.close(variableContainer,resourceParameters);

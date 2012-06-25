@@ -101,7 +101,9 @@ public class FileResourceContentMetaData extends AbstractContentMetaData
 		
 		if (file.exists() == true && file.canRead() == true && file.isDirectory() == false)
 		{
-			readInputStream(new FileInputStream(file));
+		    FileInputStream fileInputStream = new FileInputStream(file);
+			readInputStream(fileInputStream);
+			fileInputStream.close();
 		}
 		else if (file.isDirectory() == true && getIntValue(com.delcyon.capo.controller.elements.ResourceMetaDataElement.Attributes.depth,1,resourceParameters) > currentDepth)
 		{	

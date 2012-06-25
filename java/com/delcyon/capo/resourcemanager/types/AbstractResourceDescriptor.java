@@ -70,6 +70,9 @@ public abstract class AbstractResourceDescriptor implements ResourceDescriptor
 	private VariableContainer declaringVariableContainer;
 	private OutputStreamTranslater outputStreamTranslater;
 	
+	private Vector<OutputStream> openOutputStreamVector = new Vector<OutputStream>();
+	private Vector<InputStream> openInputStreamVector = new Vector<InputStream>();
+	
 	
 	@Override
 	public void setup(ResourceType resourceType, String resourceURI) throws Exception
@@ -164,6 +167,35 @@ public abstract class AbstractResourceDescriptor implements ResourceDescriptor
 			resourceState = State.CLOSED;
 		}
 		
+		for (InputStream inputStream : openInputStreamVector)
+        {
+		    try
+		    {
+		        inputStream.close();
+		    } 
+		    catch (Exception e) 
+		    {
+		        CapoApplication.logger.log(Level.WARNING, "Error closing inputstream", e);
+		    }
+        }
+		
+		openInputStreamVector.clear();
+		
+		for (OutputStream outputStream : openOutputStreamVector)
+        {
+            
+            try
+            {
+                outputStream.flush();
+                outputStream.close();
+            } 
+            catch (Exception e) 
+            {
+                CapoApplication.logger.log(Level.WARNING, "Error closing outputstream", e);
+            }
+        }
+		
+		openOutputStreamVector.clear();
 	}
 	//TODO
 	/*
@@ -433,6 +465,18 @@ public abstract class AbstractResourceDescriptor implements ResourceDescriptor
 	
 	protected abstract Action[] getSupportedActions();
 
+	protected InputStream trackInputStream(InputStream inputStream)
+    {       
+        openInputStreamVector.add(inputStream);
+        return inputStream;
+    }
+	
+	protected OutputStream trackOutputStream(OutputStream outputStream)
+    {	    
+        openOutputStreamVector.add(outputStream);
+        return outputStream;
+    }
+	
 	@Override //TODO
 	public InputStream getInputStream(VariableContainer variableContainer,ResourceParameter... resourceParameters) throws Exception
 	{		
