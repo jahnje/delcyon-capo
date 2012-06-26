@@ -64,8 +64,8 @@ import com.delcyon.capo.protocol.client.CapoConnection;
 import com.delcyon.capo.protocol.client.Request;
 import com.delcyon.capo.resourcemanager.CapoDataManager;
 import com.delcyon.capo.resourcemanager.ResourceDescriptor;
-import com.delcyon.capo.resourcemanager.ResourceParameter;
 import com.delcyon.capo.resourcemanager.ResourceDescriptor.Action;
+import com.delcyon.capo.resourcemanager.ResourceParameter;
 import com.delcyon.capo.resourcemanager.types.FileResourceType;
 import com.delcyon.capo.tasks.TaskManagerThread;
 import com.delcyon.capo.xml.XPath;
@@ -130,7 +130,7 @@ public class CapoClient extends CapoApplication
 	}
 	
 	private static final String APPLICATION_DIRECTORY_NAME = "client";
-	
+	private static final long MAX_SHUTDOWN_WAIT_TIME = 10000; //10 seconds
 	
 	private HashMap<String, String> idHashMap = new HashMap<String, String>();
     private boolean isReady = false;    
@@ -581,17 +581,18 @@ public class CapoClient extends CapoApplication
 		{
 		    CapoApplication.logger.log(Level.INFO,"Stopping Task Manager");
 			TaskManagerThread.getTaskManagerThread().interrupt();
-			while(TaskManagerThread.getTaskManagerThread().isAlive())
+			long totalWaitTime = 0;
+			long waitTime = 500;
+			
+			while(TaskManagerThread.getTaskManagerThread().isAlive() || totalWaitTime >= MAX_SHUTDOWN_WAIT_TIME)
 			{
 			    try
-			    {
-			        CapoApplication.logger.log(Level.INFO,"Waiting for TaskManager to finish.");
-			        TaskManagerThread.getTaskManagerThread().dumpStack();
-			        Thread.sleep(500);
+			    {			        			        
+			        Thread.sleep(waitTime);
+			        totalWaitTime += waitTime;
 			    }
 			    catch (InterruptedException interruptedException)
-			    {
-			        //??? ignore this for now
+			    {			        
 			        CapoApplication.logger.log(Level.WARNING,"Ignoring InterruptedException");
 			    }
 			}
