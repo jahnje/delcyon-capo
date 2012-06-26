@@ -40,12 +40,14 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
 import com.delcyon.capo.CapoApplication;
-import com.delcyon.capo.ContextThread;
 import com.delcyon.capo.CapoApplication.Location;
+import com.delcyon.capo.ContextThread;
+import com.delcyon.capo.annotations.DefaultDocumentProvider;
 import com.delcyon.capo.annotations.DirectoyProvider;
 import com.delcyon.capo.client.CapoClient;
 import com.delcyon.capo.controller.LocalRequestProcessor;
 import com.delcyon.capo.controller.elements.GroupElement;
+import com.delcyon.capo.modules.ModuleProvider;
 import com.delcyon.capo.preferences.Preference;
 import com.delcyon.capo.preferences.PreferenceInfo;
 import com.delcyon.capo.preferences.PreferenceInfoHelper;
@@ -65,6 +67,7 @@ import com.delcyon.capo.xml.XPath;
 
 @PreferenceProvider(preferences=TaskManagerThread.Preferences.class)
 @DirectoyProvider(preferenceName="TASK_DIR",preferences=TaskManagerThread.Preferences.class)
+@DefaultDocumentProvider(name="task-status.xml",directoryPreferenceName="TASK_DIR", preferences = TaskManagerThread.Preferences.class)
 public class TaskManagerThread extends ContextThread
 {
 
@@ -251,15 +254,65 @@ public class TaskManagerThread extends ContextThread
 			try
 			{
 			    lock.lock();
+			    ResourceDescriptor taskDirResourceDescriptor = capoDataManager.getResourceDirectory(Preferences.TASK_DIR.toString());
+			    ResourceDescriptor taskStatusDocumentResourceDescriptor = taskDirResourceDescriptor.getChildResourceDescriptor(null, "task-status.xml");
+			    Document taskStatusDocument = CapoApplication.getDocumentBuilder().parse(taskStatusDocumentResourceDescriptor.getInputStream(null));
+			    
 				//don't let the document change while we are running
 			    List<ResourceDescriptor> taskResourceDescriptorList = CapoApplication.getDataManager().findDocuments(capoDataManager.getResourceDirectory(Preferences.TASK_DIR.toString()));
 			    for (ResourceDescriptor resourceDescriptor : taskResourceDescriptorList)
                 {
-                    
+			        //skip our status document
+                    if (resourceDescriptor.getLocalName().equals("task-status.xml"))
+                    {
+                        continue;
+                    }
 			        Document taskManagerDocument = documentBuilder.parse(resourceDescriptor.getInputStream(null));
 
 					
 					NodeList tasksNodeList = XPath.selectNodes(taskManagerDocument, "//server:task");
+					String taskURI = resourceDescriptor.getLocalName();
+					//if we didn't find anything see if we are referring to a module
+					if (tasksNodeList.getLength() == 0)
+					{
+					    Element moduleElement = ModuleProvider.getModuleElement(taskManagerDocument.getDocumentElement().getLocalName());
+					    if (moduleElement != null && moduleElement.getLocalName().equals("task"))
+					    {
+					      //verify name attribute on module element
+		                    if (moduleElement.hasAttribute("name") == false)
+		                    {
+		                        moduleElement.setAttribute("name", taskManagerDocument.getDocumentElement().getLocalName());
+		                    }
+		                    
+		                    //copy over attributes from mod declaration to task element
+		                    NamedNodeMap attributeNodeMap = taskManagerDocument.getDocumentElement().getAttributes();
+	                        for(int index = 0; index < attributeNodeMap.getLength(); index++)
+	                        {
+	                            moduleElement.setAttribute(attributeNodeMap.item(index).getLocalName(), attributeNodeMap.item(index).getNodeValue());
+	                        }
+		                    
+	                        //copy over child elements to first element of temp task
+	                        NodeList childNodes = taskManagerDocument.getDocumentElement().getChildNodes();
+	                        boolean isFirstChild = true;
+	                        Element moduleDataElement = moduleElement.getOwnerDocument().createElement("server:moduleData");
+	                        moduleDataElement.setAttribute("DoNotProcess", "true");
+	                        for(int index = 0; index < childNodes.getLength(); index++)
+	                        {
+	                            Node childNode = childNodes.item(index);
+	                            if (childNode instanceof Element)
+	                            {
+	                                if (isFirstChild)
+	                                {
+	                                    moduleElement.appendChild(moduleDataElement);
+	                                }
+	                                moduleDataElement.appendChild(moduleElement.getOwnerDocument().importNode(childNode, true));
+	                            }
+	                        }
+	                        //reselect to make a new list with one item
+	                        tasksNodeList = XPath.selectNodes(moduleDataElement, "//server:task");    
+					    }
+					    
+					}
 					for (int monitorInfoIndex = 0; monitorInfoIndex < tasksNodeList.getLength(); monitorInfoIndex++)
 					{
 						//for each resource monitor get the resource that it is monitoring
@@ -268,9 +321,45 @@ public class TaskManagerThread extends ContextThread
 						taskDocument.appendChild(taskDocument.importNode(taskElement, true));
 						taskElement = taskDocument.getDocumentElement();
 						
+						String name = taskElement.getAttribute(Attributes.name.toString());
+						//forgot name attribute, use filename if there's only one thing here
+						if (name.trim().isEmpty())
+						{
+						    if (tasksNodeList.getLength() == 1)
+						    {
+						        name = resourceDescriptor.getLocalName();
+						        CapoApplication.logger.log(Level.WARNING, "Defaulting task name to "+name+" task in '"+resourceDescriptor.getLocalName()+"' due to missing name attribute");
+						    } 
+						    else
+						    {
+						        CapoApplication.logger.log(Level.WARNING, "Skipping task in '"+resourceDescriptor.getLocalName()+"' due to missing name attribute");
+						        continue;
+						    }
+						}
+						//find the corresponding task in the status document.
+						Element taskStatusElement = (Element) XPath.selectSingleNode(taskStatusDocument, "//server:task[@name = '"+name+"']");
+						
+						if (taskStatusElement == null)
+						{
+						    taskStatusElement = taskStatusDocument.createElement("server:task");
+						    taskStatusElement.setAttribute(Attributes.name.toString(), name);
+	                        //make sure we always know where this task came from so we can cull the file 
+                            taskStatusElement.setAttribute(Attributes.taskURI.toString(), taskURI);
+						    taskStatusDocument.getDocumentElement().appendChild(taskStatusElement);
+						}
+						
+						//walk our persisted attributes and stick them back in the task element
+                        NamedNodeMap namedNodeMap = taskStatusElement.getAttributes();
+                        for(int index = 0; index < namedNodeMap.getLength(); index++)
+                        {
+                            String attributeName = namedNodeMap.item(index).getNodeName();
+                            taskElement.setAttribute(attributeName,taskStatusElement.getAttribute(attributeName));                            
+                        }
+						
 						String lastExecutionTimeValue = taskElement.getAttribute(Attributes.lastExecutionTime.toString());
-						String executionIntervalValue = taskElement.getAttribute(Attributes.executionInterval.toString());
 						String lastAccessTimeValue = taskElement.getAttribute(Attributes.lastAccessTime.toString());
+						
+						String executionIntervalValue = taskElement.getAttribute(Attributes.executionInterval.toString());						
 						String lifeSpanValue = taskElement.getAttribute(Attributes.lifeSpan.toString());
 						
 						long executionInterval = 0l;
@@ -291,6 +380,10 @@ public class TaskManagerThread extends ContextThread
                         {
                             lastAccessTime = Long.parseLong(lastAccessTimeValue);
                         }
+						else
+						{
+						    lastAccessTime = System.currentTimeMillis();
+						}
 						
 						if (executionIntervalValue.matches("\\d+"))
                         {
@@ -313,8 +406,10 @@ public class TaskManagerThread extends ContextThread
                             
                             if(orpanAction.equals("DELETE"))
                             {
-                                CapoApplication.logger.warning("task '"+taskElement.getAttribute(Attributes.name.toString())+"' appears to be orphaned, deleteing. lastAccessTime = "+lastAccessTime);
+                                CapoApplication.logger.warning("task '"+name+"' appears to be orphaned, deleteing. lastAccessTime = "+lastAccessTime);
                                 resourceDescriptor.performAction(null, Action.DELETE);
+                                //mark this task for deletion, by server
+                                taskStatusElement.setAttribute("ACTION", Action.DELETE.toString());
                             }
                             else
                             {
@@ -340,41 +435,47 @@ public class TaskManagerThread extends ContextThread
 						
 						
 						///System.err.println("processing "+resourceMonitorElement.getLocalName());
-						
+						//Tasks get run locally 
 						LocalRequestProcessor localRequestProcessor = new LocalRequestProcessor();
+						
+						//see if this is a task we've never heard of
 						if (taskConcurrentHashMap.containsKey(taskElement.getAttribute(Attributes.name.toString())) == false)
 						{
-							//System.err.println("starting new!");
 							GroupElement processedGroupElement = localRequestProcessor.process(taskElement,null);
 							processedGroupElement.getGroup();
+							//after running save any variables for the next run
 							taskConcurrentHashMap.put(taskElement.getAttribute(Attributes.name.toString()), processedGroupElement.getGroup().getVariableHashMap());
 						}
 						else
 						{
-							//System.err.println("reruning old!");
+							//We've run this one before, so get any memory persisted variables from the previous run
 							HashMap<String, String> variableHashMap = taskConcurrentHashMap.get(taskElement.getAttribute(Attributes.name.toString()));
-							//System.err.println(variableHashMap);
-							NamedNodeMap namedNodeMap = taskElement.getAttributes();
+							
+							//walk our previous variables and stick them back in the task document
+							namedNodeMap = taskElement.getAttributes();
 							for(int index = 0; index < namedNodeMap.getLength(); index++)
 							{
 								String attributeName = namedNodeMap.item(index).getLocalName();
 								if (variableHashMap.containsKey(attributeName))
 								{
+								    //set attribute for the run
 									taskElement.setAttribute(attributeName, variableHashMap.get(attributeName));
+									//set attributes that need to be persisted
+									taskStatusElement.setAttribute(attributeName, variableHashMap.get(attributeName));
 								}
 							}
+							
+							//now run the task document
 							GroupElement processedGroupElement = localRequestProcessor.process(taskElement,variableHashMap);
 							processedGroupElement.getGroup();
 							taskConcurrentHashMap.put(taskElement.getAttribute(Attributes.name.toString()), processedGroupElement.getGroup().getVariableHashMap());														
 						}
-						taskElement.setAttribute(Attributes.lastExecutionTime.toString(), System.currentTimeMillis()+"");
-												
-						updateTasksDocument(resourceDescriptor,taskDocument);
+						taskStatusElement.setAttribute(Attributes.lastExecutionTime.toString(), System.currentTimeMillis()+"");
+						
 					}
-
-
-					
 				}
+			    updateTasksDocument(taskStatusDocumentResourceDescriptor,taskStatusDocument);
+			    
 			    lock.unlock();
 				if (runAsService == true)
 				{
@@ -402,6 +503,9 @@ public class TaskManagerThread extends ContextThread
 								capoConnection = new CapoConnection();
 								((CapoClient)CapoApplication.getApplication()).runIdentityRequest(capoConnection, sessionHashMap);
 								capoConnection.close();
+								capoConnection = new CapoConnection();
+                                ((CapoClient)CapoApplication.getApplication()).runTasksUpdateRequest(capoConnection, sessionHashMap);
+                                capoConnection.close();
 								capoConnection = new CapoConnection();
 								((CapoClient)CapoApplication.getApplication()).runDefaultRequest(capoConnection, sessionHashMap);
 								capoConnection.close();

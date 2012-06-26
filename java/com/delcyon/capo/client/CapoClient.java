@@ -270,7 +270,9 @@ public class CapoClient extends CapoApplication
 			runIdentityRequest(capoConnection,sessionHashMap);
 			capoConnection.close();
 
-
+			capoConnection = new CapoConnection();
+            runTasksUpdateRequest(capoConnection,sessionHashMap);
+            capoConnection.close();
 			
 			capoConnection = new CapoConnection();
 			runDefaultRequest(capoConnection,sessionHashMap);
@@ -317,6 +319,13 @@ public class CapoClient extends CapoApplication
 		runRequest(capoConnection, controllerRequest,sessionHashMap);
 	}
 	
+	public void runTasksUpdateRequest(CapoConnection capoConnection,HashMap<String, String> sessionHashMap) throws Exception
+    {
+        ControllerRequest controllerRequest = new ControllerRequest(capoConnection.getOutputStream(),capoConnection.getInputStream());
+        controllerRequest.setType("tasks_update");
+        controllerRequest.loadSystemVariables();
+        runRequest(capoConnection, controllerRequest,sessionHashMap);
+    }
 	
 	public void runRequest(CapoConnection capoConnection, Request request, HashMap<String, String> sessionHashMap) throws Exception
 	{

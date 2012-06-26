@@ -25,7 +25,6 @@ import java.security.Signature;
 import java.util.logging.Level;
 
 import javax.net.ssl.SSLSocket;
-import javax.net.ssl.SSLSocketFactory;
 import javax.xml.bind.DatatypeConverter;
 
 import com.delcyon.capo.CapoApplication;

@@ -506,6 +506,16 @@ public class CapoServer extends CapoApplication
 	                            clientResourcesResourceDescriptor.open(null);
 	                        }
 
+	                      //check for a client tasks directory
+                            ResourceDescriptor clientTasksResourceDescriptor = clientResourceDescriptor.getChildResourceDescriptor(null,getConfiguration().getValue(TaskManagerThread.Preferences.TASK_DIR));
+                            if (clientTasksResourceDescriptor.getContentMetaData(null).exists() == false)
+                            {
+                                logger.log(Level.INFO, "Creating new tasks dir for "+clientID);
+                                clientTasksResourceDescriptor.performAction(null, Action.CREATE,new ResourceParameter(ResourceDescriptor.DefaultParameters.CONTAINER, "true"));
+                                clientTasksResourceDescriptor.close(null);
+                                clientTasksResourceDescriptor.open(null);
+                            }
+	                        
 	                        //update status information
 	                        ResourceDescriptor statusResourceDescriptor = clientResourceDescriptor.getChildResourceDescriptor(null,"status.xml");
 	                        Element statusRootElement = null;
@@ -562,7 +572,7 @@ public class CapoServer extends CapoApplication
 	            StreamFinalizer streamFinalizer = new SocketFinalizer(socket);
 	            streamHandler.add(streamFinalizer);
 	            streamHandler.init((BufferedInputStream) socket.getInputStream(),socket.getOutputStream(),sessionHashMap);          
-	            logger.log(Level.INFO, "Starting a "+streamProcessor.getClass().getSimpleName()+" Stream Handler for "+clientID+"@"+socket.getRemoteSocketAddress());
+	            logger.log(Level.FINE, "Starting a "+streamProcessor.getClass().getSimpleName()+" Stream Handler for "+clientID+"@"+socket.getRemoteSocketAddress());
 	            try
 	            {
 	                threadPoolExecutor.execute(streamHandler);

@@ -35,7 +35,7 @@ public class TaskElement extends AbstractClientSideControl
 	
 	public enum Attributes
 	{
-		name,lastAccessTime,local,initialGroup,executionInterval,lastExecutionTime,lifeSpan,orpanAction
+		name,lastAccessTime,local,initialGroup,executionInterval,lastExecutionTime,lifeSpan,orpanAction, taskURI
 	}
 	
 	

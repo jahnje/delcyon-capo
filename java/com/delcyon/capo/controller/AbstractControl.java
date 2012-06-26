@@ -137,7 +137,7 @@ public abstract class AbstractControl implements ServerSideControl
 			    if (moduleElement != null)
 			    {
 
-
+			        //verify name attribute on module element
 			        if (moduleElement.hasAttribute("name") == false)
 			        {
 			            moduleElement.setAttribute("name", controlElementDeclaration.getLocalName());

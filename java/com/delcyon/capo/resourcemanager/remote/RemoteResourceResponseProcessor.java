@@ -151,11 +151,11 @@ public class RemoteResourceResponseProcessor implements XMLServerResponseProcess
 					resourceDescriptor.open(this, message.getResourceParameters());
 					break;
 				case CLOSE:
-				    	waitforOutputStreamToFinish(sessionID);
+				    waitforOutputStreamToFinish(sessionID);
 					resourceDescriptor.close(this, message.getResourceParameters());
 					break;
 				case RELEASE:
-				    	waitforOutputStreamToFinish(sessionID);
+				    waitforOutputStreamToFinish(sessionID);
 					resourceDescriptor.release(this, message.getResourceParameters());
 					resourceDescriptorHashtable.remove(sessionID);
 					break;

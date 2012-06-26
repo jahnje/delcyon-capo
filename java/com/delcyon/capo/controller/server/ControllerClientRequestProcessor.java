@@ -33,7 +33,7 @@ import com.delcyon.capo.xml.XPath;
 
 @PreferenceProvider(preferences=ControllerClientRequestProcessor.Preferences.class)
 @DirectoyProvider(preferenceName="CONTROLLER_DIR",preferences=PREFERENCE.class,location=Location.SERVER)
-@DefaultDocumentProvider(directoryPreferenceName="CONTROLLER_DIR",preferences=ControllerClientRequestProcessor.Preferences.class,name="default.xml,update.xml,identity.xml",location=Location.SERVER)
+@DefaultDocumentProvider(directoryPreferenceName="CONTROLLER_DIR",preferences=ControllerClientRequestProcessor.Preferences.class,name="default.xml,update.xml,identity.xml,tasks_update.xml",location=Location.SERVER)
 @ClientRequestProcessorProvider(name="ControllerRequest")
 //@XMLProcessorProvider(documentElementNames={"ControllerRequest"},namespaceURIs={"http://www.delcyon.com/capo-client","http://www.delcyon.com/capo-server"})
 public class ControllerClientRequestProcessor implements ClientRequestProcessor
@@ -47,7 +47,9 @@ public class ControllerClientRequestProcessor implements ClientRequestProcessor
 		@PreferenceInfo(arguments={"file"}, defaultValue="identity.xml", description="main identity script file, relative to controller dir", longOption="DEFAULT_IDENTITY_FILE", option="DEFAULT_IDENTITY_FILE")
 		DEFAULT_IDENTITY_FILE,
 		@PreferenceInfo(arguments={"file"}, defaultValue="update.xml", description="main update script file, relative to controller dir", longOption="DEFAULT_UPDATE_FILE", option="DEFAULT_UPDATE_FILE")
-		DEFAULT_UPDATE_FILE;
+		DEFAULT_UPDATE_FILE,
+		@PreferenceInfo(arguments={"file"}, defaultValue="tasks_update.xml", description="main tasks update script file, relative to controller dir", longOption="DEFAULT_TASKS_UPDATE_FILE", option="DEFAULT_TASKS_UPDATE_FILE")
+        DEFAULT_TASKS_UPDATE_FILE;
 		@Override
 		public String[] getArguments()
 		{

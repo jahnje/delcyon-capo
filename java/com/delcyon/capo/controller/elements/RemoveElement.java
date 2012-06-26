@@ -16,9 +16,15 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 package com.delcyon.capo.controller.elements;
 
+import java.util.logging.Level;
+
+import org.w3c.dom.Node;
+
 import com.delcyon.capo.CapoApplication;
 import com.delcyon.capo.controller.AbstractControl;
 import com.delcyon.capo.controller.ControlElementProvider;
+import com.delcyon.capo.resourcemanager.ResourceDescriptor;
+import com.delcyon.capo.resourcemanager.ResourceDescriptor.Action;
 import com.delcyon.capo.xml.XPath;
 
 /**
@@ -33,7 +39,7 @@ public class RemoveElement extends AbstractControl
 	
 	private enum Attributes
 	{
-		ref
+		ref,uri
 	}
 	
 	
@@ -51,7 +57,7 @@ public class RemoveElement extends AbstractControl
 	@Override
 	public Attributes[] getRequiredAttributes()
 	{
-		return new Attributes[]{Attributes.ref};
+		return new Attributes[]{};
 	}
 	
 	@Override
@@ -65,7 +71,27 @@ public class RemoveElement extends AbstractControl
 	{
 		
 		String ref = getAttributeValue(Attributes.ref);
-		getControlElementDeclaration().removeChild(XPath.selectSingleNode(getControlElementDeclaration(), ref));		
+		String uri = getAttributeValue(Attributes.uri);
+		if (ref.isEmpty() == false)
+		{
+		    Node selectedNode = XPath.selectSingleNode(getControlElementDeclaration(), ref);
+		    if (selectedNode != null)
+		    {
+		        if (selectedNode.getParentNode() != null)
+		        {
+		            selectedNode.getParentNode().removeChild(selectedNode);
+		        }
+		    }
+		}
+		else if (uri.isEmpty() == false)
+		{
+		    ResourceDescriptor resourceDescriptor = CapoApplication.getDataManager().getResourceDescriptor(this, uri);
+	        if (resourceDescriptor.getContentMetaData(null).exists() == true)
+	        {
+	            resourceDescriptor.performAction(null, Action.DELETE);	            
+	        }
+	        resourceDescriptor.close(getParentGroup());
+		}
 		return null;
 	}
 	
