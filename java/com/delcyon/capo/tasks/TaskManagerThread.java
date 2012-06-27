@@ -143,8 +143,8 @@ public class TaskManagerThread extends ContextThread
 	private ConcurrentHashMap<String,HashMap<String, String>> taskConcurrentHashMap = new ConcurrentHashMap<String, HashMap<String,String>>();
 
 	private boolean interrupted = false;
-
 	private long lastSyncTime;
+    private long lastRunTime;
 	private static TaskManagerThread taskManagerThread = null;
 
 	/**
@@ -253,6 +253,7 @@ public class TaskManagerThread extends ContextThread
 		
 		while(interrupted == false)
 		{
+		    this.lastRunTime = System.currentTimeMillis();
 			try
 			{
 			    lock.lock();
@@ -274,9 +275,21 @@ public class TaskManagerThread extends ContextThread
 			        //skip our status document
                     if (resourceDescriptor.getLocalName().equals("task-status.xml"))
                     {
+                        resourceDescriptor.release(null);
                         continue;
                     }
-			        Document taskManagerDocument = documentBuilder.parse(resourceDescriptor.getInputStream(null));
+                    
+                    Document taskManagerDocument = null;
+                    try
+                    {
+                        taskManagerDocument = documentBuilder.parse(resourceDescriptor.getInputStream(null));
+                    }
+                    catch (SAXParseException parseException)
+                    {
+                        CapoApplication.logger.log(Level.WARNING, "Skipping unparsable task '"+resourceDescriptor.getLocalName()+"'");                      
+                        resourceDescriptor.release(null);
+                        continue;
+                    }
 
 					
 					NodeList tasksNodeList = XPath.selectNodes(taskManagerDocument, "//server:task");
@@ -342,6 +355,7 @@ public class TaskManagerThread extends ContextThread
 						    else
 						    {
 						        CapoApplication.logger.log(Level.WARNING, "Skipping task in '"+resourceDescriptor.getLocalName()+"' due to missing name attribute");
+						        resourceDescriptor.release(null);
 						        continue;
 						    }
 						}
@@ -424,12 +438,14 @@ public class TaskManagerThread extends ContextThread
                             {
                                 CapoApplication.logger.warning("task '"+taskElement.getAttribute(Attributes.name.toString())+"' appears to be orphaned, ignoreing. lastAccessTime = "+lastAccessTime);    
                             }
+                            resourceDescriptor.release(null);
                             continue;
                         }
 						
 						if (executionInterval == 0l && lastExecutionTime > 0l)
 						{
-						    //this was only to run once						    
+						    //this was only to run once
+						    resourceDescriptor.release(null);
 						    continue;
 						}
 						
@@ -437,7 +453,8 @@ public class TaskManagerThread extends ContextThread
 						
 						if (System.currentTimeMillis() < lastExecutionTime + executionInterval)
 						{
-						  //not time to run yet.						    
+						  //not time to run yet.
+						    resourceDescriptor.release(null);
                             continue;
 						}
 						
@@ -587,7 +604,7 @@ public class TaskManagerThread extends ContextThread
 		@Override
 		public void run()
 		{
-			while(interrupted == false)
+			while(interrupted == false || documentUpdateQueue.isEmpty() == false)
 			{
 				try
 				{
@@ -613,8 +630,9 @@ public class TaskManagerThread extends ContextThread
 					    transformer.setOutputProperty("method", "xml");
 					    transformer.setOutputProperty("indent", "yes");
 					    transformer.transform(new DOMSource(taskManagerDocument), new StreamResult(taskDocumentOutputStream));
-					    taskDocumentOutputStream.close();
 
+					    taskDocumentOutputStream.close();
+					    taskManagerDocumentFileDescriptor.release(null);
 					    
 					    lock.unlock();
 					}
@@ -942,5 +960,10 @@ public class TaskManagerThread extends ContextThread
 	    }
 		
 	}
+
+    public long getLastRunTime()
+    {        
+        return lastRunTime;
+    }
 	
 }
