@@ -47,6 +47,8 @@ import com.delcyon.capo.annotations.DirectoyProvider;
 import com.delcyon.capo.client.CapoClient;
 import com.delcyon.capo.controller.LocalRequestProcessor;
 import com.delcyon.capo.controller.elements.GroupElement;
+import com.delcyon.capo.controller.elements.TaskElement;
+import com.delcyon.capo.controller.elements.TaskElement.Attributes;
 import com.delcyon.capo.modules.ModuleProvider;
 import com.delcyon.capo.preferences.Preference;
 import com.delcyon.capo.preferences.PreferenceInfo;
@@ -57,7 +59,6 @@ import com.delcyon.capo.resourcemanager.CapoDataManager;
 import com.delcyon.capo.resourcemanager.ResourceDescriptor;
 import com.delcyon.capo.resourcemanager.ResourceDescriptor.Action;
 import com.delcyon.capo.server.CapoServer;
-import com.delcyon.capo.tasks.TaskElement.Attributes;
 import com.delcyon.capo.xml.XPath;
 
 /**

@@ -14,7 +14,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package com.delcyon.capo.tasks;
+package com.delcyon.capo.controller.elements;
 
 import org.w3c.dom.Element;
 
@@ -22,6 +22,7 @@ import com.delcyon.capo.CapoApplication;
 import com.delcyon.capo.controller.AbstractClientSideControl;
 import com.delcyon.capo.controller.ControlElementProvider;
 import com.delcyon.capo.controller.server.ControllerResponse;
+import com.delcyon.capo.tasks.TaskManagerThread;
 
 /**
  * @author jeremiah
