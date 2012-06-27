@@ -1,0 +1,143 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<server:group xmlns:server="http://www.delcyon.com/capo-server"
+              xmlns:client="http://www.delcyon.com/capo-client"
+              name="update">
+    <!-- need to check CapoApplication.getVariableValue("updater.lib.md5").equals(remoteLibMD5) -->
+    <server:resourceMetaData attributes="MD5" depth="2" requiredAttributes="MD5" resource="file:lib"
+                            useRelativePaths="true"/>
+    <server:resourceMetaData attributes="MD5" depth="2" requiredAttributes="MD5" resource="remote:file:lib"
+                            useRelativePaths="true"/>
+    
+    <server:diff base="ref:../server:resourceMetaData[@resource='file:lib']"
+                mod="ref:../server:resourceMetaData[@resource = 'remote:file:lib']"
+                name="diff.lib"/>
+    
+    <server:transform name="sync_transform" ref="${diff.diff.lib}" stylesheet="ref:xsl:stylesheet">
+        <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
+                      xmlns:xdiff="http://www.delcyon.com/xdiff"
+                      xmlns:xs="http://www.w3.org/2001/XMLSchema"
+                      exclude-result-prefixes="xs"
+                      version="2.0">
+            <xsl:output indent="yes" method="xml"/>
+            
+            <xsl:key match="server:sync[@src != 'MOD']" name="sync_src_good" use="@src"/>
+            
+            <!-- main starting point, find a resourceMetatData Element -->
+            <xsl:template match="server:resourceMetaData">
+                
+                <!-- get our complete uri paths for later use -->
+                <xsl:variable name="localRootPath"
+                          select="xdiff:attribute[@xdiff:name = 'resource']/@xdiff:BASE"/>
+                <xsl:variable name="remoteRootPath"
+                          select="xdiff:attribute[@xdiff:name = 'resource']/@xdiff:MOD"/>
+                
+                <!-- process all of the diff nodes to give us an expanded nodeset to work with -->
+                <xsl:variable name="sync_nodes">
+                    <xsl:apply-templates select="resource"/>                        
+                </xsl:variable>
+                
+                <!-- turn our expanded syn node set into a list of syncs and deletes while removing any duplicate elements -->
+                <xsl:variable name="final_sync_nodes">
+                    <xsl:apply-templates mode="matchDestNodes" select="$sync_nodes"/>
+                </xsl:variable>
+                
+                <!-- now that we know what we need to do, repopulate all of the uris will the full path so that the sync elements will work  -->        
+                <server:group>
+                    <xsl:apply-templates mode="completeURIs" select="$final_sync_nodes">
+                        <xsl:with-param name="localRootPath" select="$localRootPath"/>
+                        <xsl:with-param name="remoteRootPath" select="$remoteRootPath"/>
+                    </xsl:apply-templates>
+                </server:group>
+                
+                <!-- FIN -->
+            </xsl:template>
+            
+            <xsl:template match="resource">       
+                <xsl:if test="@xdiff:element = 'BASE != MOD'"> 
+                    <xsl:if test="xdiff:attribute[@xdiff:name = 'uri']"> <!-- whole file exists on one side or the other -->
+                        <server:sync>
+                            <!-- if something  came from the base, we know it to have both a src and a destination so just make an even match out of it-->
+                            <xsl:attribute name="src" select="xdiff:attribute[@xdiff:name = 'uri']/@xdiff:BASE"/>
+                            <xsl:attribute name="dest" select="xdiff:attribute[@xdiff:name = 'uri']/@xdiff:BASE"/>
+                        </server:sync>
+                        <server:sync>
+                            <!-- since this was only found in the remote side, mark the SRC as such for later processing -->
+                            <xsl:attribute name="src">MOD</xsl:attribute>
+                            <xsl:attribute name="dest" select="xdiff:attribute[@xdiff:name = 'uri']/@xdiff:MOD"/>
+                        </server:sync>
+                    </xsl:if>
+                    
+                    <xsl:if test="xdiff:attribute[@xdiff:name = 'MD5']"><!-- file has changed -->
+                        <server:sync>
+                            <!-- if something  came from the base, we know it to have both a src and a destination so just make an even match out of it-->
+                            <xsl:attribute name="src" select="@uri"/>
+                            <xsl:attribute name="dest" select="@uri"/>
+                        </server:sync>                       
+                    </xsl:if>
+                    
+                </xsl:if>
+                
+                <xsl:if test="@xdiff:element = 'BASE'">
+                    <!-- if something  came from the base, we know it to have both a src and a destination so just make an even match out of it-->
+                    <server:sync>
+                        <xsl:attribute name="src" select="@uri"/>
+                        <xsl:attribute name="dest" select="@uri"/>
+                    </server:sync>
+                </xsl:if>
+                <xsl:if test="@xdiff:element = 'MOD'">
+                    <!-- since this was only found in the remote side, mark the SRC as such for later processing -->
+                    <server:sync>
+                        <xsl:attribute name="src">MOD</xsl:attribute>
+                        <xsl:attribute name="dest" select="@uri"/>
+                    </server:sync>
+                </xsl:if>
+            </xsl:template>
+            
+            <xsl:template match="server:sync" mode="matchDestNodes">
+                <xsl:choose>
+                    <xsl:when test="@src = 'MOD' and exists(key('sync_src_good',@dest)) = false()">
+                        <!-- since we didn't find a match anywhere, we need to mark this uri fro deletion -->
+                        <server:sync delete="true" dest="{@dest}"/>
+                    </xsl:when>
+                    <xsl:when test="@src = 'MOD' and exists(key('sync_src_good',@dest))">
+                        <!-- Do Nothing/Drop this since we found a 'good' match -->
+                    </xsl:when>
+                    <xsl:otherwise>
+                        <!-- this is a 'good' sync that has come from the local side of things, so keep it -->
+                        <xsl:copy-of select="."/>         
+                    </xsl:otherwise>
+                </xsl:choose>
+            </xsl:template>
+            
+            <!-- Adds back in the full uri to the resource -->
+            <xsl:template match="server:sync" mode="completeURIs">
+                <xsl:param name="localRootPath"/>
+                <xsl:param name="remoteRootPath"/>
+                <server:sync onCopy="$update:requiresRestart">
+                    <!-- copy over any delete information -->
+                    <xsl:if test="exists(@delete)">
+                        <xsl:copy-of select="@delete"/>
+                    </xsl:if>
+                    <!-- fixup the src uri if we have one -->
+                    <xsl:if test="exists(@src)">
+                        <xsl:attribute name="src" select="concat($localRootPath,@src)"/>
+                    </xsl:if>
+                    <!-- fixup the dest uri if we have one -->
+                    <xsl:if test="exists(@dest)">
+                        <xsl:attribute name="dest" select="concat($remoteRootPath,@dest)"/>
+                    </xsl:if>
+                </server:sync>
+                
+            </xsl:template>
+        </xsl:stylesheet>
+    </server:transform>
+    
+    <server:repeat name="sync_repeat"
+                  nodeset="${transform.sync_transform}/server:group/server:sync">
+        <server:call ref="${context}"/>
+    </server:repeat>   
+     
+    <server:when test=".['${requiresRestart}' = 'true']">
+        <server:log message="skipping restart do to testing framework"/>
+    </server:when>
+</server:group>
