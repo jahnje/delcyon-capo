@@ -1,0 +1,2 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<server:fileMonitor xmlns:server="http://www.delcyon.com/capo-server" executionInterval="15000" name="test_monitor" local="true" fileName="tasks/task-status.xml" attribute="lastModified"/>

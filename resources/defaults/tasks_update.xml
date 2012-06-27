@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<server:group name="tasks_update" xmlns:server="http://www.delcyon.com/capo-server" xmlns:client="http://www.delcyon.com/capo-client">
+    <server:sync src="remote:tasks/task-status.xml" dest="clients:${clientID}/tasks/task-status.xml"/>
+    <!-- load our newly synced task status file -->
+    <server:import src="clients:${clientID}/tasks/task-status.xml" name="task_status"/>
+        
+    
+    
+    <server:repeat name="sync_repeat" nodeset="${import.task_status}/server:tasks/server:task[@ACTION = 'DELETE']">
+        <server:var name="deletableTaskURI" eval="${context}/@taskURI"/>
+        <server:remove uri="clients:${clientID}/tasks/${deletableTaskURI}"/>
+        <server:remove ref="${context}"/>
+    </server:repeat>
+    <server:export ref="${import.task_status}/server:tasks" dest="clients:${clientID}/tasks/task-status.xml"/>
+    <server:sync src="clients:${clientID}/tasks" dest="remote:tasks" recursive="true" prune="true"/>        
+</server:group>
