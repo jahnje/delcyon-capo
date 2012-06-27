@@ -6,6 +6,7 @@ import java.net.URLClassLoader;
 import java.util.Vector;
 import java.util.prefs.Preferences;
 
+import org.junit.Assert;
 import org.junit.Test;
 
 import com.delcyon.capo.client.CapoClient;
@@ -48,7 +49,9 @@ public class Util
     @Test
     public void  testCopyTree() throws Exception
     {
-        copyTree("capo/server", "temp");
+        deleteTree("capo");
+        copyTree("test-data/capo","capo");
+        Assert.assertTrue("Copied Tree are not the same",areSame("test-data/capo","capo"));
     }
 
 	public static void setDefaultPreferences() throws Exception
@@ -61,7 +64,11 @@ public class Util
 		preferences.sync();		
 	}
 
-    
+    public static boolean areSame(String src, String dest) throws Exception
+    {
+        Class utilClass = getIndependentClassLoader().loadClass("com.delcyon.capo.tests.util.Util");
+        return (Boolean) utilClass.getMethod("areSame", String.class, String.class).invoke(null, src,dest);
+    }
     
     
     
