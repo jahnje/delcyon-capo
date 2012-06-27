@@ -38,6 +38,7 @@ import org.w3c.dom.Element;
 import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
+import org.xml.sax.SAXParseException;
 
 import com.delcyon.capo.CapoApplication;
 import com.delcyon.capo.CapoApplication.Location;
@@ -257,8 +258,15 @@ public class TaskManagerThread extends ContextThread
 			    lock.lock();
 			    ResourceDescriptor taskDirResourceDescriptor = capoDataManager.getResourceDirectory(Preferences.TASK_DIR.toString());
 			    ResourceDescriptor taskStatusDocumentResourceDescriptor = taskDirResourceDescriptor.getChildResourceDescriptor(null, "task-status.xml");
-			    Document taskStatusDocument = CapoApplication.getDocumentBuilder().parse(taskStatusDocumentResourceDescriptor.getInputStream(null));
-			    
+			    Document taskStatusDocument = null;
+			    try
+			    {
+			        taskStatusDocument = CapoApplication.getDocumentBuilder().parse(taskStatusDocumentResourceDescriptor.getInputStream(null));
+			    }
+			    catch (SAXParseException saxParseException) 
+			    {
+			        taskStatusDocument = CapoApplication.getDefaultDocument("task-status.xml");
+                }
 				//don't let the document change while we are running
 			    List<ResourceDescriptor> taskResourceDescriptorList = CapoApplication.getDataManager().findDocuments(capoDataManager.getResourceDirectory(Preferences.TASK_DIR.toString()));
 			    for (ResourceDescriptor resourceDescriptor : taskResourceDescriptorList)
@@ -474,6 +482,7 @@ public class TaskManagerThread extends ContextThread
 						taskStatusElement.setAttribute(Attributes.lastExecutionTime.toString(), System.currentTimeMillis()+"");
 						
 					}
+					resourceDescriptor.release(null);
 				}
 			    updateTasksDocument(taskStatusDocumentResourceDescriptor,taskStatusDocument);
 			    

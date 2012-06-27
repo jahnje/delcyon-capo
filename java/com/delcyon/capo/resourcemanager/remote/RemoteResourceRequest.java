@@ -58,20 +58,28 @@ private Element controllerRequestElement = null;
 		controllerRequestElement.setAttribute(ControllerClientRequestProcessor.REQUEST_TYPE_ATTRIBUTE, messageType.toString());		
 	}
 	
-	
+	public static MessageType getType(Document clientRequestDocument) throws Exception
+    {
+        Document requestDocument = XPath.unwrapDocument(clientRequestDocument);
+        return MessageType.valueOf(requestDocument.getDocumentElement().getAttribute(ControllerClientRequestProcessor.REQUEST_TYPE_ATTRIBUTE));
+    }
 
 	public static MessageType getType(ClientRequest clientRequest) throws Exception
 	{
-		Document requestDocument = XPath.unwrapDocument(clientRequest.getRequestDocument());
-		return MessageType.valueOf(requestDocument.getDocumentElement().getAttribute(ControllerClientRequestProcessor.REQUEST_TYPE_ATTRIBUTE));
+	    return getType(clientRequest.getRequestDocument());		
 	}
 	
 	public static String getVarName(ClientRequest clientRequest) throws Exception
 	{
-		Document requestDocument = XPath.unwrapDocument(clientRequest.getRequestDocument());
-		return requestDocument.getDocumentElement().getAttribute(MessageType.GET_VAR_VALUE.toString());
+	    return getVarName(clientRequest.getRequestDocument());		
 	}
 
+	public static String getVarName(Document clientRequestDocument) throws Exception
+    {
+        Document requestDocument = XPath.unwrapDocument(clientRequestDocument);
+        return requestDocument.getDocumentElement().getAttribute(MessageType.GET_VAR_VALUE.toString());
+    }
+	
 	public void setVarName(String varName)
 	{
 		controllerRequestElement.setAttribute(MessageType.GET_VAR_VALUE.toString(), varName);			

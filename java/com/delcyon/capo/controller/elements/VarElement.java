@@ -94,8 +94,7 @@ public class VarElement extends AbstractControl
 					{						
 						namespaceVector.add(currentNode.getLocalName()+"="+currentNode.getNodeValue());
 					}
-				}
-				System.out.println(stringBuffer);
+				}				
 				stringBuffer = new StringBuffer(XPath.selectSingleNodeValue(getControlElementDeclaration(), stringBuffer.toString(),namespaceVector.toArray(new String[]{})));
 				getParentGroup().processVars(stringBuffer);
 				value = stringBuffer.toString();

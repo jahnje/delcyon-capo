@@ -94,12 +94,14 @@ public class RemoteResourceResponseProcessor implements XMLServerResponseProcess
 	}
     
 	private static Hashtable<String, ResourceDescriptor> resourceDescriptorHashtable = new Hashtable<String, ResourceDescriptor>();
+	private static Hashtable<String, CapoConnection> capoVarConnectionHashtable = new Hashtable<String, CapoConnection>();
 	private static Hashtable<String, ThreadedInputStreamReader> threadedInputStreamReaderHashtable = new Hashtable<String, ThreadedInputStreamReader>();
 	private Document responseDocument = null;
 	private XMLServerResponse xmlServerResponse;
 	private String sessionID;
 	@SuppressWarnings("unused")
 	private HashMap<String, String> sessionHashMap = null;
+    
 
 	@Override
 	public Document getResponseDocument()
@@ -157,7 +159,8 @@ public class RemoteResourceResponseProcessor implements XMLServerResponseProcess
 				case RELEASE:
 				    waitforOutputStreamToFinish(sessionID);
 					resourceDescriptor.release(this, message.getResourceParameters());
-					resourceDescriptorHashtable.remove(sessionID);
+					closeVarConnection();
+					resourceDescriptorHashtable.remove(sessionID);										
 					break;
 				case GET_CONTENT_METADATA:
 					reply.setContentMetaData(resourceDescriptor.getContentMetaData(this, message.getResourceParameters()));
@@ -258,20 +261,20 @@ public class RemoteResourceResponseProcessor implements XMLServerResponseProcess
 	    ThreadedInputStreamReader threadedInputStreamReader = threadedInputStreamReaderHashtable.get(sessionID); 
 	    if (threadedInputStreamReader != null)
 	    {
-		int loopCount = 0;
-		int waitTime = 100;
-		int timeoutSeconds = CapoApplication.getConfiguration().getIntValue(Preferences.OUTPUT_STREAM_TIMEOUT);
-		while(threadedInputStreamReader.isFinished() == false)
-		{
-		    loopCount++;
-		    Thread.sleep(waitTime);
-		    if (loopCount * waitTime > timeoutSeconds * 1000)
-		    {
-			CapoApplication.logger.log(Level.WARNING, "OutputStream timeout");
-			break;
-		    }
-		}
-		threadedInputStreamReaderHashtable.remove(sessionID);
+	        int loopCount = 0;
+	        int waitTime = 100;
+	        int timeoutSeconds = CapoApplication.getConfiguration().getIntValue(Preferences.OUTPUT_STREAM_TIMEOUT);
+	        while(threadedInputStreamReader.isFinished() == false)
+	        {
+	            loopCount++;
+	            Thread.sleep(waitTime);
+	            if (loopCount * waitTime > timeoutSeconds * 1000)
+	            {
+	                CapoApplication.logger.log(Level.WARNING, "OutputStream timeout");
+	                break;
+	            }
+	        }
+	        threadedInputStreamReaderHashtable.remove(sessionID);
 	    }
 	}
 
@@ -339,15 +342,30 @@ public class RemoteResourceResponseProcessor implements XMLServerResponseProcess
 	{
 		try
 		{
-			CapoConnection capoConnection = new CapoConnection();
-			RemoteResourceRequest request = new RemoteResourceRequest(capoConnection.getOutputStream(),capoConnection.getInputStream());
+		    CapoConnection capoVarConnection = capoVarConnectionHashtable.get(sessionID);
+		    if (capoVarConnection == null)
+		    {
+		        capoVarConnection  = new CapoConnection();
+		        capoVarConnectionHashtable.put(sessionID,capoVarConnection);
+		    }
+			RemoteResourceRequest request = new RemoteResourceRequest(capoVarConnection.getOutputStream(),capoVarConnection.getInputStream());
 			request.setType(MessageType.GET_VAR_VALUE);
 			request.setVarName(varName);
 			request.setSessionId(sessionID);
 			request.send();
-			capoConnection.getInputStream();
+			capoVarConnection.getInputStream();
+			
 			ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-			StreamUtil.readInputStreamIntoOutputStream(capoConnection.getInputStream(), byteArrayOutputStream);
+			int value = 0;
+			while(true)
+			{
+			    value = capoVarConnection.getInputStream().read();
+			    if (value <= 0)
+			    {
+			        break;
+			    }
+			    byteArrayOutputStream.write(value);
+			}			
 			return new String(byteArrayOutputStream.toByteArray()); 
 		} catch (Exception exception)
 		{
@@ -356,5 +374,18 @@ public class RemoteResourceResponseProcessor implements XMLServerResponseProcess
 		}
 	}
 
-
+	private void closeVarConnection() throws Exception
+    {
+	    CapoConnection capoVarConnection = capoVarConnectionHashtable.remove(sessionID);
+        if (capoVarConnection != null)
+        {
+            //shut down the pipe gracefully
+            RemoteResourceRequest request = new RemoteResourceRequest(capoVarConnection.getOutputStream(),capoVarConnection.getInputStream());
+            request.setType(MessageType.CLOSE);
+            request.setSessionId(sessionID);
+            request.send();
+            capoVarConnection.close();            
+        }
+        
+    }
 }

@@ -129,8 +129,9 @@
     <server:repeat name="sync_repeat" nodeset="${transform.sync_transform}/server:group/server:sync">
         <server:call ref="${context}"/>
     </server:repeat>   
-    <server:log message="requiresRestart = ${requiresRestart}"/> 
+     
     <server:when test=".['${requiresRestart}' = 'true']">
+        <server:log message="requiresRestart = ${requiresRestart}"/>
         <client:restart/>
     </server:when>
 </server:group>

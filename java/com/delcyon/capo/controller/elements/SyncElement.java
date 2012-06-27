@@ -217,6 +217,8 @@ public class SyncElement extends AbstractControl
                     ResourceDescriptor childSourceResourceDescriptor = sourceResourceDescriptor.getChildResourceDescriptor(this, localName);
                     destinationContainedResourceHashMap.remove(localName);
                     syncTree(childSourceResourceDescriptor, childDestinationResourceDescriptor);
+                    childSourceResourceDescriptor.release(null);
+                    childDestinationResourceDescriptor.release(null);
                 }
 
                 if (getAttributeBooleanValue(Attributes.prune) == true)

@@ -460,15 +460,7 @@ public class RemoteResourceDescriptorProxy  implements ResourceDescriptor,Client
 				useLock = true;
 				break;
 			case GET_VAR_VALUE:
-				String varName = RemoteResourceRequest.getVarName(clientRequest);
-				if (variableContainer != null)
-				{
-					String value = variableContainer.getVarValue(varName);
-					if (value != null)
-					{
-						clientRequest.getOutputStream().write(value.getBytes());
-					}					
-				}
+			    processVarRequest(clientRequest);
 				break;
 			default:
 				throw new UnsupportedOperationException(messageType.toString());
@@ -501,7 +493,34 @@ public class RemoteResourceDescriptorProxy  implements ResourceDescriptor,Client
 			
 	}
 
-	@Override
+	private void processVarRequest(ClientRequest clientRequest) throws Exception
+    {
+	    String varName = RemoteResourceRequest.getVarName(clientRequest);
+	    while(true)
+        {
+	        if (variableContainer != null)
+	        {
+	            String value = variableContainer.getVarValue(varName);
+	            if (value != null)
+	            {
+	                clientRequest.getOutputStream().write(value.getBytes());
+	            }
+	            clientRequest.getOutputStream().write(0);
+	            clientRequest.getOutputStream().flush();
+	        }
+	        Document nextDocument = clientRequest.getXmlStreamProcessor().readNextDocument();
+	        if (RemoteResourceRequest.getType(nextDocument) != MessageType.GET_VAR_VALUE)
+	        {	            
+	            break;
+	        }
+	        else
+	        {
+	            varName = RemoteResourceRequest.getVarName(nextDocument);
+	        }
+        }
+    }
+
+    @Override
 	public void init(ClientRequestXMLProcessor clientRequestXMLProcessor, String sessionID, HashMap<String, String> sessionHashMap,String requestName) throws Exception
 	{
 		throw new UnsupportedOperationException();		

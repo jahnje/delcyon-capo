@@ -16,7 +16,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 package com.delcyon.capo.datastream;
 
-import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 
@@ -50,14 +49,8 @@ public class StreamUtil
 		int bytesRead = 0;
 		while (bytesRead != -1)
 		{
-			byte[] buffer = new byte[bufferSize];
-			try {
-			    bytesRead = inputStream.read(buffer);
-			} catch (IOException ioException)
-			{
-			    System.err.println("got here");
-			    throw ioException;
-			}
+			byte[] buffer = new byte[bufferSize];			
+			bytesRead = inputStream.read(buffer);			
 			if (bytesRead > 0)
 			{				
 				outputStream.write(buffer, 0, bytesRead);				
