@@ -31,23 +31,20 @@ public class ExternalTestClient extends ClassLoader
 {
 	
 	private URLClassLoader clientClassLoader;
-	@SuppressWarnings("unchecked")
+	@SuppressWarnings({"rawtypes" })
 	private Class testClientClass;
 
-	@SuppressWarnings({ "deprecation" })
 	public ExternalTestClient() throws Exception
 	{
-		
-
 		clientClassLoader = Util.getIndependentClassLoader();
 		testClientClass = clientClassLoader.loadClass("com.delcyon.capo.tests.util.TestClient");
 	}
 	
 	
 	@SuppressWarnings({ "unchecked" })
-	public  void startClient() throws Exception
+	public  void startClient(String... args) throws Exception
 	{
-		testClientClass.getMethod("start").invoke(null);
+		testClientClass.getMethod("start",args.getClass()).invoke(null,(Object)args);
 	}
 	
 	@SuppressWarnings({ "unchecked" })

@@ -1,12 +1,10 @@
 package com.delcyon.capo.tests.util;
 import java.net.URLClassLoader;
 import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.prefs.Preferences;
 
 import org.junit.Test;
 
 import com.delcyon.capo.client.CapoClient;
-import com.delcyon.capo.server.CapoServer;
 import com.delcyon.capo.tests.util.external.Util;
 
 /**
@@ -37,20 +35,18 @@ public class ExternalTestServer
 	@SuppressWarnings("rawtypes")
     private Class testServerClass;
 
-	@SuppressWarnings({ "deprecation"})
+	
 	public ExternalTestServer() throws Exception
 	{
-		
-
 		serverClassLoader = Util.getIndependentClassLoader();
 		testServerClass = serverClassLoader.loadClass("com.delcyon.capo.tests.util.TestServer");
 	}
 	
 	
 	@SuppressWarnings({ "unchecked" })
-	public  void startServer() throws Exception
-	{
-		testServerClass.getMethod("start").invoke(null);
+	public  void startServer(String... args) throws Exception
+	{	   
+		testServerClass.getMethod("start",args.getClass()).invoke(null,(Object)args);
 	}
 	
 	@SuppressWarnings({ "unchecked" })

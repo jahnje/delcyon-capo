@@ -34,7 +34,7 @@ public class TestClient
 	private static Thread clientThread = null;
 	private static CapoClient capoClient;
 	
-	public static void start() throws Exception
+	public static void start(final String... args) throws Exception
 	{
 		
 		if (clientThread != null)
@@ -42,7 +42,7 @@ public class TestClient
 			System.err.println("found an existing server" + clientThread);
 			System.exit(0);
 		}
-		clientThread  = new Thread()
+		clientThread = new Thread()
 		{
 			@Override
 			public void run()
@@ -50,7 +50,7 @@ public class TestClient
 
 				try
 				{					
-					CapoClient.main(new String[]{});									            		
+					CapoClient.main(args);									            		
 				}
 				catch (Exception e)
 				{					
@@ -59,7 +59,7 @@ public class TestClient
 
 			}
 		};
-		clientThread .start();
+		clientThread.start();
 		while(CapoApplication.getApplication() == null || CapoApplication.getApplication().isReady() == false)
 		{            
 			Thread.sleep(1000);
@@ -75,6 +75,11 @@ public class TestClient
 		{
 			capoClient.shutdown();
 		}
+	}
+	
+	public static CapoClient getClientInstance()
+	{
+	    return capoClient;
 	}
 	
 	public static CopyOnWriteArrayList<Exception> getExceptionList()

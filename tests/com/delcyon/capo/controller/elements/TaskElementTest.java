@@ -1,8 +1,7 @@
 package com.delcyon.capo.controller.elements;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.fail;
 
-import java.io.File;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
@@ -20,12 +19,12 @@ import com.delcyon.capo.CapoApplication;
 import com.delcyon.capo.controller.Group;
 import com.delcyon.capo.controller.client.ServerControllerResponse;
 import com.delcyon.capo.resourcemanager.ResourceDescriptor;
-import com.delcyon.capo.resourcemanager.types.FileResourceType;
 import com.delcyon.capo.tasks.TaskManagerThread;
 import com.delcyon.capo.tasks.TaskManagerThread.Preferences;
 import com.delcyon.capo.tests.util.ExternalTestClient;
 import com.delcyon.capo.tests.util.ExternalTestServer;
 import com.delcyon.capo.tests.util.TestCapoApplication;
+import com.delcyon.capo.tests.util.TestClient;
 import com.delcyon.capo.tests.util.TestServer;
 import com.delcyon.capo.tests.util.external.Util;
 import com.delcyon.capo.xml.XPath;
@@ -34,6 +33,7 @@ public class TaskElementTest
 {
 
     private ExternalTestClient externalTestClient;
+    private ExternalTestServer externalTestServer;
 
     @BeforeClass
     public static void setUpBeforeClass() throws Exception
@@ -52,40 +52,70 @@ public class TaskElementTest
     {
         Util.deleteTree("capo");
         Util.copyTree("test-data/capo", "capo");
-        TestServer.start();        
-        TaskManagerThread.getTaskManagerThread().getLock().lock();
-        externalTestClient = new ExternalTestClient();
-        externalTestClient.startClient();        
+           
     }
 
     @After
     public void tearDown() throws Exception
     {
-        if (TaskManagerThread.getTaskManagerThread().getLock().isLocked() && TaskManagerThread.getTaskManagerThread().getLock().isHeldByCurrentThread())
+        if (TaskManagerThread.getTaskManagerThread() != null && TaskManagerThread.getTaskManagerThread().getLock().isLocked() && TaskManagerThread.getTaskManagerThread().getLock().isHeldByCurrentThread())
         {
             TaskManagerThread.getTaskManagerThread().getLock().unlock();
         }
         TestServer.getServerInstance().getConfiguration().setValue(TaskManagerThread.Preferences.TASK_INTERVAL, TaskManagerThread.Preferences.TASK_INTERVAL.getDefaultValue());
         TestServer.getServerInstance().getConfiguration().setValue(TaskManagerThread.Preferences.TASK_DEFAULT_LIFESPAN, TaskManagerThread.Preferences.TASK_DEFAULT_LIFESPAN.getDefaultValue());
-        externalTestClient.shutdown();
-        TestServer.shutdown();
-        CopyOnWriteArrayList<Exception> exceptionList = externalTestClient.getExceptionList();
-        if (exceptionList.isEmpty() == false)
+        if (externalTestClient != null)
         {
-            throw exceptionList.get(0);
+            externalTestClient.shutdown();
+            CopyOnWriteArrayList<Exception> exceptionList = externalTestClient.getExceptionList();
+            if (exceptionList.isEmpty() == false)
+            {
+                throw exceptionList.get(0);
+            }
         }
         
-        exceptionList = TestServer.getExceptionList();
-        if (exceptionList.isEmpty() == false)
+        if (TestClient.getClientInstance() != null)
         {
-            throw exceptionList.get(0);
+            TestClient.shutdown();
+            CopyOnWriteArrayList<Exception> exceptionList = TestClient.getExceptionList();
+            if (exceptionList.isEmpty() == false)
+            {
+                throw exceptionList.get(0);
+            }            
         }
-        TestServer.cleanup();
+        
+        if (externalTestServer != null)
+        {
+            externalTestServer.shutdown();
+            CopyOnWriteArrayList<Exception> exceptionList = externalTestServer.getExceptionList();
+            if (exceptionList.isEmpty() == false)
+            {
+                throw exceptionList.get(0);
+            }
+        }
+
+        if (TestServer.getServerInstance() != null)
+        {
+            TestServer.shutdown();
+            CopyOnWriteArrayList<Exception> exceptionList = TestServer.getExceptionList();
+            if (exceptionList.isEmpty() == false)
+            {
+                throw exceptionList.get(0);
+            }
+            TestServer.cleanup();
+        }
+        
+        
     }
 
     @Test
     public void testProcessServerSideElement() throws Exception
     {
+        TestServer.start();        
+        TaskManagerThread.getTaskManagerThread().getLock().lock();
+        externalTestClient = new ExternalTestClient();
+        externalTestClient.startClient();    
+        
         TaskElement taskElementControl = new TaskElement();
         
         Document document = CapoApplication.getDocumentBuilder().newDocument();
@@ -178,10 +208,19 @@ public class TaskElementTest
         TaskManagerThread.getTaskManagerThread().getLock().unlock();
     }
 
+    /**
+     * Start an external server.
+     * Start a Test client
+     * 
+     * @throws Exception
+     */
     @Test
-    public void testProcessClientSideElement()
+    public void testProcessClientSideElement() throws Exception
     {
-        fail("Not yet implemented");
+        externalTestServer = new ExternalTestServer();
+        externalTestServer.startServer();
+        TestClient.start("-CLIENT_AS_SERVICE","true");
+        
     }
 
 }

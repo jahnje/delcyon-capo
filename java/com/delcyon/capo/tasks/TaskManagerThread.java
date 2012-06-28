@@ -164,6 +164,7 @@ public class TaskManagerThread extends ContextThread
 			else
 			{
 				String clientAsServiceValue = CapoApplication.getConfiguration().getValue(CapoClient.Preferences.CLIENT_AS_SERVICE);
+				CapoApplication.logger.log(Level.INFO, "Running CapoClient as a service");
 				if (clientAsServiceValue != null && clientAsServiceValue.equalsIgnoreCase("true"))
 				{
 					runAsService = true;
@@ -185,7 +186,14 @@ public class TaskManagerThread extends ContextThread
 	 */
 	public static TaskManagerThread getTaskManagerThread()
 	{
-		return CapoApplication.getTaskManagerThread();
+	    if (CapoApplication.getApplication() != null)
+	    {
+	        return CapoApplication.getTaskManagerThread();
+	    }
+	    else
+	    {
+	        return null;
+	    }
 	}
 	
 	/**

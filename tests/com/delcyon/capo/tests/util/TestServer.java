@@ -18,11 +18,9 @@ package com.delcyon.capo.tests.util;
 
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.logging.Level;
-import java.util.prefs.Preferences;
 
 import com.delcyon.capo.CapoApplication;
 import com.delcyon.capo.server.CapoServer;
-import com.delcyon.capo.tasks.TaskManagerThread;
 
 
 
@@ -37,7 +35,7 @@ public class TestServer
 	private static Thread serverThread = null;
 	private static CapoServer capoServer;
 	
-	public static CapoServer start() throws Exception
+	public static CapoServer start(final String... args) throws Exception
 	{
 		
 		if (serverThread != null)
@@ -55,7 +53,7 @@ public class TestServer
 				{					
 					//CapoServer.main(new String[]{});
 					CapoServer capoServer = new CapoServer();					
-					capoServer.start(new String[]{});
+					capoServer.start(args);
 				}
 				catch (Exception e)
 				{					
