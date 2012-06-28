@@ -14,6 +14,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
+import org.w3c.dom.NodeList;
 
 import com.delcyon.capo.CapoApplication;
 import com.delcyon.capo.controller.Group;
@@ -45,14 +46,14 @@ public class TaskElementTest
         TestCapoApplication.cleanup();
     }
 
-    
-
+   
     @Before
     public void setUp() throws Exception
     {
         Util.deleteTree("capo");
         Util.copyTree("test-data/capo", "capo");
-        TestServer.start();
+        TestServer.start();        
+        TaskManagerThread.getTaskManagerThread().getLock().lock();
         externalTestClient = new ExternalTestClient();
         externalTestClient.startClient();        
     }
@@ -60,6 +61,12 @@ public class TaskElementTest
     @After
     public void tearDown() throws Exception
     {
+        if (TaskManagerThread.getTaskManagerThread().getLock().isLocked() && TaskManagerThread.getTaskManagerThread().getLock().isHeldByCurrentThread())
+        {
+            TaskManagerThread.getTaskManagerThread().getLock().unlock();
+        }
+        TestServer.getServerInstance().getConfiguration().setValue(TaskManagerThread.Preferences.TASK_INTERVAL, TaskManagerThread.Preferences.TASK_INTERVAL.getDefaultValue());
+        TestServer.getServerInstance().getConfiguration().setValue(TaskManagerThread.Preferences.TASK_DEFAULT_LIFESPAN, TaskManagerThread.Preferences.TASK_DEFAULT_LIFESPAN.getDefaultValue());
         externalTestClient.shutdown();
         TestServer.shutdown();
         CopyOnWriteArrayList<Exception> exceptionList = externalTestClient.getExceptionList();
@@ -88,37 +95,87 @@ public class TaskElementTest
         Group group = new Group("test", null, null, null);
         taskElementControl.init(taskElement, null, group, new ServerControllerResponse());
         taskElementControl.processServerSideElement();
-        Thread.sleep(2000);
+        
         long lastRunTime = TaskManagerThread.getTaskManagerThread().getLastRunTime();
         int loopCount = 0;
+        System.out.println("waiting for TaskManager to run: ");
+        TaskManagerThread.getTaskManagerThread().getLock().unlock();
         while(lastRunTime == TaskManagerThread.getTaskManagerThread().getLastRunTime() || loopCount < 1)
         {
             if (lastRunTime != TaskManagerThread.getTaskManagerThread().getLastRunTime())
             {
-                loopCount++;
+                loopCount++;                
                 lastRunTime = TaskManagerThread.getTaskManagerThread().getLastRunTime();
+                System.out.print(loopCount);
             }
-            System.out.println("waiting for TaskManager to run loop# "+loopCount);
-            Thread.sleep(1000);
+            System.out.print(".");
+            Thread.sleep(100);
         }
+        TaskManagerThread.getTaskManagerThread().getLock().lock();
+        System.out.println();
         List<ResourceDescriptor> taskResourceDescriptorList = CapoApplication.getDataManager().findDocuments(CapoApplication.getDataManager().getResourceDirectory(Preferences.TASK_DIR.toString()));
         Assert.assertEquals(2,taskResourceDescriptorList.size());
         for (ResourceDescriptor resourceDescriptor : taskResourceDescriptorList)
         {
+            
             Document testDocument = CapoApplication.getDocumentBuilder().parse(resourceDescriptor.getInputStream(null));
             if (resourceDescriptor.getLocalName().equals("task-status.xml"))
             {
                 XPath.dumpNode(testDocument, System.out);
+                NodeList nodeList = XPath.selectNodes(testDocument, "//server:task");
+                Assert.assertEquals(1,nodeList.getLength());
+                Assert.assertEquals("testTask",((Element)nodeList.item(0)).getAttribute("name"));
+                Assert.assertEquals("testTask.xml",((Element)nodeList.item(0)).getAttribute("taskURI"));
             }
             else if (resourceDescriptor.getLocalName().equals("testTask.xml"))
             {
                 XPath.dumpNode(testDocument, System.out);
+                NodeList nodeList = XPath.selectNodes(testDocument, "//server:task");
+                Assert.assertEquals(1,nodeList.getLength());
+                Assert.assertEquals("testTask",((Element)nodeList.item(0)).getAttribute("name"));
+                Assert.assertTrue(((Element)nodeList.item(0)).getAttribute("lastAccessTime").matches("\\d+"));
             }
             else
             {
                 fail("Unknown task file:"+resourceDescriptor.getLocalName());
             }
         }
+        TestServer.getServerInstance().getConfiguration().setValue(TaskManagerThread.Preferences.TASK_INTERVAL, "2000");
+        TestServer.getServerInstance().getConfiguration().setValue(TaskManagerThread.Preferences.TASK_DEFAULT_LIFESPAN, "1000");        
+        
+        
+        lastRunTime = TaskManagerThread.getTaskManagerThread().getLastRunTime();
+        loopCount = 0;
+        TaskManagerThread.getTaskManagerThread().getLock().unlock();
+        System.out.println("waiting for TaskManager to run: ");
+        while(lastRunTime == TaskManagerThread.getTaskManagerThread().getLastRunTime() || loopCount < 5)
+        {
+            if (lastRunTime != TaskManagerThread.getTaskManagerThread().getLastRunTime())
+            {
+                loopCount++;
+                lastRunTime = TaskManagerThread.getTaskManagerThread().getLastRunTime();
+                System.out.print(loopCount);
+            }
+            System.out.print(".");    
+            Thread.sleep(100);
+        }
+        TaskManagerThread.getTaskManagerThread().getLock().lock();
+        System.out.println();
+        taskResourceDescriptorList = CapoApplication.getDataManager().findDocuments(CapoApplication.getDataManager().getResourceDirectory(Preferences.TASK_DIR.toString()));
+        Assert.assertEquals(1,taskResourceDescriptorList.size());
+        ResourceDescriptor resourceDescriptor = taskResourceDescriptorList.get(0);
+        Document testDocument = CapoApplication.getDocumentBuilder().parse(resourceDescriptor.getInputStream(null));
+        if (resourceDescriptor.getLocalName().equals("task-status.xml"))
+        {
+            XPath.dumpNode(testDocument, System.out);
+            NodeList nodeList = XPath.selectNodes(testDocument, "//server:task");
+            Assert.assertEquals(0,nodeList.getLength());                
+        }            
+        else
+        {
+            fail("Unknown task file:"+resourceDescriptor.getLocalName());
+        }
+        TaskManagerThread.getTaskManagerThread().getLock().unlock();
     }
 
     @Test

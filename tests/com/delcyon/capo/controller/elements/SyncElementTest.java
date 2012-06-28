@@ -16,6 +16,7 @@ import com.delcyon.capo.resourcemanager.ResourceDescriptor;
 import com.delcyon.capo.resourcemanager.ResourceParameter;
 import com.delcyon.capo.resourcemanager.types.ContentMetaData;
 import com.delcyon.capo.resourcemanager.types.FileResourceType;
+import com.delcyon.capo.tests.util.TestCapoApplication;
 import com.delcyon.capo.tests.util.external.Util;
 import com.delcyon.capo.xml.XMLDiff;
 import com.delcyon.capo.xml.XPath;
@@ -167,7 +168,7 @@ public class SyncElementTest
     @AfterClass
     public static void afterClass() throws Exception
     {
-        Util.deleteTree("capo");
-       
+//        Util.deleteTree("capo");        
+//        TestCapoApplication.cleanup();
     }
 }

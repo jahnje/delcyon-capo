@@ -188,8 +188,6 @@ public class CapoClient extends CapoApplication
 		setDataManager(CapoDataManager.loadDataManager(getConfiguration().getValue(PREFERENCE.RESOURCE_MANAGER)));
 		getDataManager().init();
 		
-		TaskManagerThread.startTaskManagerThread();
-		
 		runStartupScript(getConfiguration().getValue(PREFERENCE.STARTUP_SCRIPT));
 		this.isReady = true;
 	}
@@ -273,10 +271,13 @@ public class CapoClient extends CapoApplication
 			capoConnection = new CapoConnection();
             runTasksUpdateRequest(capoConnection,sessionHashMap);
             capoConnection.close();
-			
+            
 			capoConnection = new CapoConnection();
 			runDefaultRequest(capoConnection,sessionHashMap);
 			capoConnection.close();
+			
+			TaskManagerThread.startTaskManagerThread();
+			
 		} catch (Exception e)
 		{
 			//if something else is monitoring this client, don't exit on error, leave it to the monitor to do so.
@@ -605,7 +606,7 @@ public class CapoClient extends CapoApplication
 			        CapoApplication.logger.log(Level.WARNING,"Ignoring InterruptedException");
 			    }
 			}
-			CapoApplication.logger.log(Level.INFO,"Done Stopping Task Manager");
+			CapoApplication.logger.log(Level.INFO,"Done Stopping Task Manager");			
 		}
 		
 		CapoApplication.logger.log(Level.INFO,"Waiting for processing to finish.");

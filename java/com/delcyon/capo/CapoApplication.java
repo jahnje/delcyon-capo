@@ -21,6 +21,7 @@ import java.security.KeyStore;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.logging.FileHandler;
 import java.util.logging.Level;
@@ -41,6 +42,7 @@ import org.w3c.dom.Document;
 
 import com.delcyon.capo.resourcemanager.CapoDataManager;
 import com.delcyon.capo.server.CapoServer;
+import com.delcyon.capo.tasks.TaskManagerThread;
 import com.delcyon.capo.util.LeveledConsoleHandler;
 import com.delcyon.capo.util.LeveledConsoleHandler.Output;
 import com.delcyon.capo.xml.CapoXPathFunctionResolver;
@@ -82,13 +84,15 @@ public abstract class CapoApplication extends ContextThread implements WrapperLi
 	private Map<String, Set<String>> annotaionMap;
 	private CopyOnWriteArrayList<Exception> exceptionList;
 	private SSLSocketFactory sslSocketFactory;
-	private static HashMap<String, String> applicationVariableHashMap = new HashMap<String, String>();
+	private HashMap<String, String> applicationVariableHashMap = new HashMap<String, String>();
+	private ConcurrentHashMap<String, Object> globalObjectStorage = new ConcurrentHashMap<String, Object>();
 	private KeyStore keyStore = null;
 	public static final String SERVER_NAMESPACE_URI = "http://www.delcyon.com/capo-server";
 	public static final String CLIENT_NAMESPACE_URI = "http://www.delcyon.com/capo-client";
-	private static CapoDataManager dataManager = null;
-	private static Configuration configuration = null;
-    private static DocumentBuilderFactory documentBuilderFactory;
+	private CapoDataManager dataManager = null;
+	private TaskManagerThread taskManagerThread = null;
+	private Configuration configuration = null;
+    private DocumentBuilderFactory documentBuilderFactory;
 	
 	public CapoApplication() throws Exception
 	{
@@ -161,6 +165,7 @@ public abstract class CapoApplication extends ContextThread implements WrapperLi
 		try
 		{
 			shutdown();
+			capoApplication = null;
 		} 
 		catch (Exception exception)
 		{			
@@ -194,12 +199,12 @@ public abstract class CapoApplication extends ContextThread implements WrapperLi
 	
 	public static Configuration getConfiguration()
 	{
-	    return configuration;
+	    return getApplication().configuration;
 	}
 	
 	public static void setConfiguration(Configuration configuration)
 	{
-	    CapoApplication.configuration = configuration;
+	    getApplication().configuration = configuration;
 	}
 	
 	public static CapoApplication getApplication()
@@ -209,7 +214,7 @@ public abstract class CapoApplication extends ContextThread implements WrapperLi
 	
 	public static CapoDataManager getDataManager()
 	{
-	    return dataManager;
+	    return getApplication().dataManager;
 	}
 	
 	public static boolean isServer()
@@ -219,18 +224,43 @@ public abstract class CapoApplication extends ContextThread implements WrapperLi
 	
 	public static void setDataManager(CapoDataManager dataManager)
 	{
-	    CapoApplication.dataManager = dataManager;
+	    getApplication().dataManager = dataManager;
 	}
+	
+	public static void setTaskManagerThread(TaskManagerThread taskManagerThread)
+	{
+	    getApplication().taskManagerThread = taskManagerThread;
+	}
+	
+	public static TaskManagerThread getTaskManagerThread()
+    {
+        return getApplication().taskManagerThread;
+    }
 	
 	public static DocumentBuilder getDocumentBuilder() throws Exception
 	{
-	    return documentBuilderFactory.newDocumentBuilder();
+	    return getApplication().documentBuilderFactory.newDocumentBuilder();
 	}
 	
 	public static Document getDefaultDocument(String defaultDocumentName) throws Exception
 	{
 		return getDocumentBuilder().parse(ClassLoader.getSystemResource("defaults/"+defaultDocumentName).openStream());
 	}
+	
+	public static Object getGlobalObject(String key)
+	{
+	    return getApplication().globalObjectStorage.get(key);
+	}
+	
+	public static void setGlobalObject(String key, Object object)
+	{
+	    getApplication().globalObjectStorage.put(key,object);
+	}
+	
+	public static Object removeGlobalObject(String key)
+    {
+        return getApplication().globalObjectStorage.remove(key);
+    }
 	
 	public abstract String getApplicationDirectoryName();
 
@@ -250,17 +280,17 @@ public abstract class CapoApplication extends ContextThread implements WrapperLi
 	public static void setVariable(String varName, String value)
 	{
 		logger.log(Level.INFO, "Set application var "+varName+" to "+value);
-		applicationVariableHashMap.put(varName, value);			
+		getApplication().applicationVariableHashMap.put(varName, value);			
 	}
 
 	public static String getVariableValue(String varName)
 	{
-		return applicationVariableHashMap.get(varName);
+		return getApplication().applicationVariableHashMap.get(varName);
 	}
 	
 	public static String removeVariableValue(String varName)
 	{
-		return applicationVariableHashMap.remove(varName);
+		return getApplication().applicationVariableHashMap.remove(varName);
 	}
 
 	public static SSLSocketFactory getSslSocketFactory()

@@ -145,7 +145,7 @@ public class TaskManagerThread extends ContextThread
 	private boolean interrupted = false;
 	private long lastSyncTime;
     private long lastRunTime;
-	private static TaskManagerThread taskManagerThread = null;
+	
 
 	/**
 	 * This should only called once, and is the main initialization method for this class
@@ -155,7 +155,7 @@ public class TaskManagerThread extends ContextThread
 	public synchronized static void startTaskManagerThread() throws Exception
 	{
 
-		if (taskManagerThread == null)
+		if (CapoApplication.getTaskManagerThread() == null)
 		{
 			if (CapoApplication.getApplication() instanceof CapoServer)
 			{
@@ -173,9 +173,8 @@ public class TaskManagerThread extends ContextThread
 					runAsService = false;
 				}
 			}
-			
-			taskManagerThread = new TaskManagerThread();
-			taskManagerThread.start(); //if this is NOT a service, the thread will only run once.			
+			CapoApplication.setTaskManagerThread(new TaskManagerThread());			
+			CapoApplication.getTaskManagerThread().start(); //if this is NOT a service, the thread will only run once.			
 		}
 
 	}
@@ -186,7 +185,7 @@ public class TaskManagerThread extends ContextThread
 	 */
 	public static TaskManagerThread getTaskManagerThread()
 	{
-		return taskManagerThread;
+		return CapoApplication.getTaskManagerThread();
 	}
 	
 	/**
@@ -233,6 +232,10 @@ public class TaskManagerThread extends ContextThread
 		
 	}
 	
+	public ReentrantLock getLock()
+	{
+	    return lock;
+	}
 	
 	public void interrupt()
 	{
@@ -432,7 +435,15 @@ public class TaskManagerThread extends ContextThread
                                 CapoApplication.logger.warning("task '"+name+"' appears to be orphaned, deleteing. lastAccessTime = "+lastAccessTime);
                                 resourceDescriptor.performAction(null, Action.DELETE);
                                 //mark this task for deletion, by server
-                                taskStatusElement.setAttribute("ACTION", Action.DELETE.toString());
+                                //if we're running on the server, then just delete it.
+                                if (taskElement.getAttribute("local").equalsIgnoreCase("true")) 
+                                {
+                                    taskStatusElement.getParentNode().removeChild(taskStatusElement);
+                                }
+                                else //otherwise we've got to wait for it to sync back up to the server
+                                {
+                                    taskStatusElement.setAttribute("ACTION", Action.DELETE.toString());
+                                }
                             }
                             else
                             {
@@ -639,7 +650,7 @@ public class TaskManagerThread extends ContextThread
 					
 					if (runAsService == true)
 					{
-						Thread.sleep(1000);
+						Thread.sleep(CapoApplication.getConfiguration().getLongValue(Preferences.TASK_INTERVAL)/2l);
 					}
 					else
 					{

@@ -44,6 +44,7 @@ import java.util.logging.Level;
 
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLHandshakeException;
 import javax.net.ssl.SSLSocket;
 import javax.net.ssl.TrustManagerFactory;
 import javax.xml.bind.DatatypeConverter;
@@ -323,8 +324,7 @@ public class CapoServer extends CapoApplication
 			{
 				logger.log(Level.INFO, "Waiting for Task Manager to shutdown...");
 				sleep(incrementalWaitTime);
-			}
-			
+			}			
 		}
 		
 		if (clientRequestProcessorSessionManager != null)
@@ -456,8 +456,16 @@ public class CapoServer extends CapoApplication
 	                socket = new BufferedSocket(socket);
 	                inputStream = socket.getInputStream();
 	                inputStream.mark(getConfiguration().getIntValue(PREFERENCE.BUFFER_SIZE));
-	                inputStream.read(buffer);
-
+	                try
+	                {
+	                    inputStream.read(buffer);
+	                }
+	                catch (SSLHandshakeException sslHandshakeException)
+	                {
+	                    CapoApplication.logger.log(Level.WARNING, "Unknown SSLException Type: "+sslHandshakeException.getMessage());
+	                    socket.close();
+                        continue;
+	                }
 	                String authMessage = new String(buffer).trim();
 	                if (authMessage.matches("AUTH:CID=capo\\.(client|server)\\.\\d+:SIG=[A-F0-9]+.*:.*"))
 	                {

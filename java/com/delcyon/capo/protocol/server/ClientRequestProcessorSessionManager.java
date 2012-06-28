@@ -81,8 +81,7 @@ public class ClientRequestProcessorSessionManager extends Thread
 	}
 	
 	
-	private static Random random = new Random();
-	private static volatile ConcurrentHashMap<String, ClientRequestProcessorSession> clientRequestProcessorSessionHashtable = new ConcurrentHashMap<String, ClientRequestProcessorSession>();
+	private static Random random = new Random();	
 	
 	/**
 	 * Allow a client request processor to register under a different session than its own.
@@ -91,11 +90,12 @@ public class ClientRequestProcessorSessionManager extends Thread
 	 */
 	public static void registerClientRequestProcessor(ClientRequestProcessor clientRequestProcessor, String sessionID)
 	{
-		ClientRequestProcessorSession clientRequestProcessorSession = clientRequestProcessorSessionHashtable.get(sessionID);
+	    
+		ClientRequestProcessorSession clientRequestProcessorSession = getClientRequestProcessorSessionHashtable().get(sessionID);
 		if (clientRequestProcessorSession == null)
 		{
 			clientRequestProcessorSession = new ClientRequestProcessorSession(clientRequestProcessor, sessionID);
-			clientRequestProcessorSessionHashtable.put(sessionID,clientRequestProcessorSession);			
+			getClientRequestProcessorSessionHashtable().put(sessionID,clientRequestProcessorSession);			
 		}
 		else
 		{
@@ -113,12 +113,12 @@ public class ClientRequestProcessorSessionManager extends Thread
 	
 	public static void removeClientRequestProcessor(String sessionID)
 	{
-		clientRequestProcessorSessionHashtable.remove(sessionID);		
+	    getClientRequestProcessorSessionHashtable().remove(sessionID);		
 	}
 	//SS
 	public static ClientRequestProcessor getClientRequestProcessor(String sessionID)
 	{
-		ClientRequestProcessorSession clientRequestProcessorSession = clientRequestProcessorSessionHashtable.get(sessionID);
+		ClientRequestProcessorSession clientRequestProcessorSession = getClientRequestProcessorSessionHashtable().get(sessionID);
 		if (clientRequestProcessorSession == null)
 		{
 			return null;
@@ -148,8 +148,14 @@ public class ClientRequestProcessorSessionManager extends Thread
 	public ClientRequestProcessorSessionManager()
 	{
 		super("Client Request Processor Session Manager Thread");
+		CapoApplication.setGlobalObject("clientRequestProcessorSessionHashtable", new ConcurrentHashMap<String, ClientRequestProcessorSession>());
 	}
 	
+	@SuppressWarnings("unchecked")
+    private static ConcurrentHashMap<String, ClientRequestProcessorSession> getClientRequestProcessorSessionHashtable()
+	{
+	    return (ConcurrentHashMap<String, ClientRequestProcessorSession>)CapoApplication.getGlobalObject("clientRequestProcessorSessionHashtable");
+	}
 	
 	public void shutdown() throws Exception
 	{
@@ -158,6 +164,17 @@ public class ClientRequestProcessorSessionManager extends Thread
 		{
 			Thread.sleep(1000);
 		}
+		cleanup();
+	}
+	
+	private void cleanup()
+	{
+	    Set<Entry<String, ClientRequestProcessorSession>>  clientRequestProcessorSessionHashtableEntrySet = getClientRequestProcessorSessionHashtable().entrySet();
+        for (Entry<String, ClientRequestProcessorSession> entry : clientRequestProcessorSessionHashtableEntrySet)
+        {
+            CapoApplication.logger.log(Level.INFO, "Killing session: "+entry.getKey()+" - "+entry.getValue().getClientRequestProcessor().getClass().getCanonicalName());
+            getClientRequestProcessorSessionHashtable().remove(entry.getKey());            
+        }        
 	}
 	
 	@Override
@@ -169,13 +186,13 @@ public class ClientRequestProcessorSessionManager extends Thread
 			{
 				
 				sleep(1000);
-				Set<Entry<String, ClientRequestProcessorSession>>  clientRequestProcessorSessionHashtableEntrySet = clientRequestProcessorSessionHashtable.entrySet();
+				Set<Entry<String, ClientRequestProcessorSession>>  clientRequestProcessorSessionHashtableEntrySet = getClientRequestProcessorSessionHashtable().entrySet();
 				for (Entry<String, ClientRequestProcessorSession> entry : clientRequestProcessorSessionHashtableEntrySet)
 				{
 					if (entry.getValue().isTimedOut())
 					{
 						CapoApplication.logger.log(Level.INFO, "Removing expired session: "+entry.getKey()+" - "+entry.getValue().getClientRequestProcessor().getClass().getCanonicalName());
-						clientRequestProcessorSessionHashtable.remove(entry.getKey());
+						getClientRequestProcessorSessionHashtable().remove(entry.getKey());
 					}
 					else
 					{

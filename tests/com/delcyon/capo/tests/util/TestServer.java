@@ -22,6 +22,7 @@ import java.util.prefs.Preferences;
 
 import com.delcyon.capo.CapoApplication;
 import com.delcyon.capo.server.CapoServer;
+import com.delcyon.capo.tasks.TaskManagerThread;
 
 
 
@@ -63,7 +64,7 @@ public class TestServer
 
 			}
 		};
-		serverThread .start();
+		serverThread.start();
 		while(CapoApplication.getApplication() == null || CapoApplication.getApplication().isReady() == false)
 		{            
 			Thread.sleep(1000);
@@ -86,7 +87,7 @@ public class TestServer
 			{
 				CapoApplication.logger.log(Level.INFO, "waiting for server thread to die");
 				Thread.sleep(500);
-			}
+			}			
 		}
 	}
 	
@@ -102,5 +103,8 @@ public class TestServer
 		capoServer = null;
 	}
 	
-	
+	public static CapoServer getServerInstance()
+	{
+	    return capoServer;
+	}
 }

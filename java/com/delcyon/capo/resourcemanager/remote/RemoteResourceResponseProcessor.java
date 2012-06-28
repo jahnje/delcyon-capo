@@ -93,9 +93,51 @@ public class RemoteResourceResponseProcessor implements XMLServerResponseProcess
 		}
 	}
     
-	private static Hashtable<String, ResourceDescriptor> resourceDescriptorHashtable = new Hashtable<String, ResourceDescriptor>();
-	private static Hashtable<String, CapoConnection> capoVarConnectionHashtable = new Hashtable<String, CapoConnection>();
-	private static Hashtable<String, ThreadedInputStreamReader> threadedInputStreamReaderHashtable = new Hashtable<String, ThreadedInputStreamReader>();
+	
+	
+	
+	
+	
+	@SuppressWarnings("unchecked")
+    private synchronized static Hashtable<String, ThreadedInputStreamReader> getThreadedInputStreamReaderHashtable()
+    {
+        Hashtable<String, ThreadedInputStreamReader> threadedInputStreamReaderHashtable = (Hashtable<String, ThreadedInputStreamReader>) CapoApplication.getGlobalObject("threadedInputStreamReaderHashtable");
+        if (threadedInputStreamReaderHashtable == null)
+        {
+            threadedInputStreamReaderHashtable = new Hashtable<String, ThreadedInputStreamReader>();           
+            CapoApplication.setGlobalObject("threadedInputStreamReaderHashtable",threadedInputStreamReaderHashtable);
+        }
+        
+        return threadedInputStreamReaderHashtable;
+    }
+	
+	@SuppressWarnings("unchecked")
+    private synchronized static Hashtable<String, CapoConnection> getCapoVarConnectionHashtable()
+	{
+	    Hashtable<String, CapoConnection> capoVarConnectionHashtable = (Hashtable<String, CapoConnection>) CapoApplication.getGlobalObject("capoVarConnectionHashtable");
+	    if (capoVarConnectionHashtable == null)
+	    {
+	        capoVarConnectionHashtable = new Hashtable<String, CapoConnection>();	        
+	        CapoApplication.setGlobalObject("capoVarConnectionHashtable",capoVarConnectionHashtable);
+	    }
+	    
+	    return capoVarConnectionHashtable;
+	}
+	
+	@SuppressWarnings("unchecked")
+    private synchronized static Hashtable<String, ResourceDescriptor> getResourceDescriptorHashtable()
+    {
+        Hashtable<String, ResourceDescriptor> resourceDescriptorHashtable = (Hashtable<String, ResourceDescriptor>) CapoApplication.getGlobalObject("resourceDescriptorHashtable");
+        if (resourceDescriptorHashtable == null)
+        {
+            resourceDescriptorHashtable = new Hashtable<String, ResourceDescriptor>();          
+            CapoApplication.setGlobalObject("resourceDescriptorHashtable",resourceDescriptorHashtable);
+        }
+        
+        return resourceDescriptorHashtable;
+    }
+	
+	
 	private Document responseDocument = null;
 	private XMLServerResponse xmlServerResponse;
 	private String sessionID;
@@ -127,7 +169,7 @@ public class RemoteResourceResponseProcessor implements XMLServerResponseProcess
 		reply.setMessageType(MessageType.SUCCESS);
 
 		sessionID = message.getSessionID();
-		ResourceDescriptor resourceDescriptor = resourceDescriptorHashtable.get(sessionID);
+		ResourceDescriptor resourceDescriptor = getResourceDescriptorHashtable().get(sessionID);
 		try
 		{
 			CapoConnection capoConnection = null;
@@ -141,7 +183,7 @@ public class RemoteResourceResponseProcessor implements XMLServerResponseProcess
 					resourceDescriptor = CapoApplication.getDataManager().getResourceDescriptor(null, message.getResourceURI().toString());
 					reply.setResourceURI(resourceDescriptor.getResourceURI());
 					reply.setResourceType(resourceDescriptor.getResourceType());
-					resourceDescriptorHashtable.put(sessionID, resourceDescriptor);
+					getResourceDescriptorHashtable().put(sessionID, resourceDescriptor);
 					break;
 				case INIT:				
 					resourceDescriptor.init(this, message.getLifeCycle(), message.isIterate(), message.getResourceParameters());
@@ -160,7 +202,7 @@ public class RemoteResourceResponseProcessor implements XMLServerResponseProcess
 				    waitforOutputStreamToFinish(sessionID);
 					resourceDescriptor.release(this, message.getResourceParameters());
 					closeVarConnection();
-					resourceDescriptorHashtable.remove(sessionID);										
+					getResourceDescriptorHashtable().remove(sessionID);										
 					break;
 				case GET_CONTENT_METADATA:
 					reply.setContentMetaData(resourceDescriptor.getContentMetaData(this, message.getResourceParameters()));
@@ -185,11 +227,11 @@ public class RemoteResourceResponseProcessor implements XMLServerResponseProcess
 					request.send();					
 					threadedInputSreamReader = new ThreadedInputStreamReader(sessionID,capoConnection.getInputStream(),resourceDescriptor.getOutputStream(this, message.getResourceParameters()));
 					threadedInputSreamReader.setCapoConnection(capoConnection);
-					if (threadedInputStreamReaderHashtable.contains(sessionID))
+					if (getThreadedInputStreamReaderHashtable().contains(sessionID))
 					{
 					    throw new Exception("Stream Read already exists! Somebody didn't close something!");
 					}
-					threadedInputStreamReaderHashtable.put(sessionID, threadedInputSreamReader);
+					getThreadedInputStreamReaderHashtable().put(sessionID, threadedInputSreamReader);
 					threadedInputSreamReader.start();				
 					break;
 				case ADD_RESOURCE_PARAMETERS:
@@ -258,7 +300,7 @@ public class RemoteResourceResponseProcessor implements XMLServerResponseProcess
 	
 	private void waitforOutputStreamToFinish(String sessionID) throws Exception
 	{
-	    ThreadedInputStreamReader threadedInputStreamReader = threadedInputStreamReaderHashtable.get(sessionID); 
+	    ThreadedInputStreamReader threadedInputStreamReader = getThreadedInputStreamReaderHashtable().get(sessionID); 
 	    if (threadedInputStreamReader != null)
 	    {
 	        int loopCount = 0;
@@ -274,7 +316,7 @@ public class RemoteResourceResponseProcessor implements XMLServerResponseProcess
 	                break;
 	            }
 	        }
-	        threadedInputStreamReaderHashtable.remove(sessionID);
+	        getThreadedInputStreamReaderHashtable().remove(sessionID);
 	    }
 	}
 
@@ -325,7 +367,7 @@ public class RemoteResourceResponseProcessor implements XMLServerResponseProcess
 			} 
 			catch (Exception exception)
 			{	
-			    	ResourceDescriptor currentResourceDescriptor = resourceDescriptorHashtable.get(sessionID);
+			    	ResourceDescriptor currentResourceDescriptor = getResourceDescriptorHashtable().get(sessionID);
 			    	String uri = null;
 			    	if (currentResourceDescriptor != null)
 			    	{
@@ -342,11 +384,11 @@ public class RemoteResourceResponseProcessor implements XMLServerResponseProcess
 	{
 		try
 		{
-		    CapoConnection capoVarConnection = capoVarConnectionHashtable.get(sessionID);
+		    CapoConnection capoVarConnection = getCapoVarConnectionHashtable().get(sessionID);
 		    if (capoVarConnection == null)
 		    {
 		        capoVarConnection  = new CapoConnection();
-		        capoVarConnectionHashtable.put(sessionID,capoVarConnection);
+		        getCapoVarConnectionHashtable().put(sessionID,capoVarConnection);
 		    }
 			RemoteResourceRequest request = new RemoteResourceRequest(capoVarConnection.getOutputStream(),capoVarConnection.getInputStream());
 			request.setType(MessageType.GET_VAR_VALUE);
@@ -376,7 +418,7 @@ public class RemoteResourceResponseProcessor implements XMLServerResponseProcess
 
 	private void closeVarConnection() throws Exception
     {
-	    CapoConnection capoVarConnection = capoVarConnectionHashtable.remove(sessionID);
+	    CapoConnection capoVarConnection = getCapoVarConnectionHashtable().remove(sessionID);
         if (capoVarConnection != null)
         {
             //shut down the pipe gracefully
