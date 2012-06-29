@@ -52,6 +52,8 @@ public class TaskElementTest
     {
         Util.deleteTree("capo");
         Util.copyTree("test-data/capo", "capo");
+//        Util.copyTree("lib", "capo/server/lib");
+//        Util.copyTree("lib", "capo/client/lib");
            
     }
 
@@ -217,10 +219,13 @@ public class TaskElementTest
     @Test
     public void testProcessClientSideElement() throws Exception
     {
+	System.out.println("===================================================================");
         externalTestServer = new ExternalTestServer();
+        System.out.println("===================================================================");
         externalTestServer.startServer();
+        System.out.println("===================================================================");
         TestClient.start("-CLIENT_AS_SERVICE","true");
-        
+        System.out.println();
     }
 
 }

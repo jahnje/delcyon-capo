@@ -42,7 +42,7 @@ public class TestClient
 			System.err.println("found an existing server" + clientThread);
 			System.exit(0);
 		}
-		clientThread = new Thread()
+		clientThread = new Thread("TestClient")
 		{
 			@Override
 			public void run()

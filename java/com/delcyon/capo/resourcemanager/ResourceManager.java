@@ -394,12 +394,12 @@ public class ResourceManager extends CapoDataManager
         List<ContentMetaData> childResourceList = contentMetaData.getContainedResources();
         for (ContentMetaData childContentMetaData : childResourceList)
         {
-            if (childContentMetaData.isContainer() == false && childContentMetaData.getResourceURI().matches(".*"+documentName+"\\.[Xx][MmSs][Ll]"))
+            if (childContentMetaData.isContainer() == false && childContentMetaData.getResourceURI().matches(".*/"+documentName+"\\.[Xx][MmSs][Ll]"))
             {
                 return  CapoApplication.getDataManager().getResourceDescriptor(null, childContentMetaData.getResourceURI());
                 
             }
-            else if (childContentMetaData.isContainer() && childContentMetaData.getResourceURI().endsWith(documentName))
+            else if (childContentMetaData.isContainer() && childContentMetaData.getResourceURI().endsWith("/"+documentName))
             {
                 ResourceDescriptor moduleResourceDescriptor =  CapoApplication.getDataManager().getResourceDescriptor(null, childContentMetaData.getResourceURI());
                 return getDocumentResourceDescriptor(moduleResourceDescriptor, documentName);
