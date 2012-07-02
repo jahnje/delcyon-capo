@@ -19,6 +19,7 @@ import com.delcyon.capo.CapoApplication;
 import com.delcyon.capo.controller.Group;
 import com.delcyon.capo.controller.client.ServerControllerResponse;
 import com.delcyon.capo.resourcemanager.ResourceDescriptor;
+import com.delcyon.capo.server.CapoServer;
 import com.delcyon.capo.tasks.TaskManagerThread;
 import com.delcyon.capo.tasks.TaskManagerThread.Preferences;
 import com.delcyon.capo.tests.util.ExternalTestClient;
@@ -34,6 +35,7 @@ public class TaskElementTest
 
     private ExternalTestClient externalTestClient;
     private ExternalTestServer externalTestServer;
+    private CapoServer capoServer = null;
 
     @BeforeClass
     public static void setUpBeforeClass() throws Exception
@@ -43,7 +45,7 @@ public class TaskElementTest
     @AfterClass
     public static void tearDownAfterClass() throws Exception
     {
-        TestCapoApplication.cleanup();
+        //TestCapoApplication.cleanup();
     }
 
    
@@ -64,8 +66,15 @@ public class TaskElementTest
         {
             TaskManagerThread.getTaskManagerThread().getLock().unlock();
         }
+        try
+        {
         TestServer.getServerInstance().getConfiguration().setValue(TaskManagerThread.Preferences.TASK_INTERVAL, TaskManagerThread.Preferences.TASK_INTERVAL.getDefaultValue());
         TestServer.getServerInstance().getConfiguration().setValue(TaskManagerThread.Preferences.TASK_DEFAULT_LIFESPAN, TaskManagerThread.Preferences.TASK_DEFAULT_LIFESPAN.getDefaultValue());
+        } 
+        catch (Exception e) {
+	    e.printStackTrace();
+	}
+        System.err.println("==================================================================");
         if (externalTestClient != null)
         {
             externalTestClient.shutdown();
@@ -96,6 +105,8 @@ public class TaskElementTest
             }
         }
 
+       
+        
         if (TestServer.getServerInstance() != null)
         {
             TestServer.shutdown();
@@ -104,7 +115,7 @@ public class TaskElementTest
             {
                 throw exceptionList.get(0);
             }
-            TestServer.cleanup();
+         
         }
         
         

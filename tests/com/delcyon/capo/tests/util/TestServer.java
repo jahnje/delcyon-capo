@@ -34,6 +34,7 @@ public class TestServer
 {
 	private static Thread serverThread = null;
 	private static CapoServer capoServer;
+	private static CopyOnWriteArrayList<Exception> exceptionList = null;
 	
 	public static CapoServer start(final String... args) throws Exception
 	{
@@ -52,7 +53,9 @@ public class TestServer
 				try
 				{					
 					//CapoServer.main(new String[]{});
-					CapoServer capoServer = new CapoServer();					
+					capoServer = new CapoServer();
+					exceptionList = new CopyOnWriteArrayList<Exception>();
+					capoServer.setExceptionList(exceptionList);
 					capoServer.start(args);
 				}
 				catch (Exception e)
@@ -67,8 +70,8 @@ public class TestServer
 		{            
 			Thread.sleep(1000);
 		}
-		capoServer = (CapoServer) CapoApplication.getApplication();
-		capoServer.setExceptionList(new CopyOnWriteArrayList<Exception>());
+		//capoServer = (CapoServer) CapoApplication.getApplication();
+		
 		return capoServer;
 	}
 	
@@ -77,7 +80,8 @@ public class TestServer
 	{
 		if (capoServer != null)
 		{
-			capoServer.shutdown();
+			capoServer.stop(0);
+			capoServer = null;
 		}
 		if (serverThread != null)
 		{
@@ -85,21 +89,17 @@ public class TestServer
 			{
 				CapoApplication.logger.log(Level.INFO, "waiting for server thread to die");
 				Thread.sleep(500);
-			}			
+			}
+			serverThread = null;
 		}
 	}
 	
 	public static CopyOnWriteArrayList<Exception> getExceptionList()
 	{
-		return capoServer.getExceptionList();
+		return exceptionList;
 	}
 	
-	public static void cleanup() throws Exception
-	{
-		shutdown();
-		serverThread = null;
-		capoServer = null;
-	}
+	
 	
 	public static CapoServer getServerInstance()
 	{

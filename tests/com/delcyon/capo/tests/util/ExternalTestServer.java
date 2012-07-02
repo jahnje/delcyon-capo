@@ -70,11 +70,16 @@ public class ExternalTestServer
 	    Util.setDefaultPreferences();	    
 		ExternalTestServer externalTestServer = new ExternalTestServer();
 		externalTestServer.startServer();
-		CapoClient capoClient = new CapoClient();
-		capoClient.start(new String[]{});
+		TestClient.start("-CLIENT_AS_SERVICE","false");
+		TestClient.shutdown();		
+		//CapoClient.main(new String[]{"-CLIENT_AS_SERVICE","false"});
+//		CapoClient capoClient = new CapoClient();
+//		capoClient.start(new String[]{});
+//		capoClient.shutdown();
 		//CapoClient.main();
 		//Thread.sleep(10000);
 		externalTestServer.shutdown();
+		
 		CopyOnWriteArrayList<Exception> exceptionList = externalTestServer.getExceptionList();
 		if (exceptionList.isEmpty() == false)
 		{

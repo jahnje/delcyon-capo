@@ -51,8 +51,5 @@ public class TestCapoApplication extends CapoApplication
     	return null;
     }
     
-    public static void  cleanup() 
-    {
-    	CapoApplication.capoApplication = null;
-    }
+    
 }

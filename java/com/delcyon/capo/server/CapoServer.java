@@ -174,10 +174,9 @@ public class CapoServer extends CapoApplication
 	public Integer start(String[] programArgs)
 	{
 		try
-		{		    
-			CapoServer capoServer = new CapoServer();			
-			capoServer.init(programArgs);			
-			capoServer.startup(programArgs);			
+		{		    			
+			init(programArgs);			
+			startup(programArgs);			
 		} catch (Exception e)
 		{
 			e.printStackTrace();

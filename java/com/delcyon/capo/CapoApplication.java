@@ -96,7 +96,7 @@ public abstract class CapoApplication extends ContextThread implements WrapperLi
 	
 	public CapoApplication() throws Exception
 	{
-		capoApplication = this;
+	    setApplication(this);		
 		System.setProperty("java.util.prefs.syncInterval", "2000000");
 		System.setProperty("javax.xml.xpath.XPathFactory", "net.sf.saxon.xpath.XPathFactoryImpl");
 		System.setProperty("javax.xml.transform.TransformerFactory", "net.sf.saxon.TransformerFactoryImpl");
@@ -165,7 +165,7 @@ public abstract class CapoApplication extends ContextThread implements WrapperLi
 		try
 		{
 			shutdown();
-			capoApplication = null;
+			setApplication(null);
 		} 
 		catch (Exception exception)
 		{			
@@ -210,6 +210,17 @@ public abstract class CapoApplication extends ContextThread implements WrapperLi
 	public static CapoApplication getApplication()
 	{
 		return capoApplication;
+	}
+	
+	/**
+	 * This is mostly here for the sake of completeion and testing. Other than testing there's probably no good reason to use this.
+	 * @param application
+	 */
+	public static void setApplication(CapoApplication application)
+	{
+	    //Thread.dumpStack();
+	   CapoApplication.capoApplication = application; 
+	    
 	}
 	
 	public static CapoDataManager getDataManager()
@@ -336,5 +347,7 @@ public abstract class CapoApplication extends ContextThread implements WrapperLi
 	{
 		return exceptionList;
 	}
+
+	
 	
 }

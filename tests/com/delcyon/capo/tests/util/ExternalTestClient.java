@@ -81,7 +81,7 @@ public class ExternalTestClient extends ClassLoader
 		{
 			throw exceptionList.get(0);
 		}
-		TestServer.cleanup();
+		
 	}
 }
  

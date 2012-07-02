@@ -56,7 +56,6 @@ public class RestartElementTest
     public static void afterClass() throws Exception
     {        
         TestServer.shutdown();
-        Util.deleteTree("capo");
-        TestServer.cleanup();
+        Util.deleteTree("capo");        
     }
 }

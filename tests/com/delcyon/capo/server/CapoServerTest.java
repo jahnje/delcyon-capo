@@ -5,8 +5,6 @@ import java.util.Map;
 import java.util.Set;
 
 import org.junit.Assert;
-import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.Test;
 
 import com.delcyon.capo.tests.util.TestServer;
@@ -15,25 +13,7 @@ public class CapoServerTest
 {
 
 	
-	@BeforeClass
-	public static void setUpBeforeClass() throws Exception
-	{
-		
-	}
-
 	
-
-	@Before
-	public void setUp() throws Exception
-	{
-	}
-
-	@Test
-	public void testStartup() throws Exception
-	{
-		
-		
-	}
 	
 	/**
 	 * This makes sure that all of the threads have been shutdown
@@ -66,8 +46,8 @@ public class CapoServerTest
 		//store our active count before
 		int activeCount = Thread.activeCount()-localDeamonCount;
 		
-		CapoServer capoServer = TestServer.start();
-		capoServer.shutdown();
+		TestServer.start();
+		TestServer.shutdown();
 		
 		//do the same as above to remove any daemon threads from our counting
 		stackTraceMap = Thread.getAllStackTraces();
@@ -87,7 +67,7 @@ public class CapoServerTest
 				}
 			}
 		}
-		TestServer.cleanup();
+		
 		
 		Assert.assertEquals(activeCount, Thread.activeCount()-localDeamonCount);		
 		

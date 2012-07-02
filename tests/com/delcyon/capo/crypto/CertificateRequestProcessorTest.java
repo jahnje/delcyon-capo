@@ -50,7 +50,7 @@ public class CertificateRequestProcessorTest
 	@AfterClass
 	public static void tearDownAfterClass()
 	{
-		TestCapoApplication.cleanup();
+		//TestCapoApplication.stop(0);
 	}
 	
 	@Test

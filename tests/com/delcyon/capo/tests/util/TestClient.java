@@ -32,14 +32,15 @@ import com.delcyon.capo.client.CapoClient;
 public class TestClient
 {
 	private static Thread clientThread = null;
-	private static CapoClient capoClient;
+	private static CapoClient capoClient = null;
+	private static CopyOnWriteArrayList<Exception> exceptionList = null;
 	
 	public static void start(final String... args) throws Exception
 	{
 		
 		if (clientThread != null)
 		{
-			System.err.println("found an existing server" + clientThread);
+			System.err.println("found an existing client" + clientThread);
 			System.exit(0);
 		}
 		clientThread = new Thread("TestClient")
@@ -50,7 +51,15 @@ public class TestClient
 
 				try
 				{					
-					CapoClient.main(args);									            		
+					capoClient = new CapoClient();
+					if (args.length == 0)
+					{
+					    capoClient.start(new String[]{"-CLIENT_AS_SERVICE","false"});
+					}
+					else
+					{
+					    capoClient.start(args);
+					}
 				}
 				catch (Exception e)
 				{					
@@ -64,8 +73,9 @@ public class TestClient
 		{            
 			Thread.sleep(1000);
 		}
-		capoClient = (CapoClient) CapoApplication.getApplication();
-		capoClient.setExceptionList(new CopyOnWriteArrayList<Exception>());
+		//capoClient = (CapoClient) CapoApplication.getApplication();
+		exceptionList = new CopyOnWriteArrayList<Exception>();
+		capoClient.setExceptionList(exceptionList);
 	}
 	
 	
@@ -73,7 +83,12 @@ public class TestClient
 	{
 		if (capoClient != null)
 		{
-			capoClient.shutdown();
+			capoClient.stop(0);
+			capoClient = null;
+		}
+		if (clientThread != null)
+		{
+		    clientThread = null;
 		}
 	}
 	
@@ -84,6 +99,6 @@ public class TestClient
 	
 	public static CopyOnWriteArrayList<Exception> getExceptionList()
 	{
-		return capoClient.getExceptionList();
+		return exceptionList;
 	}
 }

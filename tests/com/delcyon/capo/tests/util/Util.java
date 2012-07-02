@@ -30,12 +30,21 @@ public class Util
     {        
     	if (minmalApplication == null)
     	{
-    		minmalApplication = new TestCapoApplication();    		            		
+    	    minmalApplication = new TestCapoApplication();
+    		
     	}
-    	
+    	if (CapoApplication.getApplication() == null)
+    	{
+    	    CapoApplication.setApplication(minmalApplication);
+    	}
     	if (CapoApplication.getConfiguration() == null)
     	{
     	    CapoApplication.setConfiguration(new Configuration(new String[]{"-"+PREFERENCE.DISABLE_CONFIG_AUTOSYNC.toString()}));
+    	}
+    	
+    	if (CapoApplication.getDataManager() == null)
+    	{
+    	    CapoApplication.setDataManager(new ResourceManager());
     	}
     	
     	if (CapoApplication.getDataManager() == null)

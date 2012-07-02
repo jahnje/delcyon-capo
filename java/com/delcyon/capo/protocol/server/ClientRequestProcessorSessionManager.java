@@ -164,7 +164,7 @@ public class ClientRequestProcessorSessionManager extends Thread
 		{
 			Thread.sleep(1000);
 		}
-		cleanup();
+		
 	}
 	
 	private void cleanup()
@@ -180,35 +180,38 @@ public class ClientRequestProcessorSessionManager extends Thread
 	@Override
 	public void run()
 	{
+		
+	    try
+	    {
 		while(interrupted == false)
 		{
-			try
+		    sleep(1000);
+		    Set<Entry<String, ClientRequestProcessorSession>>  clientRequestProcessorSessionHashtableEntrySet = getClientRequestProcessorSessionHashtable().entrySet();
+		    for (Entry<String, ClientRequestProcessorSession> entry : clientRequestProcessorSessionHashtableEntrySet)
+		    {
+			if (entry.getValue().isTimedOut())
 			{
-				
-				sleep(1000);
-				Set<Entry<String, ClientRequestProcessorSession>>  clientRequestProcessorSessionHashtableEntrySet = getClientRequestProcessorSessionHashtable().entrySet();
-				for (Entry<String, ClientRequestProcessorSession> entry : clientRequestProcessorSessionHashtableEntrySet)
-				{
-					if (entry.getValue().isTimedOut())
-					{
-						CapoApplication.logger.log(Level.INFO, "Removing expired session: "+entry.getKey()+" - "+entry.getValue().getClientRequestProcessor().getClass().getCanonicalName());
-						getClientRequestProcessorSessionHashtable().remove(entry.getKey());
-					}
-					else
-					{
-						//do nothing
-					}
-				}
-			} 
-			catch (Exception exception)
-			{
-				CapoApplication.logger.log(Level.WARNING, "Error in SessionManager", exception);
+			    CapoApplication.logger.log(Level.INFO, "Removing expired session: "+entry.getKey()+" - "+entry.getValue().getClientRequestProcessor().getClass().getCanonicalName());
+			    getClientRequestProcessorSessionHashtable().remove(entry.getKey());
 			}
-			finally
+			else
 			{
-				isFinished = true;
+			    //do nothing
 			}
-		}
+		    }
+		} 
+	    }
+	    catch (Exception exception)
+	    {
+		CapoApplication.logger.log(Level.WARNING, "Error in SessionManager", exception);
+	    }
+	    finally
+	    {
+		cleanup();
+		isFinished = true;		
+	    }
+		
+		
 	}
 
 	

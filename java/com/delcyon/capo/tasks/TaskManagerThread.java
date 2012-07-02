@@ -251,9 +251,13 @@ public class TaskManagerThread extends ContextThread
 		synchronized (this)
 		{
 			super.interrupt();	
-		}		
+		}
+		
 		tasksDocumentUpdaterThread.interrupt();
+		
 	}
+	
+	
 	
 	//SORT OF DONE
 	@Override
@@ -608,6 +612,7 @@ public class TaskManagerThread extends ContextThread
 	{
 	    private ConcurrentLinkedQueue<DocumentUpdate> documentUpdateQueue = new ConcurrentLinkedQueue<TaskManagerThread.DocumentUpdate>();
 		private boolean interrupted = false;
+		private boolean finished = false;
 	    
 		public TaskManagerDocumentUpdaterThread()
 		{
@@ -618,6 +623,16 @@ public class TaskManagerThread extends ContextThread
 		public void interrupt()
 		{
 			this.interrupted  = true;
+			while(finished == false)
+			{
+			    try
+			    {
+				Thread.sleep(100);
+			    } catch (InterruptedException e)
+			    {				
+				e.printStackTrace();
+			    }
+			}
 		}
 		
 		@Override
@@ -669,6 +684,7 @@ public class TaskManagerThread extends ContextThread
 					e.printStackTrace();
 				}
 			}
+			finished = true;
 		}
         public void add(ResourceDescriptor resourceDescriptor, Document taskDocument)
         {
