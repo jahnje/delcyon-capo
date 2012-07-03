@@ -24,6 +24,7 @@ import org.w3c.dom.Element;
 import com.delcyon.capo.client.CapoClient;
 import com.delcyon.capo.tests.util.ExternalTestServer;
 import com.delcyon.capo.tests.util.TestCapoApplication;
+import com.delcyon.capo.tests.util.TestClient;
 import com.delcyon.capo.tests.util.external.Util;
 import com.delcyon.capo.xml.XPath;
 
@@ -43,7 +44,7 @@ public class CertificateRequestProcessorTest
 	public void setUp() throws Exception
 	{
 		exception = null;
-		capoClient = null;
+		
 		persistantPassword = "This is a test password";
 	}
 
@@ -64,23 +65,7 @@ public class CertificateRequestProcessorTest
 		ExternalTestServer externalTestServer = new ExternalTestServer();
 		externalTestServer.startServer();
 		
-		capoClient = new CapoClient();
-		Thread clientThread = new Thread()
-		{
-			public void run() 
-			{
-				
-				try
-				{
-					
-					capoClient.start(new String[]{});		
-				} catch (Exception e)
-				{
-					exception = e;					
-				}
-				
-			};
-		};
+		
 		PrintStream oldSystemOutPrintStream = System.out;
 		
 		ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
@@ -93,11 +78,7 @@ public class CertificateRequestProcessorTest
 		testInPipe.connect(testOutPipe);
 		System.setIn(testInPipe);
 		
-		clientThread.start();
-		while(capoClient.isReady() == false)
-		{
-			Thread.sleep(1000);
-		}
+		TestClient.start();
 		
 		long waitTime = 0;
 		while(true)
@@ -143,7 +124,7 @@ public class CertificateRequestProcessorTest
 		testOutPipe.flush();
 		
 		
-		capoClient.shutdown();
+		TestClient.shutdown();
 		//shutdown
 		System.setIn(oldSystmIn);
 		externalTestServer.shutdown();
@@ -177,23 +158,7 @@ public class CertificateRequestProcessorTest
 		ExternalTestServer externalTestServer = new ExternalTestServer();
 		externalTestServer.startServer();
 		
-		capoClient = new CapoClient();
-		Thread clientThread = new Thread()
-		{
-			public void run() 
-			{
-				
-				try
-				{
-					
-					capoClient.start(new String[]{});		
-				} catch (Exception e)
-				{
-					exception = e;					
-				}
-				
-			};
-		};
+		
 		PrintStream oldSystemOutPrintStream = System.out;
 		
 		ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
@@ -206,11 +171,7 @@ public class CertificateRequestProcessorTest
 		testInPipe.connect(testOutPipe);
 		System.setIn(testInPipe);
 		
-		clientThread.start();
-		while(capoClient.isReady() == false)
-		{
-			Thread.sleep(1000);
-		}
+		TestClient.start();
 		
 		long waitTime = 0;
 		while(true)
@@ -250,7 +211,7 @@ public class CertificateRequestProcessorTest
 		testOutPipe.flush();
 		
 		
-		capoClient.shutdown();
+		TestClient.shutdown();
 		//shutdown
 		System.setIn(oldSystmIn);
 		externalTestServer.shutdown();
@@ -273,46 +234,14 @@ public class CertificateRequestProcessorTest
 	    Util.copyTree("test-data/capo/server", "capo/server");
 	    Util.deleteTree("capo/server/clients");
 	    Util.setDefaultPreferences();
-//	    Document serverConfigDocument = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(new File("capo/server/config/config.xml"));
-//	    Element entryElement = serverConfigDocument.createElement("entry");
-//	   
-//	    entryElement.setAttribute("key", "CLIENT_VERIFICATION_PASSWORD");
-//	    entryElement.setAttribute("value", persistantPassword);
-//	    serverConfigDocument.getDocumentElement().appendChild(entryElement);
-//	    XPath.dumpNode(serverConfigDocument, new FileOutputStream("capo/server/config/config.xml"));
+
 		ExternalTestServer externalTestServer = new ExternalTestServer();
 		externalTestServer.startServer();
 		
-		capoClient = new CapoClient();
-		capoClient.setExceptionList(new CopyOnWriteArrayList<Exception>());
-		Thread clientThread = new Thread()
-		{
-			public void run() 
-			{
-				
-				try
-				{
-					
-					capoClient.start(new String[]{"-CLIENT_VERIFICATION_PASSWORD",persistantPassword});		
-				} catch (Exception e)
-				{
-					exception = e;					
-				}
-				
-			};
-		};
+		TestClient.start("-CLIENT_VERIFICATION_PASSWORD",persistantPassword);
+        TestClient.shutdown();
+		CopyOnWriteArrayList<Exception> exceptionList = TestClient.getExceptionList();
 		
-		
-		clientThread.start();
-		while(capoClient.isReady() == false)
-		{
-			Thread.sleep(1000);
-		}
-		
-		
-		
-		capoClient.shutdown();
-		CopyOnWriteArrayList<Exception> exceptionList = capoClient.getExceptionList();
 		Assert.assertEquals("Expecting one wrong password exception",1, exceptionList.size());
 		Assert.assertEquals("Expecting wrong password exception","Wrong Password.", exceptionList.get(0).getMessage());
 		
@@ -349,35 +278,9 @@ public class CertificateRequestProcessorTest
 		ExternalTestServer externalTestServer = new ExternalTestServer();
 		externalTestServer.startServer();
 		
-		capoClient = new CapoClient();
-		Thread clientThread = new Thread()
-		{
-			public void run() 
-			{
-				
-				try
-				{
-					
-					capoClient.start(new String[]{"-CLIENT_VERIFICATION_PASSWORD",persistantPassword});		
-				} catch (Exception e)
-				{
-					exception = e;					
-				}
-				
-			};
-		};
+		TestClient.start("-CLIENT_VERIFICATION_PASSWORD",persistantPassword);
+		TestClient.shutdown();
 		
-		
-		clientThread.start();
-		while(capoClient.isReady() == false)
-		{
-			Thread.sleep(1000);
-		}
-		
-		
-		
-		capoClient.shutdown();
-		//shutdown
 		
 		externalTestServer.shutdown();
 		CopyOnWriteArrayList<Exception> exceptionList = externalTestServer.getExceptionList();
