@@ -1,5 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<control   bsreplacement="XXXXXXXXXXX" serverLocation="test.txt" name="included_description">
-    <var name="bob">LLLLLLLLLLLLL</var>
-    <include xmlns="http://www.delcyon.com/capo" src="versionControl.xml"/>    
-</control>

@@ -70,7 +70,7 @@ public class ExternalTestServer
 	    Util.setDefaultPreferences();	    
 		ExternalTestServer externalTestServer = new ExternalTestServer();
 		externalTestServer.startServer();
-		TestClient.start("-CLIENT_AS_SERVICE","false");
+		TestClient.start();
 		TestClient.shutdown();		
 		//CapoClient.main(new String[]{"-CLIENT_AS_SERVICE","false"});
 //		CapoClient capoClient = new CapoClient();

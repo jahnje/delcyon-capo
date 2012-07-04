@@ -82,14 +82,14 @@ public class DiffTest
 		
 		Element baseElement = document.createElement("base");
 		rootElement.appendChild(baseElement);
-		FileInputStream baseFileInputStream = new FileInputStream("test-data/base.txt");
+		FileInputStream baseFileInputStream = new FileInputStream("test-data/diff-testdata/base.txt");
 		StreamUtil.readInputStreamIntoOutputStream(baseFileInputStream, byteArrayOutputStream,4096);
 		baseElement.setTextContent(new String(byteArrayOutputStream.toByteArray()));
 		byteArrayOutputStream.reset();
 		
 		Element otherElement = document.createElement("other");
 		rootElement.appendChild(otherElement);
-		FileInputStream otherFileInputStream = new FileInputStream("test-data/other.txt");
+		FileInputStream otherFileInputStream = new FileInputStream("test-data/diff-testdata/other.txt");
 		
 		StreamUtil.readInputStreamIntoOutputStream(otherFileInputStream, byteArrayOutputStream,4096);
 		otherElement.setTextContent(new String(byteArrayOutputStream.toByteArray()));

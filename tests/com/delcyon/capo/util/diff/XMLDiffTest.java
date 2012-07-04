@@ -66,8 +66,8 @@ public class XMLDiffTest
 
 		
 		
-		baseDocument = documentBuilder.parse("test-data/baseDocument.xml");
-		changeDocument = documentBuilder.parse("test-data/changeDocument.xml");
+		baseDocument = documentBuilder.parse("test-data/diff-testdata/baseDocument.xml");
+		changeDocument = documentBuilder.parse("test-data/diff-testdata/changeDocument.xml");
 		ByteArrayOutputStream baseDocumentByteArrayOutputStream = new ByteArrayOutputStream();
 		ByteArrayOutputStream changeDocumentByteArrayOutputStream = new ByteArrayOutputStream();
 		XPath.dumpNode(baseDocument, baseDocumentByteArrayOutputStream);
@@ -76,8 +76,8 @@ public class XMLDiffTest
 		changeOutputString = changeDocumentByteArrayOutputStream.toString();
 		
 		
-		baseDiffOnlyDocument = documentBuilder.parse("test-data/baseDiffOnlyDocument.xml");
-		changeDiffOnlyDocument = documentBuilder.parse("test-data/changeDiffOnlyDocument.xml");
+		baseDiffOnlyDocument = documentBuilder.parse("test-data/diff-testdata/baseDiffOnlyDocument.xml");
+		changeDiffOnlyDocument = documentBuilder.parse("test-data/diff-testdata/changeDiffOnlyDocument.xml");
 		ByteArrayOutputStream baseDocumentDiffOnlyByteArrayOutputStream = new ByteArrayOutputStream();
 		ByteArrayOutputStream changeDocumentDiffOnlyByteArrayOutputStream = new ByteArrayOutputStream();
 		XPath.dumpNode(baseDiffOnlyDocument, baseDocumentDiffOnlyByteArrayOutputStream);
@@ -180,7 +180,7 @@ public class XMLDiffTest
 	public void testSimpleXmlDiff() throws Exception
 	{
 		XMLDiff xmlDiff = new XMLDiff();
-		Document simpleXmlDiffDocument = documentBuilder.parse("test-data/simpleXmlDiff.xml");
+		Document simpleXmlDiffDocument = documentBuilder.parse("test-data/diff-testdata/simpleXmlDiff.xml");
 		Element sideElement = xmlDiff.getElementForSide(baseDocument,(Element) simpleXmlDiffDocument.getDocumentElement().cloneNode(true), Side.MOD);
 		System.err.println("\n\nBASE dump");
 		XPath.dumpNode(sideElement, System.err);
