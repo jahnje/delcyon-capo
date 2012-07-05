@@ -24,7 +24,6 @@ import com.delcyon.capo.tasks.TaskManagerThread;
 import com.delcyon.capo.tasks.TaskManagerThread.Preferences;
 import com.delcyon.capo.tests.util.ExternalTestClient;
 import com.delcyon.capo.tests.util.ExternalTestServer;
-import com.delcyon.capo.tests.util.TestCapoApplication;
 import com.delcyon.capo.tests.util.TestClient;
 import com.delcyon.capo.tests.util.TestServer;
 import com.delcyon.capo.tests.util.external.Util;
@@ -222,13 +221,20 @@ public class TaskElementTest
     }
 
     /**
+     * Copy a default test script that includes a task to the server
      * Start an external server.
      * Start a Test client
+     * Ensure tasks gets created on server
+     * Ensure task gets synced to client
+     * Ensure Client runs task
+     * Ensure client marks task for deletion
+     * Ensure task gets deleted from client
+     * Ensure task gets deleted from server
      * 
      * @throws Exception
      */
     @Test
-    public void testProcessClientSideElement() throws Exception
+    public void testProcessClientSideScriptedTask() throws Exception
     {
 	System.out.println("===================================================================");
         externalTestServer = new ExternalTestServer();
@@ -237,6 +243,27 @@ public class TaskElementTest
         System.out.println("===================================================================");
         TestClient.start("-CLIENT_AS_SERVICE","true");
         System.out.println();
+    }
+    
+    /**
+     * copy a test task to the servers client task dir.
+     * Start External Server
+     * Start local Client 
+     * Ensure that it synced over.
+     * Ensure that it runs
+     * Ensure that it gets deleted
+     * @throws Exception
+     */    
+    @Test
+    public void testProcessClientSideManualTask() throws Exception
+    {
+    	System.out.println("===================================================================");
+    	externalTestServer = new ExternalTestServer();
+    	System.out.println("===================================================================");
+    	externalTestServer.startServer();
+    	System.out.println("===================================================================");
+    	TestClient.start("-CLIENT_AS_SERVICE","true");
+    	System.out.println();
     }
 
 }
