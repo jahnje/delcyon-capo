@@ -127,7 +127,7 @@ public class TaskManagerThread extends ContextThread
 		}
 	}
 	
-	private static boolean runAsService = true;
+	private boolean runAsService = true;
 	
 	private Transformer transformer;
 	private CapoDataManager capoDataManager;
@@ -154,7 +154,7 @@ public class TaskManagerThread extends ContextThread
 	 */
 	public synchronized static void startTaskManagerThread() throws Exception
 	{
-
+	    boolean runAsService = true;
 		if (CapoApplication.getTaskManagerThread() == null)
 		{
 			if (CapoApplication.getApplication() instanceof CapoServer)
@@ -164,18 +164,21 @@ public class TaskManagerThread extends ContextThread
 			else
 			{
 				String clientAsServiceValue = CapoApplication.getConfiguration().getValue(CapoClient.Preferences.CLIENT_AS_SERVICE);
-				CapoApplication.logger.log(Level.INFO, "Running CapoClient as a service");
+				
 				if (clientAsServiceValue != null && clientAsServiceValue.equalsIgnoreCase("true"))
 				{
+				    CapoApplication.logger.log(Level.INFO, "Running CapoClient as a service");
 					runAsService = true;
 				}
 				else
 				{
+				    CapoApplication.logger.log(Level.INFO, "Running CapoClient once");
 					runAsService = false;
 				}
 			}
-			CapoApplication.setTaskManagerThread(new TaskManagerThread());			
-			CapoApplication.getTaskManagerThread().start(); //if this is NOT a service, the thread will only run once.			
+			TaskManagerThread taskManagerThread = new TaskManagerThread(runAsService);			
+			CapoApplication.setTaskManagerThread(taskManagerThread);			
+			taskManagerThread.start(); //if this is NOT a service, the thread will only run once.			
 		}
 
 	}
@@ -201,11 +204,11 @@ public class TaskManagerThread extends ContextThread
 	 * @param capoDataManager
 	 * @throws Exception
 	 */
-	private TaskManagerThread() throws Exception
+	private TaskManagerThread(boolean runAsService) throws Exception
 	{
 		super(TaskManagerThread.class.getName());
 		this.capoDataManager = CapoApplication.getDataManager();
-		
+		this.runAsService = runAsService;
 		
 		//this sets up our basic identity transform, that removes indentation and extraneous spaces
 		//it has nothing to do with figuring out who we are
@@ -385,7 +388,10 @@ public class TaskManagerThread extends ContextThread
                             taskStatusElement.setAttribute(Attributes.taskURI.toString(), taskURI);
 						    taskStatusDocument.getDocumentElement().appendChild(taskStatusElement);
 						}
-						
+						if (taskStatusElement.getAttribute("ACTION").equals("IGNORE"))
+						{
+						    continue;
+						}
 						//walk our persisted attributes and stick them back in the task element
                         NamedNodeMap namedNodeMap = taskStatusElement.getAttributes();
                         for(int index = 0; index < namedNodeMap.getLength(); index++)
@@ -490,10 +496,20 @@ public class TaskManagerThread extends ContextThread
 						//see if this is a task we've never heard of
 						if (taskConcurrentHashMap.containsKey(taskElement.getAttribute(Attributes.name.toString())) == false)
 						{
-							GroupElement processedGroupElement = localRequestProcessor.process(taskElement,null);
-							processedGroupElement.getGroup();
-							//after running save any variables for the next run
-							taskConcurrentHashMap.put(taskElement.getAttribute(Attributes.name.toString()), processedGroupElement.getGroup().getVariableHashMap());
+						    	try
+						    	{
+						    	    GroupElement processedGroupElement = localRequestProcessor.process(taskElement,null);
+						    	    processedGroupElement.getGroup();
+						    	    //after running save any variables for the next run
+						    	    taskConcurrentHashMap.put(taskElement.getAttribute(Attributes.name.toString()), processedGroupElement.getGroup().getVariableHashMap());
+						    	} 
+						    	catch (Exception exception)
+						    	{
+						    	    taskStatusElement.setAttribute("ACTION", "IGNORE");
+						    	    taskStatusElement.setAttribute("EXCEPTION", exception.getMessage());						    	    
+						    	}
+							
+							
 						}
 						else
 						{
@@ -515,9 +531,18 @@ public class TaskManagerThread extends ContextThread
 							}
 							
 							//now run the task document
-							GroupElement processedGroupElement = localRequestProcessor.process(taskElement,variableHashMap);
-							processedGroupElement.getGroup();
-							taskConcurrentHashMap.put(taskElement.getAttribute(Attributes.name.toString()), processedGroupElement.getGroup().getVariableHashMap());														
+							try
+							{
+							    GroupElement processedGroupElement = localRequestProcessor.process(taskElement,variableHashMap);
+							    processedGroupElement.getGroup();
+							    taskConcurrentHashMap.put(taskElement.getAttribute(Attributes.name.toString()), processedGroupElement.getGroup().getVariableHashMap());
+							} 
+						    	catch (Exception exception)
+						    	{
+						    	    taskStatusElement.setAttribute("ACTION", "IGNORE");
+						    	    taskStatusElement.setAttribute("EXCEPTION", exception.getMessage());						    	    
+						    	}
+																					
 						}
 						taskStatusElement.setAttribute(Attributes.lastExecutionTime.toString(), System.currentTimeMillis()+"");
 						

@@ -81,15 +81,15 @@ public class CapoClient extends CapoApplication
 	public enum Preferences implements Preference
 	{
 		
-		@PreferenceInfo(arguments={}, defaultValue="false", description="Run The Capo Client as a service [true|false] default is false", longOption="CLIENT_AS_SERVICE", option="CLIENT_AS_SERVICE")
+		@PreferenceInfo(arguments={"boolean"}, defaultValue="false", description="Run The Capo Client as a service [true|false] default is false", longOption="CLIENT_AS_SERVICE", option="CLIENT_AS_SERVICE")
 		CLIENT_AS_SERVICE,
-		@PreferenceInfo(arguments={}, defaultValue="capo.client.0", description="ID that this server will use when communicating with servers", longOption="CLIENT_ID", option="CLIENT_ID")
+		@PreferenceInfo(arguments={"clientID"}, defaultValue="capo.client.0", description="ID that this server will use when communicating with servers", longOption="CLIENT_ID", option="CLIENT_ID")
 		CLIENT_ID,
-		@PreferenceInfo(arguments={}, defaultValue="1024", description="Encryption key size", longOption="KEY_SIZE", option="KEY_SIZE")
+		@PreferenceInfo(arguments={"keysize"}, defaultValue="1024", description="Encryption key size", longOption="KEY_SIZE", option="KEY_SIZE")
 		KEY_SIZE,
-		@PreferenceInfo(arguments={}, defaultValue="36", description="Number of Months before key expires", longOption="KEY_MONTHS_VALID", option="KEY_MONTHS_VALID")
+		@PreferenceInfo(arguments={"months"}, defaultValue="36", description="Number of Months before key expires", longOption="KEY_MONTHS_VALID", option="KEY_MONTHS_VALID")
 		KEY_MONTHS_VALID,
-		@PreferenceInfo(arguments={}, defaultValue="1000", description="Milliseconds until retry, on connection failure", longOption="CONNECTION_RETRY_INTERVAL", option="CONNECTION_RETRY_INTERVAL")
+		@PreferenceInfo(arguments={"interval"}, defaultValue="1000", description="Milliseconds until retry, on connection failure", longOption="CONNECTION_RETRY_INTERVAL", option="CONNECTION_RETRY_INTERVAL")
         CONNECTION_RETRY_INTERVAL;
 		
 		@Override

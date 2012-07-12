@@ -149,17 +149,25 @@ public class ExportElement extends AbstractControl
 		}
 
 		//escape all newline and carriage returns
-		refNode = refNode.cloneNode(true);			
+		refNode = refNode.cloneNode(true);
+		
 		NodeList nodeList = XPath.selectNodes(refNode, "descendant-or-self::*");
 		for(int index = 0;index < nodeList.getLength(); index++)
 		{
 			Node node = nodeList.item(index);
+			//make sure we only mess around with text nodes, setting the text content on a parent node will wipe out all of the children.
+			if (node.getNodeType() != Node.TEXT_NODE)
+			{
+			    continue;
+			}
+			
 			String text = node.getTextContent();
 			if (text != null)
 			{
 				String newText = text.replaceAll("\\\\n", "\n").replaceAll("\\\\r", "\r");
 				node.setTextContent(newText);	
 			}
+			
 		}
 		
 		refNode.normalize();
@@ -194,6 +202,7 @@ public class ExportElement extends AbstractControl
 			transformer.transform(new DOMSource(refNode), new StreamResult(md5FilterOutputStream));
 			if (md5.equalsIgnoreCase(md5FilterOutputStream.getMD5()) == false)
 			{
+			    
 				OutputStream outputStream = resourceDescriptor.getOutputStream(getParentGroup(),resourceParameters);
 				transformer.transform(new DOMSource(refNode), new StreamResult(outputStream));
 				outputStream.flush();

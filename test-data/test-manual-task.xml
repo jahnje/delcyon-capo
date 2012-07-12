@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<server:task xmlns:server="http://www.delcyon.com/capo-server" name="test-manual-task">
+	<text>This is a test</text>
+	<server:export eval="../text/#text"/>
+	<server:log message="exporting test data"/>
+</server:task>

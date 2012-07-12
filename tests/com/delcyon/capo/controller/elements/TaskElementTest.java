@@ -257,12 +257,13 @@ public class TaskElementTest
     @Test
     public void testProcessClientSideManualTask() throws Exception
     {
+	Util.copyTree("test-data/test-manual-task.xml", "capo/server/clients/capo.client.1/tasks/test-manual-task.xml");
     	System.out.println("===================================================================");
     	externalTestServer = new ExternalTestServer();
     	System.out.println("===================================================================");
-    	externalTestServer.startServer();
+    	externalTestServer.startServer("-CAPO_DIR","capo/server");
     	System.out.println("===================================================================");
-    	TestClient.start("-CLIENT_AS_SERVICE","true");
+    	TestClient.start("-CLIENT_AS_SERVICE","true","-CAPO_DIR","capo/client");
     	System.out.println();
     }
 
