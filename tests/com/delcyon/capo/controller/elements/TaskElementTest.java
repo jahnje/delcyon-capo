@@ -2,6 +2,8 @@ package com.delcyon.capo.controller.elements;
 
 import static org.junit.Assert.fail;
 
+import java.io.FileInputStream;
+import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
@@ -14,6 +16,7 @@ import org.junit.Test;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
+import org.xml.sax.SAXException;
 
 import com.delcyon.capo.CapoApplication;
 import com.delcyon.capo.CapoApplication.ApplicationState;
@@ -28,6 +31,7 @@ import com.delcyon.capo.tests.util.ExternalTestServer;
 import com.delcyon.capo.tests.util.TestClient;
 import com.delcyon.capo.tests.util.TestServer;
 import com.delcyon.capo.tests.util.external.Util;
+import com.delcyon.capo.util.diff.Diff;
 import com.delcyon.capo.xml.XPath;
 
 public class TaskElementTest
@@ -139,22 +143,8 @@ public class TaskElementTest
         taskElementControl.init(taskElement, null, group, new ServerControllerResponse());
         taskElementControl.processServerSideElement();
         
-        long lastRunTime = TaskManagerThread.getTaskManagerThread().getLastRunTime();
-        int loopCount = 0;
-        System.out.println("waiting for TaskManager to run: ");
-        TaskManagerThread.getTaskManagerThread().getLock().unlock();
-        while(lastRunTime == TaskManagerThread.getTaskManagerThread().getLastRunTime() || loopCount < 1)
-        {
-            if (lastRunTime != TaskManagerThread.getTaskManagerThread().getLastRunTime())
-            {
-                loopCount++;                
-                lastRunTime = TaskManagerThread.getTaskManagerThread().getLastRunTime();
-                System.out.print(loopCount);
-            }
-            System.out.print(".");
-            Thread.sleep(100);
-        }
-        TaskManagerThread.getTaskManagerThread().getLock().lock();
+        waitForTaskManagerToRun(2);
+        
         System.out.println();
         List<ResourceDescriptor> taskResourceDescriptorList = CapoApplication.getDataManager().findDocuments(CapoApplication.getDataManager().getResourceDirectory(Preferences.TASK_DIR.toString()));
         Assert.assertEquals(2,taskResourceDescriptorList.size());
@@ -187,22 +177,7 @@ public class TaskElementTest
         TestServer.getServerInstance().getConfiguration().setValue(TaskManagerThread.Preferences.TASK_DEFAULT_LIFESPAN, "1000");        
         
         
-        lastRunTime = TaskManagerThread.getTaskManagerThread().getLastRunTime();
-        loopCount = 0;
-        TaskManagerThread.getTaskManagerThread().getLock().unlock();
-        System.out.println("waiting for TaskManager to run: ");
-        while(lastRunTime == TaskManagerThread.getTaskManagerThread().getLastRunTime() || loopCount < 5)
-        {
-            if (lastRunTime != TaskManagerThread.getTaskManagerThread().getLastRunTime())
-            {
-                loopCount++;
-                lastRunTime = TaskManagerThread.getTaskManagerThread().getLastRunTime();
-                System.out.print(loopCount);
-            }
-            System.out.print(".");    
-            Thread.sleep(100);
-        }
-        TaskManagerThread.getTaskManagerThread().getLock().lock();
+        waitForTaskManagerToRun(5);
         System.out.println();
         taskResourceDescriptorList = CapoApplication.getDataManager().findDocuments(CapoApplication.getDataManager().getResourceDirectory(Preferences.TASK_DIR.toString()));
         Assert.assertEquals(1,taskResourceDescriptorList.size());
@@ -258,14 +233,78 @@ public class TaskElementTest
     @Test
     public void testProcessClientSideManualTask() throws Exception
     {
-        Util.copyTree("test-data/test-manual-task.xml", "capo/server/clients/capo.client.1/tasks/test-manual-task.xml");
+        Util.copyTree("test-data/test-manual-task-with-error.xml", "capo/server/clients/capo.client.1/tasks/test-manual-task.xml");
     	System.out.println("===================================================================");
     	externalTestServer = new ExternalTestServer();
     	System.out.println("===================================================================");
     	externalTestServer.startServer("-CAPO_DIR","capo/server");
     	System.out.println("===================================================================");
     	TestClient.start(ApplicationState.RUNNING,"-CLIENT_AS_SERVICE","true","-CAPO_DIR","capo/client");
-    	System.out.println();
+    	
+    	TaskManagerThread.getTaskManagerThread().getLock().lock();
+    	
+    	List<ResourceDescriptor> taskResourceDescriptorList = CapoApplication.getDataManager().findDocuments(CapoApplication.getDataManager().getResourceDirectory(Preferences.TASK_DIR.toString()));
+        Assert.assertEquals(2,taskResourceDescriptorList.size());
+        waitForTaskManagerToRun(1);
+        
+        Assert.assertEquals(2,taskResourceDescriptorList.size());
+        Assert.assertTrue("Didn't find ignoreable test-manual-task",validateXMLContent(taskResourceDescriptorList, "task-status.xml", "exists(//server:task[@name = 'test-manual-task' and @ACTION = 'IGNORE' and exists(@EXCEPTION)])"));
+        
+        Util.copyTree("test-data/test-manual-task.xml", "capo/server/clients/capo.client.1/tasks/test-manual-task.xml");
+        waitForTaskManagerToRun(2);
+        taskResourceDescriptorList = CapoApplication.getDataManager().findDocuments(CapoApplication.getDataManager().getResourceDirectory(Preferences.TASK_DIR.toString()));
+        Assert.assertEquals(2,taskResourceDescriptorList.size());
+        Assert.assertTrue("Didn't find new synched test-manual-task",validateXMLContent(taskResourceDescriptorList, "test-manual-task.xml", "exists(//server:task/server:export[exists(@dest)])"));
+        Diff diff = new Diff(new FileInputStream("test-data/test.txt"), new FileInputStream("capo/client/test.txt"));
+        String[] differences = diff.getDifferences().split("\n");
+        Assert.assertTrue("There should be data in the export file",differences.length > 2);
+        for (String difference : differences)
+        {            
+            Assert.assertTrue("Line contains a difference:" +difference, difference.startsWith("="));
+        }
+    	
+        Util.deleteTree("capo/server/clients/capo.client.1/tasks/test-manual-task.xml");
+        waitForTaskManagerToRun(3);
+        
+        taskResourceDescriptorList = CapoApplication.getDataManager().findDocuments(CapoApplication.getDataManager().getResourceDirectory(Preferences.TASK_DIR.toString()));
+        Assert.assertEquals(1,taskResourceDescriptorList.size());
+        
     }
 
+    private boolean validateXMLContent(List<ResourceDescriptor> resourceDescriptorList,String documentName,String xpath) throws Exception
+    {
+        
+        for (ResourceDescriptor resourceDescriptor : resourceDescriptorList)
+        {
+            Document testDocument = CapoApplication.getDocumentBuilder().parse(resourceDescriptor.getInputStream(null));
+            if (resourceDescriptor.getLocalName().equals(documentName))
+            {
+                return XPath.evaluate(testDocument, xpath);
+            }
+        }
+        fail("Didn't find document: "+documentName);
+        return false;
+    }
+    
+    private void waitForTaskManagerToRun(int loopCount) throws Exception
+    {
+        long lastRunTime = TaskManagerThread.getTaskManagerThread().getLastRunTime();
+        int currentLoop = 0;
+        TaskManagerThread.getTaskManagerThread().getLock().unlock();
+        System.out.println("waiting for TaskManager to run "+loopCount+" times: ");
+        while(currentLoop < loopCount)
+        {
+            if (lastRunTime != TaskManagerThread.getTaskManagerThread().getLastRunTime())
+            {
+                currentLoop++;
+                lastRunTime = TaskManagerThread.getTaskManagerThread().getLastRunTime();
+                System.out.print(currentLoop);
+            }
+            System.out.print(".");    
+            Thread.sleep(CapoApplication.getConfiguration().getLongValue(Preferences.TASK_INTERVAL)/4l);
+        }
+        TaskManagerThread.getTaskManagerThread().getLock().lock();
+        System.out.println();
+    }
+    
 }

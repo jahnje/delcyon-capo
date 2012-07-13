@@ -576,7 +576,7 @@ public class TaskManagerThread extends ContextThread
 																					
 						}
 						taskStatusElement.setAttribute(Attributes.lastExecutionTime.toString(), System.currentTimeMillis()+"");
-						
+						taskStatusElement.setAttribute(Attributes.MD5.toString(), resourceDescriptor.getContentMetaData(null).getMD5());
 					}
 					resourceDescriptor.release(null);
 				}
@@ -714,21 +714,16 @@ public class TaskManagerThread extends ContextThread
 					    taskManagerDocument.normalizeDocument();
 					    taskManagerDocument.normalize();
 					    taskManagerDocumentFileDescriptor.open(null);
-					    try
-					    {
-					        OutputStream taskDocumentOutputStream = taskManagerDocumentFileDescriptor.getOutputStream(null);
 
-					        transformer.setOutputProperty("method", "xml");
-					        transformer.setOutputProperty("indent", "yes");
-					        transformer.transform(new DOMSource(taskManagerDocument), new StreamResult(taskDocumentOutputStream));
+					    OutputStream taskDocumentOutputStream = taskManagerDocumentFileDescriptor.getOutputStream(null);
 
-					        taskDocumentOutputStream.close();
-					    } catch (NullPointerException nullPointerException)
-					    {
-					        System.err.println("Ugh!");
-					    }
+					    transformer.setOutputProperty("method", "xml");
+					    transformer.setOutputProperty("indent", "yes");
+					    transformer.transform(new DOMSource(taskManagerDocument), new StreamResult(taskDocumentOutputStream));
+
+					    taskDocumentOutputStream.close();
 					    taskManagerDocumentFileDescriptor.release(null);
-					    
+
 					    lock.unlock();
 					}
 					
@@ -741,11 +736,7 @@ public class TaskManagerThread extends ContextThread
 					    catch (InterruptedException interruptedException)
 					    {
 					        continue;
-					    }
-					    catch (NullPointerException nullPointerException)
-                        {
-                            System.err.println("ugh2");
-                        }
+					    }					    
 					}
 					else
 					{

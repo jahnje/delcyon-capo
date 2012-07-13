@@ -1,6 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <server:task xmlns:server="http://www.delcyon.com/capo-server" name="test-manual-task">
-	<text>This is a test</text>
-	<server:export eval="../text/#text"/>
+	<text>This is a test, this is only a @@TEST@@, again, this is only a test
+This is a test, this is only a @@TEST1@@, again, this is o@@nly a test
+This is a test, this is only a @@TEST2@@, again, this is only a test
+This is @ test, this is only a @@TEST3@@, again, this is only a test
+This is a te@st, this is only a @@TEST4@@, again, this is only a test
+This @is a test, this is only a @@TEST5@@, again, this is only a test
+This is a test, this is only a @@TEST5@@, again, this is only a @@TEST5@@
+tttttttttttttttttttttttttttttttttttttttttttttt</text>
+	<server:export ref="../text/text()" dest="test.txt" output="method:text,indent:no" trim="true"/>
 	<server:log message="exporting test data"/>
 </server:task>

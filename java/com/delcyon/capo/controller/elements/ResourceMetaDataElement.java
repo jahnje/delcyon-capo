@@ -116,9 +116,7 @@ public class ResourceMetaDataElement extends AbstractControl
 			}
 			resourceDescriptor.close(getParentGroup(), resourceParameters);
 
-			buildElementContent(contentMetaData,getControlElementDeclaration(),attributes);
-			
-
+			buildElementContent(contentMetaData,getControlElementDeclaration(),attributes);			
 		}
 		else
 		{
