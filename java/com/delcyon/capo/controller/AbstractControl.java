@@ -28,6 +28,7 @@ import org.w3c.dom.NodeList;
 
 import com.delcyon.capo.CapoApplication;
 import com.delcyon.capo.ContextThread;
+import com.delcyon.capo.annotations.ControlNamespaceURI;
 import com.delcyon.capo.controller.client.ClientSideControl;
 import com.delcyon.capo.controller.client.ServerControllerResponse;
 import com.delcyon.capo.controller.elements.GroupElement;
@@ -43,10 +44,33 @@ import com.delcyon.capo.xml.XPath;
  *
  */
 @SuppressWarnings("unchecked")
+@ControlNamespaceURI(URIList={CapoApplication.CAPO_NAMESPACE_URI,CapoApplication.SERVER_NAMESPACE_URI,CapoApplication.CLIENT_NAMESPACE_URI,CapoApplication.RESOURCE_NAMESPACE_URI})
 public abstract class AbstractControl implements ServerSideControl
 {
-
 	
+	private static HashMap<String, Class> controlNamespaceURIHashMap = null;
+    static
+    {
+        controlNamespaceURIHashMap = new HashMap<String, Class>();
+        Set<String> controlNamespaceURISet = CapoApplication.getAnnotationMap().get(ControlNamespaceURI.class.getCanonicalName());
+        for (String className : controlNamespaceURISet)
+        {
+            try
+            {
+                Class controlNamespaceURIClass = Class.forName(className);
+                ControlNamespaceURI controlNamespaceURI = (ControlNamespaceURI) controlNamespaceURIClass.getAnnotation(ControlNamespaceURI.class);
+                String[] uriList = controlNamespaceURI.URIList();
+                for (String uri : uriList)
+                {
+                    controlNamespaceURIHashMap.put(uri, controlNamespaceURIClass);
+                    CapoApplication.logger.log(Level.CONFIG, "Loaded controlNamespaceURI '"+uri+"' from "+className);    
+                }                
+            } catch (ClassNotFoundException classNotFoundException)
+            {
+                CapoApplication.logger.log(Level.WARNING, "Error getting controlNamespaceURI",classNotFoundException);
+            }
+        }
+    }
 	
 	private static HashMap<String, Class> controlElementHashMap = null;
 	static
@@ -83,6 +107,15 @@ public abstract class AbstractControl implements ServerSideControl
 		}
 	}
 
+	public static boolean isControlNamespace(String namespaceURI)
+    {
+        if (namespaceURI == null)
+        {
+            return false;
+        }
+        return controlNamespaceURIHashMap.containsKey(namespaceURI);
+    }
+	
 	private Group parentGroup;
 	private transient Element controlElementDeclaration;
 	private transient Element originalControlElementDeclaration;
@@ -115,6 +148,11 @@ public abstract class AbstractControl implements ServerSideControl
 				continue;
 			}
 
+			if(isControlNamespace(node.getNamespaceURI()) == false)
+			{
+			    continue;
+			}
+			
 			Element controlElementDeclaration = (Element) node;
 			
 			if (controlElementDeclaration.hasAttribute("DoNotProcess"))
@@ -217,7 +255,7 @@ public abstract class AbstractControl implements ServerSideControl
 				}
 				catch (Exception exception)
 				{
-					CapoApplication.logger.log(Level.WARNING, "Couldn't process "+XPath.getXPath(node));
+					CapoApplication.logger.log(Level.WARNING, "Couldn't process "+XPath.getXPath(node)+"\nREASON: "+exception.getMessage());
 					setContext(originalContext);
 					throw exception;
 				}
@@ -237,7 +275,9 @@ public abstract class AbstractControl implements ServerSideControl
 		destroy();
 	}
 	
-	@Override
+	
+
+    @Override
 	public void init(Element controlElementDeclaration, ControlElement parentControlElement, Group parentGroup, ControllerClientRequestProcessor controllerClientRequestProcessor) throws Exception
 	{
 		this.parentGroup = parentGroup;		
