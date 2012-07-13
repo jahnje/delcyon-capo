@@ -30,12 +30,7 @@ public class TestCapoApplication extends CapoApplication
         return "TestApp";
     }
 
-    @Override
-    public boolean isReady()
-    {
-        // TODO Auto-generated method stub
-        return false;
-    }
+    
 
     @Override
     public void shutdown() throws Exception

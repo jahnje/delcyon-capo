@@ -45,6 +45,7 @@ import com.delcyon.capo.server.CapoServer;
 import com.delcyon.capo.tasks.TaskManagerThread;
 import com.delcyon.capo.util.LeveledConsoleHandler;
 import com.delcyon.capo.util.LeveledConsoleHandler.Output;
+import com.delcyon.capo.util.LogPrefixFormatter;
 import com.delcyon.capo.xml.CapoXPathFunctionResolver;
 import com.delcyon.capo.xml.XPath;
 
@@ -57,6 +58,23 @@ import eu.medsea.mimeutil.MimeUtil;
  */
 public abstract class CapoApplication extends ContextThread implements WrapperListener
 {
+    
+    public enum ApplicationState
+    {
+        NONE(0),
+        INITIALIZING(1),
+        INITIALIZED(2),
+        STARTING(3),
+        RUNNING(4),
+        STOPPING(5),
+        STOPPED(6);
+        public int order;
+        private ApplicationState(int order)
+        {
+            this.order = order;
+        }
+    }
+    
 	public enum DefaultDocument
 	{
 		default_capo,
@@ -93,6 +111,7 @@ public abstract class CapoApplication extends ContextThread implements WrapperLi
 	private TaskManagerThread taskManagerThread = null;
 	private Configuration configuration = null;
     private DocumentBuilderFactory documentBuilderFactory;
+    private volatile ApplicationState applicationState = ApplicationState.NONE;
 	
 	public CapoApplication() throws Exception
 	{
@@ -112,6 +131,7 @@ public abstract class CapoApplication extends ContextThread implements WrapperLi
 					leveledConsoleHandler = new LeveledConsoleHandler();
 					leveledConsoleHandler.setLevel(LOGGING_LEVEL);
 					leveledConsoleHandler.setOutputForLevel(Output.STDERR, Level.FINER);
+					leveledConsoleHandler.setFormatter(new LogPrefixFormatter(getApplication().getApplicationDirectoryName().toUpperCase()+": "));
 					logger.setUseParentHandlers(false);
 					logger.addHandler(leveledConsoleHandler);				
 				}
@@ -154,6 +174,16 @@ public abstract class CapoApplication extends ContextThread implements WrapperLi
 		
 	}
 	
+	public ApplicationState getApplicationState()
+    {
+        return applicationState;
+    }
+	
+	protected void setApplicationState(ApplicationState applicationState)
+	{
+	    this.applicationState = applicationState;
+	}
+	
 	protected abstract void startup(String[] programArgs) throws Exception;
 	
 	protected abstract void init(String[] programArgs) throws Exception;
@@ -164,8 +194,11 @@ public abstract class CapoApplication extends ContextThread implements WrapperLi
 	{
 		try
 		{
+		    logger.log(Level.INFO, "Requesting Application Shutdown");		    
 			shutdown();
+			logger.log(Level.INFO, "Application Shutdown");			
 			setApplication(null);
+			
 		} 
 		catch (Exception exception)
 		{			
@@ -193,7 +226,7 @@ public abstract class CapoApplication extends ContextThread implements WrapperLi
 		WrapperManager.restart();
 	}
 	
-	 public abstract boolean isReady();
+	 
 
 	 public abstract void shutdown() throws Exception;
 	
@@ -216,9 +249,12 @@ public abstract class CapoApplication extends ContextThread implements WrapperLi
 	 * This is mostly here for the sake of completeion and testing. Other than testing there's probably no good reason to use this.
 	 * @param application
 	 */
-	public static void setApplication(CapoApplication application)
+	protected static void setApplication(CapoApplication application)
 	{
-	    //Thread.dumpStack();
+	    if (application == null && CapoApplication.logger.isLoggable(Level.FINER))
+	    {
+	        Thread.dumpStack();
+	    }
 	   CapoApplication.capoApplication = application; 
 	    
 	}

@@ -20,6 +20,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.logging.Level;
 
 import com.delcyon.capo.CapoApplication;
+import com.delcyon.capo.CapoApplication.ApplicationState;
 import com.delcyon.capo.server.CapoServer;
 
 
@@ -66,7 +67,7 @@ public class TestServer
 			}
 		};
 		serverThread.start();
-		while(CapoApplication.getApplication() == null || CapoApplication.getApplication().isReady() == false)
+		while(CapoApplication.getApplication() == null || CapoApplication.getApplication().getApplicationState().order < ApplicationState.RUNNING.order)
 		{            
 			Thread.sleep(1000);
 		}

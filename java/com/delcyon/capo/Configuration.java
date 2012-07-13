@@ -22,6 +22,7 @@ import java.util.HashMap;
 import java.util.Set;
 import java.util.Vector;
 import java.util.Map.Entry;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
 import java.util.prefs.BackingStoreException;
 import java.util.prefs.Preferences;
@@ -165,8 +166,8 @@ public class Configuration
 	private Document configDocument;
 	private DocumentBuilder documentBuilder;
 	private File capoConfigFile;
-	private HashMap<String, String> preferenceValueHashMap = new HashMap<String, String>();
-	private HashMap<String, Preference> preferenceHashMap = new HashMap<String, Preference>();
+	private ConcurrentHashMap<String, String> preferenceValueHashMap = new ConcurrentHashMap<String, String>();
+	private ConcurrentHashMap<String, Preference> preferenceHashMap = new ConcurrentHashMap<String, Preference>();
 	private boolean disableAutoSync;
 	
 	
@@ -507,6 +508,7 @@ public class Configuration
 		}
 		catch (Exception exception)
 		{
+		    CapoApplication.logger.log(Level.WARNING, "Couldn't sync config file", exception);
 			throw new BackingStoreException(exception.getMessage());
 		}
 

@@ -19,6 +19,7 @@ package com.delcyon.capo.tests.util;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 import com.delcyon.capo.CapoApplication;
+import com.delcyon.capo.CapoApplication.ApplicationState;
 import com.delcyon.capo.client.CapoClient;
 
 
@@ -35,7 +36,7 @@ public class TestClient
 	private static CapoClient capoClient = null;
 	private static CopyOnWriteArrayList<Exception> exceptionList = null;
 	
-	public static void start(final String... args) throws Exception
+	public static void start(ApplicationState waitForApplicationState,final String... args) throws Exception
 	{
 		
 		if (clientThread != null)
@@ -43,6 +44,7 @@ public class TestClient
 			System.err.println("found an existing client" + clientThread);
 			System.exit(0);
 		}
+		exceptionList = new CopyOnWriteArrayList<Exception>();
 		clientThread = new Thread("TestClient")
 		{
 			@Override
@@ -52,6 +54,7 @@ public class TestClient
 				try
 				{					
 					capoClient = new CapoClient();
+					capoClient.setExceptionList(exceptionList);
 					if (args.length == 0)
 					{
 					    capoClient.start(new String[]{"-CLIENT_AS_SERVICE","false"});
@@ -69,13 +72,14 @@ public class TestClient
 			}
 		};
 		clientThread.start();
-		while(CapoApplication.getApplication() == null || CapoApplication.getApplication().isReady() == false)
+		
+        
+		while(CapoApplication.getApplication() == null || CapoApplication.getApplication().getApplicationState().order < waitForApplicationState.order)
 		{            
 			Thread.sleep(1000);
 		}
 		//capoClient = (CapoClient) CapoApplication.getApplication();
-		exceptionList = new CopyOnWriteArrayList<Exception>();
-		capoClient.setExceptionList(exceptionList);
+		
 	}
 	
 	
@@ -83,6 +87,7 @@ public class TestClient
 	{
 		if (capoClient != null)
 		{
+		    System.err.println("=====================Calling Client Shutdown========================================");
 			capoClient.stop(0);
 			capoClient = null;
 		}

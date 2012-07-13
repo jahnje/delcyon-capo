@@ -133,8 +133,7 @@ public class CapoClient extends CapoApplication
 	private static final long MAX_SHUTDOWN_WAIT_TIME = 10000; //10 seconds
 	
 	private HashMap<String, String> idHashMap = new HashMap<String, String>();
-    private boolean isReady = false;    
-	private boolean isDone = false;
+   
 	
 	public CapoClient() throws Exception
 	{
@@ -174,7 +173,7 @@ public class CapoClient extends CapoApplication
 
 	protected void init(String[] programArgs) throws Exception
 	{
-	
+	    setApplicationState(ApplicationState.INITIALIZING);
 		setConfiguration(new Configuration(programArgs));
 		if (getConfiguration().hasOption(PREFERENCE.HELP))
 		{
@@ -189,7 +188,7 @@ public class CapoClient extends CapoApplication
 		getDataManager().init();
 		
 		runStartupScript(getConfiguration().getValue(PREFERENCE.STARTUP_SCRIPT));
-		this.isReady = true;
+		setApplicationState(ApplicationState.INITIALIZED);
 	}
 
 	private void runStartupScript(String startupScriptName) throws Exception
@@ -219,8 +218,8 @@ public class CapoClient extends CapoApplication
 	protected void startup(String[] programArgs) throws Exception
 	{
 		start();
-		//keep this thread running until the client thread is done. 
-		while(isDone == false)
+		//keep this thread running until the client thread is ready. 
+		while(getApplicationState().order <= ApplicationState.RUNNING.order)
 		{
 			Thread.sleep(500);			
 		}		
@@ -244,7 +243,7 @@ public class CapoClient extends CapoApplication
 			capoConnection.close();
 			if (WrapperManager.isShuttingDown()) //bail out if we're restarting
             {
-			    isDone = true;
+			    setApplicationState(ApplicationState.STOPPING);
 			    return;
             }
 			if (hasValidKeystore() == false)
@@ -278,6 +277,7 @@ public class CapoClient extends CapoApplication
 			
 			TaskManagerThread.startTaskManagerThread();
 			
+			
 		} catch (Exception e)
 		{
 			//if something else is monitoring this client, don't exit on error, leave it to the monitor to do so.
@@ -291,7 +291,7 @@ public class CapoClient extends CapoApplication
 				System.exit(1);
 			}
 		}
-		isDone  = true;
+		setApplicationState(ApplicationState.RUNNING);
 	}
 
 	
@@ -413,12 +413,6 @@ public class CapoClient extends CapoApplication
 	public String getApplicationDirectoryName()
 	{
 		return APPLICATION_DIRECTORY_NAME;
-	}
-
-	@Override
-	public boolean isReady()
-	{
-	    return this.isReady;
 	}
 	
 	public void clearIDMap()
@@ -587,6 +581,12 @@ public class CapoClient extends CapoApplication
 
 	public void shutdown() throws Exception
 	{
+	    CapoApplication.logger.log(Level.INFO,"Waiting for processing to finish.");
+        while(getApplicationState().order < ApplicationState.RUNNING.order)
+        {
+            Thread.sleep(500);
+        }
+        
 		if (TaskManagerThread.getTaskManagerThread() != null)
 		{
 		    CapoApplication.logger.log(Level.INFO,"Stopping Task Manager");
@@ -594,7 +594,7 @@ public class CapoClient extends CapoApplication
 			long totalWaitTime = 0;
 			long waitTime = 500;
 			
-			while(TaskManagerThread.getTaskManagerThread().isAlive() || totalWaitTime >= MAX_SHUTDOWN_WAIT_TIME)
+			while(TaskManagerThread.getTaskManagerThread().isFinished() == false || totalWaitTime >= MAX_SHUTDOWN_WAIT_TIME)
 			{
 			    try
 			    {			        			        
@@ -609,11 +609,7 @@ public class CapoClient extends CapoApplication
 			CapoApplication.logger.log(Level.INFO,"Done Stopping Task Manager");			
 		}
 		
-		CapoApplication.logger.log(Level.INFO,"Waiting for processing to finish.");
-		while(isDone == false)
-		{
-			Thread.sleep(500);
-		}
+		
 		CapoApplication.logger.log(Level.INFO,"Done.");
 	}
 	

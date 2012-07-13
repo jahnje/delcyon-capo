@@ -16,6 +16,7 @@ import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 
 import com.delcyon.capo.CapoApplication;
+import com.delcyon.capo.CapoApplication.ApplicationState;
 import com.delcyon.capo.controller.Group;
 import com.delcyon.capo.controller.client.ServerControllerResponse;
 import com.delcyon.capo.resourcemanager.ResourceDescriptor;
@@ -67,12 +68,12 @@ public class TaskElementTest
         }
         try
         {
-        TestServer.getServerInstance().getConfiguration().setValue(TaskManagerThread.Preferences.TASK_INTERVAL, TaskManagerThread.Preferences.TASK_INTERVAL.getDefaultValue());
-        TestServer.getServerInstance().getConfiguration().setValue(TaskManagerThread.Preferences.TASK_DEFAULT_LIFESPAN, TaskManagerThread.Preferences.TASK_DEFAULT_LIFESPAN.getDefaultValue());
+            TestServer.getServerInstance().getConfiguration().setValue(TaskManagerThread.Preferences.TASK_INTERVAL, TaskManagerThread.Preferences.TASK_INTERVAL.getDefaultValue());
+            TestServer.getServerInstance().getConfiguration().setValue(TaskManagerThread.Preferences.TASK_DEFAULT_LIFESPAN, TaskManagerThread.Preferences.TASK_DEFAULT_LIFESPAN.getDefaultValue());
         } 
         catch (Exception e) {
-	    e.printStackTrace();
-	}
+            e.printStackTrace();
+        }
         System.err.println("==================================================================");
         if (externalTestClient != null)
         {
@@ -126,7 +127,7 @@ public class TaskElementTest
         TestServer.start();        
         TaskManagerThread.getTaskManagerThread().getLock().lock();
         externalTestClient = new ExternalTestClient();
-        externalTestClient.startClient();    
+        externalTestClient.startClient(ApplicationState.RUNNING);    
         
         TaskElement taskElementControl = new TaskElement();
         
@@ -241,7 +242,7 @@ public class TaskElementTest
         System.out.println("===================================================================");
         externalTestServer.startServer();
         System.out.println("===================================================================");
-        TestClient.start("-CLIENT_AS_SERVICE","true");
+        TestClient.start(ApplicationState.RUNNING,"-CLIENT_AS_SERVICE","true");
         System.out.println();
     }
     
@@ -257,13 +258,13 @@ public class TaskElementTest
     @Test
     public void testProcessClientSideManualTask() throws Exception
     {
-	Util.copyTree("test-data/test-manual-task.xml", "capo/server/clients/capo.client.1/tasks/test-manual-task.xml");
+        Util.copyTree("test-data/test-manual-task.xml", "capo/server/clients/capo.client.1/tasks/test-manual-task.xml");
     	System.out.println("===================================================================");
     	externalTestServer = new ExternalTestServer();
     	System.out.println("===================================================================");
     	externalTestServer.startServer("-CAPO_DIR","capo/server");
     	System.out.println("===================================================================");
-    	TestClient.start("-CLIENT_AS_SERVICE","true","-CAPO_DIR","capo/client");
+    	TestClient.start(ApplicationState.RUNNING,"-CLIENT_AS_SERVICE","true","-CAPO_DIR","capo/client");
     	System.out.println();
     }
 

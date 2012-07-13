@@ -4,6 +4,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 
 import org.junit.Test;
 
+import com.delcyon.capo.CapoApplication.ApplicationState;
 import com.delcyon.capo.client.CapoClient;
 import com.delcyon.capo.tests.util.external.Util;
 
@@ -52,6 +53,7 @@ public class ExternalTestServer
 	@SuppressWarnings({ "unchecked" })
 	public  void shutdown() throws Exception
 	{
+	    System.err.println("=====================Calling Server Shutdown========================================");
 		testServerClass.getMethod("shutdown").invoke(null);
 	}
 	
@@ -70,7 +72,7 @@ public class ExternalTestServer
 	    Util.setDefaultPreferences();	    
 		ExternalTestServer externalTestServer = new ExternalTestServer();
 		externalTestServer.startServer();
-		TestClient.start();
+		TestClient.start(ApplicationState.RUNNING);
 		TestClient.shutdown();		
 		//CapoClient.main(new String[]{"-CLIENT_AS_SERVICE","false"});
 //		CapoClient capoClient = new CapoClient();

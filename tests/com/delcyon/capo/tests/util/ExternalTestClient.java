@@ -1,9 +1,11 @@
 package com.delcyon.capo.tests.util;
+import java.lang.reflect.Method;
 import java.net.URLClassLoader;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 import org.junit.Test;
 
+import com.delcyon.capo.CapoApplication.ApplicationState;
 import com.delcyon.capo.tests.util.external.Util;
 
 /**
@@ -42,9 +44,12 @@ public class ExternalTestClient extends ClassLoader
 	
 	
 	@SuppressWarnings({ "unchecked" })
-	public  void startClient(String... args) throws Exception
+	public  void startClient(ApplicationState waitForApplicationState,String... args) throws Exception
 	{
-		testClientClass.getMethod("start",args.getClass()).invoke(null,(Object)args);
+	    
+	    Class enumClass = clientClassLoader.loadClass("com.delcyon.capo.CapoApplication$ApplicationState");
+	    Object object = enumClass.getMethod("valueOf", String.class).invoke(null, waitForApplicationState.toString());
+		testClientClass.getMethod("start",enumClass,args.getClass()).invoke(null,object,(Object)args);
 	}
 	
 	@SuppressWarnings({ "unchecked" })
@@ -65,7 +70,7 @@ public class ExternalTestClient extends ClassLoader
 	    Util.copyTree("test-data/capo", "capo");
 		TestServer.start();
 		ExternalTestClient externalTestClient = new ExternalTestClient();
-		externalTestClient.startClient();
+		externalTestClient.startClient(ApplicationState.RUNNING);
 		
 		//Thread.sleep(10000);
 		externalTestClient.shutdown();

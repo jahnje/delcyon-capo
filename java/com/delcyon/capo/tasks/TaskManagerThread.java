@@ -142,7 +142,8 @@ public class TaskManagerThread extends ContextThread
 	private DocumentBuilder documentBuilder;
 	private ConcurrentHashMap<String,HashMap<String, String>> taskConcurrentHashMap = new ConcurrentHashMap<String, HashMap<String,String>>();
 
-	private boolean interrupted = false;
+	private volatile boolean interrupted = false;
+	private volatile boolean finished = false;
 	private long lastSyncTime;
     private long lastRunTime;
 	
@@ -256,8 +257,31 @@ public class TaskManagerThread extends ContextThread
 			super.interrupt();	
 		}
 		
-		tasksDocumentUpdaterThread.interrupt();
+		CapoServer.logger.log(Level.INFO, "Waiting for  TaskManager to finish");
+		while(this.finished == false)
+		{
+		    
+		    try
+            {
+                Thread.sleep(100);
+            } catch (InterruptedException e)
+            {               
+                e.printStackTrace();
+            }
+		}
 		
+		tasksDocumentUpdaterThread.interrupt();
+		CapoServer.logger.log(Level.INFO, "Waiting for  TaskDocumentUpdater Thread to shutdown");
+		while(tasksDocumentUpdaterThread.finished == false)
+        {		    
+            try
+            {
+                Thread.sleep(100);
+            } catch (InterruptedException e)
+            {               
+                e.printStackTrace();
+            }
+        }
 	}
 	
 	
@@ -271,10 +295,17 @@ public class TaskManagerThread extends ContextThread
 		
 		while(interrupted == false)
 		{
-		    this.lastRunTime = System.currentTimeMillis();
+		   
 			try
 			{
 			    lock.lock();
+			    //if we got asked to stop while waiting for the lock, bail out
+			    if (interrupted == true)
+			    {
+			        break;    
+			    }
+			    //don't update this unless we are actually going to run.
+			    this.lastRunTime = System.currentTimeMillis();
 			    ResourceDescriptor taskDirResourceDescriptor = capoDataManager.getResourceDirectory(Preferences.TASK_DIR.toString());
 			    ResourceDescriptor taskStatusDocumentResourceDescriptor = taskDirResourceDescriptor.getChildResourceDescriptor(null, "task-status.xml");
 			    Document taskStatusDocument = null;
@@ -552,7 +583,7 @@ public class TaskManagerThread extends ContextThread
 			    updateTasksDocument(taskStatusDocumentResourceDescriptor,taskStatusDocument);
 			    
 			    lock.unlock();
-				if (runAsService == true)
+				if (runAsService == true && interrupted == false)
 				{
 
 					try
@@ -607,6 +638,7 @@ public class TaskManagerThread extends ContextThread
 			}
 			
 		}
+		finished = true;
 	}
 	
 
@@ -636,8 +668,8 @@ public class TaskManagerThread extends ContextThread
 	private class TaskManagerDocumentUpdaterThread extends Thread
 	{
 	    private ConcurrentLinkedQueue<DocumentUpdate> documentUpdateQueue = new ConcurrentLinkedQueue<TaskManagerThread.DocumentUpdate>();
-		private boolean interrupted = false;
-		private boolean finished = false;
+		private volatile boolean interrupted = false;
+		private volatile boolean finished = false;
 	    
 		public TaskManagerDocumentUpdaterThread()
 		{
@@ -647,19 +679,16 @@ public class TaskManagerThread extends ContextThread
 		@Override
 		public void interrupt()
 		{
-			this.interrupted  = true;
-			while(finished == false)
-			{
-			    try
-			    {
-				Thread.sleep(100);
-			    } catch (InterruptedException e)
-			    {				
-				e.printStackTrace();
-			    }
-			}
+		    CapoServer.logger.log(Level.INFO, "Interrupting TaskDocumentUpdater Thread");
+		    this.interrupted = true;
+		    synchronized (this)
+            {
+                super.interrupt();
+            }
+		    
+		    
 		}
-		
+
 		@Override
 		public void run()
 		{
@@ -684,21 +713,39 @@ public class TaskManagerThread extends ContextThread
 					    CapoServer.logger.log(Level.FINE, "updating task file");
 					    taskManagerDocument.normalizeDocument();
 					    taskManagerDocument.normalize();
-					    taskManagerDocumentFileDescriptor.open(null); 
-					    OutputStream taskDocumentOutputStream = taskManagerDocumentFileDescriptor.getOutputStream(null);
-					    transformer.setOutputProperty("method", "xml");
-					    transformer.setOutputProperty("indent", "yes");
-					    transformer.transform(new DOMSource(taskManagerDocument), new StreamResult(taskDocumentOutputStream));
+					    taskManagerDocumentFileDescriptor.open(null);
+					    try
+					    {
+					        OutputStream taskDocumentOutputStream = taskManagerDocumentFileDescriptor.getOutputStream(null);
 
-					    taskDocumentOutputStream.close();
+					        transformer.setOutputProperty("method", "xml");
+					        transformer.setOutputProperty("indent", "yes");
+					        transformer.transform(new DOMSource(taskManagerDocument), new StreamResult(taskDocumentOutputStream));
+
+					        taskDocumentOutputStream.close();
+					    } catch (NullPointerException nullPointerException)
+					    {
+					        System.err.println("Ugh!");
+					    }
 					    taskManagerDocumentFileDescriptor.release(null);
 					    
 					    lock.unlock();
 					}
 					
-					if (runAsService == true)
+					if (runAsService == true && interrupted == false)
 					{
-						Thread.sleep(CapoApplication.getConfiguration().getLongValue(Preferences.TASK_INTERVAL)/2l);
+					    try
+					    {
+					        Thread.sleep(CapoApplication.getConfiguration().getLongValue(Preferences.TASK_INTERVAL)/2l);
+					    } 
+					    catch (InterruptedException interruptedException)
+					    {
+					        continue;
+					    }
+					    catch (NullPointerException nullPointerException)
+                        {
+                            System.err.println("ugh2");
+                        }
 					}
 					else
 					{
@@ -1024,6 +1071,11 @@ public class TaskManagerThread extends ContextThread
     public long getLastRunTime()
     {        
         return lastRunTime;
+    }
+
+    public boolean isFinished()
+    {        
+        return finished;
     }
 	
 }

@@ -158,8 +158,8 @@ public class CapoServer extends CapoApplication
 	
 	private ServerSocket serverSocket;
 	private boolean attemptSSL = true;
-	private boolean isReady = false;
-	private boolean isShutdown = false;
+	//private boolean isReady = false;
+	//private boolean isShutdown = false;
 	private ThreadPoolExecutor threadPoolExecutor;
 	private ClientRequestProcessorSessionManager clientRequestProcessorSessionManager;
    
@@ -210,6 +210,7 @@ public class CapoServer extends CapoApplication
 	 */
 	public void init(String[] programArgs) throws SecurityException, Exception
 	{
+	    setApplicationState(ApplicationState.INITIALIZING);
 		setConfiguration(new Configuration(programArgs));
 
 		if (getConfiguration().hasOption(PREFERENCE.HELP))
@@ -253,7 +254,8 @@ public class CapoServer extends CapoApplication
 		
 		runStartupScript(getConfiguration().getValue(PREFERENCE.STARTUP_SCRIPT));
 		
-		this.isReady = true;
+		setApplicationState(ApplicationState.INITIALIZED);
+		
 	}
 
 	
@@ -289,7 +291,12 @@ public class CapoServer extends CapoApplication
 		long maxWaitTime = 30000;
 		long totalWaitTime = 0;
 		logger.log(Level.INFO, "Shuting Down Server");
-		isShutdown = true;
+		while(getApplicationState().order < ApplicationState.RUNNING.order)
+        {
+            logger.log(Level.INFO, "Waiting for final shutdown...");
+            Thread.sleep(incrementalWaitTime);
+        }
+		setApplicationState(ApplicationState.STOPPING);
 		if (serverSocket != null)
 		{
 			logger.log(Level.INFO, "Closing Socket");
@@ -309,7 +316,7 @@ public class CapoServer extends CapoApplication
 				totalWaitTime += incrementalWaitTime;
 				if (totalWaitTime >= maxWaitTime)
 				{
-					logger.log(Level.WARNING, "Forcing thread pool to shutdown... ");
+					logger.log(Level.INFO, "Forcing thread pool to shutdown... ");
 					threadPoolExecutor.shutdownNow();
 				}
 			}
@@ -319,11 +326,11 @@ public class CapoServer extends CapoApplication
 		{
 			logger.log(Level.INFO, "Stopping Task Manager");
 			TaskManagerThread.getTaskManagerThread().interrupt();
-			while(TaskManagerThread.getTaskManagerThread().isAlive())
-			{
-				logger.log(Level.INFO, "Waiting for Task Manager to shutdown...");
+			while(TaskManagerThread.getTaskManagerThread().isFinished() == false)
+			{				
 				sleep(incrementalWaitTime);
-			}			
+			}
+			logger.log(Level.INFO, "Done Waiting for Task Manager to shutdown...");
 		}
 		
 		if (clientRequestProcessorSessionManager != null)
@@ -340,15 +347,12 @@ public class CapoServer extends CapoApplication
 		logger.log(Level.INFO, "Removing Resource Manager");
         setDataManager(null);
 		
-		while(isReady == true)
-		{
-			logger.log(Level.INFO, "Waiting for final shutdown...");
-			Thread.sleep(incrementalWaitTime);
-		}
+		
 		
 		
 		
 		logger.log(Level.INFO, "Server Shutdown");
+		setApplicationState(ApplicationState.STOPPED);
 	}
 	
 	
@@ -361,6 +365,7 @@ public class CapoServer extends CapoApplication
 	 */
 	public void startup(String[] programArgs) throws Exception
 	{
+	    setApplicationState(ApplicationState.STARTING);
 		SynchronousQueue<Runnable> synchronousQueue = new SynchronousQueue<Runnable>();
 		threadPoolGroup = new ThreadGroup("Thread Pool Group");
 		threadPoolExecutor = new ThreadPoolExecutor(getConfiguration().getIntValue(Preferences.START_THREADPOOL_SIZE), getConfiguration().getIntValue(Preferences.MAX_THREADPOOL_SIZE), getConfiguration().getIntValue(Preferences.THREAD_IDLE_TIME), TimeUnit.MILLISECONDS, synchronousQueue);
@@ -383,6 +388,7 @@ public class CapoServer extends CapoApplication
 	@Override
     public void run()
 	{
+	    setApplicationState(ApplicationState.RUNNING);
 	    try
 	    {
 	        while (true)
@@ -395,10 +401,10 @@ public class CapoServer extends CapoApplication
 	                socket = serverSocket.accept();
 	            } catch (SocketException socketException)
 	            {
-	                if (isShutdown == true && serverSocket.isClosed())
+	                if (getApplicationState().order > ApplicationState.RUNNING.order && serverSocket.isClosed())
 	                {
 	                    logger.log(Level.INFO, "Shutting down server");
-	                    isReady = false;
+	                    //isReady = false;
 	                    return;
 	                }
 	            }
@@ -657,12 +663,6 @@ public class CapoServer extends CapoApplication
 			e.printStackTrace();
 		}
 		return false;
-	}
-	
-	@Override
-	public boolean isReady()
-	{
-	    return this.isReady;
 	}
 	
 	@Override

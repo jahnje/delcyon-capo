@@ -21,6 +21,7 @@ import org.junit.Test;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
+import com.delcyon.capo.CapoApplication.ApplicationState;
 import com.delcyon.capo.client.CapoClient;
 import com.delcyon.capo.tests.util.ExternalTestServer;
 import com.delcyon.capo.tests.util.TestCapoApplication;
@@ -78,7 +79,7 @@ public class CertificateRequestProcessorTest
 		testInPipe.connect(testOutPipe);
 		System.setIn(testInPipe);
 		
-		TestClient.start();
+		TestClient.start(ApplicationState.INITIALIZED);
 		
 		long waitTime = 0;
 		while(true)
@@ -171,7 +172,7 @@ public class CertificateRequestProcessorTest
 		testInPipe.connect(testOutPipe);
 		System.setIn(testInPipe);
 		
-		TestClient.start();
+		TestClient.start(ApplicationState.INITIALIZED);
 		
 		long waitTime = 0;
 		while(true)
@@ -238,7 +239,7 @@ public class CertificateRequestProcessorTest
 		ExternalTestServer externalTestServer = new ExternalTestServer();
 		externalTestServer.startServer();
 		
-		TestClient.start("-CLIENT_VERIFICATION_PASSWORD",persistantPassword);
+		TestClient.start(ApplicationState.RUNNING,"-CLIENT_VERIFICATION_PASSWORD",persistantPassword);
         TestClient.shutdown();
 		CopyOnWriteArrayList<Exception> exceptionList = TestClient.getExceptionList();
 		
@@ -278,7 +279,7 @@ public class CertificateRequestProcessorTest
 		ExternalTestServer externalTestServer = new ExternalTestServer();
 		externalTestServer.startServer();
 		
-		TestClient.start("-CLIENT_VERIFICATION_PASSWORD",persistantPassword);
+		TestClient.start(ApplicationState.RUNNING,"-CLIENT_VERIFICATION_PASSWORD",persistantPassword);
 		TestClient.shutdown();
 		
 		

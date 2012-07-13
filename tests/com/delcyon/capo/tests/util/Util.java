@@ -35,7 +35,7 @@ public class Util
     	}
     	if (CapoApplication.getApplication() == null)
     	{
-    	    CapoApplication.setApplication(minmalApplication);
+    	    minmalApplication = new TestCapoApplication();
     	}
     	if (CapoApplication.getConfiguration() == null)
     	{
