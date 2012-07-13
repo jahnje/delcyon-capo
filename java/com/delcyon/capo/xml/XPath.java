@@ -68,6 +68,18 @@ public class XPath
 		return selectSingleNode(node, path, null);
 	}
 	
+	public static boolean evaluate(Node node,String path) throws Exception
+	{
+	    javax.xml.xpath.XPath xPath = xPathFactory.newXPath();
+        NamespaceContextMap namespaceContextMap = new NamespaceContextMap();
+        namespaceContextMap.addNamespace("server", CapoApplication.SERVER_NAMESPACE_URI);
+        namespaceContextMap.addNamespace("client", CapoApplication.CLIENT_NAMESPACE_URI);
+        xPath.setNamespaceContext(namespaceContextMap);
+        //String parsedXpath = processFunctions(path,prefix);
+        XPathExpression xPathExpression = xPath.compile(path);
+        return (Boolean) xPathExpression.evaluate(node,XPathConstants.BOOLEAN);
+	}
+	
 	public static Node selectSingleNode(Node node, String path,String prefix) throws Exception
 	{
 		try 
