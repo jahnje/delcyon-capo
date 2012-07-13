@@ -110,13 +110,22 @@ public class RepeatElement extends AbstractControl
 		NodeList nodeList = XPath.selectNodes(getControlElementDeclaration(), nodeset);
 		for(int index = 0; index < nodeList.getLength(); index++)
 		{
-			Element tempGroupElement = (Element) getControlElementDeclaration().cloneNode(true);
+		    //make a copy of the original Element
+		    Element originalElement = getControlElementDeclaration();
+			Element tempGroupElement = (Element) originalElement.cloneNode(true);
+			
+			//replace the current element with the temp element, this is so out of context xpaths will still work
+			originalElement.getParentNode().replaceChild(tempGroupElement, originalElement);
 			
 			GroupElement groupElement = new GroupElement();			
 			groupElement.init(tempGroupElement, groupElement, getParentGroup(), getControllerClientRequestProcessor());	
 			groupElement.getGroup().set(indexVar, index+"");
 			groupElement.getGroup().set("context", XPath.getXPath(nodeList.item(index)));		
 			groupElement.processServerSideElement();
+			
+			//once we're done, switch them back
+			tempGroupElement.getParentNode().replaceChild(originalElement, tempGroupElement);
+			
 		}
 		return null;
 	}
