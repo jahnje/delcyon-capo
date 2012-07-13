@@ -343,6 +343,7 @@ public class TaskManagerThread extends ContextThread
 					
 					NodeList tasksNodeList = XPath.selectNodes(taskManagerDocument, "//server:task");
 					String taskURI = resourceDescriptor.getLocalName();
+					String resourceMD5 = resourceDescriptor.getContentMetaData(null).getMD5();
 					//if we didn't find anything see if we are referring to a module
 					if (tasksNodeList.getLength() == 0)
 					{
@@ -418,8 +419,9 @@ public class TaskManagerThread extends ContextThread
 	                        //make sure we always know where this task came from so we can cull the file 
                             taskStatusElement.setAttribute(Attributes.taskURI.toString(), taskURI);
 						    taskStatusDocument.getDocumentElement().appendChild(taskStatusElement);
+						    taskConcurrentHashMap.remove(name);
 						}
-						if (taskStatusElement.getAttribute("ACTION").equals("IGNORE"))
+						if (taskStatusElement.getAttribute("ACTION").equals("IGNORE") && taskStatusElement.getAttribute(Attributes.MD5.toString()).equals(resourceMD5))
 						{
 						    continue;
 						}
@@ -505,6 +507,12 @@ public class TaskManagerThread extends ContextThread
 						if (executionInterval == 0l && lastExecutionTime > 0l)
 						{
 						    //this was only to run once
+						    String orpanAction = CapoApplication.getConfiguration().getValue(Preferences.TASK_DEFAULT_ORPHAN_ACTION);
+                            if (taskElement.hasAttribute(Attributes.orpanAction.toString()))
+                            {
+                                orpanAction = taskElement.getAttribute(Attributes.orpanAction.toString());
+                            }
+						    taskStatusElement.setAttribute("ACTION", orpanAction);
 						    resourceDescriptor.release(null);
 						    continue;
 						}
@@ -556,7 +564,7 @@ public class TaskManagerThread extends ContextThread
 								{
 								    //set attribute for the run
 									taskElement.setAttribute(attributeName, variableHashMap.get(attributeName));
-									//set attributes that need to be persisted
+									//set attributes that need to be persisted									
 									taskStatusElement.setAttribute(attributeName, variableHashMap.get(attributeName));
 								}
 							}
@@ -576,7 +584,7 @@ public class TaskManagerThread extends ContextThread
 																					
 						}
 						taskStatusElement.setAttribute(Attributes.lastExecutionTime.toString(), System.currentTimeMillis()+"");
-						taskStatusElement.setAttribute(Attributes.MD5.toString(), resourceDescriptor.getContentMetaData(null).getMD5());
+						taskStatusElement.setAttribute(Attributes.MD5.toString(), resourceMD5);
 					}
 					resourceDescriptor.release(null);
 				}

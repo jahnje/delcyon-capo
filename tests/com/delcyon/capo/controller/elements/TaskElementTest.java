@@ -2,8 +2,9 @@ package com.delcyon.capo.controller.elements;
 
 import static org.junit.Assert.fail;
 
+import java.io.File;
 import java.io.FileInputStream;
-import java.io.IOException;
+import java.io.FileOutputStream;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
@@ -16,7 +17,6 @@ import org.junit.Test;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
-import org.xml.sax.SAXException;
 
 import com.delcyon.capo.CapoApplication;
 import com.delcyon.capo.CapoApplication.ApplicationState;
@@ -74,6 +74,7 @@ public class TaskElementTest
         {
             TestServer.getServerInstance().getConfiguration().setValue(TaskManagerThread.Preferences.TASK_INTERVAL, TaskManagerThread.Preferences.TASK_INTERVAL.getDefaultValue());
             TestServer.getServerInstance().getConfiguration().setValue(TaskManagerThread.Preferences.TASK_DEFAULT_LIFESPAN, TaskManagerThread.Preferences.TASK_DEFAULT_LIFESPAN.getDefaultValue());
+            TestServer.getServerInstance().getConfiguration().setValue(TaskManagerThread.Preferences.DEFAULT_CLIENT_SYNC_INTERVAL, TaskManagerThread.Preferences.DEFAULT_CLIENT_SYNC_INTERVAL.getDefaultValue());
         } 
         catch (Exception e) {
             e.printStackTrace();
@@ -240,7 +241,10 @@ public class TaskElementTest
     	externalTestServer.startServer("-CAPO_DIR","capo/server");
     	System.out.println("===================================================================");
     	TestClient.start(ApplicationState.RUNNING,"-CLIENT_AS_SERVICE","true","-CAPO_DIR","capo/client");
-    	
+    	TestServer.getServerInstance().getConfiguration().setValue(TaskManagerThread.Preferences.TASK_INTERVAL, "2000");
+        TestServer.getServerInstance().getConfiguration().setValue(TaskManagerThread.Preferences.TASK_DEFAULT_LIFESPAN, "1000");
+        TestServer.getServerInstance().getConfiguration().setValue(TaskManagerThread.Preferences.DEFAULT_CLIENT_SYNC_INTERVAL, "1000");
+        
     	TaskManagerThread.getTaskManagerThread().getLock().lock();
     	
     	List<ResourceDescriptor> taskResourceDescriptorList = CapoApplication.getDataManager().findDocuments(CapoApplication.getDataManager().getResourceDirectory(Preferences.TASK_DIR.toString()));
@@ -251,7 +255,7 @@ public class TaskElementTest
         Assert.assertTrue("Didn't find ignoreable test-manual-task",validateXMLContent(taskResourceDescriptorList, "task-status.xml", "exists(//server:task[@name = 'test-manual-task' and @ACTION = 'IGNORE' and exists(@EXCEPTION)])"));
         
         Util.copyTree("test-data/test-manual-task.xml", "capo/server/clients/capo.client.1/tasks/test-manual-task.xml");
-        waitForTaskManagerToRun(2);
+        waitForTaskManagerToRun(1);
         taskResourceDescriptorList = CapoApplication.getDataManager().findDocuments(CapoApplication.getDataManager().getResourceDirectory(Preferences.TASK_DIR.toString()));
         Assert.assertEquals(2,taskResourceDescriptorList.size());
         Assert.assertTrue("Didn't find new synched test-manual-task",validateXMLContent(taskResourceDescriptorList, "test-manual-task.xml", "exists(//server:task/server:export[exists(@dest)])"));
@@ -264,11 +268,26 @@ public class TaskElementTest
         }
     	
         Util.deleteTree("capo/server/clients/capo.client.1/tasks/test-manual-task.xml");
-        waitForTaskManagerToRun(3);
+        waitForTaskManagerToRun(1);
         
         taskResourceDescriptorList = CapoApplication.getDataManager().findDocuments(CapoApplication.getDataManager().getResourceDirectory(Preferences.TASK_DIR.toString()));
         Assert.assertEquals(1,taskResourceDescriptorList.size());
         
+        Util.copyTree("test-data/test-manual-task-single-run.xml", "capo/server/clients/capo.client.1/tasks/test-manual-task.xml");
+        waitForTaskManagerToRun(1);
+        taskResourceDescriptorList = CapoApplication.getDataManager().findDocuments(CapoApplication.getDataManager().getResourceDirectory(Preferences.TASK_DIR.toString()));
+        Assert.assertEquals(2,taskResourceDescriptorList.size());
+        waitForTaskManagerToRun(2);
+        Assert.assertTrue("Didn't find ignoreable run test-manual-task",validateXMLContent(taskResourceDescriptorList, "task-status.xml", "exists(//server:task[@name = 'test-manual-task' and @ACTION = 'IGNORE' and not(exists(@EXCEPTION)) and exists(@lastExecutionTime)])"));        
+        
+        File manualTaskFile = new File("capo/server/clients/capo.client.1/tasks/test-manual-task.xml");
+        Document manualTaskDocument = CapoApplication.getDocumentBuilder().parse(manualTaskFile);
+        ((Element)XPath.selectSingleNode(manualTaskDocument, "//server:task")).setAttribute("orpanAction", "DELETE");
+        XPath.dumpNode(manualTaskDocument, new FileOutputStream(manualTaskFile));
+        waitForTaskManagerToRun(3);
+        taskResourceDescriptorList = CapoApplication.getDataManager().findDocuments(CapoApplication.getDataManager().getResourceDirectory(Preferences.TASK_DIR.toString()));
+        Assert.assertEquals(1,taskResourceDescriptorList.size());
+        System.out.println();
     }
 
     private boolean validateXMLContent(List<ResourceDescriptor> resourceDescriptorList,String documentName,String xpath) throws Exception

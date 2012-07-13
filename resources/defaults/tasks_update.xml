@@ -5,13 +5,15 @@
     <!-- load our newly synced task status file -->
     <server:import src="clients:${clientID}/tasks/task-status.xml" name="task_status"/>            
     
+    
+    
     <!-- remove any task from the status if the status md5, and file md5 don't match-->
     <server:repeat name="sync_repeat" nodeset="${import.task_status}/server:tasks/server:task">        
         <server:var name="taskURI" eval="${context}/@taskURI"/>        
         <server:resourceMetaData name="taskMetaData" resource="clients:${clientID}/tasks/${taskURI}" useRelativePaths="true" attributes="MD5" requiredAttributes="MD5"/>                
         <server:when test=".[${resourceMetaData.taskMetaData}/@MD5 != ${context}/@MD5]">
             <server:log message="updating status for ${taskURI}"/>
-            <server:remove ref="${context}"/>    
+            <server:remove ref="${context}"/>            
         </server:when>        
     </server:repeat>
     
