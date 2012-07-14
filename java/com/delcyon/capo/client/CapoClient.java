@@ -64,8 +64,8 @@ import com.delcyon.capo.protocol.client.CapoConnection;
 import com.delcyon.capo.protocol.client.Request;
 import com.delcyon.capo.resourcemanager.CapoDataManager;
 import com.delcyon.capo.resourcemanager.ResourceDescriptor;
-import com.delcyon.capo.resourcemanager.ResourceDescriptor.Action;
 import com.delcyon.capo.resourcemanager.ResourceParameter;
+import com.delcyon.capo.resourcemanager.ResourceDescriptor.Action;
 import com.delcyon.capo.resourcemanager.types.FileResourceType;
 import com.delcyon.capo.tasks.TaskManagerThread;
 import com.delcyon.capo.xml.XPath;
@@ -594,7 +594,7 @@ public class CapoClient extends CapoApplication
 			long totalWaitTime = 0;
 			long waitTime = 500;
 			
-			while(TaskManagerThread.getTaskManagerThread().isFinished() == false || totalWaitTime >= MAX_SHUTDOWN_WAIT_TIME)
+			while(TaskManagerThread.getTaskManagerThread().getTaskManagerState() != ApplicationState.STOPPED || totalWaitTime >= MAX_SHUTDOWN_WAIT_TIME)
 			{
 			    try
 			    {			        			        

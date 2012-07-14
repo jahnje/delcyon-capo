@@ -16,11 +16,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 package com.delcyon.capo.tasks;
 
-import java.io.OutputStream;
 import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.logging.Level;
 
@@ -30,7 +28,6 @@ import javax.xml.transform.OutputKeys;
 import javax.xml.transform.Transformer;
 import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
-import javax.xml.transform.stream.StreamResult;
 
 import org.tanukisoftware.wrapper.WrapperManager;
 import org.w3c.dom.Document;
@@ -41,8 +38,9 @@ import org.w3c.dom.NodeList;
 import org.xml.sax.SAXParseException;
 
 import com.delcyon.capo.CapoApplication;
-import com.delcyon.capo.CapoApplication.Location;
 import com.delcyon.capo.ContextThread;
+import com.delcyon.capo.CapoApplication.ApplicationState;
+import com.delcyon.capo.CapoApplication.Location;
 import com.delcyon.capo.annotations.DefaultDocumentProvider;
 import com.delcyon.capo.annotations.DirectoyProvider;
 import com.delcyon.capo.client.CapoClient;
@@ -142,10 +140,11 @@ public class TaskManagerThread extends ContextThread
 	private DocumentBuilder documentBuilder;
 	private ConcurrentHashMap<String,HashMap<String, String>> taskConcurrentHashMap = new ConcurrentHashMap<String, HashMap<String,String>>();
 
-	private volatile boolean interrupted = false;
-	private volatile boolean finished = false;
-	private long lastSyncTime;
-    private long lastRunTime;
+	//private volatile boolean interrupted = false;
+	//private volatile boolean finished = false;
+	private volatile ApplicationState taskManagerState = ApplicationState.NONE;
+	private long lastSyncTime = 0l;
+    private long lastRunTime = 0l;
 	
 
 	/**
@@ -207,7 +206,7 @@ public class TaskManagerThread extends ContextThread
 	 */
 	private TaskManagerThread(boolean runAsService) throws Exception
 	{
-		super(TaskManagerThread.class.getName());
+		super(TaskManagerThread.class.getName()+" - "+CapoApplication.getApplication().getApplicationDirectoryName().toUpperCase());
 		this.capoDataManager = CapoApplication.getDataManager();
 		this.runAsService = runAsService;
 		
@@ -236,7 +235,7 @@ public class TaskManagerThread extends ContextThread
 //		}
 		
 		//go ahead and start things up
-		tasksDocumentUpdaterThread = new TaskManagerDocumentUpdaterThread();
+		tasksDocumentUpdaterThread = new TaskManagerDocumentUpdaterThread(lock,runAsService);
 		if (runAsService == true) // TODO in theory if this is false, you can do a single pass of monitors, then it will exit, and not update anything
 		{
 			tasksDocumentUpdaterThread.start();
@@ -251,16 +250,20 @@ public class TaskManagerThread extends ContextThread
 	
 	public void interrupt()
 	{
-		this.interrupted  = true;
+		
 		synchronized (this)
 		{
+			//only set us to stopping if we're running or something earlier, this can happen when we don't run the client as a service
+			if (this.taskManagerState.order < ApplicationState.STOPPING.order)
+			{
+				this.taskManagerState = ApplicationState.STOPPING;
+			}
 			super.interrupt();	
 		}
 		
 		CapoServer.logger.log(Level.INFO, "Waiting for  TaskManager to finish");
-		while(this.finished == false)
-		{
-		    
+		while(this.taskManagerState != ApplicationState.STOPPED)
+		{			
 		    try
             {
                 Thread.sleep(100);
@@ -272,7 +275,7 @@ public class TaskManagerThread extends ContextThread
 		
 		tasksDocumentUpdaterThread.interrupt();
 		CapoServer.logger.log(Level.INFO, "Waiting for  TaskDocumentUpdater Thread to shutdown");
-		while(tasksDocumentUpdaterThread.finished == false)
+		while(tasksDocumentUpdaterThread.getUpdaterState() != ApplicationState.STOPPED)
         {		    
             try
             {
@@ -290,22 +293,56 @@ public class TaskManagerThread extends ContextThread
 	@Override
 	public void run()
 	{
-		//setup initial lastSyncTime for default client syncing
-		this.lastSyncTime = System.currentTimeMillis();
-		
-		while(interrupted == false)
+		taskManagerState = ApplicationState.RUNNING;
+		while(taskManagerState.order < ApplicationState.STOPPING.order)
 		{
-		   
 			try
 			{
+				//Lock everything down until we finish running
 			    lock.lock();
 			    //if we got asked to stop while waiting for the lock, bail out
-			    if (interrupted == true)
+			    if (taskManagerState.order >= ApplicationState.STOPPING.order)
 			    {
 			        break;    
 			    }
 			    //don't update this unless we are actually going to run.
 			    this.lastRunTime = System.currentTimeMillis();
+			    
+			    //===============================================BEGIN CLIENT SYNC===============================================================
+			    //check to see if we need to check in with the server
+			    if (lastSyncTime == 0) //skip initial sync since we can't get here without it happening first
+			    {
+			    	lastSyncTime = System.currentTimeMillis();			
+			    }
+			    else if (runAsService == true && CapoApplication.isServer() == false)
+			    {
+			    	//see if it's time to run the client sync
+			    	if (System.currentTimeMillis() - lastSyncTime > CapoApplication.getConfiguration().getLongValue(Preferences.DEFAULT_CLIENT_SYNC_INTERVAL))
+			    	{
+			    		//run the standard update and identity scripts. This is not configurable, because we want to make sure that the client always checks and for the basics.
+			    		HashMap<String, String> sessionHashMap = new HashMap<String, String>();
+			    		CapoConnection capoConnection = new CapoConnection();
+			    		((CapoClient)CapoApplication.getApplication()).runUpdateRequest(capoConnection, sessionHashMap);
+			    		capoConnection.close();
+			    		if (WrapperManager.isShuttingDown()) //bail out of thread and client sync if we're restarting
+			    		{
+			    			break;
+			    		}
+			    		capoConnection = new CapoConnection();
+			    		((CapoClient)CapoApplication.getApplication()).runIdentityRequest(capoConnection, sessionHashMap);
+			    		capoConnection.close();
+			    		capoConnection = new CapoConnection();
+			    		((CapoClient)CapoApplication.getApplication()).runTasksUpdateRequest(capoConnection, sessionHashMap);
+			    		capoConnection.close();
+			    		capoConnection = new CapoConnection();
+			    		((CapoClient)CapoApplication.getApplication()).runDefaultRequest(capoConnection, sessionHashMap);
+			    		capoConnection.close();
+			    		lastSyncTime = System.currentTimeMillis();
+			    	}
+			    }					
+			    //===============================================END CLIENT SYNC===============================================================
+			    
+			    //===============================================BEGIN OVERALL TASK RUN===============================================================
 			    ResourceDescriptor taskDirResourceDescriptor = capoDataManager.getResourceDirectory(Preferences.TASK_DIR.toString());
 			    ResourceDescriptor taskStatusDocumentResourceDescriptor = taskDirResourceDescriptor.getChildResourceDescriptor(null, "task-status.xml");
 			    Document taskStatusDocument = null;
@@ -325,7 +362,7 @@ public class TaskManagerThread extends ContextThread
                     if (resourceDescriptor.getLocalName().equals("task-status.xml"))
                     {
                         resourceDescriptor.release(null);
-                        continue;
+                        continue; //loop to next file
                     }
                     
                     Document taskManagerDocument = null;
@@ -337,54 +374,21 @@ public class TaskManagerThread extends ContextThread
                     {
                         CapoApplication.logger.log(Level.WARNING, "Skipping unparsable task '"+resourceDescriptor.getLocalName()+"'");                      
                         resourceDescriptor.release(null);
-                        continue;
+                        continue; //loop to next file
                     }
 
 					
 					NodeList tasksNodeList = XPath.selectNodes(taskManagerDocument, "//server:task");
 					String taskURI = resourceDescriptor.getLocalName();
 					String resourceMD5 = resourceDescriptor.getContentMetaData(null).getMD5();
+					
 					//if we didn't find anything see if we are referring to a module
 					if (tasksNodeList.getLength() == 0)
 					{
-					    Element moduleElement = ModuleProvider.getModuleElement(taskManagerDocument.getDocumentElement().getLocalName());
-					    if (moduleElement != null && moduleElement.getLocalName().equals("task"))
-					    {
-					      //verify name attribute on module element
-		                    if (moduleElement.hasAttribute("name") == false)
-		                    {
-		                        moduleElement.setAttribute("name", taskManagerDocument.getDocumentElement().getLocalName());
-		                    }
-		                    
-		                    //copy over attributes from mod declaration to task element
-		                    NamedNodeMap attributeNodeMap = taskManagerDocument.getDocumentElement().getAttributes();
-	                        for(int index = 0; index < attributeNodeMap.getLength(); index++)
-	                        {
-	                            moduleElement.setAttribute(attributeNodeMap.item(index).getLocalName(), attributeNodeMap.item(index).getNodeValue());
-	                        }
-		                    
-	                        //copy over child elements to first element of temp task
-	                        NodeList childNodes = taskManagerDocument.getDocumentElement().getChildNodes();
-	                        boolean isFirstChild = true;
-	                        Element moduleDataElement = moduleElement.getOwnerDocument().createElement("server:moduleData");
-	                        moduleDataElement.setAttribute("DoNotProcess", "true");
-	                        for(int index = 0; index < childNodes.getLength(); index++)
-	                        {
-	                            Node childNode = childNodes.item(index);
-	                            if (childNode instanceof Element)
-	                            {
-	                                if (isFirstChild)
-	                                {
-	                                    moduleElement.appendChild(moduleDataElement);
-	                                }
-	                                moduleDataElement.appendChild(moduleElement.getOwnerDocument().importNode(childNode, true));
-	                            }
-	                        }
-	                        //reselect to make a new list with one item
-	                        tasksNodeList = XPath.selectNodes(moduleDataElement, "//server:task");    
-					    }
-					    
+					    tasksNodeList = loadModule(tasksNodeList,taskManagerDocument);					    
 					}
+					
+					 //===============================================BEGIN INDIVIDUAL TASK RUN===============================================================
 					for (int monitorInfoIndex = 0; monitorInfoIndex < tasksNodeList.getLength(); monitorInfoIndex++)
 					{
 						//for each resource monitor get the resource that it is monitoring
@@ -406,12 +410,12 @@ public class TaskManagerThread extends ContextThread
 						    {
 						        CapoApplication.logger.log(Level.WARNING, "Skipping task in '"+resourceDescriptor.getLocalName()+"' due to missing name attribute");
 						        resourceDescriptor.release(null);
-						        continue;
+						        continue; //loop to next task
 						    }
 						}
 						//find the corresponding task in the status document.
 						Element taskStatusElement = (Element) XPath.selectSingleNode(taskStatusDocument, "//server:task[@name = '"+name+"']");
-						
+						//init new task status element for unknown task
 						if (taskStatusElement == null)
 						{
 						    taskStatusElement = taskStatusDocument.createElement("server:task");
@@ -419,12 +423,15 @@ public class TaskManagerThread extends ContextThread
 	                        //make sure we always know where this task came from so we can cull the file 
                             taskStatusElement.setAttribute(Attributes.taskURI.toString(), taskURI);
 						    taskStatusDocument.getDocumentElement().appendChild(taskStatusElement);
+						    //clear out the persisted values since this is a new or replaced task
 						    taskConcurrentHashMap.remove(name);
 						}
+						
 						if (taskStatusElement.getAttribute("ACTION").equals("IGNORE") && taskStatusElement.getAttribute(Attributes.MD5.toString()).equals(resourceMD5))
 						{
-						    continue;
+						    continue; //loop to next task
 						}
+						
 						//walk our persisted attributes and stick them back in the task element
                         NamedNodeMap namedNodeMap = taskStatusElement.getAttributes();
                         for(int index = 0; index < namedNodeMap.getLength(); index++)
@@ -433,6 +440,7 @@ public class TaskManagerThread extends ContextThread
                             taskElement.setAttribute(attributeName,taskStatusElement.getAttribute(attributeName));                            
                         }
 						
+                        //===============================================BEGIN LIFECYCLE VAR INITIALIZATION===============================================================
 						String lastExecutionTimeValue = taskElement.getAttribute(Attributes.lastExecutionTime.toString());
 						String lastAccessTimeValue = taskElement.getAttribute(Attributes.lastAccessTime.toString());
 						
@@ -470,8 +478,10 @@ public class TaskManagerThread extends ContextThread
 						if (lastExecutionTimeValue.matches("\\d+"))
 						{
 						    lastExecutionTime = Long.parseLong(lastExecutionTimeValue);						    
-						}
+						}						
+						//===============================================END LIFECYCLE VAR INITIALIZATION===============================================================
 						
+						//===============================================BEGIN ORPHAN CHECK===============================================================
 						//check to see if task is orphaned
                         if (System.currentTimeMillis() > (lastAccessTime + lifeSpan))
                         {
@@ -501,9 +511,11 @@ public class TaskManagerThread extends ContextThread
                                 CapoApplication.logger.warning("task '"+taskElement.getAttribute(Attributes.name.toString())+"' appears to be orphaned, ignoreing. lastAccessTime = "+lastAccessTime);    
                             }
                             resourceDescriptor.release(null);
-                            continue;
+                            continue; //loop to next task
                         }
-						
+                        //===============================================END ORPHAN CHECK===============================================================
+                        
+                        //check for single run task
 						if (executionInterval == 0l && lastExecutionTime > 0l)
 						{
 						    //this was only to run once
@@ -514,47 +526,31 @@ public class TaskManagerThread extends ContextThread
                             }
 						    taskStatusElement.setAttribute("ACTION", orpanAction);
 						    resourceDescriptor.release(null);
-						    continue;
+						    continue; //loop to next task
 						}
 						
 						
-						
+						//check to see if it's time for this task to run
 						if (System.currentTimeMillis() < lastExecutionTime + executionInterval)
 						{
-						  //not time to run yet.
-						    resourceDescriptor.release(null);
-                            continue;
+							//not time to run yet.
+							resourceDescriptor.release(null);
+							continue;
 						}
 						
 						
 						
-						///System.err.println("processing "+resourceMonitorElement.getLocalName());
+						//===============================================BEGIN PROCESSING OF TASK===============================================================
 						//Tasks get run locally 
 						LocalRequestProcessor localRequestProcessor = new LocalRequestProcessor();
+						HashMap<String, String> variableHashMap = null; //place to store memory persisted values from repeated task runs
 						
 						//see if this is a task we've never heard of
-						if (taskConcurrentHashMap.containsKey(taskElement.getAttribute(Attributes.name.toString())) == false)
-						{
-						    	try
-						    	{
-						    	    GroupElement processedGroupElement = localRequestProcessor.process(taskElement,null);
-						    	    processedGroupElement.getGroup();
-						    	    //after running save any variables for the next run
-						    	    taskConcurrentHashMap.put(taskElement.getAttribute(Attributes.name.toString()), processedGroupElement.getGroup().getVariableHashMap());
-						    	} 
-						    	catch (Exception exception)
-						    	{
-						    	    taskStatusElement.setAttribute("ACTION", "IGNORE");
-						    	    taskStatusElement.setAttribute("EXCEPTION", exception.getMessage());						    	    
-						    	}
-							
-							
-						}
-						else
+						if (taskConcurrentHashMap.containsKey(taskElement.getAttribute(Attributes.name.toString())) == true)
 						{
 							//We've run this one before, so get any memory persisted variables from the previous run
-							HashMap<String, String> variableHashMap = taskConcurrentHashMap.get(taskElement.getAttribute(Attributes.name.toString()));
-							
+							variableHashMap = taskConcurrentHashMap.get(taskElement.getAttribute(Attributes.name.toString()));
+
 							//walk our previous variables and stick them back in the task document
 							namedNodeMap = taskElement.getAttributes();
 							for(int index = 0; index < namedNodeMap.getLength(); index++)
@@ -562,207 +558,119 @@ public class TaskManagerThread extends ContextThread
 								String attributeName = namedNodeMap.item(index).getLocalName();
 								if (variableHashMap.containsKey(attributeName))
 								{
-								    //set attribute for the run
+									//set attribute for the run
 									taskElement.setAttribute(attributeName, variableHashMap.get(attributeName));
 									//set attributes that need to be persisted									
 									taskStatusElement.setAttribute(attributeName, variableHashMap.get(attributeName));
 								}
 							}
-							
-							//now run the task document
-							try
-							{
-							    GroupElement processedGroupElement = localRequestProcessor.process(taskElement,variableHashMap);
-							    processedGroupElement.getGroup();
-							    taskConcurrentHashMap.put(taskElement.getAttribute(Attributes.name.toString()), processedGroupElement.getGroup().getVariableHashMap());
-							} 
-						    	catch (Exception exception)
-						    	{
-						    	    taskStatusElement.setAttribute("ACTION", "IGNORE");
-						    	    taskStatusElement.setAttribute("EXCEPTION", exception.getMessage());						    	    
-						    	}
-																					
 						}
+						
+						//RUN TASK
+						try
+				    	{
+				    	    GroupElement processedGroupElement = localRequestProcessor.process(taskElement,variableHashMap);
+				    	    processedGroupElement.getGroup();
+				    	    //after running save any variables for the next run
+				    	    taskConcurrentHashMap.put(taskElement.getAttribute(Attributes.name.toString()), processedGroupElement.getGroup().getVariableHashMap());
+				    	} 
+				    	catch (Exception exception)
+				    	{
+				    	    taskStatusElement.setAttribute("ACTION", "IGNORE");
+				    	    taskStatusElement.setAttribute("EXCEPTION", exception.getMessage());						    	    
+				    	}
+				    	
+				    	//update task status
 						taskStatusElement.setAttribute(Attributes.lastExecutionTime.toString(), System.currentTimeMillis()+"");
 						taskStatusElement.setAttribute(Attributes.MD5.toString(), resourceMD5);
-					}
+					} //===============================================END INDIVIDUAL TASK RUN===============================================================
+					
+					//cleanup file resource descriptor
 					resourceDescriptor.release(null);
-				}
-			    updateTasksDocument(taskStatusDocumentResourceDescriptor,taskStatusDocument);
+					
+				}//===============================================END OVERALL TASKS RUN===============================================================
 			    
-			    lock.unlock();
-				if (runAsService == true && interrupted == false)
-				{
-
-					try
-					{
-						//sleep for a while, then do it all over again
-						Thread.sleep(CapoApplication.getConfiguration().getLongValue(Preferences.TASK_INTERVAL));
-						
-						if (CapoApplication.isServer() == false)
-						{
-							//check to see if we need to check in with the server
-							long defaultClientSyncInterval = CapoApplication.getConfiguration().getLongValue(Preferences.DEFAULT_CLIENT_SYNC_INTERVAL);
-							if (System.currentTimeMillis() - lastSyncTime > defaultClientSyncInterval)
-							{
-								//run the standard update and identity scripts. This is not configurable, because we want to make sure that the client always checks and for the basics.
-								HashMap<String, String> sessionHashMap = new HashMap<String, String>();
-								CapoConnection capoConnection = new CapoConnection();
-								((CapoClient)CapoApplication.getApplication()).runUpdateRequest(capoConnection, sessionHashMap);
-								capoConnection.close();
-								if (WrapperManager.isShuttingDown()) //bail out if we're restarting
-								{
-								    break;
-								}
-								capoConnection = new CapoConnection();
-								((CapoClient)CapoApplication.getApplication()).runIdentityRequest(capoConnection, sessionHashMap);
-								capoConnection.close();
-								capoConnection = new CapoConnection();
-                                ((CapoClient)CapoApplication.getApplication()).runTasksUpdateRequest(capoConnection, sessionHashMap);
-                                capoConnection.close();
-								capoConnection = new CapoConnection();
-								((CapoClient)CapoApplication.getApplication()).runDefaultRequest(capoConnection, sessionHashMap);
-								capoConnection.close();
-								lastSyncTime = System.currentTimeMillis();
-							}
-						}
-					} catch (InterruptedException interruptedException) {} //someone asked us to stop sleeping, not an error
-				}
-				else //this is not a service, so exit the thread.
-				{
-					break; 
-				}
-			} 
-			catch (Exception e)
+			    //after running it's time to store all of the status information
+			    updateTasksDocument(taskStatusDocumentResourceDescriptor,taskStatusDocument);
+				
+			} //END MAIN TRY BLOCK
+			catch (Exception exception)
 			{
-				CapoServer.logger.log(Level.WARNING, "error processing task document",e);
+				CapoServer.logger.log(Level.WARNING, "error processing tasks",exception);
 			}
 			finally //make sure we always unlock things if we're bailing out
 			{
 			    while(lock.isHeldByCurrentThread())
 			    {
-			        lock.unlock();
+			        lock.unlock(); //unlock everything since we;re now done and about to sleep or finish
 			    }
 			}
 			
-		}
-		finished = true;
-	}
-	
-
-	//DONE
-	private class DocumentUpdate
-	{
-	    private Document document;
-        private ResourceDescriptor documentResourceDescriptor;
-        public DocumentUpdate(ResourceDescriptor documentResourceDescriptor, Document document)
-        {
-            this.documentResourceDescriptor = documentResourceDescriptor;
-            this.document = document;
-        }
-        
-        public Document getDocument()
-        {
-            return document;
-        }
-        
-        public ResourceDescriptor getDocumentResourceDescriptor()
-        {
-            return documentResourceDescriptor;
-        }
-	}
-
-	//DONE
-	private class TaskManagerDocumentUpdaterThread extends Thread
-	{
-	    private ConcurrentLinkedQueue<DocumentUpdate> documentUpdateQueue = new ConcurrentLinkedQueue<TaskManagerThread.DocumentUpdate>();
-		private volatile boolean interrupted = false;
-		private volatile boolean finished = false;
-	    
-		public TaskManagerDocumentUpdaterThread()
-		{
-			super("TaskDocumentUpdater");
-		}
-		
-		@Override
-		public void interrupt()
-		{
-		    CapoServer.logger.log(Level.INFO, "Interrupting TaskDocumentUpdater Thread");
-		    this.interrupted = true;
-		    synchronized (this)
-            {
-                super.interrupt();
-            }
-		    
-		    
-		}
-
-		@Override
-		public void run()
-		{
-			while(interrupted == false || documentUpdateQueue.isEmpty() == false)
+			//check to see if we need to sleep then loop because we're a service, or bail out because we've been interrupted.
+			if (runAsService == true && taskManagerState.order < ApplicationState.STOPPING.order)
 			{
 				try
 				{
-				   
-					while (documentUpdateQueue.isEmpty() == false)
-					{
-					    lock.lock();
-
-
-
-					    DocumentUpdate documentUpdate = documentUpdateQueue.poll();
-					    if (documentUpdate == null)
-					    {
-					        continue;
-					    }
-					    Document taskManagerDocument = documentUpdate.getDocument();
-					    ResourceDescriptor taskManagerDocumentFileDescriptor = documentUpdate.getDocumentResourceDescriptor();
-					    CapoServer.logger.log(Level.FINE, "updating task file");
-					    taskManagerDocument.normalizeDocument();
-					    taskManagerDocument.normalize();
-					    taskManagerDocumentFileDescriptor.open(null);
-
-					    OutputStream taskDocumentOutputStream = taskManagerDocumentFileDescriptor.getOutputStream(null);
-
-					    transformer.setOutputProperty("method", "xml");
-					    transformer.setOutputProperty("indent", "yes");
-					    transformer.transform(new DOMSource(taskManagerDocument), new StreamResult(taskDocumentOutputStream));
-
-					    taskDocumentOutputStream.close();
-					    taskManagerDocumentFileDescriptor.release(null);
-
-					    lock.unlock();
-					}
-					
-					if (runAsService == true && interrupted == false)
-					{
-					    try
-					    {
-					        Thread.sleep(CapoApplication.getConfiguration().getLongValue(Preferences.TASK_INTERVAL)/2l);
-					    } 
-					    catch (InterruptedException interruptedException)
-					    {
-					        continue;
-					    }					    
-					}
-					else
-					{
-						break;
-					}
-				} catch (Exception e)
-				{				
-					e.printStackTrace();
-				}
+					//sleep for a while, then do it all over again
+					Thread.sleep(CapoApplication.getConfiguration().getLongValue(Preferences.TASK_INTERVAL));					
+				} 
+				catch (InterruptedException interruptedException) 
+				{
+					//someone asked us to stop sleeping, not an error
+				} 
 			}
-			finished = true;
+			else //this is not a service or we were inturrupted, so exit the thread.
+			{
+				break; 
+			}
+			
 		}
-        public void add(ResourceDescriptor resourceDescriptor, Document taskDocument)
-        {
-            documentUpdateQueue.add(new DocumentUpdate(resourceDescriptor, taskDocument));
-            
-        }
+		this.taskManagerState = ApplicationState.STOPPED;
 	}
+	
+	private NodeList loadModule(NodeList tasksNodeList, Document taskManagerDocument) throws Exception
+	{
+		Element moduleElement = ModuleProvider.getModuleElement(taskManagerDocument.getDocumentElement().getLocalName());
+	    if (moduleElement != null && moduleElement.getLocalName().equals("task"))
+	    {
+	      //verify name attribute on module element
+            if (moduleElement.hasAttribute("name") == false)
+            {
+                moduleElement.setAttribute("name", taskManagerDocument.getDocumentElement().getLocalName());
+            }
+            
+            //copy over attributes from mod declaration to task element
+            NamedNodeMap attributeNodeMap = taskManagerDocument.getDocumentElement().getAttributes();
+            for(int index = 0; index < attributeNodeMap.getLength(); index++)
+            {
+                moduleElement.setAttribute(attributeNodeMap.item(index).getLocalName(), attributeNodeMap.item(index).getNodeValue());
+            }
+            
+            //copy over child elements to first element of temp task
+            NodeList childNodes = taskManagerDocument.getDocumentElement().getChildNodes();
+            boolean isFirstChild = true;
+            Element moduleDataElement = moduleElement.getOwnerDocument().createElement("server:moduleData");
+            moduleDataElement.setAttribute("DoNotProcess", "true");
+            for(int index = 0; index < childNodes.getLength(); index++)
+            {
+                Node childNode = childNodes.item(index);
+                if (childNode instanceof Element)
+                {
+                    if (isFirstChild)
+                    {
+                        moduleElement.appendChild(moduleDataElement);
+                    }
+                    moduleDataElement.appendChild(moduleElement.getOwnerDocument().importNode(childNode, true));
+                }
+            }
+            //reselect to make a new list with one item
+            tasksNodeList = XPath.selectNodes(moduleDataElement, "//server:task");    
+	    }
+	    return tasksNodeList;
+	}
+	
+	
+	
 	
 	//DONE
 	private void updateTasksDocument(ResourceDescriptor resourceDescriptor, Document taskDocument) throws Exception
@@ -1072,9 +980,9 @@ public class TaskManagerThread extends ContextThread
         return lastRunTime;
     }
 
-    public boolean isFinished()
-    {        
-        return finished;
+    public ApplicationState getTaskManagerState()
+    {
+    	return taskManagerState;
     }
 	
 }

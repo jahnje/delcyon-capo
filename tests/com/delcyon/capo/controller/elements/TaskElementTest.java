@@ -129,10 +129,12 @@ public class TaskElementTest
     @Test
     public void testProcessServerSideElement() throws Exception
     {
-        TestServer.start();        
+        TestServer.start();
+        TestServer.getServerInstance().getConfiguration().setValue(TaskManagerThread.Preferences.TASK_INTERVAL, "2000");
+        TestServer.getServerInstance().getConfiguration().setValue(TaskManagerThread.Preferences.TASK_DEFAULT_LIFESPAN, "6000");        
+        TestServer.getServerInstance().getConfiguration().setValue(TaskManagerThread.Preferences.DEFAULT_CLIENT_SYNC_INTERVAL, "1000");
         TaskManagerThread.getTaskManagerThread().getLock().lock();
-        externalTestClient = new ExternalTestClient();
-        externalTestClient.startClient(ApplicationState.RUNNING);    
+        waitForTaskManagerToRun(2); //run this twice so that we pick up the new hnages before starting
         
         TaskElement taskElementControl = new TaskElement();
         
@@ -144,7 +146,9 @@ public class TaskElementTest
         taskElementControl.init(taskElement, null, group, new ServerControllerResponse());
         taskElementControl.processServerSideElement();
         
-        waitForTaskManagerToRun(2);
+        waitForTaskManagerToRun(2); //this has to run twice so that the task doc updater has a chance to run. 
+        
+        
         
         System.out.println();
         List<ResourceDescriptor> taskResourceDescriptorList = CapoApplication.getDataManager().findDocuments(CapoApplication.getDataManager().getResourceDirectory(Preferences.TASK_DIR.toString()));
@@ -174,11 +178,9 @@ public class TaskElementTest
                 fail("Unknown task file:"+resourceDescriptor.getLocalName());
             }
         }
-        TestServer.getServerInstance().getConfiguration().setValue(TaskManagerThread.Preferences.TASK_INTERVAL, "2000");
-        TestServer.getServerInstance().getConfiguration().setValue(TaskManagerThread.Preferences.TASK_DEFAULT_LIFESPAN, "1000");        
+       
         
-        
-        waitForTaskManagerToRun(5);
+        waitForTaskManagerToRun(3); //run this long enough for it to be orphaned, and a re-sync to happen
         System.out.println();
         taskResourceDescriptorList = CapoApplication.getDataManager().findDocuments(CapoApplication.getDataManager().getResourceDirectory(Preferences.TASK_DIR.toString()));
         Assert.assertEquals(1,taskResourceDescriptorList.size());

@@ -326,7 +326,7 @@ public class CapoServer extends CapoApplication
 		{
 			logger.log(Level.INFO, "Stopping Task Manager");
 			TaskManagerThread.getTaskManagerThread().interrupt();
-			while(TaskManagerThread.getTaskManagerThread().isFinished() == false)
+			while(TaskManagerThread.getTaskManagerThread().getTaskManagerState() != ApplicationState.STOPPED)
 			{				
 				sleep(incrementalWaitTime);
 			}

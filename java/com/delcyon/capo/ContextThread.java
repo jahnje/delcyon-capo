@@ -39,7 +39,7 @@ public class ContextThread extends Thread
 	
 	public ContextThread(ThreadGroup threadGroup, Runnable runnable)
 	{
-		super(threadGroup, runnable, "ContextThread");		  
+		super(threadGroup, runnable, "ContextThread - "+CapoApplication.getApplication().getApplicationDirectoryName().toUpperCase());		  
 		this.interruptibleRunnable = null;
 	}
 
