@@ -214,14 +214,46 @@ public class TaskElementTest
      */
     @Test
     public void testProcessClientSideScriptedTask() throws Exception
-    {
-	System.out.println("===================================================================");
+    { //test-dynamic-client-task.xml
+    	
+		System.out.println("===================================================================");
         externalTestServer = new ExternalTestServer();
         System.out.println("===================================================================");
         externalTestServer.startServer();
         System.out.println("===================================================================");
         TestClient.start(ApplicationState.RUNNING,"-CLIENT_AS_SERVICE","true");
+        TestClient.getClientInstance().getConfiguration().setValue(TaskManagerThread.Preferences.TASK_INTERVAL, "2000");
+        TestClient.getClientInstance().getConfiguration().setValue(TaskManagerThread.Preferences.TASK_DEFAULT_LIFESPAN, "6000");
+        TestClient.getClientInstance().getConfiguration().setValue(TaskManagerThread.Preferences.DEFAULT_CLIENT_SYNC_INTERVAL, "1000");
+        
+    	TaskManagerThread.getTaskManagerThread().getLock().lock();
+    	waitForTaskManagerToRun(2); //let things sync up
+    	
+    	Util.copyTree("test-data/test-dynamic-client-task.xml", "capo/server/controller/default.xml");
+    	
+    	waitForTaskManagerToRun(1);
+    	List<ResourceDescriptor> taskResourceDescriptorList = CapoApplication.getDataManager().findDocuments(CapoApplication.getDataManager().getResourceDirectory(Preferences.TASK_DIR.toString()));
+        Assert.assertEquals(1,taskResourceDescriptorList.size());
+        Assert.assertTrue("should be empty task-status file",validateXMLContent(taskResourceDescriptorList, "task-status.xml", "not(exists(//server:task))"));
+    	waitForTaskManagerToRun(2);    	
+    	taskResourceDescriptorList = CapoApplication.getDataManager().findDocuments(CapoApplication.getDataManager().getResourceDirectory(Preferences.TASK_DIR.toString()));
+    	if (taskResourceDescriptorList.size() != 2)
+    	{
+    		waitForTaskManagerToRun(1);
+    		taskResourceDescriptorList = CapoApplication.getDataManager().findDocuments(CapoApplication.getDataManager().getResourceDirectory(Preferences.TASK_DIR.toString()));
+    	}
+        Assert.assertEquals(2,taskResourceDescriptorList.size());
+        //give the updater a chance to run.
+        TaskManagerThread.getTaskManagerThread().getLock().unlock();
+        TaskManagerThread.getTaskManagerThread().getLock().lock();
+        Assert.assertTrue("dynamic task test should have run",validateXMLContent(taskResourceDescriptorList, "task-status.xml", "exists(//server:task[@name = 'dynamic-task-text' and exists(@lastExecutionTime)])"));
+        
+        Util.copyTree("resources/defaults/default.xml", "capo/server/controller/default.xml");
+        waitForTaskManagerToRun(5);
+        taskResourceDescriptorList = CapoApplication.getDataManager().findDocuments(CapoApplication.getDataManager().getResourceDirectory(Preferences.TASK_DIR.toString()));
+        Assert.assertEquals(1,taskResourceDescriptorList.size());
         System.out.println();
+        
     }
     
     /**
@@ -300,7 +332,13 @@ public class TaskElementTest
             Document testDocument = CapoApplication.getDocumentBuilder().parse(resourceDescriptor.getInputStream(null));
             if (resourceDescriptor.getLocalName().equals(documentName))
             {
-                return XPath.evaluate(testDocument, xpath);
+            	boolean result = XPath.evaluate(testDocument, xpath);
+            	if (result == false)
+            	{
+            		XPath.dumpNode(testDocument, System.err);
+            	}
+            		
+                return result;
             }
         }
         fail("Didn't find document: "+documentName);

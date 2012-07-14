@@ -32,6 +32,7 @@ import org.w3c.dom.Document;
 import com.delcyon.capo.CapoApplication;
 import com.delcyon.capo.CapoApplication.ApplicationState;
 import com.delcyon.capo.resourcemanager.ResourceDescriptor;
+import com.delcyon.capo.resourcemanager.ResourceDescriptor.Action;
 import com.delcyon.capo.server.CapoServer;
 import com.delcyon.capo.tasks.TaskManagerThread.Preferences;
 
@@ -83,11 +84,11 @@ public class TaskManagerDocumentUpdaterThread extends Thread
 		{
 			try
 			{
-			   
+				lock.lock();
 				while (documentUpdateQueue.isEmpty() == false)
 				{
-				    lock.lock();
-
+				   
+					
 				    DocumentUpdate documentUpdate = documentUpdateQueue.poll();
 				    if (documentUpdate == null)
 				    {
@@ -95,7 +96,11 @@ public class TaskManagerDocumentUpdaterThread extends Thread
 				    }
 				    Document taskManagerDocument = documentUpdate.getDocument();
 				    ResourceDescriptor taskManagerDocumentFileDescriptor = documentUpdate.getDocumentResourceDescriptor();
-				    CapoServer.logger.log(Level.FINE, "updating task file");
+				    if (taskManagerDocumentFileDescriptor.getContentMetaData(null).exists() == false)
+			        {
+				    	taskManagerDocumentFileDescriptor.performAction(null, Action.CREATE);
+			        }
+				    CapoServer.logger.log(Level.FINE, "updating task file: "+taskManagerDocumentFileDescriptor.getResourceURI());
 				    taskManagerDocument.normalizeDocument();
 				    taskManagerDocument.normalize();
 				    taskManagerDocumentFileDescriptor.open(null);
@@ -109,28 +114,37 @@ public class TaskManagerDocumentUpdaterThread extends Thread
 				    taskDocumentOutputStream.close();
 				    taskManagerDocumentFileDescriptor.release(null);
 
-				    lock.unlock();
+				    
 				}
-				
-				if (runAsService == true && getUpdaterState().order < ApplicationState.STOPPING.order)
-				{
-				    try
-				    {
-				        Thread.sleep(CapoApplication.getConfiguration().getLongValue(Preferences.TASK_INTERVAL)/2l);
-				    } 
-				    catch (InterruptedException interruptedException)
-				    {
-				        continue;
-				    }					    
-				}
-				else
-				{
-					break;
-				}
-			} catch (Exception e)
-			{				
-				e.printStackTrace();
 			}
+			catch (Exception exception)
+			{
+				CapoServer.logger.log(Level.WARNING, "error processing task document update",exception);
+			}
+			finally //make sure we always unlock things if we're bailing out
+			{
+			    while(lock.isHeldByCurrentThread())
+			    {
+			        lock.unlock(); //unlock everything since we;re now done and about to sleep or finish
+			    }
+			}
+
+			if (runAsService == true && getUpdaterState().order < ApplicationState.STOPPING.order)
+			{
+				try
+				{
+					Thread.sleep(CapoApplication.getConfiguration().getLongValue(Preferences.TASK_INTERVAL)/2l);
+				} 
+				catch (InterruptedException interruptedException)
+				{
+					continue;
+				}					    
+			}
+			else
+			{
+				break;
+			}
+			
 		}
 		this.state = ApplicationState.STOPPED;
 	}

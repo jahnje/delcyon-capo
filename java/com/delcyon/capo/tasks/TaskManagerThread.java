@@ -483,7 +483,7 @@ public class TaskManagerThread extends ContextThread
 						
 						//===============================================BEGIN ORPHAN CHECK===============================================================
 						//check to see if task is orphaned
-                        if (System.currentTimeMillis() > (lastAccessTime + lifeSpan))
+                        if (this.lastRunTime > (lastAccessTime + lifeSpan)) //use last run time so that everything is on equal footing, as opposed to having tasks that take too long and cause other tasks to expire before it's too late
                         {
                             String orpanAction = CapoApplication.getConfiguration().getValue(Preferences.TASK_DEFAULT_ORPHAN_ACTION);
                             if (taskElement.hasAttribute(Attributes.orpanAction.toString()))
@@ -493,7 +493,7 @@ public class TaskManagerThread extends ContextThread
                             
                             if(orpanAction.equals("DELETE"))
                             {
-                                CapoApplication.logger.warning("task '"+name+"' appears to be orphaned, deleteing. lastAccessTime = "+lastAccessTime);
+                                CapoApplication.logger.warning("task '"+name+"' appears to be orphaned, deleteing. lastAccessTime = "+lastAccessTime+" lrt="+this.lastRunTime+" ls="+lifeSpan+" delta ="+(lastAccessTime + lifeSpan - this.lastRunTime));
                                 resourceDescriptor.performAction(null, Action.DELETE);
                                 //mark this task for deletion, by server
                                 //if we're running on the server, then just delete it.
@@ -921,17 +921,30 @@ public class TaskManagerThread extends ContextThread
 	   
 	    if (taskDocumentResourceDescriptor == null)
 	    {
-	        ResourceDescriptor tasksResourceDescriptor = CapoApplication.getDataManager().getResourceDirectory(Preferences.TASK_DIR.toString());
-	        taskDocumentResourceDescriptor = tasksResourceDescriptor.getChildResourceDescriptor(taskElement, name+".xml");
-	        if (taskDocumentResourceDescriptor.getContentMetaData(null).exists() == false)
+	    	if (clientID != null)
 	        {
-	            taskDocumentResourceDescriptor.performAction(null, Action.CREATE);
+	            ResourceDescriptor clientResourceDescriptor = capoDataManager.getResourceDescriptor(null, "clients:"+clientID);
+	            //see if we have a child filesystem
+	            if (clientResourceDescriptor.getContentMetaData(null).exists() == true)
+	            {
+	                ResourceDescriptor relaventChildResourceDescriptor = clientResourceDescriptor.getChildResourceDescriptor(null,CapoApplication.getConfiguration().getValue(Preferences.TASK_DIR));
+	                if (relaventChildResourceDescriptor != null && relaventChildResourceDescriptor.getContentMetaData(null).exists() == true)
+	                {
+	                    //search the client filesystem
+	                	taskDocumentResourceDescriptor = relaventChildResourceDescriptor.getChildResourceDescriptor(taskElement, name+".xml");
+	                }
+	            }
+	           
 	        }
+	    	else //this is for server side stuff
+	    	{
+	    		ResourceDescriptor tasksResourceDescriptor = CapoApplication.getDataManager().getResourceDirectory(Preferences.TASK_DIR.toString());
+	    		taskDocumentResourceDescriptor = tasksResourceDescriptor.getChildResourceDescriptor(taskElement, name+".xml");
+	    	}
 	        taskDocument = documentBuilder.newDocument();
 	    }
 	    else if (taskDocumentResourceDescriptor.getContentMetaData(null).exists() == false)
-	    {
-	        taskDocumentResourceDescriptor.performAction(null, Action.CREATE);
+	    {	       
 	        taskDocument = documentBuilder.newDocument();
 	    }
 	    else
@@ -947,7 +960,7 @@ public class TaskManagerThread extends ContextThread
 				//see if the md5s match
 				if (previousMonitorElement.getAttribute("md5").equals(md5))
 				{
-					CapoApplication.logger.log(Level.INFO, "Task hasn't changed: "+name);
+					CapoApplication.logger.log(Level.FINE, "Task hasn't changed: "+name);
 					previousMonitorElement.setAttribute(Attributes.lastAccessTime.toString(), System.currentTimeMillis()+"");
 					updateTasksDocument(taskDocumentResourceDescriptor,taskDocument);
 					return;

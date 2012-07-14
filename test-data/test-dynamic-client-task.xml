@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<server:Capo xmlns:server="http://www.delcyon.com/capo-server"
+             xmlns:client="http://www.delcyon.com/capo-client"
+             xmlns:resource="http://www.delcyon.com/capo/resource"
+             mainGroup="default"
+             name="main">
+    
+    <server:group name="default">
+        <server:log message="clientID = ${clientID}" output="STDERR"/>        
+        <server:call ref="server:group('client-task-group')"/>      
+    </server:group>
+    
+    <server:group name="client-task-group">       
+        <server:task  name="dynamic-task-text">
+            <server:log message="Processed Task" output="STDERR"/>     
+        </server:task>
+    </server:group>
+    
+</server:Capo>

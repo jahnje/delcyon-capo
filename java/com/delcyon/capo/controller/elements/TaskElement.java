@@ -23,6 +23,7 @@ import com.delcyon.capo.controller.AbstractClientSideControl;
 import com.delcyon.capo.controller.ControlElementProvider;
 import com.delcyon.capo.controller.server.ControllerResponse;
 import com.delcyon.capo.tasks.TaskManagerThread;
+import com.delcyon.capo.xml.XPath;
 
 /**
  * @author jeremiah
@@ -86,10 +87,12 @@ public class TaskElement extends AbstractClientSideControl
 		}
 		else
 		{
+			TaskManagerThread.getTaskManagerThread().setTask(name,md5,this,getParentGroup().getVarValue("clientID")); //save server side first
 			ControllerResponse controllerResponse = getControllerClientRequestProcessor().createResponse();
 			controllerResponse.appendElement(getControlElementDeclaration());
-			getControllerClientRequestProcessor().writeResponse(controllerResponse);
-			TaskManagerThread.getTaskManagerThread().setTask(name,md5,this,getParentGroup().getVarValue("clientID"));
+			XPath.dumpNode(getControlElementDeclaration(), System.out);
+			//getControllerClientRequestProcessor().writeResponse(controllerResponse);
+			
 		}
 		//see if we have a matching monitor on the local or remote
 		//if we don't, then send the whole package to the receiver
