@@ -99,21 +99,21 @@ public class CapoServer extends CapoApplication
 	public enum Preferences implements Preference
 	{
 		
-		@PreferenceInfo(arguments={}, defaultValue="15", description="The number of seconds to tell a client to wait before attempting to connect again", longOption="INITIAL_CLIENT_RETRY_TIME", option="INITIAL_CLIENT_RETRY_TIME")
+		@PreferenceInfo(arguments={"sec"}, defaultValue="15", description="The number of seconds to tell a client to wait before attempting to connect again", longOption="INITIAL_CLIENT_RETRY_TIME", option="INITIAL_CLIENT_RETRY_TIME")
 		INITIAL_CLIENT_RETRY_TIME,
-		@PreferenceInfo(arguments={}, defaultValue="600000", description="The number of ms to keep an idle thread alive", longOption="THREAD_IDLE_TIME", option="THREAD_IDLE_TIME")
+		@PreferenceInfo(arguments={"ms"}, defaultValue="600000", description="The number of ms to keep an idle thread alive", longOption="THREAD_IDLE_TIME", option="THREAD_IDLE_TIME")
 		THREAD_IDLE_TIME,
-		@PreferenceInfo(arguments={}, defaultValue="30", description="The number of concurrent connection to allow", longOption="MAX_THREADPOOL_SIZE", option="MAX_THREADPOOL_SIZE")
+		@PreferenceInfo(arguments={"int"}, defaultValue="30", description="The number of concurrent connection to allow", longOption="MAX_THREADPOOL_SIZE", option="MAX_THREADPOOL_SIZE")
 		MAX_THREADPOOL_SIZE,
-		@PreferenceInfo(arguments={}, defaultValue="10", description="The number of server threads to start with", longOption="START_THREADPOOL_SIZE", option="START_THREADPOOL_SIZE")
+		@PreferenceInfo(arguments={"int"}, defaultValue="10", description="The number of server threads to start with", longOption="START_THREADPOOL_SIZE", option="START_THREADPOOL_SIZE")
 		START_THREADPOOL_SIZE,
-		@PreferenceInfo(arguments={}, defaultValue="capo.server.0", description="ID that this server will use when communicating with clients", longOption="SERVER_ID", option="SERVER_ID")
+		@PreferenceInfo(arguments={"string"}, defaultValue="capo.server.0", description="ID that this server will use when communicating with clients", longOption="SERVER_ID", option="SERVER_ID")
 		SERVER_ID,
-		@PreferenceInfo(arguments={}, defaultValue="1024", description="Encryption key size", longOption="KEY_SIZE", option="KEY_SIZE")
+		@PreferenceInfo(arguments={"int"}, defaultValue="1024", description="Encryption key size", longOption="KEY_SIZE", option="KEY_SIZE")
 		KEY_SIZE,
-		@PreferenceInfo(arguments={}, defaultValue="36", description="Number of Months before key expires", longOption="KEY_MONTHS_VALID", option="KEY_MONTHS_VALID")
+		@PreferenceInfo(arguments={"months"}, defaultValue="36", description="Number of Months before key expires", longOption="KEY_MONTHS_VALID", option="KEY_MONTHS_VALID")
 		KEY_MONTHS_VALID,
-		@PreferenceInfo(arguments={}, defaultValue="clients", description="resource where client information is stored", longOption="CLIENTS_DIR", option="CLIENTS_DIR")
+		@PreferenceInfo(arguments={"dir"}, defaultValue="clients", description="resource where client information is stored", longOption="CLIENTS_DIR", option="CLIENTS_DIR")
         CLIENTS_DIR;
 		@Override
 		public String[] getArguments()

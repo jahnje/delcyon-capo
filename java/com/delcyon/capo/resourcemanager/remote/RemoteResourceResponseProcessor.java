@@ -53,7 +53,7 @@ public class RemoteResourceResponseProcessor implements XMLServerResponseProcess
     public enum Preferences implements Preference
 	{
 		
-		@PreferenceInfo(arguments={}, defaultValue="30", description="The number of seconds to  wait before timing out a remote output stream", longOption="OUTPUT_STREAM_TIMEOUT", option="OUTPUT_STREAM_TIMEOUT")
+		@PreferenceInfo(arguments={"sec"}, defaultValue="30", description="The number of seconds to  wait before timing out a remote output stream", longOption="OUTPUT_STREAM_TIMEOUT", option="OUTPUT_STREAM_TIMEOUT")
 		OUTPUT_STREAM_TIMEOUT;
 		
 		@Override

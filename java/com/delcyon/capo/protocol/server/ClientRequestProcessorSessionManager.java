@@ -40,7 +40,7 @@ public class ClientRequestProcessorSessionManager extends Thread
 	public enum Preferences implements Preference
 	{
 		
-		@PreferenceInfo(arguments={}, defaultValue="5", description="The number of minutes before an inactive session timesout", longOption="DEFAULT_SESSION_TIMEOUT", option="DEFAULT_SESSION_TIMEOUT")
+		@PreferenceInfo(arguments={"min"}, defaultValue="5", description="The number of minutes before an inactive session timesout", longOption="DEFAULT_SESSION_TIMEOUT", option="DEFAULT_SESSION_TIMEOUT")
 		DEFAULT_SESSION_TIMEOUT
 		;
 		@Override

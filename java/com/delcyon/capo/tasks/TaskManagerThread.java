@@ -79,15 +79,15 @@ public class TaskManagerThread extends ContextThread
 	{
 		
 		
-		@PreferenceInfo(arguments={}, defaultValue="tasks", description="Where to store resource monitor file", longOption="TASK_DIR", option="TASK_DIR")
+		@PreferenceInfo(arguments={"dir"}, defaultValue="tasks", description="Where to store resource monitor file", longOption="TASK_DIR", option="TASK_DIR")
 		TASK_DIR,
-		@PreferenceInfo(arguments={}, defaultValue="30000", description="How long before a task is considered orphaned", longOption="TASK_LIFESPAN", option="TASK_LIFESPAN")
+		@PreferenceInfo(arguments={"ms"}, defaultValue="30000", description="How long before a task is considered orphaned", longOption="TASK_LIFESPAN", option="TASK_LIFESPAN")
         TASK_DEFAULT_LIFESPAN,
-        @PreferenceInfo(arguments={}, defaultValue="30000", description="Delay between client update and task syncing", longOption="DEFAULT_CLIENT_SYNC_INTERVAL", option="DEFAULT_CLIENT_SYNC_INTERVAL",location=Location.CLIENT)
+        @PreferenceInfo(arguments={"ms"}, defaultValue="30000", description="Delay between client update and task syncing", longOption="DEFAULT_CLIENT_SYNC_INTERVAL", option="DEFAULT_CLIENT_SYNC_INTERVAL",location=Location.CLIENT)
         DEFAULT_CLIENT_SYNC_INTERVAL,
-        @PreferenceInfo(arguments={}, defaultValue="DELETE", description="What to do when a task is considered orphaned (DELETE|IGNORE)", longOption="TASK_DEFAULT_ORPHAN_ACTION", option="TASK_DEFAULT_ORPHAN_ACTION")
+        @PreferenceInfo(arguments={"action"}, defaultValue="DELETE", description="What to do when a task is considered orphaned (DELETE|IGNORE)", longOption="TASK_DEFAULT_ORPHAN_ACTION", option="TASK_DEFAULT_ORPHAN_ACTION")
         TASK_DEFAULT_ORPHAN_ACTION,
-		@PreferenceInfo(arguments={}, defaultValue="10000", description="Interval at witch overall task manager thread runs", longOption="TASK_INTERVAL", option="TASK_INTERVAL")
+		@PreferenceInfo(arguments={"ms"}, defaultValue="10000", description="Interval at witch overall task manager thread runs", longOption="TASK_INTERVAL", option="TASK_INTERVAL")
 		TASK_INTERVAL;
 		
 		@Override
