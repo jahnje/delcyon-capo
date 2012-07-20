@@ -56,6 +56,10 @@ public interface ResourceType
 	 */
 	public ArrayList<ArrayList<Integer>> getDefaultTokenLists();
 
+	/**
+	 * This returns the first scheme that corresponds to this resource type.
+	 * @return
+	 */
 	public String getName();
 	
 }

@@ -50,7 +50,7 @@ public abstract class AbstractResourceType implements ResourceType
 	@Override
 	public String getName()
 	{
-		return Arrays.toString(getClass().getAnnotation(ResourceTypeProvider.class).schemes());
+		return getClass().getAnnotation(ResourceTypeProvider.class).schemes()[0];
 	}
 	
 }

@@ -22,6 +22,7 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.w3c.dom.Document;
+import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 
 import com.delcyon.capo.resourcemanager.ResourceDescriptor;
@@ -54,22 +55,28 @@ public class ResourceDocumentTest
     @Test
     public void simpleTest() throws Exception
     {
+    	Util.copyTree("test-data/capo", "capo", true, true);
         FileResourceType fileResourceType = new FileResourceType();
-        ResourceDescriptor resourceDescriptor = fileResourceType.getResourceDescriptor("capo");
+        ResourceDescriptor resourceDescriptor = fileResourceType.getResourceDescriptor("server");
         
         ResourceDocumentBuilder documentBuilder = new ResourceDocumentBuilder();
         Document document = documentBuilder.buildDocument(resourceDescriptor);
-       //XPath.dumpNode(document, System.out);
-        NodeList nodeList = XPath.selectNSNodes(document, "/file:capo/*:server/file:clients/*[matches(local-name(),'cli')]/file:identity.xml/server:identity/*","file=http://capo.delcyon.com/resource","server=http://www.delcyon.com/capo-server");///file:capo/file:server/file:clients/*/*/server:id[@name = 'hostname']/@value");
+       XPath.dumpNode(document, System.out);
+       String xpath ="/file:server/file:clients/*[matches(local-name(),'cli')]/file:identity.xml/server:identity/*"; 
+        NodeList nodeList = XPath.selectNSNodes(document, xpath,"file=http://www.delcyon.com/capo/resource/file","server=http://www.delcyon.com/capo-server");///file:capo/file:server/file:clients/*/*/server:id[@name = 'hostname']/@value");
+        System.out.println("=================================================");
         for(int index = 0; index < nodeList.getLength(); index++)
         {
             System.out.println(nodeList.item(index));
         }
-        nodeList = XPath.selectNSNodes(document, "/file:capo/*:server/file:clients/*[matches(local-name(),'cli')]/file:identity.xml/server:identity/*","file=http://capo.delcyon.com/resource","server=http://www.delcyon.com/capo-server");///file:capo/file:server/file:clients/*/*/server:id[@name = 'hostname']/@value");
+        System.out.println("=================================================");
+        nodeList = XPath.selectNSNodes(document, "/*:server/file:clients/*[matches(local-name(),'cli')]/file:identity.xml/server:identity/*","file=http://www.delcyon.com/capo/resource/file","server=http://www.delcyon.com/capo-server");///file:capo/file:server/file:clients/*/*/server:id[@name = 'hostname']/@value");
         for(int index = 0; index < nodeList.getLength(); index++)
         {
-            System.out.println(nodeList.item(index));
+        	Element idElement = (Element) nodeList.item(index); 
+            System.out.println(idElement.getAttribute("name")+" = " +idElement.getAttribute("value"));
         }
+        System.out.println("=================================================");
     }
     
 }
