@@ -18,13 +18,9 @@ package com.delcyon.capo.controller.elements;
 
 import java.util.logging.Level;
 
-import org.w3c.dom.Element;
-
 import com.delcyon.capo.CapoApplication;
 import com.delcyon.capo.controller.AbstractControl;
 import com.delcyon.capo.controller.ControlElementProvider;
-import com.delcyon.capo.controller.server.ServerSideControl;
-import com.delcyon.capo.server.CapoServer;
 import com.delcyon.capo.xml.XPath;
 
 @ControlElementProvider(name="debug")
@@ -33,7 +29,7 @@ public class DebugElement extends AbstractControl
 
 	public enum Attributes
 	{
-		
+		ref
 	}
 	
 	
@@ -50,7 +46,7 @@ public class DebugElement extends AbstractControl
 	@Override
 	public Attributes[] getRequiredAttributes()
 	{
-		return Attributes.values();
+		return null;
 	}
 
 	
@@ -65,7 +61,10 @@ public class DebugElement extends AbstractControl
 	{
 
 		CapoApplication.logger.log(Level.WARNING, "Found debug at "+XPath.getXPath(getControlElementDeclaration()));
-	
+		if (getAttributeValue(Attributes.ref).trim().isEmpty() == false)
+		{
+			XPath.dumpNode(XPath.selectSingleNode(getControlElementDeclaration(), getAttributeValue(Attributes.ref)), System.err);
+		}
 		return null;
 	}
 
