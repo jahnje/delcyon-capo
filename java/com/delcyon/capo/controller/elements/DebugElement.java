@@ -29,7 +29,9 @@ public class DebugElement extends AbstractControl
 
 	public enum Attributes
 	{
-		ref
+		dumpRef,
+		dumpVars,
+		sleep
 	}
 	
 	
@@ -46,7 +48,7 @@ public class DebugElement extends AbstractControl
 	@Override
 	public Attributes[] getRequiredAttributes()
 	{
-		return null;
+		return new Attributes[]{};
 	}
 
 	
@@ -61,9 +63,24 @@ public class DebugElement extends AbstractControl
 	{
 
 		CapoApplication.logger.log(Level.WARNING, "Found debug at "+XPath.getXPath(getControlElementDeclaration()));
-		if (getAttributeValue(Attributes.ref).trim().isEmpty() == false)
+		
+		if (getAttributeBooleanValue(Attributes.dumpVars) == true)
 		{
-			XPath.dumpNode(XPath.selectSingleNode(getControlElementDeclaration(), getAttributeValue(Attributes.ref)), System.err);
+			System.err.println("=====================================DEBUG VAR DUMP===========================================================");
+			getParentGroup().dumpVars(System.err);
+			System.err.println("=====================================END DEBUG VAR DUMP===========================================================");
+		}
+		if (getAttributeValue(Attributes.dumpRef).trim().isEmpty() == false)
+		{
+			System.err.println("=====================================DEBUG REF DUMP===========================================================");
+			XPath.dumpNode(XPath.selectSingleNode(getControlElementDeclaration(), getAttributeValue(Attributes.dumpRef)), System.err);
+			System.err.println("=====================================END DEBUG===========================================================");
+		}
+		if(getAttributeValue(Attributes.sleep).trim().matches("\\d+"))
+		{
+			System.err.println("DEBUG=> sleeping for "+getAttributeValue(Attributes.sleep)+"ms");
+			Thread.sleep(Long.parseLong(getAttributeValue(Attributes.sleep)));
+			System.err.println("DEBUG=> done sleeping");
 		}
 		return null;
 	}

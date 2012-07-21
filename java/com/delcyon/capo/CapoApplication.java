@@ -16,6 +16,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 package com.delcyon.capo;
 
+import java.io.PrintStream;
 import java.net.URL;
 import java.security.KeyStore;
 import java.util.HashMap;
@@ -333,6 +334,16 @@ public abstract class CapoApplication extends ContextThread implements WrapperLi
 	public static String getVariableValue(String varName)
 	{
 		return getApplication().applicationVariableHashMap.get(varName);
+	}
+	
+	public static void dumpVars(PrintStream printStream)
+	{
+		printStream.println("\n====================APPLICATION VARS=====================");
+		if (getApplication() != null)
+		{			
+			printStream.println(getApplication().applicationVariableHashMap);
+		}
+		printStream.println("====================END APPLICATION VARS=====================\n");
 	}
 	
 	public static String removeVariableValue(String varName)

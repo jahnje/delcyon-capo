@@ -16,6 +16,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 package com.delcyon.capo.controller;
 
+import java.io.PrintStream;
 import java.util.HashMap;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -222,7 +223,55 @@ public class Group implements VariableContainer
 		}
 	}
 
+	/**
+	 * for debugging purposes, prints all of the variables
+	 * @param printStream
+	 */
+	public void dumpVars(PrintStream printStream)
+	{
+		if (parentGroup != null)
+		{
+			parentGroup.dumpVars(printStream);
+		}
+		else 
+		{
+			CapoApplication.dumpVars(printStream);
+		}
+		String spacing = "";
+		int tabCount = getGroupPath().split(":").length;
+		for(int depth = 0; depth < tabCount; depth++)
+		{
+			spacing += "\t";
+		}
+		printStream.println("\n"+spacing+"===================='"+getGroupName().toUpperCase()+"' GROUP VARS  (path = "+getGroupPath()+")=====================");
+		
+		printStream.println(spacing+"====================CONTAINER VARS=====================");
+		if (variableContainer != null) //this allows us to steer variable look up to some other hierarchy 
+		{
+			 printStream.println(spacing+variableContainer);
+		}
+		
+		printStream.println(spacing+"====================LOCAL VARS=====================");
+		printStream.println(spacing+variableHashMap);
+		
+		printStream.println(spacing+"====================ENTRY VARS=====================");
+		printStream.println(spacing+entryHashMap);
+		
+		printStream.println(spacing+"====================SESSION VARS=====================");
+		if (controllerClientRequestProcessor != null && controllerClientRequestProcessor.getSessionHashMap() != null)
+		{
+			printStream.println(spacing+controllerClientRequestProcessor.getSessionHashMap());
+		}
+		
+		printStream.println(spacing+"====================REQUEST VARS=====================");
+		if (controllerClientRequestProcessor != null)
+		{
+			printStream.println(spacing+controllerClientRequestProcessor.getRequestHashMap());
+		}
 
+		printStream.println(spacing+"====================END '"+getGroupName().toUpperCase()+"' GROUP VARS=====================\n");
+		
+	}
 
 	public void set(String varName, String value)
 	{

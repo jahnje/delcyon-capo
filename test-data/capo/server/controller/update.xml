@@ -135,8 +135,10 @@
     <server:repeat name="sync_repeat"
                   nodeset="${transform.sync_transform}/server:group/server:sync">
         <server:call ref="${context}"/>
-    </server:repeat>   
-     
+    </server:repeat>
+    <!--<server:group name="test.debug">
+        <server:debug dumpVars="true" dumpRef=".." sleep="10000"/>
+     </server:group>-->
     <server:when test=".['${requiresRestart}' = 'true']">
         <server:log message="skipping restart do to testing framework"/>
     </server:when>
