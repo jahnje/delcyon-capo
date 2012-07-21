@@ -229,7 +229,7 @@ public class TaskElementTest
     	TaskManagerThread.getTaskManagerThread().getLock().lock();
     	waitForTaskManagerToRun(2); //let things sync up
     	
-    	Util.copyTree("test-data/test-dynamic-client-task.xml", "capo/server/controller/default.xml");
+    	Util.copyTree("test-data/task-testdata/test-dynamic-client-task.xml", "capo/server/controller/default.xml");
     	
     	waitForTaskManagerToRun(1);
     	List<ResourceDescriptor> taskResourceDescriptorList = CapoApplication.getDataManager().findDocuments(CapoApplication.getDataManager().getResourceDirectory(Preferences.TASK_DIR.toString()));
@@ -268,7 +268,7 @@ public class TaskElementTest
     @Test
     public void testProcessClientSideManualTask() throws Exception
     {
-        Util.copyTree("test-data/test-manual-task-with-error.xml", "capo/server/clients/capo.client.1/tasks/test-manual-task.xml");
+        Util.copyTree("test-data/task-testdata/test-manual-task-with-error.xml", "capo/server/clients/capo.client.1/tasks/test-manual-task.xml");
     	System.out.println("===================================================================");
     	externalTestServer = new ExternalTestServer();
     	System.out.println("===================================================================");
@@ -288,12 +288,12 @@ public class TaskElementTest
         Assert.assertEquals(2,taskResourceDescriptorList.size());
         Assert.assertTrue("Didn't find ignoreable test-manual-task",validateXMLContent(taskResourceDescriptorList, "task-status.xml", "exists(//server:task[@name = 'test-manual-task' and @ACTION = 'IGNORE' and exists(@EXCEPTION)])"));
         
-        Util.copyTree("test-data/test-manual-task.xml", "capo/server/clients/capo.client.1/tasks/test-manual-task.xml");
+        Util.copyTree("test-data/task-testdata/test-manual-task.xml", "capo/server/clients/capo.client.1/tasks/test-manual-task.xml");
         waitForTaskManagerToRun(1);
         taskResourceDescriptorList = CapoApplication.getDataManager().findDocuments(CapoApplication.getDataManager().getResourceDirectory(Preferences.TASK_DIR.toString()));
         Assert.assertEquals(2,taskResourceDescriptorList.size());
         Assert.assertTrue("Didn't find new synched test-manual-task",validateXMLContent(taskResourceDescriptorList, "test-manual-task.xml", "exists(//server:task/server:export[exists(@dest)])"));
-        Diff diff = new Diff(new FileInputStream("test-data/test.txt"), new FileInputStream("capo/client/test.txt"));
+        Diff diff = new Diff(new FileInputStream("test-data/task-testdata/test.txt"), new FileInputStream("capo/client/test.txt"));
         String[] differences = diff.getDifferences().split("\n");
         Assert.assertTrue("There should be data in the export file",differences.length > 2);
         for (String difference : differences)
@@ -307,7 +307,7 @@ public class TaskElementTest
         taskResourceDescriptorList = CapoApplication.getDataManager().findDocuments(CapoApplication.getDataManager().getResourceDirectory(Preferences.TASK_DIR.toString()));
         Assert.assertEquals(1,taskResourceDescriptorList.size());
         
-        Util.copyTree("test-data/test-manual-task-single-run.xml", "capo/server/clients/capo.client.1/tasks/test-manual-task.xml");
+        Util.copyTree("test-data/task-testdata/test-manual-task-single-run.xml", "capo/server/clients/capo.client.1/tasks/test-manual-task.xml");
         waitForTaskManagerToRun(1);
         taskResourceDescriptorList = CapoApplication.getDataManager().findDocuments(CapoApplication.getDataManager().getResourceDirectory(Preferences.TASK_DIR.toString()));
         Assert.assertEquals(2,taskResourceDescriptorList.size());
