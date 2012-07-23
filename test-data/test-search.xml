@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<server:Capo xmlns:server="http://www.delcyon.com/capo-server"
+             xmlns:client="http://www.delcyon.com/capo-client"
+             xmlns:resource="http://www.delcyon.com/capo/resource"
+             mainGroup="default"
+             name="main">
+    
+    <server:group name="default">
+       
+        
+        <!-- Start with the resource that we want to search against -->
+        <server:search name="testSearch" dumpVars="true" sleep="10000" dumpRef="..">
+            <!-- Create a result element called client for each client dir -->
+            <server:search.type name="client" uri="clients" dumpVars="true"/>
+        </server:search>
+    
+    </server:group>
+    
+    
+</server:Capo>

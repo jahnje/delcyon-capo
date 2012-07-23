@@ -27,7 +27,6 @@ import org.w3c.dom.NodeList;
 
 import com.delcyon.capo.resourcemanager.ResourceDescriptor;
 import com.delcyon.capo.resourcemanager.types.FileResourceType;
-import com.delcyon.capo.server.CapoServer;
 import com.delcyon.capo.tests.util.TestServer;
 import com.delcyon.capo.tests.util.Util;
 import com.delcyon.capo.xml.XPath;
