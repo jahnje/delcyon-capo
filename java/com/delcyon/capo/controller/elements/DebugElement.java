@@ -63,27 +63,31 @@ public class DebugElement extends AbstractControl
 	{
 
 		CapoApplication.logger.log(Level.WARNING, "Found debug at "+XPath.getXPath(getControlElementDeclaration()));
-		
-		if (getAttributeBooleanValue(Attributes.dumpVars) == true)
-		{
-			System.err.println("=====================================DEBUG VAR DUMP===========================================================");
-			getParentGroup().dumpVars(System.err);
-			System.err.println("=====================================END DEBUG VAR DUMP===========================================================");
-		}
-		if (getAttributeValue(Attributes.dumpRef).trim().isEmpty() == false)
-		{
-			System.err.println("=====================================DEBUG REF DUMP===========================================================");
-			XPath.dumpNode(XPath.selectSingleNode(getControlElementDeclaration(), getAttributeValue(Attributes.dumpRef)), System.err);
-			System.err.println("=====================================END DEBUG===========================================================");
-		}
-		if(getAttributeValue(Attributes.sleep).trim().matches("\\d+"))
-		{
-			System.err.println("DEBUG=> sleeping for "+getAttributeValue(Attributes.sleep)+"ms");
-			Thread.sleep(Long.parseLong(getAttributeValue(Attributes.sleep)));
-			System.err.println("DEBUG=> done sleeping");
-		}
+		debugElement(this);
 		return null;
 	}
 
+	public static void debugElement(AbstractControl control) throws Exception
+	{
+
+		if (control.getAttributeBooleanValue(Attributes.dumpVars) == true)
+		{
+			System.err.println("=====================================DEBUG VAR DUMP===========================================================");
+			control.getParentGroup().dumpVars(System.err);
+			System.err.println("=====================================END DEBUG VAR DUMP===========================================================");
+		}
+		if (control.getAttributeValue(Attributes.dumpRef).trim().isEmpty() == false)
+		{
+			System.err.println("=====================================DEBUG REF DUMP===========================================================");
+			XPath.dumpNode(XPath.selectSingleNode(control.getControlElementDeclaration(), control.getAttributeValue(Attributes.dumpRef)), System.err);
+			System.err.println("=====================================END DEBUG===========================================================");
+		}
+		if(control.getAttributeValue(Attributes.sleep).trim().matches("\\d+"))
+		{
+			System.err.println("DEBUG=> sleeping for "+control.getAttributeValue(Attributes.sleep)+"ms");
+			Thread.sleep(Long.parseLong(control.getAttributeValue(Attributes.sleep)));
+			System.err.println("DEBUG=> done sleeping");
+		}
+	}
 	
 }

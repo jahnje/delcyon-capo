@@ -31,6 +31,7 @@ import com.delcyon.capo.ContextThread;
 import com.delcyon.capo.annotations.ControlNamespaceURI;
 import com.delcyon.capo.controller.client.ClientSideControl;
 import com.delcyon.capo.controller.client.ServerControllerResponse;
+import com.delcyon.capo.controller.elements.DebugElement;
 import com.delcyon.capo.controller.elements.GroupElement;
 import com.delcyon.capo.controller.server.ControllerClientRequestProcessor;
 import com.delcyon.capo.controller.server.ServerSideControl;
@@ -245,6 +246,11 @@ public abstract class AbstractControl implements ServerSideControl
 							throw new MissingAttributeException(missingAttributes,controlElementDeclaration);	
 						}
 						((ClientSideControl) controlElement).processClientSideElement();
+						
+					}
+					if (controlElement instanceof AbstractControl)
+					{
+						DebugElement.debugElement((AbstractControl) controlElement);
 					}
 					if (parentGroup != null)
 					{
