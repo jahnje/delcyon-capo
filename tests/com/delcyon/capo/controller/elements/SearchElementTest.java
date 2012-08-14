@@ -43,6 +43,7 @@ public class SearchElementTest
     public void simpleTest() throws Exception
     {
     	Util.copyTree("test-data/capo", "capo", true, true);
+    	Util.copyTree("test-data/test-search.xsl", "capo/server/modules", false, false);
         TestServer.start();
         Document document = CapoApplication.getDocumentBuilder().parse(new FileInputStream("test-data/test-search.xml"));
         LocalRequestProcessor localRequestProcessor = new LocalRequestProcessor();
