@@ -2,6 +2,7 @@
 <server:Capo xmlns:server="http://www.delcyon.com/capo-server"
              xmlns:client="http://www.delcyon.com/capo-client"
              xmlns:resource="http://www.delcyon.com/capo/resource"
+             xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
              mainGroup="default"
              name="main">
     
@@ -9,12 +10,106 @@
        
         
         <!-- Start with the resource that we want to search against -->
-        <server:search name="testSearch" dumpVars="true" sleep="10000" dumpRef="..">
-            <!-- Create a result element called client for each client dir -->
-            <server:search.type name="client" uri="clients" dumpVars="true"/>
+        <server:search name="fileTestSearch"  uri="clients" dumpVars="true" sleep="1000" dumpRef="..">
+            <resource:child name="client" path="*">
+                <resource:include name="@localname" src="meta"/>
+                <resource:child path="status.xml"/>
+                <resource:child path="identity.xml">
+                    
+                </resource:child>
+            </resource:child>
+        </server:search>
+    
+        <!-- Start with the resource that we want to search against -->
+        <server:search name="jdbcTestSearch"  uri="jdbc:hsqldb:file:testdb" dumpVars="true" sleep="1000" dumpRef="..">
+            <resource:parameter name="user" value="user"/>
+            <resource:child name="systems" path="SYSTEMS">
+                <resource:rule constraint="NAME" constraintType="equals"  value="%"/>
+                <resource:rule constraint="LAST_CONNECT" constraintType="expression"  value="> now() - 1hr"/>
+                <resource:include name="NAME"/>
+                <resource:include name="OS"/>
+                <resource:child name="interfaces" path="INTERFACES">
+                    <resource:rule constraint="SYSTEM_ID" constraintType="equals"  value="SYSTEMS.ID"/>
+                    <resource:rule constraint="STATUS" constraintType="equals"  value="ACTIVE"/>
+                    <resource:include name="IP"/>
+                    <resource:include name="MAC"/>
+                </resource:child>    
+            </resource:child>
         </server:search>
     
     </server:group>
     
+    <!-- new smaple output 
+    <?xml version="1.0" encoding="UTF-8"?>
+<server:group xmlns:client="http://www.delcyon.com/capo-client"
+              xmlns:resource="http://www.delcyon.com/capo/resource"
+              xmlns:server="http://www.delcyon.com/capo-server"
+              xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
+              name="default">
+    <server:search dumpRef=".." dumpVars="true" name="testSearch" sleep="1000" uri="clients">
+      <identity uri="file:/home/jeremiah/java-work/delcyon-capo/capo/server/clients/capo.client.1">
+         <server:id name="MAC" value="00:e0:81:b0:14:7f"/>
+         <server:id name="hostname" value="bluejay.goodinassociates.com"/>
+      </identity>
+   </server:search>
+</server:group>
+    -->
     
+    <!-- sample output 
+    <file:clients xmlns:file="http://www.delcyon.com/capo/resource/file" 
+        MD5="0" 
+        container="true"
+        executable="true"
+        exists="true"
+        lastModified="1342217486000"
+        path="file:/home/jeremiah/java-work/delcyon-capo/capo/server/clients"
+        readable="true"
+        uri="file:/home/jeremiah/java-work/delcyon-capo/capo/server/clients"
+        writeable="true">
+        <file:capo.client.1 
+            MD5="1ab50ed2306f45d81799968d15dc53051" 
+            container="true" 
+            executable="true"
+            exists="true"
+            lastModified="1343399703000"
+            path="file:/home/jeremiah/java-work/delcyon-capo/capo/server/clients/capo.client.1"
+            readable="true"
+            uri="file:/home/jeremiah/java-work/delcyon-capo/capo/server/clients/capo.client.1"
+            writeable="true">
+            <file:status.xml 
+                MD5="b7c9a648e0070fa021a7cf18d843d6df" 
+                container="false"
+                contentFormatType="XML"
+                executable="false"
+                exists="true"
+                lastModified="1343399702000"
+                mimeType="text/xml"
+                path="file:/home/jeremiah/java-work/delcyon-capo/capo/server/clients/capo.client.1/status.xml"
+                readable="true"
+                size="80"
+                uri="file:/home/jeremiah/java-work/delcyon-capo/capo/server/clients/capo.client.1/status.xml"
+                writeable="true">
+                <status lastConnectTime="1335193042006"/>
+            </file:status.xml>
+            <file:identity.xml 
+                MD5="f38746da26ed4de157f199b885815972" 
+                container="false"
+                contentFormatType="XML"
+                executable="false"
+                exists="true"
+                lastModified="1343399702000"
+                mimeType="text/xml"
+                path="file:/home/jeremiah/java-work/delcyon-capo/capo/server/clients/capo.client.1/identity.xml"
+                readable="true"
+                size="247"
+                uri="file:/home/jeremiah/java-work/delcyon-capo/capo/server/clients/capo.client.1/identity.xml"
+                writeable="true">
+                <server:identity>
+                    <server:id name="MAC" value="00:e0:81:b0:14:7f"/>
+                    <server:id name="hostname" value="bluejay.goodinassociates.com"/>
+                </server:identity>
+            </file:identity.xml>
+        </file:capo.client.1>
+    </file:clients>
+    -->
 </server:Capo>
