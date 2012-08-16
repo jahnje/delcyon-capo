@@ -8,15 +8,30 @@
     
     <server:group name="default">
        
+        <resource:file localName="localName" uri="uri">
+            <!-- context = content -->
+            <!-- metatdata = ../@* -->
+            <!-- constraint = name of something in current context -->
+            <!-- constaraintType = the kind of evaluation to do -->
+            <!-- value aka. test = test to run against constraint if exists -->
+            <!-- we need a rule vs. a test? This should act as the join clause vs. the where clause -->
+            <!-- restriction vs. join -->            
+            <!-- path = resource type local path, not understandable by other resource types -->
+            <!-- xpath = resource document path, with context equal to current content -->
+        </resource:file>
+       
         
         <!-- Start with the resource that we want to search against -->
         <server:search name="fileTestSearch"  uri="clients" dumpVars="true" sleep="1000" dumpRef="..">
             <resource:child name="client" path="*">
-                <resource:include name="@localname" src="meta"/>
-                <resource:child path="status.xml"/>
-                <resource:child path="identity.xml">
-                    
-                </resource:child>
+                <resource:include xpath="../@localname"/>
+                <resource:child path="status.xml">
+                    <resource:rule  constraintType="eval"  value="status/@lastConnectTime > now() - 1hr"/>
+                    <resource:child path="../identity.xml">
+                        <resource:include xpath="server:identity/server:id[@name = 'MAC']"/>
+                        <resource:include xpath="server:identity/server:id[@name = 'IP']"/>
+                    </resource:child>
+                </resource:child>                
             </resource:child>
         </server:search>
     
