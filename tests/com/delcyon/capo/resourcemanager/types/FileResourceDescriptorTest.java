@@ -6,7 +6,6 @@ import java.util.Arrays;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Assert;
-import org.junit.Before;
 import org.junit.BeforeClass;
 
 import com.delcyon.capo.resourcemanager.ResourceDescriptor;
@@ -91,13 +90,18 @@ public class FileResourceDescriptorTest extends ResourceDescriptorTest
     @Override
     public void testGetResourceState() throws Exception
     {
+        resourceDescriptor.reset(State.NONE);
         Assert.assertSame(State.NONE,resourceDescriptor.getResourceState());
+        resourceDescriptor.reset(State.NONE);
         resourceDescriptor.init(null, LifeCycle.EXPLICIT, false);
         Assert.assertSame(State.INITIALIZED,resourceDescriptor.getResourceState());
+        resourceDescriptor.reset(State.NONE);
         resourceDescriptor.open(null);
         Assert.assertSame(State.OPEN,resourceDescriptor.getResourceState());
+        resourceDescriptor.reset(State.NONE);
         resourceDescriptor.close(null);
         Assert.assertSame(State.CLOSED,resourceDescriptor.getResourceState());
+        resourceDescriptor.reset(State.NONE);
         resourceDescriptor.release(null);
         Assert.assertSame(State.RELEASED,resourceDescriptor.getResourceState());
     }
@@ -273,7 +277,6 @@ public class FileResourceDescriptorTest extends ResourceDescriptorTest
     public void testGetResourceType() throws Exception
     {
         Assert.fail("not yet implementd");
-        
     }
 
     @Override

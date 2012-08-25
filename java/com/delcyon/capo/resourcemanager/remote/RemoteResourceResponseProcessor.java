@@ -204,6 +204,9 @@ public class RemoteResourceResponseProcessor implements XMLServerResponseProcess
 					closeVarConnection();
 					getResourceDescriptorHashtable().remove(sessionID);										
 					break;
+				case RESET:
+					resourceDescriptor.reset(message.getPreviousState());
+					break;
 				case GET_CONTENT_METADATA:
 					reply.setContentMetaData(resourceDescriptor.getContentMetaData(this, message.getResourceParameters()));
 					break;

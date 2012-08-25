@@ -78,7 +78,8 @@ public class RemoteResourceDescriptorMessage extends AbstractResponse
 		GET_SUPPORTED_STREAM_FORMATS, 
 		GET_SUPPORTED_STREAM_TYPES, 
 		IS_SUPPORTED_ACTION, 
-		IS_SUPPORTED_STREAM_TYPE
+		IS_SUPPORTED_STREAM_TYPE,
+		RESET
 	}
 
 	private MessageType messageType;
@@ -102,7 +103,8 @@ public class RemoteResourceDescriptorMessage extends AbstractResponse
 	private StreamFormat[] supportedStreamFormats;
 	private StreamType[] supportedStreamTypes;
 	private Boolean isSupportedStreamType;
-	private Exception exception;	
+	private Exception exception;
+	private State previousState;	
 	
 
 	public void setMessageType(MessageType messageType)
@@ -339,6 +341,16 @@ public class RemoteResourceDescriptorMessage extends AbstractResponse
 	public Exception getException()
 	{
 		return exception;
+	}
+
+	public void setPreviousState(State previousState)
+	{
+		this.previousState = previousState;		
+	}
+	
+	public State getPreviousState()
+	{
+		return previousState;
 	}
 	
 }

@@ -23,6 +23,7 @@ import org.w3c.dom.Element;
 
 import com.delcyon.capo.controller.ControlElement;
 import com.delcyon.capo.controller.VariableContainer;
+import com.delcyon.capo.resourcemanager.ResourceDescriptor.State;
 import com.delcyon.capo.resourcemanager.types.ContentMetaData;
 
 /**
@@ -56,6 +57,10 @@ public interface ResourceDescriptor
 		SET_ATTRIBUTE
 	}
 	
+	/** This represents the state of a resource. 
+	 * The next state can only be set by calling the relevant method on the resource. 
+	 * A previous state can be set by using the reset(state) method.  
+	 * Ordinal is used on this enum, so the order of these declarations is important an should not be changed **/
 	public enum State
 	{
 		NONE,
@@ -112,6 +117,8 @@ public interface ResourceDescriptor
 	public boolean isSupportedAction(Action action) throws Exception;
 	public boolean isRemoteResource();
 	//BEGIN BASIC LIFECYCLE METHODS
+	/** used to set the resource to a previous state, will throw an exception if the state requested is not a previous state**/
+	public void reset(State previousState) throws Exception;	
 	/**Called by resource type when Descriptor is constructed
 	 * @throws Exception */
 	public void setup(ResourceType resourceType, String resourceURI) throws Exception;
@@ -176,6 +183,7 @@ public interface ResourceDescriptor
 	public abstract void addResourceParameters(VariableContainer variableContainer, ResourceParameter... resourceParameters) throws Exception;
 	
     public abstract ResourceDescriptor getChildResourceDescriptor(ControlElement callingControlElement, String relativeURI) throws Exception;
+    
 	
 	
 //	/** processes any resource parameters found, and populates any variables found from the current context

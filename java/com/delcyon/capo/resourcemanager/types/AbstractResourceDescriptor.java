@@ -40,11 +40,10 @@ import com.delcyon.capo.datastream.StreamEventListener;
 import com.delcyon.capo.datastream.StreamUtil;
 import com.delcyon.capo.resourcemanager.ContentFormatType;
 import com.delcyon.capo.resourcemanager.ResourceDescriptor;
-import com.delcyon.capo.resourcemanager.ResourceManager;
 import com.delcyon.capo.resourcemanager.ResourceParameter;
+import com.delcyon.capo.resourcemanager.ResourceType;
 import com.delcyon.capo.resourcemanager.ResourceParameter.EvaluationContext;
 import com.delcyon.capo.resourcemanager.ResourceParameter.Source;
-import com.delcyon.capo.resourcemanager.ResourceType;
 import com.delcyon.capo.server.CapoServer;
 import com.delcyon.capo.util.ReflectionUtility;
 import com.delcyon.capo.xml.XPath;
@@ -61,7 +60,7 @@ public abstract class AbstractResourceDescriptor implements ResourceDescriptor
 	private HashMap<StreamType, State> streamStateHashMap = new HashMap<StreamType, State>();
 	private String resourceURI = null; 
 	private ResourceParameter[] initialResourceParameters = null;
-	
+	private HashMap<State, StateParameters> stateParametersHashMap = new HashMap<State, StateParameters>();
 	
 	private LifeCycle lifeCycle;
 	private State resourceState = State.NONE;
@@ -77,6 +76,7 @@ public abstract class AbstractResourceDescriptor implements ResourceDescriptor
 	@Override
 	public void setup(ResourceType resourceType, String resourceURI) throws Exception
 	{
+		this.resourceState = State.NONE;
 		this.resourceType = resourceType;
 		this.resourceURI = resourceURI;
 		this.lifeCycle = resourceType.getDefaultLifeCycle();
@@ -86,7 +86,7 @@ public abstract class AbstractResourceDescriptor implements ResourceDescriptor
 	@Override
 	public void init(VariableContainer variableContainer,LifeCycle lifeCycle, boolean iterate, ResourceParameter... resourceParameters) throws Exception
 	{		
-		
+			
 			this.declaringVariableContainer = variableContainer;
 			//override life cycle
 			if (lifeCycle == null)
@@ -122,6 +122,7 @@ public abstract class AbstractResourceDescriptor implements ResourceDescriptor
 				}
 			}
 		this.resourceState = State.INITIALIZED;
+		this.stateParametersHashMap.put(State.INITIALIZED, new StateParameters(resourceParameters, variableContainer));
 	}
 		
 
@@ -142,12 +143,14 @@ public abstract class AbstractResourceDescriptor implements ResourceDescriptor
 
 
 		this.resourceState = State.OPEN;
+		this.stateParametersHashMap.put(State.OPEN, new StateParameters(resourceParameters, variableContainer));
  	}
 	
 	
 	@Override
 	public void close(VariableContainer variableContainer,ResourceParameter... resourceParameters) throws Exception
-	{
+	{		
+		
 		Vector<ResourceParameter> tempResourceParameterVector = new Vector<ResourceParameter>();
 
 		for (ResourceParameter resourceParameter : resourceParameters)
@@ -165,6 +168,7 @@ public abstract class AbstractResourceDescriptor implements ResourceDescriptor
 		if (isIterating() == false)
 		{
 			resourceState = State.CLOSED;
+			this.stateParametersHashMap.put(State.CLOSED, new StateParameters(resourceParameters, variableContainer));
 		}
 		
 		for (InputStream inputStream : openInputStreamVector)
@@ -207,12 +211,80 @@ public abstract class AbstractResourceDescriptor implements ResourceDescriptor
 	@Override
 	public void release(VariableContainer variableContainer,ResourceParameter... resourceParameters) throws Exception
 	{
-		//do nothing, children need to overrride this is they want something to happen
-		
+		if (getResourceState().ordinal() >= State.OPEN.ordinal() && getResourceState().ordinal() < State.CLOSED.ordinal())
+		{
+			close(variableContainer, resourceParameters);
+		}
+		//TODO cleanup metadata
+		setResourceState(State.RELEASED);
+		this.stateParametersHashMap.put(State.RELEASED, new StateParameters(resourceParameters, variableContainer));
+	}
+
+	@Override
+	public void reset(State previousState) throws Exception
+	{
+	    if(previousState.ordinal() > getResourceState().ordinal())
+	    {
+	        throw new Exception("Cannot reset a resource to a later state. Current State:"+getResourceState()+" Requested State:"+previousState);
+	    }
+	    
+	    //if we aren't already open, don't try, we're probably just trying to re-initialize
+	    if(getResourceState().ordinal() < State.OPEN.ordinal())
+	    {
+	    	release(null);
+	    }
+	    
+	    if (previousState.ordinal() == getResourceState().ordinal())
+	    {
+	    	nextState(null);
+	    }
+	    
+	    while(getResourceState() != previousState)
+	    {
+	    	int nextState = getResourceState().ordinal()+1;
+	    	if (nextState >= State.values().length)
+	    	{
+	    		nextState = 0;
+	    	}
+	    	StateParameters nextStateParameters = stateParametersHashMap.get(State.values()[nextState]);
+	    	if (nextStateParameters == null)
+	    	{
+	    		nextState(null);
+	    	}
+	    	else
+	    	{
+	    		nextState(nextStateParameters.getVariableContainer(), nextStateParameters.getResourceParameters());
+	    	}
+	    }
+	    
 	}
 	
-
-
+	/** This is just a simple mapping to allow us to jump to the next state. Maybe someday, we can put the proper method pointers in the enum declaration when available.*/
+	private void nextState(VariableContainer variableContainer,ResourceParameter... resourceParameters) throws Exception
+	{
+		if (getResourceState() == State.NONE)
+        {
+        	init(variableContainer, lifeCycle, isIterating, resourceParameters);
+        }
+        else if (getResourceState() == State.INITIALIZED)
+        {
+        	open(variableContainer, resourceParameters);
+        }
+        else if (getResourceState() == State.OPEN || getResourceState() == State.STEPPING)
+        {
+        	close(variableContainer, resourceParameters);
+        }
+        else if (getResourceState() == State.CLOSED)
+        {
+        	release(variableContainer, resourceParameters);
+        }
+        else if (getResourceState() == State.RELEASED)
+        {
+        	setup(resourceType, resourceURI);
+        }
+	}
+	
+	
 	public String getResourceURI()
 	{
 		return resourceURI;

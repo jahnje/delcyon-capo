@@ -236,6 +236,14 @@ public class RemoteResourceDescriptorProxy  implements ResourceDescriptor,Client
 	}
 	
 	@Override
+	public void reset(State previousState) throws Exception
+	{		
+		RemoteResourceDescriptorMessage message = new RemoteResourceDescriptorMessage();
+		message.setPreviousState(previousState);		
+		message = sendResponse(message, MessageType.RESET,false);		
+	}
+	
+	@Override
 	public boolean next(VariableContainer variableContainer, ResourceParameter... resourceParameters) throws Exception
 	{
 		this.variableContainer = variableContainer;
@@ -531,4 +539,6 @@ public class RemoteResourceDescriptorProxy  implements ResourceDescriptor,Client
 	{
 		throw new UnsupportedOperationException();
 	}
+
+	
 }
