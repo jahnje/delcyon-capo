@@ -120,6 +120,14 @@ public class ResourceParameter
 		this.evaluationContext = EvaluationContext.NOW;
 	}
 	
+	public ResourceParameter(String name, String value)
+	{	
+		this.name = name;
+		this.value = value;
+		this.source = Source.CALL;
+		this.evaluationContext = EvaluationContext.NOW;
+	}
+	
 	@SuppressWarnings("unchecked")
     public ResourceParameter(Enum name, Enum value)
     {   

@@ -117,9 +117,6 @@ public abstract class ResourceDescriptorTest
     public abstract void testGetLocalName() throws Exception;
 
     @Test
-    public abstract void testSetResourceURI() throws Exception;
-
-    @Test
     public abstract void testGetResourceType() throws Exception;
 
     @Test

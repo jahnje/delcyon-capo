@@ -393,7 +393,7 @@ public class RemoteResourceDescriptorProxy  implements ResourceDescriptor,Client
 		return this.resourceURI;
 	}
 
-	@Override
+	
 	public void setResourceURI(String resourceURI)
 	{
 		this.resourceURI = resourceURI;

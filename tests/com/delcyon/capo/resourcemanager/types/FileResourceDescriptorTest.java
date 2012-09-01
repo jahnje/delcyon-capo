@@ -1,21 +1,35 @@
 package com.delcyon.capo.resourcemanager.types;
 
 
+import java.io.ByteArrayOutputStream;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.Arrays;
+import java.util.List;
 
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.BeforeClass;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
 
+import com.delcyon.capo.CapoApplication;
+import com.delcyon.capo.datastream.StreamUtil;
 import com.delcyon.capo.resourcemanager.ResourceDescriptor;
+import com.delcyon.capo.resourcemanager.ResourceDescriptorTest;
+import com.delcyon.capo.resourcemanager.ResourceParameter;
+import com.delcyon.capo.resourcemanager.ResourceDescriptor.Action;
 import com.delcyon.capo.resourcemanager.ResourceDescriptor.LifeCycle;
 import com.delcyon.capo.resourcemanager.ResourceDescriptor.State;
 import com.delcyon.capo.resourcemanager.ResourceDescriptor.StreamFormat;
 import com.delcyon.capo.resourcemanager.ResourceDescriptor.StreamType;
-import com.delcyon.capo.resourcemanager.ResourceDescriptorTest;
 import com.delcyon.capo.tests.util.TestServer;
 import com.delcyon.capo.tests.util.Util;
+import com.delcyon.capo.xml.XMLDiff;
 
 public class FileResourceDescriptorTest extends ResourceDescriptorTest
 {
@@ -36,9 +50,14 @@ public class FileResourceDescriptorTest extends ResourceDescriptorTest
     @Override
     protected ResourceDescriptor getResourceDescriptor() throws Exception
     {        
-        return TestServer.getServerInstance().getApplication().getDataManager().getResourceDescriptor(null, "file:test-data/main.xml");
+        return TestServer.getServerInstance().getApplication().getDataManager().getResourceDescriptor(null, "file:config/config.xml");
     }
     
+    @Before
+    public void setup() throws Exception
+    {
+    	Util.copyTree("test-data/capo", "capo", true, true);
+    }
     
 
     @After
@@ -106,190 +125,369 @@ public class FileResourceDescriptorTest extends ResourceDescriptorTest
         Assert.assertSame(State.RELEASED,resourceDescriptor.getResourceState());
     }
 
-    @Override
+    @Override //TODO remove, since never used
     public void testGetStreamState() throws Exception
-    {        
-        Assert.fail("not yet implementd");
+    {   
+    	return;
+    	/*
+    	resourceDescriptor.reset(State.NONE);
+    	resourceDescriptor.open(null);
+    	if (Arrays.asList(resourceDescriptor.getSupportedStreamTypes()).contains(StreamType.INPUT))
+    	{
+    		resourceDescriptor.getInputStream(null);
+    		Assert.assertSame(State.OPEN,resourceDescriptor.getStreamState(StreamType.INPUT));
+    	}
+    	if (Arrays.asList(resourceDescriptor.getSupportedStreamTypes()).contains(StreamType.ERROR))
+    	{
+    		//TODO no get ErrorInputStream
+    		Assert.assertSame(State.OPEN,resourceDescriptor.getStreamState(StreamType.ERROR));
+    	}
+    	
+    	
+    	if (Arrays.asList(resourceDescriptor.getSupportedStreamTypes()).contains(StreamType.OUTPUT))
+    	{
+    		resourceDescriptor.getOutputStream(null);
+        	Assert.assertSame(State.OPEN,resourceDescriptor.getStreamState(StreamType.OUTPUT));
+    	}
+    	*/
     }
 
     @Override
     public void testPerformAction() throws Exception
     {
-        Assert.fail("not yet implementd");
-        
+        resourceDescriptor.reset(State.NONE);
+        resourceDescriptor.init(null, LifeCycle.EXPLICIT, false);
+        Assert.assertTrue(resourceDescriptor.getContentMetaData(null).exists());
+        resourceDescriptor.performAction(null, Action.DELETE);        
+        Assert.assertTrue(resourceDescriptor.getContentMetaData(null).exists() == false);
+        resourceDescriptor.performAction(null, Action.CREATE);
+        Assert.assertTrue(resourceDescriptor.getContentMetaData(null).exists());
     }
 
     @Override
     public void testIsSupportedAction() throws Exception
     {
-        Assert.fail("not yet implementd");
-        
+    	resourceDescriptor.reset(State.NONE);
+        resourceDescriptor.init(null, LifeCycle.EXPLICIT, false);
+        Assert.assertTrue(resourceDescriptor.isSupportedAction(Action.CREATE));
+        Assert.assertTrue(resourceDescriptor.isSupportedAction(Action.DELETE));
     }
 
     @Override
     public void testIsRemoteResource() throws Exception
     {
-        Assert.fail("not yet implementd");
+    	Assert.assertTrue(resourceDescriptor.isRemoteResource() == false);
         
     }
 
     @Override
     public void testSetup() throws Exception
     {
-        Assert.fail("not yet implementd");
-        
+        ResourceDescriptor  resourceDescriptor = this.resourceDescriptor.getResourceType().getResourceDescriptor(this.resourceDescriptor.getResourceURI());
+        Assert.assertSame(State.NONE,resourceDescriptor.getResourceState());
+        Assert.assertSame(this.resourceDescriptor.getResourceType(),resourceDescriptor.getResourceType());
+        Assert.assertSame(this.resourceDescriptor.getResourceURI(),resourceDescriptor.getResourceURI());
+        Assert.assertSame(this.resourceDescriptor.getResourceType().getDefaultLifeCycle(),resourceDescriptor.getLifeCycle());
+        resourceDescriptor.release(null);
     }
 
     @Override
     public void testInit() throws Exception
     {
-        Assert.fail("not yet implementd");
-        
+    	ResourceDescriptor  resourceDescriptor = this.resourceDescriptor.getResourceType().getResourceDescriptor(this.resourceDescriptor.getResourceURI());
+        resourceDescriptor.init(null, LifeCycle.EXPLICIT, false);
+        Assert.assertSame(State.INITIALIZED,resourceDescriptor.getResourceState());
+        Assert.assertNotNull(resourceDescriptor.getResourceURI());
+        Assert.assertNotNull(resourceDescriptor.getLocalName());
+        //TODO check for initialization content meta data
+        resourceDescriptor.release(null);
     }
 
     @Override
     public void testOpen() throws Exception
     {
-        Assert.fail("not yet implementd");
-        
+        resourceDescriptor.reset(State.NONE);
+        resourceDescriptor.init(null, LifeCycle.EXPLICIT, false);
+        resourceDescriptor.open(null);
+        Assert.assertSame(State.OPEN,resourceDescriptor.getResourceState());
+      //TODO check for open content meta data
     }
 
     @Override
     public void testReadXML() throws Exception
     {
-        Assert.fail("not yet implementd");
+    	resourceDescriptor.reset(State.NONE);
+        resourceDescriptor.init(null, LifeCycle.EXPLICIT, false);
+        resourceDescriptor.open(null);
+        Assert.assertSame(State.OPEN,resourceDescriptor.getResourceState());
+        Element element = resourceDescriptor.readXML(null);
+        Assert.assertNotNull(element);
+        Assert.assertTrue(element.hasChildNodes());
+        int count = 0;
+        NodeList nodeList = element.getChildNodes();
+        for(int index = 0; index < nodeList.getLength(); index++)
+        {
+        	if (nodeList.item(index).getNodeType() == Node.ELEMENT_NODE)
+        	{
+        		count++;
+        	}
+        }
+        System.out.println("readXML found "+count+" child elements");
+        Assert.assertTrue(count > 0);
+        resourceDescriptor.release(null);
+    }
+
+    
+
+    @Override
+    public void testReadBlock() throws Exception
+    {
+    	resourceDescriptor.reset(State.NONE);
+        resourceDescriptor.init(null, LifeCycle.EXPLICIT, false);
+        resourceDescriptor.open(null);
+        Assert.assertSame(State.OPEN,resourceDescriptor.getResourceState());
+        byte[] data = resourceDescriptor.readBlock(null);
+        Assert.assertTrue(data.length > 10);
+        System.out.println("Read the following bloack data: '"+new String(data)+"'");
         
     }
 
     @Override
     public void testWriteXML() throws Exception
     {
-        Assert.fail("not yet implementd");
+    	resourceDescriptor.reset(State.NONE);
+        resourceDescriptor.init(null, LifeCycle.EXPLICIT, false);
+        resourceDescriptor.open(null);
+        Document document = CapoApplication.getDocumentBuilder().newDocument();
+        Element rootElement = document.createElementNS("BSNS","ns:testRootElement");
+        rootElement.setAttributeNS("http://www.w3.org/2000/xmlns/","xmlns:ns","BSNS");
+        rootElement.setTextContent("This is a test");
+        resourceDescriptor.writeXML(null, rootElement);
+        Element readElement = resourceDescriptor.readXML(null);
+        XMLDiff xmlDiff = new XMLDiff();
+        Element diffElement = xmlDiff.getDifferences(rootElement, readElement);
+        Assert.assertEquals(XMLDiff.EQUALITY,diffElement.getAttribute("xdiff:element"));
         
     }
-
-    @Override
-    public void testReadBlock() throws Exception
-    {
-        Assert.fail("not yet implementd");
-        
-    }
-
+    
+    
     @Override
     public void testWriteBlock() throws Exception
     {
-        Assert.fail("not yet implementd");
+    	resourceDescriptor.reset(State.NONE);
+        resourceDescriptor.init(null, LifeCycle.EXPLICIT, false);
+        resourceDescriptor.open(null);
+        resourceDescriptor.writeBlock(null,"this is a test".getBytes());
+        Assert.assertArrayEquals("this is a test".getBytes(),resourceDescriptor.readBlock(null));
         
     }
 
     @Override
     public void testNext() throws Exception
     {
-        Assert.fail("not yet implementd");
+    	resourceDescriptor.reset(State.NONE);
+        resourceDescriptor.init(null, LifeCycle.EXPLICIT, false);
+        resourceDescriptor.open(null);
+        if(resourceDescriptor.getResourceType().isIterable())
+        {
+        	Assert.assertTrue(resourceDescriptor.next(null));
+        }
+        else
+        {
+        	Assert.assertTrue(resourceDescriptor.next(null) == false);
+        }
         
     }
 
     @Override
     public void testProcessOutput() throws Exception
     {
-        Assert.fail("not yet implementd");
+    	resourceDescriptor.reset(State.NONE);
+        resourceDescriptor.init(null, LifeCycle.EXPLICIT, false);
+        resourceDescriptor.open(null);
+        if (resourceDescriptor.isSupportedStreamFormat(StreamType.OUTPUT, StreamFormat.PROCESS))
+        {
+        	resourceDescriptor.processOutput(null);
+        	//TODO figure out what exactly we expect to happen here, or if this method is even useful.
+        }
+        else
+        {
+        	//skip, do nothing because it isn't supported
+        }
         
     }
 
     @Override
     public void testProcessInput() throws Exception
     {
-        Assert.fail("not yet implementd");
+    	resourceDescriptor.reset(State.NONE);
+        resourceDescriptor.init(null, LifeCycle.EXPLICIT, false);
+        resourceDescriptor.open(null);
+        if (resourceDescriptor.isSupportedStreamFormat(StreamType.INPUT, StreamFormat.PROCESS))
+        {
+        	resourceDescriptor.processInput(null);
+        	//TODO figure out what exactly we expect to happen here, or if this method is even useful.
+        }
+        else
+        {
+        	//skip, do nothing because it isn't supported
+        }
         
     }
 
     @Override
     public void testGetInputStream() throws Exception
     {
-        Assert.fail("not yet implementd");
+    	resourceDescriptor.reset(State.NONE);
+        resourceDescriptor.init(null, LifeCycle.EXPLICIT, false);
+        resourceDescriptor.open(null);
+        if (resourceDescriptor.isSupportedStreamFormat(StreamType.INPUT, StreamFormat.STREAM))
+        {
+        	InputStream inputStream = resourceDescriptor.getInputStream(null);
+        	ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+        	Assert.assertTrue(StreamUtil.readInputStreamIntoOutputStream(inputStream, byteArrayOutputStream) > 10);
+        	Assert.assertTrue(new String(byteArrayOutputStream.toByteArray()).startsWith("<?xml version=\"1.0\" encoding=\"UTF-8\"?>"));
+        }
+        else
+        {
+        	//do nothing
+        }
         
     }
 
     @Override
     public void testGetOutputStream() throws Exception
     {
-        Assert.fail("not yet implementd");
+    	resourceDescriptor.reset(State.NONE);
+        resourceDescriptor.init(null, LifeCycle.EXPLICIT, false);
+        resourceDescriptor.open(null);
+        if (resourceDescriptor.isSupportedStreamFormat(StreamType.OUTPUT, StreamFormat.STREAM))
+        {
+        	OutputStream outputStream = resourceDescriptor.getOutputStream(null);
+        	outputStream.write("this is a test".getBytes());
+        	outputStream.close();
+        	InputStream inputStream = resourceDescriptor.getInputStream(null);
+        	ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+        	Assert.assertTrue(StreamUtil.readInputStreamIntoOutputStream(inputStream, byteArrayOutputStream) > 10);
+        	Assert.assertTrue(new String(byteArrayOutputStream.toByteArray()).equals("this is a test"));
+        }
+        else
+        {
+        	//do nothing
+        }
         
     }
 
     @Override
     public void testClose() throws Exception
     {
-        Assert.fail("not yet implementd");
-        
+    	resourceDescriptor.reset(State.NONE);
+        resourceDescriptor.init(null, LifeCycle.EXPLICIT, false);
+        resourceDescriptor.open(null);
+        Assert.assertSame(State.OPEN,resourceDescriptor.getResourceState());
+        resourceDescriptor.close(null);
+        Assert.assertSame(State.CLOSED,resourceDescriptor.getResourceState());        
     }
 
     @Override
     public void testRelease() throws Exception
     {
-        Assert.fail("not yet implementd");
+    	resourceDescriptor.reset(State.NONE);
+        resourceDescriptor.init(null, LifeCycle.EXPLICIT, false);
+        resourceDescriptor.open(null);
+        Assert.assertSame(State.OPEN,resourceDescriptor.getResourceState());
+        resourceDescriptor.close(null);
+        Assert.assertSame(State.CLOSED,resourceDescriptor.getResourceState());
+        resourceDescriptor.release(null);
+        Assert.assertSame(State.RELEASED,resourceDescriptor.getResourceState());
         
     }
 
     @Override
     public void testGetContentMetaData() throws Exception
     {
-        Assert.fail("not yet implementd");
+    	resourceDescriptor.reset(State.NONE);
+        resourceDescriptor.init(null, LifeCycle.EXPLICIT, false);
+        resourceDescriptor.open(null);
+        Assert.assertSame(State.OPEN,resourceDescriptor.getResourceState());
+        ContentMetaData contentMetaData = resourceDescriptor.getContentMetaData(null);
+        List<String> attributeList = contentMetaData.getSupportedAttributes();
+        for (String attribute : attributeList)
+		{
+        	System.out.println(attribute+" = "+contentMetaData.getValue(attribute));
+			Assert.assertNotNull(contentMetaData.getValue(attribute));
+		}
+        
         
     }
 
     @Override
     public void testGetIterationMetaData() throws Exception
     {
-        Assert.fail("not yet implementd");
-        
+    	if (resourceDescriptor.getResourceType().isIterable())
+    	{
+    		resourceDescriptor.reset(State.NONE);
+    		resourceDescriptor.init(null, LifeCycle.EXPLICIT, false);
+    		resourceDescriptor.open(null);
+    		resourceDescriptor.next(null);
+    		ContentMetaData contentMetaData = resourceDescriptor.getIterationMetaData(null);
+    		List<String> attributeList = contentMetaData.getSupportedAttributes();
+    		for (String attribute : attributeList)
+    		{
+    			System.out.println(attribute+" = "+contentMetaData.getValue(attribute));
+    			Assert.assertNotNull(contentMetaData.getValue(attribute));
+    		}
+    	}
+
     }
 
     @Override
     public void testGetLifeCycle() throws Exception
     {
-        Assert.fail("not yet implementd");
+    	Assert.assertNotNull(resourceDescriptor.getLifeCycle());
         
     }
 
     @Override
     public void testGetResourceURI() throws Exception
     {
-        Assert.fail("not yet implementd");
+    	Assert.assertNotNull(resourceDescriptor.getResourceURI());
         
     }
 
     @Override
     public void testGetLocalName() throws Exception
     {
-        Assert.fail("not yet implementd");
-        
-    }
-
-    @Override
-    public void testSetResourceURI() throws Exception
-    {
-        Assert.fail("not yet implementd");
+    	Assert.assertNotNull(resourceDescriptor.getLocalName());
         
     }
 
     @Override
     public void testGetResourceType() throws Exception
     {
-        Assert.fail("not yet implementd");
+    	Assert.assertNotNull(resourceDescriptor.getResourceType());
     }
 
     @Override
     public void testAddResourceParameters() throws Exception
     {
-        Assert.fail("not yet implementd");
-        
+        resourceDescriptor.addResourceParameters(null, new ResourceParameter("test","test"));        
     }
 
     @Override
     public void testGetChildResourceDescriptor() throws Exception
     {
-        Assert.fail("not yet implementd");
+    	resourceDescriptor.reset(State.NONE);
+    	resourceDescriptor.init(null, LifeCycle.EXPLICIT, false);
+    	resourceDescriptor.open(null);
+    	if (resourceDescriptor.getContentMetaData(null).isContainer())
+    	{
+    		List<ContentMetaData> childContentMetaDataList = resourceDescriptor.getContentMetaData(null).getContainedResources();
+    		for (ContentMetaData contentMetaData : childContentMetaDataList)
+			{
+				Assert.assertNotNull(resourceDescriptor.getChildResourceDescriptor(null, contentMetaData.getResourceURI()));
+			}
+    	}
         
     }
 

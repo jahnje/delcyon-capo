@@ -289,7 +289,7 @@ public abstract class AbstractResourceDescriptor implements ResourceDescriptor
 	{
 		return resourceURI;
 	}
-	public void setResourceURI(String resourceURI)
+	protected void setResourceURI(String resourceURI)
 	{
 		this.resourceURI = resourceURI;
 	}
@@ -463,6 +463,7 @@ public abstract class AbstractResourceDescriptor implements ResourceDescriptor
 		this.resourceState = state;
 	}
 	
+	@Deprecated //TODO remove, never used
 	public void setStreamState(StreamType streamType, State state)
 	{
 		streamStateHashMap.put(streamType, state);

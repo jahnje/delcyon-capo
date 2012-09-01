@@ -34,7 +34,7 @@ public class SearchTypeElement extends AbstractControl
 
 	public enum Attributes
 	{
-		name,uri
+		name
 	}
 	
 	
@@ -75,14 +75,7 @@ public class SearchTypeElement extends AbstractControl
 	@Override
 	public Object processServerSideElement() throws Exception
 	{
-		ResourceDescriptor resourceDescriptor = group.getResourceDescriptor(this, getAttributeValue(Attributes.uri));
-		ResourceDocumentBuilder resourceDocumentBuilder = new ResourceDocumentBuilder();
-		Document document = resourceDocumentBuilder.buildDocument(resourceDescriptor);// <=== pass in any constraint nodes
-		Element resourceElement = document.getDocumentElement();
-		resourceElement = (Element) getControlElementDeclaration().getOwnerDocument().importNode(resourceElement,true);
-		getControlElementDeclaration().appendChild(resourceElement);
-		//process any children that are types
-		processChildren(getControlElementDeclaration().getChildNodes(), group, this, getControllerClientRequestProcessor());
+		
 		return null;
 	}
 

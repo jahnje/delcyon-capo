@@ -111,6 +111,7 @@ public interface ResourceDescriptor
 	public State getResourceState() throws Exception;
 	/** Returns the state of a particular stream
 	 * @throws Exception */
+	@Deprecated //TODO remove this, seems we've never used it.
 	public State getStreamState(StreamType streamType) throws Exception;
 	
 	public boolean performAction(VariableContainer variableContainer, Action action,ResourceParameter... resourceParameters) throws Exception;
@@ -142,9 +143,11 @@ public interface ResourceDescriptor
 	/**Causes a read from the descriptor to move it to he next data iteration*/
 	public boolean next(VariableContainer variableContainer, ResourceParameter... resourceParameters) throws Exception;
 	
-	/** Requires that the resource support the PROCESS stream type on the OUTPUT stream. Used to send commands to the resourceDescriptor*/
+	/** Requires that the resource support the PROCESS stream format on the OUTPUT stream. Used to send commands to the resourceDescriptor*/
+	@Deprecated //TODO this may not actually do anything useful
 	public void processOutput(VariableContainer variableContainer,ResourceParameter... resourceParameters) throws Exception;	
-	/** Requires that the resource support the PROCESS stream type on the INPUT stream, Used to send commands to the resourceDescriptor*/
+	/** Requires that the resource support the PROCESS stream format on the INPUT stream, Used to send commands to the resourceDescriptor*/
+	@Deprecated //TODO this may not actually do anything useful
 	public void processInput(VariableContainer variableContainer,ResourceParameter... resourceParameters) throws Exception;
 	
 	/** Returns an inputStream for reading, and requires that the resource support the STREAM format type */
@@ -172,8 +175,6 @@ public interface ResourceDescriptor
 
 	public abstract String getLocalName();
 	
-	public abstract void setResourceURI(String resourceURI);
-
 	public ResourceType getResourceType();	
 		
 	/** adds a resource parameter to the list of existing parameters

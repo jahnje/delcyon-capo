@@ -60,7 +60,7 @@ public class FileResourceType extends AbstractResourceType
 	@Override
 	public boolean isIterable()
 	{
-		return true;
+		return false;
 	}
 	
 	@Override
