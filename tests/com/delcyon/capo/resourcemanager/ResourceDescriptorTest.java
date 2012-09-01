@@ -1,10 +1,30 @@
 package com.delcyon.capo.resourcemanager;
 
+import java.io.ByteArrayOutputStream;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.util.List;
+
 import org.junit.After;
 import org.junit.AfterClass;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
+
+import com.delcyon.capo.CapoApplication;
+import com.delcyon.capo.datastream.StreamUtil;
+import com.delcyon.capo.resourcemanager.ResourceDescriptor.Action;
+import com.delcyon.capo.resourcemanager.ResourceDescriptor.LifeCycle;
+import com.delcyon.capo.resourcemanager.ResourceDescriptor.State;
+import com.delcyon.capo.resourcemanager.ResourceDescriptor.StreamFormat;
+import com.delcyon.capo.resourcemanager.ResourceDescriptor.StreamType;
+import com.delcyon.capo.resourcemanager.types.ContentMetaData;
+import com.delcyon.capo.xml.XMLDiff;
 
 public abstract class ResourceDescriptorTest
 {
@@ -45,84 +65,369 @@ public abstract class ResourceDescriptorTest
     @Test
     public abstract void testIsSupportedStreamFormat() throws Exception;
 
-    @Test
-    public abstract void testGetResourceState() throws Exception;
+    @Test  
+    public void testGetResourceState() throws Exception
+    {
+        resourceDescriptor.reset(State.NONE);
+        Assert.assertSame(State.NONE,resourceDescriptor.getResourceState());
+        resourceDescriptor.reset(State.NONE);
+        resourceDescriptor.init(null, LifeCycle.EXPLICIT, false);
+        Assert.assertSame(State.INITIALIZED,resourceDescriptor.getResourceState());
+        resourceDescriptor.reset(State.NONE);
+        resourceDescriptor.open(null);
+        Assert.assertSame(State.OPEN,resourceDescriptor.getResourceState());
+        resourceDescriptor.reset(State.NONE);
+        resourceDescriptor.close(null);
+        Assert.assertSame(State.CLOSED,resourceDescriptor.getResourceState());
+        resourceDescriptor.reset(State.NONE);
+        resourceDescriptor.release(null);
+        Assert.assertSame(State.RELEASED,resourceDescriptor.getResourceState());
+    }
+
+    
+
+    @Test    
+    public void testPerformAction() throws Exception
+    {
+        resourceDescriptor.reset(State.NONE);
+        resourceDescriptor.init(null, LifeCycle.EXPLICIT, false);
+        Assert.assertTrue(resourceDescriptor.getContentMetaData(null).exists());
+        resourceDescriptor.performAction(null, Action.DELETE);        
+        Assert.assertTrue(resourceDescriptor.getContentMetaData(null).exists() == false);
+        resourceDescriptor.performAction(null, Action.CREATE);
+        Assert.assertTrue(resourceDescriptor.getContentMetaData(null).exists());
+    }
+
+
+    
+
+    
 
     @Test
-    public abstract void testGetStreamState() throws Exception;
+    public void testIsSupportedAction() throws Exception
+    {
+    	resourceDescriptor.reset(State.NONE);
+        resourceDescriptor.init(null, LifeCycle.EXPLICIT, false);
+        Assert.assertTrue(resourceDescriptor.isSupportedAction(Action.CREATE));
+        Assert.assertTrue(resourceDescriptor.isSupportedAction(Action.DELETE));
+    }
 
     @Test
-    public abstract void testPerformAction() throws Exception;
+    public void testIsRemoteResource() throws Exception
+    {
+    	Assert.assertTrue(resourceDescriptor.isRemoteResource() == false);
+        
+    }
 
     @Test
-    public abstract void testIsSupportedAction() throws Exception;
+    public void testSetup() throws Exception
+    {
+        ResourceDescriptor  resourceDescriptor = this.resourceDescriptor.getResourceType().getResourceDescriptor(this.resourceDescriptor.getResourceURI());
+        Assert.assertSame(State.NONE,resourceDescriptor.getResourceState());
+        Assert.assertSame(this.resourceDescriptor.getResourceType(),resourceDescriptor.getResourceType());
+        Assert.assertSame(this.resourceDescriptor.getResourceURI(),resourceDescriptor.getResourceURI());
+        Assert.assertSame(this.resourceDescriptor.getResourceType().getDefaultLifeCycle(),resourceDescriptor.getLifeCycle());
+        resourceDescriptor.release(null);
+    }
 
     @Test
-    public abstract void testIsRemoteResource() throws Exception;
+    public void testInit() throws Exception
+    {
+    	ResourceDescriptor  resourceDescriptor = this.resourceDescriptor.getResourceType().getResourceDescriptor(this.resourceDescriptor.getResourceURI());
+        resourceDescriptor.init(null, LifeCycle.EXPLICIT, false);
+        Assert.assertSame(State.INITIALIZED,resourceDescriptor.getResourceState());
+        Assert.assertNotNull(resourceDescriptor.getResourceURI());
+        Assert.assertNotNull(resourceDescriptor.getLocalName());
+        //TODO check for initialization content meta data
+        resourceDescriptor.release(null);
+    }
 
     @Test
-    public abstract void testSetup() throws Exception;
+    public void testOpen() throws Exception
+    {
+        resourceDescriptor.reset(State.NONE);
+        resourceDescriptor.init(null, LifeCycle.EXPLICIT, false);
+        resourceDescriptor.open(null);
+        Assert.assertSame(State.OPEN,resourceDescriptor.getResourceState());
+      //TODO check for open content meta data
+    }
 
     @Test
-    public abstract void testInit() throws Exception;
+    public void testReadXML() throws Exception
+    {
+    	resourceDescriptor.reset(State.NONE);
+        resourceDescriptor.init(null, LifeCycle.EXPLICIT, false);
+        resourceDescriptor.open(null);
+        Assert.assertSame(State.OPEN,resourceDescriptor.getResourceState());
+        Element element = resourceDescriptor.readXML(null);
+        Assert.assertNotNull(element);
+        Assert.assertTrue(element.hasChildNodes());
+        int count = 0;
+        NodeList nodeList = element.getChildNodes();
+        for(int index = 0; index < nodeList.getLength(); index++)
+        {
+        	if (nodeList.item(index).getNodeType() == Node.ELEMENT_NODE)
+        	{
+        		count++;
+        	}
+        }
+        System.out.println("readXML found "+count+" child elements");
+        Assert.assertTrue(count > 0);
+        resourceDescriptor.release(null);
+    }
+
+    
 
     @Test
-    public abstract void testOpen() throws Exception;
+    public void testReadBlock() throws Exception
+    {
+    	resourceDescriptor.reset(State.NONE);
+        resourceDescriptor.init(null, LifeCycle.EXPLICIT, false);
+        resourceDescriptor.open(null);
+        Assert.assertSame(State.OPEN,resourceDescriptor.getResourceState());
+        byte[] data = resourceDescriptor.readBlock(null);
+        Assert.assertTrue(data.length > 10);
+        System.out.println("Read the following bloack data: '"+new String(data)+"'");
+        
+    }
 
     @Test
-    public abstract void testReadXML() throws Exception;
+    public void testWriteXML() throws Exception
+    {
+    	resourceDescriptor.reset(State.NONE);
+        resourceDescriptor.init(null, LifeCycle.EXPLICIT, false);
+        resourceDescriptor.open(null);
+        Document document = CapoApplication.getDocumentBuilder().newDocument();
+        Element rootElement = document.createElementNS("BSNS","ns:testRootElement");
+        rootElement.setAttributeNS("http://www.w3.org/2000/xmlns/","xmlns:ns","BSNS");
+        rootElement.setTextContent("This is a test");
+        resourceDescriptor.writeXML(null, rootElement);
+        Element readElement = resourceDescriptor.readXML(null);
+        XMLDiff xmlDiff = new XMLDiff();
+        Element diffElement = xmlDiff.getDifferences(rootElement, readElement);
+        Assert.assertEquals(XMLDiff.EQUALITY,diffElement.getAttribute("xdiff:element"));
+        
+    }
+    
+    
+    @Test
+    public void testWriteBlock() throws Exception
+    {
+    	resourceDescriptor.reset(State.NONE);
+        resourceDescriptor.init(null, LifeCycle.EXPLICIT, false);
+        resourceDescriptor.open(null);
+        resourceDescriptor.writeBlock(null,"this is a test".getBytes());
+        Assert.assertArrayEquals("this is a test".getBytes(),resourceDescriptor.readBlock(null));
+        
+    }
 
     @Test
-    public abstract void testWriteXML() throws Exception;
+    public void testNext() throws Exception
+    {
+    	resourceDescriptor.reset(State.NONE);
+        resourceDescriptor.init(null, LifeCycle.EXPLICIT, false);
+        resourceDescriptor.open(null);
+        if(resourceDescriptor.getResourceType().isIterable())
+        {
+        	Assert.assertTrue(resourceDescriptor.next(null));
+        }
+        else
+        {
+        	Assert.assertTrue(resourceDescriptor.next(null) == false);
+        }
+        
+    }
 
     @Test
-    public abstract void testReadBlock() throws Exception;
+    public void testProcessOutput() throws Exception
+    {
+    	resourceDescriptor.reset(State.NONE);
+        resourceDescriptor.init(null, LifeCycle.EXPLICIT, false);
+        resourceDescriptor.open(null);
+        if (resourceDescriptor.isSupportedStreamFormat(StreamType.OUTPUT, StreamFormat.PROCESS))
+        {
+        	resourceDescriptor.processOutput(null);
+        	//TODO figure out what exactly we expect to happen here, or if this method is even useful.
+        }
+        else
+        {
+        	//skip, do nothing because it isn't supported
+        }
+        
+    }
 
     @Test
-    public abstract void testWriteBlock() throws Exception;
+    public void testProcessInput() throws Exception
+    {
+    	resourceDescriptor.reset(State.NONE);
+        resourceDescriptor.init(null, LifeCycle.EXPLICIT, false);
+        resourceDescriptor.open(null);
+        if (resourceDescriptor.isSupportedStreamFormat(StreamType.INPUT, StreamFormat.PROCESS))
+        {
+        	resourceDescriptor.processInput(null);
+        	//TODO figure out what exactly we expect to happen here, or if this method is even useful.
+        }
+        else
+        {
+        	//skip, do nothing because it isn't supported
+        }
+        
+    }
 
     @Test
-    public abstract void testNext() throws Exception;
+    public void testGetInputStream() throws Exception
+    {
+    	resourceDescriptor.reset(State.NONE);
+        resourceDescriptor.init(null, LifeCycle.EXPLICIT, false);
+        resourceDescriptor.open(null);
+        if (resourceDescriptor.isSupportedStreamFormat(StreamType.INPUT, StreamFormat.STREAM))
+        {
+        	InputStream inputStream = resourceDescriptor.getInputStream(null);
+        	ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+        	Assert.assertTrue(StreamUtil.readInputStreamIntoOutputStream(inputStream, byteArrayOutputStream) > 10);
+        	Assert.assertTrue(new String(byteArrayOutputStream.toByteArray()).startsWith("<?xml version=\"1.0\" encoding=\"UTF-8\"?>"));
+        }
+        else
+        {
+        	//do nothing
+        }
+        
+    }
 
     @Test
-    public abstract void testProcessOutput() throws Exception;
+    public void testGetOutputStream() throws Exception
+    {
+    	resourceDescriptor.reset(State.NONE);
+        resourceDescriptor.init(null, LifeCycle.EXPLICIT, false);
+        resourceDescriptor.open(null);
+        if (resourceDescriptor.isSupportedStreamFormat(StreamType.OUTPUT, StreamFormat.STREAM))
+        {
+        	OutputStream outputStream = resourceDescriptor.getOutputStream(null);
+        	outputStream.write("this is a test".getBytes());
+        	outputStream.close();
+        	InputStream inputStream = resourceDescriptor.getInputStream(null);
+        	ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+        	Assert.assertTrue(StreamUtil.readInputStreamIntoOutputStream(inputStream, byteArrayOutputStream) > 10);
+        	Assert.assertTrue(new String(byteArrayOutputStream.toByteArray()).equals("this is a test"));
+        }
+        else
+        {
+        	//do nothing
+        }
+        
+    }
 
     @Test
-    public abstract void testProcessInput() throws Exception;
+    public void testClose() throws Exception
+    {
+    	resourceDescriptor.reset(State.NONE);
+        resourceDescriptor.init(null, LifeCycle.EXPLICIT, false);
+        resourceDescriptor.open(null);
+        Assert.assertSame(State.OPEN,resourceDescriptor.getResourceState());
+        resourceDescriptor.close(null);
+        Assert.assertSame(State.CLOSED,resourceDescriptor.getResourceState());        
+    }
 
     @Test
-    public abstract void testGetInputStream() throws Exception;
-    @Test
-    public abstract void testGetOutputStream() throws Exception;
+    public void testRelease() throws Exception
+    {
+    	resourceDescriptor.reset(State.NONE);
+        resourceDescriptor.init(null, LifeCycle.EXPLICIT, false);
+        resourceDescriptor.open(null);
+        Assert.assertSame(State.OPEN,resourceDescriptor.getResourceState());
+        resourceDescriptor.close(null);
+        Assert.assertSame(State.CLOSED,resourceDescriptor.getResourceState());
+        resourceDescriptor.release(null);
+        Assert.assertSame(State.RELEASED,resourceDescriptor.getResourceState());
+        
+    }
 
     @Test
-    public abstract void testClose() throws Exception;
+    public void testGetContentMetaData() throws Exception
+    {
+    	resourceDescriptor.reset(State.NONE);
+        resourceDescriptor.init(null, LifeCycle.EXPLICIT, false);
+        resourceDescriptor.open(null);
+        Assert.assertSame(State.OPEN,resourceDescriptor.getResourceState());
+        ContentMetaData contentMetaData = resourceDescriptor.getContentMetaData(null);
+        List<String> attributeList = contentMetaData.getSupportedAttributes();
+        for (String attribute : attributeList)
+		{
+        	System.out.println(attribute+" = "+contentMetaData.getValue(attribute));
+			Assert.assertNotNull(contentMetaData.getValue(attribute));
+		}
+        
+        
+    }
 
     @Test
-    public abstract void testRelease() throws Exception;
+    public void testGetIterationMetaData() throws Exception
+    {
+    	if (resourceDescriptor.getResourceType().isIterable())
+    	{
+    		resourceDescriptor.reset(State.NONE);
+    		resourceDescriptor.init(null, LifeCycle.EXPLICIT, false);
+    		resourceDescriptor.open(null);
+    		resourceDescriptor.next(null);
+    		ContentMetaData contentMetaData = resourceDescriptor.getIterationMetaData(null);
+    		List<String> attributeList = contentMetaData.getSupportedAttributes();
+    		for (String attribute : attributeList)
+    		{
+    			System.out.println(attribute+" = "+contentMetaData.getValue(attribute));
+    			Assert.assertNotNull(contentMetaData.getValue(attribute));
+    		}
+    	}
+
+    }
 
     @Test
-    public abstract void testGetContentMetaData() throws Exception;
+    public void testGetLifeCycle() throws Exception
+    {
+    	Assert.assertNotNull(resourceDescriptor.getLifeCycle());
+        
+    }
 
     @Test
-    public abstract void testGetIterationMetaData() throws Exception;
+    public void testGetResourceURI() throws Exception
+    {
+    	Assert.assertNotNull(resourceDescriptor.getResourceURI());
+        
+    }
 
     @Test
-    public abstract void testGetLifeCycle() throws Exception;
+    public void testGetLocalName() throws Exception
+    {
+    	Assert.assertNotNull(resourceDescriptor.getLocalName());
+        
+    }
 
     @Test
-    public abstract void testGetResourceURI() throws Exception;
+    public void testGetResourceType() throws Exception
+    {
+    	Assert.assertNotNull(resourceDescriptor.getResourceType());
+    }
 
     @Test
-    public abstract void testGetLocalName() throws Exception;
+    public void testAddResourceParameters() throws Exception
+    {
+        resourceDescriptor.addResourceParameters(null, new ResourceParameter("test","test"));        
+    }
 
     @Test
-    public abstract void testGetResourceType() throws Exception;
-
-    @Test
-    public abstract void testAddResourceParameters() throws Exception;
-
-    @Test
-    public abstract void testGetChildResourceDescriptor() throws Exception;
+    public void testGetChildResourceDescriptor() throws Exception
+    {
+    	resourceDescriptor.reset(State.NONE);
+    	resourceDescriptor.init(null, LifeCycle.EXPLICIT, false);
+    	resourceDescriptor.open(null);
+    	if (resourceDescriptor.getContentMetaData(null).isContainer())
+    	{
+    		List<ContentMetaData> childContentMetaDataList = resourceDescriptor.getContentMetaData(null).getContainedResources();
+    		for (ContentMetaData contentMetaData : childContentMetaDataList)
+			{
+				Assert.assertNotNull(resourceDescriptor.getChildResourceDescriptor(null, contentMetaData.getResourceURI()));
+			}
+    	}
+        
+    }
 
 }
