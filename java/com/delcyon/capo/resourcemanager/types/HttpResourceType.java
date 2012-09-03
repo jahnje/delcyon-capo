@@ -37,7 +37,7 @@ public class HttpResourceType extends AbstractResourceType
 	@Override
 	public boolean isIterable()
 	{
-		return true;
+		return false;
 	}
 	
 	@Override

@@ -629,7 +629,7 @@ public abstract class AbstractResourceDescriptor implements ResourceDescriptor
 		{
 			ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
 			StreamUtil.readInputStreamIntoOutputStream(getInputStream(variableContainer, resourceParameters), byteArrayOutputStream) ;
-			if (getContentMetaData(variableContainer, resourceParameters).getContentFormatType() == ContentFormatType.XML)
+			if (getIterationMetaData(variableContainer, resourceParameters).getContentFormatType() == ContentFormatType.XML)
 			{
 			    dataElement = CapoApplication.getDocumentBuilder().parse(new ByteArrayInputStream(byteArrayOutputStream.toByteArray())).getDocumentElement();
 			}

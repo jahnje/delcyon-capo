@@ -24,7 +24,10 @@ import com.delcyon.capo.resourcemanager.ResourceDescriptor.State;
 import com.delcyon.capo.resourcemanager.ResourceDescriptor.StreamFormat;
 import com.delcyon.capo.resourcemanager.ResourceDescriptor.StreamType;
 import com.delcyon.capo.resourcemanager.types.ContentMetaData;
+import com.delcyon.capo.tests.util.TestServer;
+import com.delcyon.capo.tests.util.Util;
 import com.delcyon.capo.xml.XMLDiff;
+import com.delcyon.capo.xml.XPath;
 
 public abstract class ResourceDescriptorTest
 {
@@ -33,16 +36,21 @@ public abstract class ResourceDescriptorTest
     @BeforeClass
     public static void setUpBeforeClass() throws Exception
     {
+        Util.copyTree("test-data/capo", "capo", true, true);
+        TestServer.start();
     }
 
     @AfterClass
     public static void tearDownAfterClass() throws Exception
     {
+        TestServer.shutdown();
     }
-
+   
+    
     @Before
     public void setUp() throws Exception
     {
+    	Util.copyTree("test-data/capo", "capo", true, true);
         this.resourceDescriptor = getResourceDescriptor();
     }
 
@@ -91,11 +99,17 @@ public abstract class ResourceDescriptorTest
     {
         resourceDescriptor.reset(State.NONE);
         resourceDescriptor.init(null, LifeCycle.EXPLICIT, false);
-        Assert.assertTrue(resourceDescriptor.getContentMetaData(null).exists());
-        resourceDescriptor.performAction(null, Action.DELETE);        
-        Assert.assertTrue(resourceDescriptor.getContentMetaData(null).exists() == false);
-        resourceDescriptor.performAction(null, Action.CREATE);
-        Assert.assertTrue(resourceDescriptor.getContentMetaData(null).exists());
+        if (resourceDescriptor.isSupportedAction(Action.DELETE))
+        {
+        	Assert.assertTrue(resourceDescriptor.getContentMetaData(null).exists());
+        	resourceDescriptor.performAction(null, Action.DELETE);        
+        	Assert.assertTrue(resourceDescriptor.getContentMetaData(null).exists() == false);
+        }
+        if(resourceDescriptor.isSupportedAction(Action.CREATE))
+        {
+        	resourceDescriptor.performAction(null, Action.CREATE);
+        	Assert.assertTrue(resourceDescriptor.getContentMetaData(null).exists());
+        }
     }
 
 
@@ -108,8 +122,8 @@ public abstract class ResourceDescriptorTest
     {
     	resourceDescriptor.reset(State.NONE);
         resourceDescriptor.init(null, LifeCycle.EXPLICIT, false);
-        Assert.assertTrue(resourceDescriptor.isSupportedAction(Action.CREATE));
-        Assert.assertTrue(resourceDescriptor.isSupportedAction(Action.DELETE));
+        Assert.assertNotNull(resourceDescriptor.isSupportedAction(Action.CREATE));
+        Assert.assertNotNull(resourceDescriptor.isSupportedAction(Action.DELETE));
     }
 
     @Test
@@ -172,6 +186,7 @@ public abstract class ResourceDescriptorTest
         	}
         }
         System.out.println("readXML found "+count+" child elements");
+        XPath.dumpNode(element, System.out);
         Assert.assertTrue(count > 0);
         resourceDescriptor.release(null);
     }
@@ -197,16 +212,18 @@ public abstract class ResourceDescriptorTest
     	resourceDescriptor.reset(State.NONE);
         resourceDescriptor.init(null, LifeCycle.EXPLICIT, false);
         resourceDescriptor.open(null);
-        Document document = CapoApplication.getDocumentBuilder().newDocument();
-        Element rootElement = document.createElementNS("BSNS","ns:testRootElement");
-        rootElement.setAttributeNS("http://www.w3.org/2000/xmlns/","xmlns:ns","BSNS");
-        rootElement.setTextContent("This is a test");
-        resourceDescriptor.writeXML(null, rootElement);
-        Element readElement = resourceDescriptor.readXML(null);
-        XMLDiff xmlDiff = new XMLDiff();
-        Element diffElement = xmlDiff.getDifferences(rootElement, readElement);
-        Assert.assertEquals(XMLDiff.EQUALITY,diffElement.getAttribute("xdiff:element"));
-        
+        if (resourceDescriptor.isSupportedStreamType(StreamType.OUTPUT))
+        {
+        	Document document = CapoApplication.getDocumentBuilder().newDocument();
+        	Element rootElement = document.createElementNS("BSNS","ns:testRootElement");
+        	rootElement.setAttributeNS("http://www.w3.org/2000/xmlns/","xmlns:ns","BSNS");
+        	rootElement.setTextContent("This is a test");
+        	resourceDescriptor.writeXML(null, rootElement);
+        	Element readElement = resourceDescriptor.readXML(null);
+        	XMLDiff xmlDiff = new XMLDiff();
+        	Element diffElement = xmlDiff.getDifferences(rootElement, readElement);
+        	Assert.assertEquals(XMLDiff.EQUALITY,diffElement.getAttribute("xdiff:element"));
+        }
     }
     
     
@@ -216,8 +233,11 @@ public abstract class ResourceDescriptorTest
     	resourceDescriptor.reset(State.NONE);
         resourceDescriptor.init(null, LifeCycle.EXPLICIT, false);
         resourceDescriptor.open(null);
-        resourceDescriptor.writeBlock(null,"this is a test".getBytes());
-        Assert.assertArrayEquals("this is a test".getBytes(),resourceDescriptor.readBlock(null));
+        if (resourceDescriptor.isSupportedStreamType(StreamType.OUTPUT))
+        {
+        	resourceDescriptor.writeBlock(null,"this is a test".getBytes());
+        	Assert.assertArrayEquals("this is a test".getBytes(),resourceDescriptor.readBlock(null));
+        }
         
     }
 
@@ -284,8 +304,9 @@ public abstract class ResourceDescriptorTest
         {
         	InputStream inputStream = resourceDescriptor.getInputStream(null);
         	ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-        	Assert.assertTrue(StreamUtil.readInputStreamIntoOutputStream(inputStream, byteArrayOutputStream) > 10);
-        	Assert.assertTrue(new String(byteArrayOutputStream.toByteArray()).startsWith("<?xml version=\"1.0\" encoding=\"UTF-8\"?>"));
+        	Assert.assertTrue("expcted test data to be atleast 10 chars in length.",getExpectedResourceContentPrefix().length() > 10);
+        	Assert.assertTrue(StreamUtil.readInputStreamIntoOutputStream(inputStream, byteArrayOutputStream) > 10);        	
+        	Assert.assertTrue("Expected in put stream to start with'"+getExpectedResourceContentPrefix()+"' but got '"+new String(byteArrayOutputStream.toByteArray())+"'",new String(byteArrayOutputStream.toByteArray()).startsWith(getExpectedResourceContentPrefix()));
         }
         else
         {
@@ -294,7 +315,9 @@ public abstract class ResourceDescriptorTest
         
     }
 
-    @Test
+    protected abstract String getExpectedResourceContentPrefix();
+
+	@Test
     public void testGetOutputStream() throws Exception
     {
     	resourceDescriptor.reset(State.NONE);
@@ -354,7 +377,7 @@ public abstract class ResourceDescriptorTest
         for (String attribute : attributeList)
 		{
         	System.out.println(attribute+" = "+contentMetaData.getValue(attribute));
-			Assert.assertNotNull(contentMetaData.getValue(attribute));
+			Assert.assertNotNull("didn't expect "+attribute+" = "+contentMetaData.getValue(attribute)+" to be null",contentMetaData.getValue(attribute));
 		}
         
         

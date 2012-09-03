@@ -4,33 +4,18 @@ package com.delcyon.capo.resourcemanager.types;
 import java.util.Arrays;
 
 import org.junit.After;
-import org.junit.AfterClass;
 import org.junit.Assert;
-import org.junit.Before;
-import org.junit.BeforeClass;
 
 import com.delcyon.capo.resourcemanager.ResourceDescriptor;
 import com.delcyon.capo.resourcemanager.ResourceDescriptorTest;
 import com.delcyon.capo.resourcemanager.ResourceDescriptor.StreamFormat;
 import com.delcyon.capo.resourcemanager.ResourceDescriptor.StreamType;
 import com.delcyon.capo.tests.util.TestServer;
-import com.delcyon.capo.tests.util.Util;
 
 public class FileResourceDescriptorTest extends ResourceDescriptorTest
 {
 
-    @BeforeClass
-    public static void setUpBeforeClass() throws Exception
-    {
-        Util.copyTree("test-data/capo", "capo", true, true);
-        TestServer.start();
-    }
-
-    @AfterClass
-    public static void tearDownAfterClass() throws Exception
-    {
-        TestServer.shutdown();
-    }
+    
 
     @Override
     protected ResourceDescriptor getResourceDescriptor() throws Exception
@@ -38,18 +23,13 @@ public class FileResourceDescriptorTest extends ResourceDescriptorTest
         return TestServer.getServerInstance().getApplication().getDataManager().getResourceDescriptor(null, "file:config/config.xml");
     }
     
-    @Before
-    public void setup() throws Exception
-    {
-    	Util.copyTree("test-data/capo", "capo", true, true);
+    @Override
+    protected String getExpectedResourceContentPrefix()
+    {    	
+    	return "<?xml version=\"1.0\" encoding=\"UTF-8\"?>";
     }
     
-
-    @After
-    public void tearDown() throws Exception
-    {
-    }
-
+    
     @Override
     public void testGetSupportedStreamTypes() throws Exception
     {

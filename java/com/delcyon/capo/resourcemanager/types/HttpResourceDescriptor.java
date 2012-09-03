@@ -38,12 +38,16 @@ public class HttpResourceDescriptor extends AbstractResourceDescriptor
 		
 	}
 	
-	private SimpleContentMetaData buildContentMetatData()
+	private SimpleContentMetaData buildContentMetatData(boolean useInputStream) throws Exception
 	{
 		SimpleContentMetaData simpleContentMetaData  = new SimpleContentMetaData(getResourceURI());
-		simpleContentMetaData.addSupportedAttribute(Attributes.exists,Attributes.readable,Attributes.writeable,Attributes.container);
+		simpleContentMetaData.addSupportedAttribute(Attributes.exists,Attributes.readable);
 		simpleContentMetaData.setValue(Attributes.exists,true);
 		simpleContentMetaData.setValue(Attributes.readable,true);
+		if (useInputStream)
+		{
+			simpleContentMetaData.readInputStream(getInputStream(null));
+		}
 		return simpleContentMetaData;
 	}
 	
@@ -54,7 +58,7 @@ public class HttpResourceDescriptor extends AbstractResourceDescriptor
 
 		if (contentMetaData == null)
 		{			
-			contentMetaData = buildContentMetatData();
+			contentMetaData = buildContentMetatData(true);
 					
 		}
 	}
@@ -64,7 +68,7 @@ public class HttpResourceDescriptor extends AbstractResourceDescriptor
 	@Override
 	public InputStream getInputStream(VariableContainer variableContainer,ResourceParameter... resourceParameters) throws Exception
 	{		
-		iterationContentMetaData = buildContentMetatData();
+		iterationContentMetaData = buildContentMetatData(false);
 		URL url = new URL(getResourceURI());	
 		return iterationContentMetaData.wrapInputStream(url.openConnection().getInputStream());		
 	}
@@ -72,7 +76,7 @@ public class HttpResourceDescriptor extends AbstractResourceDescriptor
 	@Override
 	public OutputStream getOutputStream(VariableContainer variableContainer,ResourceParameter... resourceParameters) throws Exception
 	{
-		iterationContentMetaData = buildContentMetatData();
+		iterationContentMetaData = buildContentMetatData(false);
 		URL url = new URL(getResourceURI());	
 		return iterationContentMetaData.wrapOutputStream(url.openConnection().getOutputStream());
 	}
@@ -105,10 +109,6 @@ public class HttpResourceDescriptor extends AbstractResourceDescriptor
 		{
 			return new StreamFormat[]{StreamFormat.STREAM};
 		}
-		else if(streamType == StreamType.OUTPUT)
-		{
-			return new StreamFormat[]{StreamFormat.STREAM};
-		}
 		else
 		{
 			return null;
@@ -118,7 +118,7 @@ public class HttpResourceDescriptor extends AbstractResourceDescriptor
 	@Override
 	public StreamType[] getSupportedStreamTypes()
 	{
-		return new StreamType[]{StreamType.INPUT,StreamType.OUTPUT};
+		return new StreamType[]{StreamType.INPUT};
 	}
 
 	@Override
