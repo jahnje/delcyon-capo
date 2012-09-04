@@ -212,7 +212,7 @@ public abstract class ResourceDescriptorTest
     	resourceDescriptor.reset(State.NONE);
         resourceDescriptor.init(null, LifeCycle.EXPLICIT, false);
         resourceDescriptor.open(null);
-        if (resourceDescriptor.isSupportedStreamType(StreamType.OUTPUT))
+        if (resourceDescriptor.isSupportedStreamFormat(StreamType.OUTPUT,StreamFormat.XML_BLOCK))
         {
         	Document document = CapoApplication.getDocumentBuilder().newDocument();
         	Element rootElement = document.createElementNS("BSNS","ns:testRootElement");
@@ -222,6 +222,10 @@ public abstract class ResourceDescriptorTest
         	Element readElement = resourceDescriptor.readXML(null);
         	XMLDiff xmlDiff = new XMLDiff();
         	Element diffElement = xmlDiff.getDifferences(rootElement, readElement);
+        	if (XMLDiff.EQUALITY.equals(diffElement.getAttribute("xdiff:element")) == false)
+        	{
+        	    XPath.dumpNode(diffElement, System.err);
+        	}
         	Assert.assertEquals(XMLDiff.EQUALITY,diffElement.getAttribute("xdiff:element"));
         }
     }
@@ -233,7 +237,7 @@ public abstract class ResourceDescriptorTest
     	resourceDescriptor.reset(State.NONE);
         resourceDescriptor.init(null, LifeCycle.EXPLICIT, false);
         resourceDescriptor.open(null);
-        if (resourceDescriptor.isSupportedStreamType(StreamType.OUTPUT))
+        if (resourceDescriptor.isSupportedStreamFormat(StreamType.OUTPUT,StreamFormat.BLOCK))
         {
         	resourceDescriptor.writeBlock(null,"this is a test".getBytes());
         	Assert.assertArrayEquals("this is a test".getBytes(),resourceDescriptor.readBlock(null));
@@ -245,11 +249,22 @@ public abstract class ResourceDescriptorTest
     public void testNext() throws Exception
     {
     	resourceDescriptor.reset(State.NONE);
-        resourceDescriptor.init(null, LifeCycle.EXPLICIT, false);
+        resourceDescriptor.init(null, LifeCycle.EXPLICIT, true);
         resourceDescriptor.open(null);
         if(resourceDescriptor.getResourceType().isIterable())
         {
-        	Assert.assertTrue(resourceDescriptor.next(null));
+            int recordCount = 0;
+            int hashCode = 0; 
+            while(resourceDescriptor.next(null))
+            {
+                recordCount++;
+                int tmpHashCode = new String(resourceDescriptor.readBlock(null)).hashCode();
+                Assert.assertTrue("records don't differ",hashCode != tmpHashCode);
+                hashCode = tmpHashCode;
+                tmpHashCode = new String(resourceDescriptor.readBlock(null)).hashCode();
+                Assert.assertTrue("record differs on second read",hashCode == tmpHashCode);
+            }
+        	Assert.assertTrue(recordCount > 0);
         }
         else
         {
@@ -267,7 +282,7 @@ public abstract class ResourceDescriptorTest
         if (resourceDescriptor.isSupportedStreamFormat(StreamType.OUTPUT, StreamFormat.PROCESS))
         {
         	resourceDescriptor.processOutput(null);
-        	//TODO figure out what exactly we expect to happen here, or if this method is even useful.
+        	//TODO figure out what exactly we expect to happen here, or if this method is even useful.        	
         }
         else
         {

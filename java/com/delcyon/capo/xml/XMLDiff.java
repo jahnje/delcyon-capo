@@ -93,6 +93,7 @@ public class XMLDiff
 	private TextDiffType textDiffType = TextDiffType.USE_DIFFERENCE_BASED_ON_LENGTH;
 	private int useDiffTextLength = DEFAULT_USE_DIFF_TEXT_LENGTH;
 	private HashMap<String, String> ignoreableAttributeMap = new HashMap<String, String>();
+    private boolean allowNamespaceMismatches = false;
 	
 	public XMLDiff() throws Exception
 	{
@@ -159,6 +160,20 @@ public class XMLDiff
 		return tokenLists;
 	}
 	
+	public boolean isAllowNamespaceMismatches()
+    {
+        return allowNamespaceMismatches;
+    }
+	
+	/**
+	 * This defaults to false. This attempts to turn of namespace aware diffing for the document tress. 
+	 * It's results can be fairly unpredictable. So don't use unless there is no other option. 
+	 * @param allowNamespaceMismatches
+	 */
+	public void setAllowNamespaceMismatches(boolean allowNamespaceMismatches)
+    {
+        this.allowNamespaceMismatches = allowNamespaceMismatches;
+    }
 	
 	public Element getDifferences(Element baseElement, Element otherElement) throws Exception
 	{
@@ -530,41 +545,79 @@ public class XMLDiff
 			//see if we are supposed to ignore this
 			if (ignoreableAttributeMap.containsKey(attributeNamesapceURI+":"+attributeLocalName))
 			{				
-				continue;
+			    continue;
 			}
+
 			
-			String attributeValue = attribute.getValue();
-			String attributeName = attribute.getName();
-			if (otherElement.hasAttributeNS(attributeNamesapceURI, attributeLocalName) == false)
+			if (attributeNamesapceURI != null || allowNamespaceMismatches == false)
 			{
-				Element xdiffAttributeElement = createElement(differenceDocument, XDIFF_NAMESPACE_URI, XDIFF_PREFIX, XDIFF_ATTRIBUTE_ELEMENT_NAME);				
-				setAttribute(xdiffAttributeElement, XDIFF_NAMESPACE_URI, XDIFF_PREFIX, XDIFF_ATTRIBUTE_ATTRIBUTE_NAME, direction);
-				setAttribute(xdiffAttributeElement, XDIFF_NAMESPACE_URI, XDIFF_PREFIX, XDIFF_NAME_ATTRIBUTE_NAME, attributeName);
-				setAttribute(xdiffAttributeElement, XDIFF_NAMESPACE_URI, XDIFF_PREFIX, XDIFF_VALUE_ATTRIBUTE_NAME, attributeValue);
-				
-				differenceElement.appendChild(xdiffAttributeElement);
-				attributesAreEqual = false;
+
+			    String attributeValue = attribute.getValue();
+			    String attributeName = attribute.getName();
+			    if (otherElement.hasAttributeNS(attributeNamesapceURI, attributeLocalName) == false)
+			    {
+			        Element xdiffAttributeElement = createElement(differenceDocument, XDIFF_NAMESPACE_URI, XDIFF_PREFIX, XDIFF_ATTRIBUTE_ELEMENT_NAME);				
+			        setAttribute(xdiffAttributeElement, XDIFF_NAMESPACE_URI, XDIFF_PREFIX, XDIFF_ATTRIBUTE_ATTRIBUTE_NAME, direction);
+			        setAttribute(xdiffAttributeElement, XDIFF_NAMESPACE_URI, XDIFF_PREFIX, XDIFF_NAME_ATTRIBUTE_NAME, attributeName);
+			        setAttribute(xdiffAttributeElement, XDIFF_NAMESPACE_URI, XDIFF_PREFIX, XDIFF_VALUE_ATTRIBUTE_NAME, attributeValue);
+
+			        differenceElement.appendChild(xdiffAttributeElement);
+			        attributesAreEqual = false;
+			    }
+			    else //has the attribute
+			    {
+			        //compare values
+			        String otherValue = otherElement.getAttributeNS(attributeNamesapceURI, attributeLocalName);
+			        if(attributeValue.equals(otherValue))
+			        {
+			            differenceElement.setAttributeNodeNS((Attr) differenceDocument.importNode(attribute,true));
+			        }
+			        //only compare values in one direction
+			        else if(direction == Side.BASE)
+			        {
+			            Element xdiffAttributeElement = createElement(differenceDocument, XDIFF_NAMESPACE_URI, XDIFF_PREFIX, XDIFF_ATTRIBUTE_ELEMENT_NAME);
+			            setAttribute(xdiffAttributeElement, XDIFF_NAMESPACE_URI, XDIFF_PREFIX, XDIFF_NAME_ATTRIBUTE_NAME, attributeName);
+			            setAttribute(xdiffAttributeElement, XDIFF_NAMESPACE_URI, XDIFF_PREFIX, Side.BASE, attributeValue);
+			            setAttribute(xdiffAttributeElement, XDIFF_NAMESPACE_URI, XDIFF_PREFIX, Side.MOD, otherValue);					
+			            differenceElement.appendChild(xdiffAttributeElement);
+			            attributesAreEqual = false;
+			        }
+			    }
 			}
-			else //has the attribute
+			else if(allowNamespaceMismatches == true)//dealing with empty namespaces
 			{
-				//compare values
-				String otherValue = otherElement.getAttributeNS(attributeNamesapceURI, attributeLocalName);
-				if(attributeValue.equals(otherValue))
-				{
-					differenceElement.setAttributeNodeNS((Attr) differenceDocument.importNode(attribute,true));
-				}
-				//only compare values in one direction
-				else if(direction == Side.BASE)
-				{
-					Element xdiffAttributeElement = createElement(differenceDocument, XDIFF_NAMESPACE_URI, XDIFF_PREFIX, XDIFF_ATTRIBUTE_ELEMENT_NAME);
-					setAttribute(xdiffAttributeElement, XDIFF_NAMESPACE_URI, XDIFF_PREFIX, XDIFF_NAME_ATTRIBUTE_NAME, attributeName);
-					setAttribute(xdiffAttributeElement, XDIFF_NAMESPACE_URI, XDIFF_PREFIX, Side.BASE, attributeValue);
-					setAttribute(xdiffAttributeElement, XDIFF_NAMESPACE_URI, XDIFF_PREFIX, Side.MOD, otherValue);					
-					differenceElement.appendChild(xdiffAttributeElement);
-					attributesAreEqual = false;
-				}
+			    String attributeValue = attribute.getValue();
+                String attributeName = attribute.getName();
+                if (otherElement.hasAttribute(attributeName) == false)
+                {
+                    Element xdiffAttributeElement = createElement(differenceDocument, XDIFF_NAMESPACE_URI, XDIFF_PREFIX, XDIFF_ATTRIBUTE_ELEMENT_NAME);             
+                    setAttribute(xdiffAttributeElement, XDIFF_NAMESPACE_URI, XDIFF_PREFIX, XDIFF_ATTRIBUTE_ATTRIBUTE_NAME, direction);
+                    setAttribute(xdiffAttributeElement, XDIFF_NAMESPACE_URI, XDIFF_PREFIX, XDIFF_NAME_ATTRIBUTE_NAME, attributeName);
+                    setAttribute(xdiffAttributeElement, XDIFF_NAMESPACE_URI, XDIFF_PREFIX, XDIFF_VALUE_ATTRIBUTE_NAME, attributeValue);
+
+                    differenceElement.appendChild(xdiffAttributeElement);
+                    attributesAreEqual = false;
+                }
+                else //has the attribute
+                {
+                    //compare values
+                    String otherValue = otherElement.getAttribute( attributeName);
+                    if(attributeValue.equals(otherValue))
+                    {
+                        differenceElement.setAttributeNodeNS((Attr) differenceDocument.importNode(attribute,true));
+                    }
+                    //only compare values in one direction
+                    else if(direction == Side.BASE)
+                    {
+                        Element xdiffAttributeElement = createElement(differenceDocument, XDIFF_NAMESPACE_URI, XDIFF_PREFIX, XDIFF_ATTRIBUTE_ELEMENT_NAME);
+                        setAttribute(xdiffAttributeElement, XDIFF_NAMESPACE_URI, XDIFF_PREFIX, XDIFF_NAME_ATTRIBUTE_NAME, attributeName);
+                        setAttribute(xdiffAttributeElement, XDIFF_NAMESPACE_URI, XDIFF_PREFIX, Side.BASE, attributeValue);
+                        setAttribute(xdiffAttributeElement, XDIFF_NAMESPACE_URI, XDIFF_PREFIX, Side.MOD, otherValue);                   
+                        differenceElement.appendChild(xdiffAttributeElement);
+                        attributesAreEqual = false;
+                    }
+                }
 			}
-			
 		}
 		return attributesAreEqual;
 	}

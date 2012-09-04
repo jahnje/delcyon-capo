@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ResultSet sql="select * from systems">
+    <Row number="1">
+        <Column name="ID" type="VARCHAR">capo.client.1</Column>
+        <Column name="NAME" type="VARCHAR">host1.local</Column>
+        <Column name="LAST_CONNECT" type="TIMESTAMP">2012-06-22 10:33:11.840000</Column>
+        <Column name="OS" type="VARCHAR">OSX</Column>
+    </Row>
+    <Row number="2">
+        <Column name="ID" type="VARCHAR">capo.client.2</Column>
+        <Column name="NAME" type="VARCHAR">host2.local</Column>
+        <Column name="LAST_CONNECT" type="TIMESTAMP">2012-06-22 10:33:11.840000</Column>
+        <Column name="OS" type="VARCHAR">LINUX</Column>
+    </Row>
+    <Row number="3">
+        <Column name="ID" type="VARCHAR">capo.client.3</Column>
+        <Column name="NAME" type="VARCHAR">host3.local</Column>
+        <Column name="LAST_CONNECT" type="TIMESTAMP">2012-06-22 10:33:11.840000</Column>
+        <Column name="OS" type="VARCHAR">LINUX</Column>
+    </Row>
+    <Row number="4">
+        <Column name="ID" type="VARCHAR">BS-ID</Column>
+        <Column name="NAME" type="VARCHAR">BS-NAME</Column>
+        <Column name="LAST_CONNECT" type="TIMESTAMP">2012-06-22 10:33:11.840000</Column>
+        <Column name="OS" type="VARCHAR">BS-OS</Column>
+    </Row>
+</ResultSet>

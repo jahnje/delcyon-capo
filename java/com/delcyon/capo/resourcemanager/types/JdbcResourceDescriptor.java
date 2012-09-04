@@ -29,6 +29,7 @@ import org.w3c.dom.Element;
 
 import com.delcyon.capo.CapoApplication;
 import com.delcyon.capo.controller.VariableContainer;
+import com.delcyon.capo.resourcemanager.ContentFormatType;
 import com.delcyon.capo.resourcemanager.ResourceParameter;
 import com.delcyon.capo.resourcemanager.types.ContentMetaData.Attributes;
 
@@ -57,10 +58,15 @@ public class JdbcResourceDescriptor extends AbstractResourceDescriptor
 	private SimpleContentMetaData buildContentMetatData()
 	{
 		SimpleContentMetaData simpleContentMetaData  = new SimpleContentMetaData(getResourceURI());
-		simpleContentMetaData.addSupportedAttribute(Attributes.exists,Attributes.readable,Attributes.writeable,Attributes.container);
-		simpleContentMetaData.addSupportedAttribute(LocalAttributes.values());
+		simpleContentMetaData.addSupportedAttribute(Attributes.exists,Attributes.readable,Attributes.writeable,Attributes.container);		
 		simpleContentMetaData.setValue(Attributes.exists,true);
 		simpleContentMetaData.setValue(Attributes.readable,true);
+		simpleContentMetaData.setValue(Attributes.writeable,true);
+		simpleContentMetaData.setValue(Attributes.container,true);
+		simpleContentMetaData.setValue("mimeType","aplication/xml");
+		simpleContentMetaData.setValue("MD5","");
+		simpleContentMetaData.setValue("contentFormatType",ContentFormatType.XML);
+		simpleContentMetaData.setValue("size","0");
 		return simpleContentMetaData;
 	}
 	
@@ -88,6 +94,10 @@ public class JdbcResourceDescriptor extends AbstractResourceDescriptor
 	@Override
 	public boolean next(VariableContainer variableContainer, ResourceParameter... resourceParameters) throws Exception
 	{
+	    if (getResourceState() == State.OPEN)
+	    {
+	        readXML(variableContainer, resourceParameters);
+	    }
 		if (getResourceState() == State.STEPPING && resultSet != null)
 		{
 			if(resultSet.next())
@@ -111,7 +121,7 @@ public class JdbcResourceDescriptor extends AbstractResourceDescriptor
 		
 		Document document = CapoApplication.getDocumentBuilder().newDocument();
 		Element rootElement = document.createElement("ResultSet");
-		rootElement.setAttribute("sql", getVarValue(variableContainer,"sql"));
+		rootElement.setAttribute("sql", getVarValue(variableContainer,"query"));
 		document.appendChild(rootElement);
 		
 		if (getResourceState() == State.STEPPING && resultSet != null)
@@ -124,7 +134,7 @@ public class JdbcResourceDescriptor extends AbstractResourceDescriptor
 		if (connection != null && connection.isClosed() == false)
 		{			
 			statement = connection.createStatement();
-			resultSet = statement.executeQuery(getVarValue(variableContainer,"sql"));
+			resultSet = statement.executeQuery(getVarValue(variableContainer,"query"));
 			
 			if (isIterating() == false)
 			{
@@ -177,10 +187,11 @@ public class JdbcResourceDescriptor extends AbstractResourceDescriptor
 	{
 		
 		iterationContentMetaData = buildContentMetatData();
+		iterationContentMetaData.addSupportedAttribute(LocalAttributes.values());
 		try
 			{
 				Statement statement = connection.createStatement();
-				int rowCount = statement.executeUpdate(getVarValue(variableContainer,"sql"));
+				int rowCount = statement.executeUpdate(getVarValue(variableContainer,"update"));
 				iterationContentMetaData.setValue(LocalAttributes.rowCount, rowCount); 				
 			} 
 			catch (Exception exception)
