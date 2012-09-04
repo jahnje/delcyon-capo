@@ -69,13 +69,14 @@ public class JdbcResourceDescriptor extends AbstractResourceDescriptor
 	{
 	
 		super.init(variableContainer,lifeCycle, iterate, resourceParameters);
-		connection = DriverManager.getConnection(getResourceURI().toString(), getVarValue(getDeclaringVariableContainer(),"user"), getVarValue(getDeclaringVariableContainer(),"password"));
+		
 		contentMetaData = buildContentMetatData();
 	}
 	
 	@Override
 	public void open(VariableContainer variableContainer,ResourceParameter... resourceParameters) throws Exception
 	{
+		connection = DriverManager.getConnection(getResourceURI().toString(), getVarValue(getDeclaringVariableContainer(),"user"), getVarValue(getDeclaringVariableContainer(),"password"));
 		if (isIterating() && getResourceState() == State.OPEN)
 		{
 			readXML(variableContainer,resourceParameters);
@@ -242,6 +243,7 @@ public class JdbcResourceDescriptor extends AbstractResourceDescriptor
 			CapoApplication.logger.log(Level.INFO, "Closeing DB Connection");
 			connection.close();
 		}
+		super.release(variableContainer, resourceParameters);
 	}
 	
 }
