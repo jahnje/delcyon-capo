@@ -18,6 +18,9 @@ package com.delcyon.capo.datastream;
 
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.math.BigInteger;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 
 import com.delcyon.capo.CapoApplication;
 import com.delcyon.capo.Configuration.PREFERENCE;
@@ -63,6 +66,12 @@ public class StreamUtil
 		return totalBytesRead;
     }
 
-	
+	public static String getMD5(byte[] data) throws NoSuchAlgorithmException
+	{
+	    MessageDigest messageDigest = MessageDigest.getInstance("MD5");
+        messageDigest.reset();
+        messageDigest.update(data);
+        return new BigInteger(1, messageDigest.digest()).toString(16);
+	}
 	
 }

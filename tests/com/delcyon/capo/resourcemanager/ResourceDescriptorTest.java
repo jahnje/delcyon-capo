@@ -186,8 +186,8 @@ public abstract class ResourceDescriptorTest
         	}
         }
         System.out.println("readXML found "+count+" child elements");
-        XPath.dumpNode(element, System.out);
-        Assert.assertTrue(count > 0);
+        XPath.dumpNode(element, System.out);       
+        Assert.assertTrue(count > 0 || element.getTextContent().trim().isEmpty() == false);
         resourceDescriptor.release(null);
     }
 
