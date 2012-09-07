@@ -44,7 +44,12 @@ public class RefResourceDescriptor extends AbstractResourceDescriptor
 		simpleContentMetaData.addSupportedAttribute(Attributes.exists,Attributes.readable,Attributes.writeable,Attributes.container);		
 		simpleContentMetaData.setValue(Attributes.exists,true);
 		simpleContentMetaData.setValue(Attributes.readable,true);
+		simpleContentMetaData.setValue(Attributes.writeable,false);
+		simpleContentMetaData.setValue(Attributes.container,false);
 		simpleContentMetaData.setContentFormatType(ContentFormatType.XML);
+		simpleContentMetaData.setValue("mimeType","aplication/xml");
+        simpleContentMetaData.setValue("MD5","");        
+        simpleContentMetaData.setValue("size","0");
 		return simpleContentMetaData;
 	}
 	
@@ -99,6 +104,11 @@ public class RefResourceDescriptor extends AbstractResourceDescriptor
 		return new StreamType[]{StreamType.INPUT};
 	}
 
+	public void setContextControlElement(ControlElement conextControlElement)
+	{
+	    this.contextControlElement = conextControlElement;
+	}
+	
 	@Override
 	public Element readXML(VariableContainer variableContainer, ResourceParameter... resourceParameters) throws Exception
 	{	
