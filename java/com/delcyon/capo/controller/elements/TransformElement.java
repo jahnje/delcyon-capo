@@ -33,9 +33,9 @@ import com.delcyon.capo.controller.AbstractControl;
 import com.delcyon.capo.controller.ControlElementProvider;
 import com.delcyon.capo.modules.ModuleProvider;
 import com.delcyon.capo.resourcemanager.ResourceDescriptor;
-import com.delcyon.capo.resourcemanager.ResourceManager;
 import com.delcyon.capo.resourcemanager.ResourceParameter;
 import com.delcyon.capo.resourcemanager.ResourceParameterBuilder;
+import com.delcyon.capo.resourcemanager.ResourceURI;
 import com.delcyon.capo.resourcemanager.ResourceDescriptor.StreamFormat;
 import com.delcyon.capo.resourcemanager.ResourceDescriptor.StreamType;
 import com.delcyon.capo.resourcemanager.ResourceParameter.Source;
@@ -115,7 +115,7 @@ public class TransformElement extends AbstractControl implements XPathFunctionPr
 		String stylesheet = getAttributeValue(Attributes.stylesheet);
 		String src = null;
 		//see if we are making a specific reference to something, and if so ues it, as opposed to the module system.
-		if (ResourceManager.getScheme(stylesheet) != null)
+		if (ResourceURI.getScheme(stylesheet) != null)
 		{
 			src = stylesheet;
 		}

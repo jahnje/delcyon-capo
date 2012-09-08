@@ -234,7 +234,7 @@ public class ResourceManager extends CapoDataManager
 	public ResourceDescriptor getResourceDescriptor(ControlElement callingControlElement,String resourceURI) throws Exception
 	{
 		
-		String scheme = getScheme(resourceURI);
+		String scheme = ResourceURI.getScheme(resourceURI);
 		
 		
 		//if there is no scheme, and it didn't come from client request, assume it's a default resource type. Which unless overridden is a file:.
@@ -285,7 +285,7 @@ public class ResourceManager extends CapoDataManager
 	    }
 
 	    //figure out resource type
-		String scheme = getScheme(resourceURI);
+		String scheme = ResourceURI.getScheme(resourceURI);
 		//if we don't know what this assume it's a default resource type. Which unless overridden is a file.
 		if (resourceURI != null && scheme == null && resourceElement == null)
 		{
@@ -432,65 +432,6 @@ public class ResourceManager extends CapoDataManager
         return resourceDescriptorVector;
 	}
 	
-	//URI PROCESSIG
-	
-	public static String getScheme(String capoURIString)
-	{
-		String scheme = null;
-		
-		int schemeDeliminatorIndex = capoURIString.indexOf(":");
-		if(schemeDeliminatorIndex > 0)
-		{
-			scheme = capoURIString.substring(0, schemeDeliminatorIndex);			
-		}
-		return scheme;
-	}
-	
-	public static String getSchemeSpecificPart(String capoURIString)
-	{
-		String scheme = null;
-		String uriRemainder = null;
-		int schemeDeliminatorIndex = capoURIString.indexOf(":");
-		if(schemeDeliminatorIndex > 0)
-		{
-			scheme = capoURIString.substring(0, schemeDeliminatorIndex);
-			uriRemainder = capoURIString.substring(schemeDeliminatorIndex+1);
-		}
-		if (scheme == null)
-		{
-			return capoURIString;
-		}
-		else
-		{
-			return uriRemainder;
-		}
-	}
-	
-	public static boolean isOpaque(String resourceURI)
-	{
-		return getSchemeSpecificPart(resourceURI).startsWith("/") == false;
-	}
-
-	public static String getAuthroity(String resourceURI)
-	{
-		if (resourceURI.matches(".+//.+/.+"))
-		{
-			return resourceURI.replaceFirst(".+//(.+)/.+", "$1");
-		}
-		else
-		{
-			return null;
-		}
-	}
-
-	public static String removeURN(String uriString)
-	{
-		while(getScheme(uriString) != null)
-		{
-			uriString = getSchemeSpecificPart(uriString); 
-		}
-		return uriString;
-	}
 
 	//SEQUENCE PROCESSING
 	

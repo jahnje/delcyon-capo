@@ -23,9 +23,9 @@ import com.delcyon.capo.CapoApplication;
 import com.delcyon.capo.CapoApplication.Location;
 import com.delcyon.capo.annotations.DirectoyProvider;
 import com.delcyon.capo.resourcemanager.ResourceDescriptor;
-import com.delcyon.capo.resourcemanager.ResourceManager;
 import com.delcyon.capo.resourcemanager.ResourceType;
 import com.delcyon.capo.resourcemanager.ResourceTypeProvider;
+import com.delcyon.capo.resourcemanager.ResourceURI;
 import com.delcyon.capo.resourcemanager.ResourceDescriptor.LifeCycle;
 import com.delcyon.capo.server.CapoServer;
 import com.delcyon.capo.server.CapoServer.Preferences;
@@ -46,7 +46,7 @@ public class ClientsResourceType implements ResourceType
     @Override
     public ResourceDescriptor getResourceDescriptor(String resourceURI) throws Exception
     {
-        ResourceDescriptor clientResourceDescriptor = CapoApplication.getDataManager().getResourceDescriptor(null, CapoApplication.getDataManager().getResourceDirectory(Preferences.CLIENTS_DIR.toString()).getResourceURI()+"/"+ResourceManager.getSchemeSpecificPart(resourceURI));        
+        ResourceDescriptor clientResourceDescriptor = CapoApplication.getDataManager().getResourceDescriptor(null, CapoApplication.getDataManager().getResourceDirectory(Preferences.CLIENTS_DIR.toString()).getResourceURI()+"/"+ResourceURI.getSchemeSpecificPart(resourceURI));        
         return clientResourceDescriptor;
     }
 

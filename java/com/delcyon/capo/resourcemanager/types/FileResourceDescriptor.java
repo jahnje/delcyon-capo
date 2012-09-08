@@ -28,9 +28,9 @@ import com.delcyon.capo.CapoApplication;
 import com.delcyon.capo.Configuration.PREFERENCE;
 import com.delcyon.capo.controller.VariableContainer;
 import com.delcyon.capo.resourcemanager.ResourceDescriptor;
-import com.delcyon.capo.resourcemanager.ResourceManager;
 import com.delcyon.capo.resourcemanager.ResourceParameter;
 import com.delcyon.capo.resourcemanager.ResourceType;
+import com.delcyon.capo.resourcemanager.ResourceURI;
 import com.delcyon.capo.resourcemanager.types.ContentMetaData.Attributes;
 import com.delcyon.capo.resourcemanager.types.FileResourceType.Parameters;
 
@@ -86,7 +86,7 @@ public class FileResourceDescriptor extends AbstractResourceDescriptor implement
 		//this lets us use custom relative URIs for files.
 		// file:filename and file:/filename file://filename
 		
-		if (ResourceManager.isOpaque(getResourceURI()) || ResourceManager.getAuthroity(getResourceURI()) != null || ResourceManager.getScheme(getResourceURI()) == null)
+		if (ResourceURI.isOpaque(getResourceURI()) || ResourceURI.getAuthroity(getResourceURI()) != null || ResourceURI.getScheme(getResourceURI()) == null)
 		{
 		    String uri = null;
 			if (parentDir == null)

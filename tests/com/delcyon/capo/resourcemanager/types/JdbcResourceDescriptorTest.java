@@ -37,7 +37,7 @@ public class JdbcResourceDescriptorTest extends ResourceDescriptorTest
 	@Override
     protected ResourceDescriptor getResourceDescriptor() throws Exception
     {        
-        ResourceDescriptor resourceDescriptor =  TestServer.getServerInstance().getApplication().getDataManager().getResourceDescriptor(null, "jdbc:hsqldb:file:testdb/testdb");
+        ResourceDescriptor resourceDescriptor =  TestServer.getServerInstance().getApplication().getDataManager().getResourceDescriptor(null, "jdbc:hsqldb:file:testdb/testdb?user=user&password=");
         resourceDescriptor.addResourceParameters(null, new ResourceParameter("user","user"));
         resourceDescriptor.addResourceParameters(null, new ResourceParameter("password",""));        
         return resourceDescriptor;

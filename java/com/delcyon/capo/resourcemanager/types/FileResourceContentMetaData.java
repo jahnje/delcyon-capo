@@ -22,9 +22,9 @@ import java.math.BigInteger;
 import java.net.URI;
 
 import com.delcyon.capo.datastream.stream_attribute_filter.MD5FilterInputStream;
-import com.delcyon.capo.resourcemanager.ResourceManager;
 import com.delcyon.capo.resourcemanager.ResourceParameter;
 import com.delcyon.capo.resourcemanager.ResourceParameterBuilder;
+import com.delcyon.capo.resourcemanager.ResourceURI;
 
 /**
  * @author jeremiah
@@ -77,7 +77,7 @@ public class FileResourceContentMetaData extends AbstractContentMetaData
 			{
 				String uriString = uri.toString();
 				uriString = uriString.replaceFirst(getString(Attributes.path,null,resourceParameters),"");
-				setResourceURI(ResourceManager.removeURN(uriString));
+				setResourceURI(ResourceURI.removeURN(uriString));
 			}
 		}
 		else
