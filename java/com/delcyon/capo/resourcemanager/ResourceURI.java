@@ -125,6 +125,7 @@ public class ResourceURI
 
 	public static String getAuthroity(String resourceURI)
 	{
+
 		String hierarchy = getHierarchy(resourceURI);
 		if (hierarchy != null && hierarchy.matches(".+/{0,1}.*"))
 		{
@@ -208,6 +209,7 @@ public class ResourceURI
 		return getSchemeSpecificPart(hierarchy).replaceFirst("//(.*)", "$1");
 	}
 	
+
 //	public static String getQuery(String resourceURI)
 //	{
 //		String hostname = null;

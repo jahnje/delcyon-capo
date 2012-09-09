@@ -122,6 +122,7 @@ public class ResourceURITest
 		Assert.assertEquals("/schemespecific",ResourceURI.getHierarchy(opaqueTestURI));
 		Assert.assertEquals("example:animal:ferret:nose",ResourceURI.getHierarchy(testURNPath));
 		Assert.assertEquals(null,ResourceURI.getHierarchy(testMailToURN));
+
 	}
 	
 	/**
