@@ -16,6 +16,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 package com.delcyon.capo.resourcemanager;
 
+import java.util.HashMap;
+
 /**
  * @author jeremiah
  * <a href="http://en.wikipedia.org/wiki/URI_scheme">Based on</a>
@@ -24,48 +26,151 @@ package com.delcyon.capo.resourcemanager;
 public class ResourceURI
 {
 	
-	private String resourceURIString;
+	private String resourceURIString = null;
+	private String scheme = null;
+	private String schemeSpecificPart = null;
+	private boolean opaque = false;
+	private String authority = null;
+	private String hierarchy = null;
+	private String userInfo = null;
+	private String hostname = null;
+	private Integer port = null;
+	private String baseURI = null;
+	private String query = null;
+	private String fragment = null;
+	private String path = null;
+	private HashMap<String, String> parameterMap = new HashMap<String, String>();
+	private ResourceURI childResourceURI = null;
+	
 
 	public ResourceURI(String resourceURI)
 	{
 		this.resourceURIString = resourceURI;
-		String [] uriSplit = resourceURI.split("!(?<!\\\\!)");
-    	for (String uriSection : uriSplit)
-    	{
-    		System.out.println(uriSection);
-    	}
-    	String[] parameterSectionSplit = uriSplit[0].replaceAll("\\\\(?=!)", "").split("\\?(?<!\\\\\\?)");// now split off the parameter section of the first declaration of the URI
-    	for (String uriSection : parameterSectionSplit)
-    	{
-    		System.out.println("ps==>"+uriSection);
-    	}
-    	if (parameterSectionSplit.length > 1)
-    	{
-    		String[] parameterSplit = parameterSectionSplit[1].replaceAll("\\\\(?=\\?)", "").split("&(?<!\\\\&)");// now split off the parameters from parameter section
-    		for (String parameter : parameterSplit)
-    		{
-    			System.out.println("p==>"+parameter);
-    			String[] avp = parameter.replaceAll("\\\\(?=&)", "").split("=(?<!\\\\=)");// now split off the parameters from parameter section
-    			String parameterName = avp[0].replaceAll("\\\\(?==)", "");
-    			String parameterValue = "";
-    			if(avp.length > 1)
-    			{
-    				parameterValue = avp[1].replaceAll("\\\\(?==)", "");
-    			}
-    			System.out.println("\tname=> '"+parameterName+"'");
-    			System.out.println("\tvalue=> '"+parameterValue+"'");
-    		}
-    	}
+		this.scheme = getScheme(resourceURI);
+		this.schemeSpecificPart = getSchemeSpecificPart(resourceURI);
+		this.opaque = isOpaque(resourceURI);
+		this.authority  = getAuthroity(resourceURI);
+		this.hierarchy  = getHierarchy(resourceURI);
+		this.userInfo = getUserInfo(resourceURI);
+		this.hostname = getHostname(resourceURI);
+		this.port = getPort(resourceURI);
+		this.baseURI = getBaseURI(resourceURI);		
+		this.query = getQuery(resourceURI);
+		this.path = getPath(resourceURI);
+		this.fragment = getFragment(resourceURI);
+		
+		if(resourceURI.length() > baseURI.length() && resourceURI.substring(baseURI.length()+1).length() > 0)
+		{
+			
+			childResourceURI = new ResourceURI(resourceURI.substring(baseURI.length()+2));
+		}
+		
+		if (this.query != null)
+		{
+		
+			String[] parameterSplit = query.split("&(?<!\\\\&)");// now split off the parameters from parameter section
+			for (String parameter : parameterSplit)
+			{				
+				String[] avp = parameter.replaceAll("\\\\(?=&)", "").split("=(?<!\\\\=)");// now split off the parameters from parameter section
+				String parameterName = avp[0].replaceAll("\\\\(?==)", "");
+				String parameterValue = "";
+				if(avp.length > 1)
+				{
+					parameterValue = avp[1].replaceAll("\\\\(?==)", "");
+				}
+				parameterMap.put(parameterName, parameterValue);
+			
+			}
+		}
 	}
 	
-	public static String getScheme(String capoURIString)
+	
+	public String getResourceURIString()
+	{
+		return resourceURIString;
+	}
+
+	public String getScheme()
+	{
+		return scheme;
+	}
+
+	public String getSchemeSpecificPart()
+	{
+		return schemeSpecificPart;
+	}
+
+	public boolean isOpaque()
+	{
+		return opaque;
+	}
+
+	public String getAuthority()
+	{
+		return authority;
+	}
+
+	public String getHierarchy()
+	{
+		return hierarchy;
+	}
+
+	public String getUserInfo()
+	{
+		return userInfo;
+	}
+
+	public String getHostname()
+	{
+		return hostname;
+	}
+
+	public Integer getPort()
+	{
+		return port;
+	}
+
+	public String getBaseURI()
+	{
+		return baseURI;
+	}
+
+	public String getQuery()
+	{
+		return query;
+	}
+
+	public String getFragment()
+	{
+		return this.fragment;
+	}
+
+	public String getPath()
+	{
+		return path;
+	}
+
+	public HashMap<String, String> getParameterMap()
+	{
+		return parameterMap;
+	}
+
+	public ResourceURI getChildResourceURI()
+	{
+		return childResourceURI;
+	}
+
+//================================start static methods==============================================
+
+
+	public static String getScheme(String resourceURI)
 	{
 		String scheme = null;
 		
-		int schemeDeliminatorIndex = capoURIString.indexOf(":");
+		int schemeDeliminatorIndex = resourceURI.indexOf(":");
 		if(schemeDeliminatorIndex > 0)
 		{
-			scheme = capoURIString.substring(0, schemeDeliminatorIndex);
+			scheme = resourceURI.substring(0, schemeDeliminatorIndex);
 			if(scheme.toLowerCase().matches("[a-z0-9+\\-\\.]+") == false)
 			{
 				scheme = null;
@@ -74,14 +179,14 @@ public class ResourceURI
 		return scheme;
 	}
 	
-	public static String getSchemeSpecificPart(String capoURIString)
+	public static String getSchemeSpecificPart(String resourceURI)
 	{
 		String scheme = null;
 		String uriRemainder = null;
-		int schemeDeliminatorIndex = capoURIString.indexOf(":");
+		int schemeDeliminatorIndex = resourceURI.indexOf(":");
 		if(schemeDeliminatorIndex > 0)
 		{			
-			scheme = capoURIString.substring(0, schemeDeliminatorIndex);
+			scheme = resourceURI.substring(0, schemeDeliminatorIndex);
 			//verify that what we have is actually a scheme
 			if(scheme.toLowerCase().matches("[a-z0-9+\\-\\.]+") == false)
 			{
@@ -89,12 +194,12 @@ public class ResourceURI
 			}
 			else
 			{
-				uriRemainder = capoURIString.substring(schemeDeliminatorIndex+1);
+				uriRemainder = resourceURI.substring(schemeDeliminatorIndex+1);
 			}
 		}
 		if (scheme == null)
 		{
-			return capoURIString;
+			return resourceURI;
 		}
 		else
 		{
@@ -206,7 +311,6 @@ public class ResourceURI
 		}
 		
 		String hierarchy = getBaseURI(resourceURI).split("\\?(?<!\\\\\\?)")[0];// now split off the parameter section of the first declaration of the URI
-		System.out.println(getSchemeSpecificPart(hierarchy).replaceFirst("//(.*)", "$1"));
 		return getSchemeSpecificPart(hierarchy).replaceFirst("//(.*)", "$1");
 	}
 	
@@ -218,8 +322,31 @@ public class ResourceURI
 		if(querySplit.length > 1)
 		{
 			query = querySplit[1].replaceAll("\\\\(?=\\?)", "");
+			if (query.matches(".+#.*"))
+			{
+				query = query.split("#(?<!\\\\#)")[0].replaceAll("\\\\(?=#)", "");
+			}
 		}
 		return query;
+	}
+	
+	public static String getFragment(String resourceURI)
+	{
+		String fragment = null;
+		String[] querySplit = getBaseURI(resourceURI).split("\\?(?<!\\\\\\?)");
+		if(querySplit.length > 1)
+		{
+			fragment = querySplit[1].replaceAll("\\\\(?=\\?)", "");
+			if (fragment.matches(".+#.+"))
+			{
+				fragment = fragment.split("#(?<!\\\\#)")[1].replaceAll("\\\\(?=#)", "");
+			}
+			else
+			{
+				fragment = null;
+			}
+		}
+		return fragment;
 	}
 	
 	public static String getPath(String resourceURI)

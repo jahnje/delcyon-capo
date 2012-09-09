@@ -108,8 +108,7 @@ public abstract class AbstractResourceDescriptor implements ResourceDescriptor
 		
 
 		//process resource parameters
-			String[] uriSplit = getResourceURI().split("!(?<!\\\\!)"); //we only want the first part of the URI w/o reference to any child content 
-			String[] parameterSplit = uriSplit[0].split("?(?<!\\\\?)");// now split off the parameter section of the first declaration of the URI
+			
 			initialResourceParameters = resourceParameters;
 
 			for (ResourceParameter resourceParameter : initialResourceParameters)
