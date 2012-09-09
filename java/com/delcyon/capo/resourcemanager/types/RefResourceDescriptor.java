@@ -22,8 +22,8 @@ import com.delcyon.capo.ContextThread;
 import com.delcyon.capo.controller.ControlElement;
 import com.delcyon.capo.controller.VariableContainer;
 import com.delcyon.capo.resourcemanager.ContentFormatType;
-import com.delcyon.capo.resourcemanager.ResourceManager;
 import com.delcyon.capo.resourcemanager.ResourceParameter;
+import com.delcyon.capo.resourcemanager.ResourceURI;
 import com.delcyon.capo.resourcemanager.types.ContentMetaData.Attributes;
 import com.delcyon.capo.resourcemanager.types.RefResourceType.Parameters;
 import com.delcyon.capo.xml.XPath;
@@ -121,11 +121,11 @@ public class RefResourceDescriptor extends AbstractResourceDescriptor
 		{
 			if (getVarValue(variableContainer, Parameters.XMLNS) != null)
 			{
-				return (Element) XPath.selectNSNode(contextControlElement.getControlElementDeclaration(), ResourceManager.getSchemeSpecificPart(getResourceURI()),getVarValue(variableContainer, Parameters.XMLNS).split(","));
+				return (Element) XPath.selectNSNode(contextControlElement.getControlElementDeclaration(), ResourceURI.getSchemeSpecificPart(getResourceURI()),getVarValue(variableContainer, Parameters.XMLNS).split(","));
 			}
 			else
 			{ 
-				return (Element) XPath.selectSingleNode(contextControlElement.getControlElementDeclaration(), ResourceManager.getSchemeSpecificPart(getResourceURI()));
+				return (Element) XPath.selectSingleNode(contextControlElement.getControlElementDeclaration(), ResourceURI.getSchemeSpecificPart(getResourceURI()));
 			}
 		}
 		else

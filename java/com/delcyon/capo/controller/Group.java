@@ -18,10 +18,10 @@ package com.delcyon.capo.controller;
 
 import java.io.PrintStream;
 import java.util.HashMap;
-import java.util.Map.Entry;
 import java.util.Set;
 import java.util.Stack;
 import java.util.Vector;
+import java.util.Map.Entry;
 import java.util.logging.Level;
 
 import org.w3c.dom.Element;
@@ -33,10 +33,10 @@ import com.delcyon.capo.controller.elements.GroupElement;
 import com.delcyon.capo.controller.elements.ResourceElement;
 import com.delcyon.capo.controller.server.ControllerClientRequestProcessor;
 import com.delcyon.capo.resourcemanager.ResourceDescriptor;
+import com.delcyon.capo.resourcemanager.ResourceParameterBuilder;
+import com.delcyon.capo.resourcemanager.ResourceURI;
 import com.delcyon.capo.resourcemanager.ResourceDescriptor.LifeCycle;
 import com.delcyon.capo.resourcemanager.ResourceDescriptor.State;
-import com.delcyon.capo.resourcemanager.ResourceManager;
-import com.delcyon.capo.resourcemanager.ResourceParameterBuilder;
 import com.delcyon.capo.server.CapoServer;
 import com.delcyon.capo.xml.XPath;
 
@@ -372,8 +372,8 @@ public class Group implements VariableContainer
 	
 	public ResourceDescriptor getResourceDescriptor(ControlElement callingControlElement,String resourceURIString) throws Exception
 	{
-		String scheme = ResourceManager.getScheme(resourceURIString);
-		String uriRemainder = ResourceManager.getSchemeSpecificPart(resourceURIString);
+		String scheme = ResourceURI.getScheme(resourceURIString);
+		String uriRemainder = ResourceURI.getSchemeSpecificPart(resourceURIString);
 		
 		
 		

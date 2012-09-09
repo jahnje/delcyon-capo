@@ -8,7 +8,7 @@
     
     <server:group name="default">
        
-        <resource:file localName="localName" uri="uri">
+       <!-- <resource:file localName="localName" uri="uri">-->
             <!-- context = content -->
             <!-- metatdata = ../@* -->
             <!-- constraint = name of something in current context -->
@@ -18,11 +18,11 @@
             <!-- restriction vs. join -->            
             <!-- path = resource type local path, not understandable by other resource types -->
             <!-- xpath = resource document path, with context equal to current content -->
-        </resource:file>
+        <!--</resource:file>-->
        
         
         <!-- Start with the resource that we want to search against -->
-        <server:search name="fileTestSearch"  uri="clients" dumpVars="true" sleep="1000" dumpRef="..">
+        <!--<server:search name="fileTestSearch"  uri="clients" dumpVars="true" sleep="1000" dumpRef="..">
             <resource:child name="client" path="*">
                 <resource:include xpath="../@localname"/>
                 <resource:child path="status.xml">
@@ -33,11 +33,10 @@
                     </resource:child>
                 </resource:child>                
             </resource:child>
-        </server:search>
+        </server:search>-->
     
         <!-- Start with the resource that we want to search against -->
-        <server:search name="jdbcTestSearch"  uri="jdbc:hsqldb:file:testdb" dumpVars="true" sleep="1000" dumpRef="..">
-            <resource:parameter name="user" value="user"/>
+        <server:resource name="jdbcTestSearch"  uri="jdbc:hsqldb:file:testdb/testdb?user=user&amp;password=!!systems" dumpVars="true" sleep="1000" dumpRef="..">            
             <resource:child name="systems" path="SYSTEMS">
                 <resource:rule constraint="NAME" constraintType="equals"  value="%"/>
                 <resource:rule constraint="LAST_CONNECT" constraintType="expression"  value="> now() - 1hr"/>
@@ -50,8 +49,9 @@
                     <resource:include name="MAC"/>
                 </resource:child>    
             </resource:child>
-        </server:search>
-    
+        </server:resource>
+        
+        <server:import name="jdbcTestImport" src="resource:jdbcTestSearch"  dumpVars="true" sleep="1000" dumpRef=".."/>
     </server:group>
     
     <!-- new smaple output 

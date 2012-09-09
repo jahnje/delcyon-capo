@@ -22,8 +22,8 @@ import com.delcyon.capo.CapoApplication;
 import com.delcyon.capo.controller.ControlElement;
 import com.delcyon.capo.controller.VariableContainer;
 import com.delcyon.capo.resourcemanager.ResourceDescriptor;
-import com.delcyon.capo.resourcemanager.ResourceManager;
 import com.delcyon.capo.resourcemanager.ResourceParameter;
+import com.delcyon.capo.resourcemanager.ResourceURI;
 import com.delcyon.capo.resourcemanager.types.RefResourceType.Parameters;
 import com.delcyon.capo.server.CapoServer.Preferences;
 import com.delcyon.capo.xml.XPath;
@@ -46,7 +46,7 @@ public class ClientsResourceDescriptor extends AbstractResourceDescriptor
 	{		
 		super.init(variableContainer, lifeCycle, iterate, resourceParameters);
 		
-		clientResourceDescriptor = CapoApplication.getDataManager().getResourceDescriptor(null, CapoApplication.getDataManager().getResourceDirectory(Preferences.CLIENTS_DIR.toString()).getResourceURI()+"/"+ResourceManager.getSchemeSpecificPart(getResourceURI()));
+		clientResourceDescriptor = CapoApplication.getDataManager().getResourceDescriptor(null, CapoApplication.getDataManager().getResourceDirectory(Preferences.CLIENTS_DIR.toString()).getResourceURI()+"/"+ResourceURI.getSchemeSpecificPart(getResourceURI()));
 		
 		this.contentMetaData = clientResourceDescriptor.getContentMetaData(variableContainer, resourceParameters);
 		
@@ -109,11 +109,11 @@ public class ClientsResourceDescriptor extends AbstractResourceDescriptor
 		{
 			if (getVarValue(variableContainer, Parameters.XMLNS) != null)
 			{
-				return (Element) XPath.selectNSNode(contextControlElement.getControlElementDeclaration(), ResourceManager.getSchemeSpecificPart(getResourceURI()),getVarValue(variableContainer, Parameters.XMLNS).split(","));
+				return (Element) XPath.selectNSNode(contextControlElement.getControlElementDeclaration(), ResourceURI.getSchemeSpecificPart(getResourceURI()),getVarValue(variableContainer, Parameters.XMLNS).split(","));
 			}
 			else
 			{ 
-				return (Element) XPath.selectSingleNode(contextControlElement.getControlElementDeclaration(), ResourceManager.getSchemeSpecificPart(getResourceURI()));
+				return (Element) XPath.selectSingleNode(contextControlElement.getControlElementDeclaration(), ResourceURI.getSchemeSpecificPart(getResourceURI()));
 			}
 		}
 		else

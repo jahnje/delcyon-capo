@@ -33,10 +33,9 @@ import com.delcyon.capo.controller.elements.StepElement;
 import com.delcyon.capo.datastream.StreamUtil;
 import com.delcyon.capo.resourcemanager.ContentFormatType;
 import com.delcyon.capo.resourcemanager.ResourceDescriptor;
-import com.delcyon.capo.resourcemanager.ResourceManager;
 import com.delcyon.capo.resourcemanager.ResourceParameter;
-import com.delcyon.capo.resourcemanager.ResourceParameterBuilder;
 import com.delcyon.capo.resourcemanager.ResourceType;
+import com.delcyon.capo.resourcemanager.ResourceURI;
 import com.delcyon.capo.resourcemanager.types.ContentMetaData.Attributes;
 import com.delcyon.capo.util.diff.InputStreamTokenizer;
 import com.delcyon.capo.util.diff.InputStreamTokenizer.TokenList;
@@ -70,7 +69,7 @@ public class ShellResourceDescriptor extends AbstractResourceDescriptor
 	@Override
 	public void setup(ResourceType resourceType, String resourceURI) throws Exception
 	{		
-		super.setup(resourceType, ResourceManager.getSchemeSpecificPart(resourceURI));
+		super.setup(resourceType, ResourceURI.getSchemeSpecificPart(resourceURI));
 	}
 	
 	private SimpleContentMetaData buildContentMetaData()

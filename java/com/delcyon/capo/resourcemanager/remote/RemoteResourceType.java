@@ -21,11 +21,12 @@ import java.util.ArrayList;
 import com.delcyon.capo.CapoApplication;
 import com.delcyon.capo.controller.server.ControllerClientRequestProcessor;
 import com.delcyon.capo.resourcemanager.ResourceDescriptor;
-import com.delcyon.capo.resourcemanager.ResourceDescriptor.LifeCycle;
 import com.delcyon.capo.resourcemanager.ResourceManager;
-import com.delcyon.capo.resourcemanager.ResourceManager.Preferences;
 import com.delcyon.capo.resourcemanager.ResourceType;
 import com.delcyon.capo.resourcemanager.ResourceTypeProvider;
+import com.delcyon.capo.resourcemanager.ResourceURI;
+import com.delcyon.capo.resourcemanager.ResourceDescriptor.LifeCycle;
+import com.delcyon.capo.resourcemanager.ResourceManager.Preferences;
 
 /**
  * @author jeremiah
@@ -77,12 +78,12 @@ public class RemoteResourceType implements ResourceType
 	public ResourceDescriptor getResourceDescriptor(ControllerClientRequestProcessor controllerClientRequestProcessor, String resourceURI) throws Exception
 	{
 		RemoteResourceDescriptorProxy remoteResourceDescriptorProxy = new RemoteResourceDescriptorProxy(controllerClientRequestProcessor);		
-		proxyedURI = ResourceManager.getSchemeSpecificPart(resourceURI);
-		if (ResourceManager.getScheme(proxyedURI) == null)
+		proxyedURI = ResourceURI.getSchemeSpecificPart(resourceURI);
+		if (ResourceURI.getScheme(proxyedURI) == null)
 		{
 			proxyedURI = CapoApplication.getConfiguration().getValue(Preferences.DEFAULT_RESOURCE_TYPE)+":"+proxyedURI;
 		}
-		proxyedResourceType = CapoApplication.getDataManager().getResourceType(ResourceManager.getScheme(proxyedURI));
+		proxyedResourceType = CapoApplication.getDataManager().getResourceType(ResourceURI.getScheme(proxyedURI));
 		remoteResourceDescriptorProxy.setup(proxyedResourceType, proxyedURI);
 		return remoteResourceDescriptorProxy;
 	}
