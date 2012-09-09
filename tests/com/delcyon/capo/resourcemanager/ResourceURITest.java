@@ -26,11 +26,11 @@ import org.junit.Test;
 public class ResourceURITest
 {
 
-	private String testURI = "jdbc:hsqldb:file:testdb/testdb?user=user\\?&password&\\&\\!systems=\\=!systems?id=:242";
-	private String opaqueTestURI = "scheme:/schemespecific";
-	private String testURL = "foo://username:password@example.com:8042/over/there/index.dtb?type=animal&name=narwhal#nose";
-	private String testURNPath = "urn:example:animal:ferret:nose";
-	private String testMailToURN = "mailto:username@example.com?subject=Topic";
+	private static final String testURI = "jdbc:hsqldb:file:testdb/testdb?user=user\\?&password&\\&\\!systems=\\=!systems?id=:242";
+	private static final String opaqueTestURI = "scheme:/schemespecific";
+	private static final String testURL = "foo://username:password@example.com:8042/over/there/index.dtb?type=animal&name=narwhal#nose";
+	private static final String testURNPath = "urn:example:animal:ferret:nose";
+	private static final String testMailToURN = "mailto:username@example.com?subject=Topic";
 	/**
 	 * Test method for {@link com.delcyon.capo.resourcemanager.ResourceURI#ResourceURI(java.lang.String)}.
 	 */
@@ -80,7 +80,7 @@ public class ResourceURITest
 	{
 		Assert.assertEquals("username:password@example.com:8042",ResourceURI.getAuthroity(testURL));
 		Assert.assertEquals(null,ResourceURI.getAuthroity(testMailToURN));
-		Assert.assertEquals("hsqldb:file",ResourceURI.getAuthroity(testURI));
+		Assert.assertEquals(null,ResourceURI.getAuthroity(testURI));
 		Assert.assertEquals(null,ResourceURI.getAuthroity(testURNPath));
 	}
 
@@ -115,13 +115,46 @@ public class ResourceURITest
 	}
 	
 	@Test
+	public void testHasHierarchy()
+	{
+		Assert.assertEquals(true,ResourceURI.hasHierarchy(testURL));
+		Assert.assertEquals(false,ResourceURI.hasHierarchy(testURI));
+		Assert.assertEquals(false,ResourceURI.hasHierarchy(opaqueTestURI));
+		Assert.assertEquals(false,ResourceURI.hasHierarchy(testURNPath));
+		Assert.assertEquals(false,ResourceURI.hasHierarchy(testMailToURN));
+
+	}
+	
+	@Test
 	public void testGetHierarchy()
 	{
 		Assert.assertEquals("username:password@example.com:8042/over/there/index.dtb",ResourceURI.getHierarchy(testURL));
-		Assert.assertEquals("hsqldb:file:testdb/testdb",ResourceURI.getHierarchy(testURI));
-		Assert.assertEquals("/schemespecific",ResourceURI.getHierarchy(opaqueTestURI));
-		Assert.assertEquals("example:animal:ferret:nose",ResourceURI.getHierarchy(testURNPath));
+		Assert.assertEquals(null,ResourceURI.getHierarchy(testURI));
+		Assert.assertEquals(null,ResourceURI.getHierarchy(opaqueTestURI));
+		Assert.assertEquals(null,ResourceURI.getHierarchy(testURNPath));
 		Assert.assertEquals(null,ResourceURI.getHierarchy(testMailToURN));
+
+	}
+	
+	@Test
+	public void testGetPath()
+	{
+		Assert.assertEquals("/over/there/index.dtb",ResourceURI.getPath(testURL));
+		Assert.assertEquals("testdb/testdb",ResourceURI.getPath(testURI));
+		Assert.assertEquals("/schemespecific",ResourceURI.getPath(opaqueTestURI));
+		Assert.assertEquals("example:animal:ferret:nose",ResourceURI.getPath(testURNPath));
+		Assert.assertEquals("username@example.com",ResourceURI.getPath(testMailToURN));
+
+	}
+	
+	@Test
+	public void testGetQuery()
+	{
+		Assert.assertEquals("type=animal&name=narwhal#nose",ResourceURI.getQuery(testURL));
+		Assert.assertEquals("user=user?&password&\\&!systems=\\=",ResourceURI.getQuery(testURI));
+		Assert.assertEquals(null,ResourceURI.getQuery(opaqueTestURI));
+		Assert.assertEquals(null,ResourceURI.getQuery(testURNPath));
+		Assert.assertEquals("subject=Topic",ResourceURI.getQuery(testMailToURN));
 
 	}
 	

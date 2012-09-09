@@ -127,9 +127,10 @@ public class ResourceURI
 	{
 
 		String hierarchy = getHierarchy(resourceURI);
-		if (hierarchy != null && hierarchy.matches(".+/{0,1}.*"))
+		if (hierarchy != null && hierarchy.matches(".+[/:]{0,1}.*"))
 		{
-			return hierarchy.split("/")[0];
+			String authority = hierarchy.split("/")[0]; 
+			return authority;
 		}
 		else
 		{
@@ -187,7 +188,7 @@ public class ResourceURI
 	public static boolean hasHierarchy(String resourceURI)
 	{
 		String hierarchy = getBaseURI(resourceURI).split("\\?(?<!\\\\\\?)")[0];
-		if (hierarchy.matches(".*/.*"))
+		if (hierarchy.matches(".+://.+/.*"))
 		{
 			return true;
 		}
@@ -210,26 +211,42 @@ public class ResourceURI
 	}
 	
 
-//	public static String getQuery(String resourceURI)
-//	{
-//		String hostname = null;
-//		String authority = getAuthroity(resourceURI);
-//		if(authority != null)
-//		{
-//			hostname = authority.replaceFirst(".+@", "").replaceFirst(":\\d+", "");
-//		}
-//		return hostname;
-//	}
-//	
-//	public static String getPath(String resourceURI)
-//	{
-//		String hostname = null;
-//		String authority = getAuthroity(resourceURI);
-//		if(authority != null)
-//		{
-//			hostname = authority.replaceFirst(".+@", "").replaceFirst(":\\d+", "");
-//		}
-//		return hostname;
-//	}
+	public static String getQuery(String resourceURI)
+	{
+		String query = null;
+		String[] querySplit = getBaseURI(resourceURI).split("\\?(?<!\\\\\\?)");
+		if(querySplit.length > 1)
+		{
+			query = querySplit[1].replaceAll("\\\\(?=\\?)", "");
+		}
+		return query;
+	}
+	
+	public static String getPath(String resourceURI)
+	{
+		String path = null;
+		String baseURI = getBaseURI(resourceURI);
+		if(hasHierarchy(baseURI))
+		{
+			String authority = getAuthroity(baseURI);
+			path = getHierarchy(baseURI);
+			if (authority != null)
+			{
+				path = path.substring(authority.length());
+			}
+		}
+		else
+		{
+			
+			path = getSchemeSpecificPart(getBaseURI(resourceURI).split("\\?(?<!\\\\\\?)")[0]);
+			if (path.matches(".*/.*")) //see if this path is a urn path or a conventional path
+			{
+				path = path.replaceAll(".+:(?<!\\\\:)(.+)", "$1").replaceAll("\\\\(?=:)", "");
+			}			
+		}
+		
+		
+		return path;
+	}
 	
 }
