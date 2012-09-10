@@ -171,7 +171,7 @@ public interface ResourceDescriptor
 	public abstract LifeCycle getLifeCycle() throws Exception;
 	
 	/** get the official name URN of our resource*/
-	public abstract String getResourceURI();
+	public abstract ResourceURI getResourceURI();
 
 	public abstract String getLocalName();
 	

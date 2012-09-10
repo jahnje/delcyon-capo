@@ -35,6 +35,7 @@ import com.delcyon.capo.protocol.server.ClientRequestXMLProcessor;
 import com.delcyon.capo.resourcemanager.ResourceDescriptor;
 import com.delcyon.capo.resourcemanager.ResourceParameter;
 import com.delcyon.capo.resourcemanager.ResourceType;
+import com.delcyon.capo.resourcemanager.ResourceURI;
 import com.delcyon.capo.resourcemanager.remote.RemoteResourceDescriptorMessage.MessageType;
 import com.delcyon.capo.resourcemanager.types.ContentMetaData;
 
@@ -53,7 +54,7 @@ public class RemoteResourceDescriptorProxy  implements ResourceDescriptor,Client
 	private VariableContainer variableContainer;
 	private InputStream inputStream;
 	private OutputStream outputStream;
-	private String resourceURI = null;
+	private ResourceURI resourceURI = null;
 	private ResourceType resourceType;
 	private LifeCycle lifeCycle;
 	public RemoteResourceDescriptorProxy(ControllerClientRequestProcessor controllerClientRequestProcessor)
@@ -66,11 +67,11 @@ public class RemoteResourceDescriptorProxy  implements ResourceDescriptor,Client
 	public void setup(ResourceType resourceType, String resourceURI) throws Exception
 	{
 		RemoteResourceDescriptorMessage message = new RemoteResourceDescriptorMessage();
-		this.resourceURI = resourceURI;
+		this.resourceURI = new ResourceURI(resourceURI);
 		this.resourceType = resourceType;
 		message.setMessageType(MessageType.SETUP);
 		message.setSessionID(sessionID);
-		message.setResourceURI(resourceURI);		
+		message.setResourceURI(new ResourceURI(resourceURI));		
 		message = sendResponse(message, MessageType.SETUP,false);
 		this.resourceURI = message.getResourceURI();
 		this.resourceType = message.getResourceType();
@@ -388,13 +389,13 @@ public class RemoteResourceDescriptorProxy  implements ResourceDescriptor,Client
 	}
 
 	@Override
-	public String getResourceURI()
+	public ResourceURI getResourceURI()
 	{
 		return this.resourceURI;
 	}
 
 	
-	public void setResourceURI(String resourceURI)
+	public void setResourceURI(ResourceURI resourceURI)
 	{
 		this.resourceURI = resourceURI;
 		
@@ -404,7 +405,7 @@ public class RemoteResourceDescriptorProxy  implements ResourceDescriptor,Client
     @Override
     public String getLocalName()
     {
-        String[] splitURI = this.resourceURI.split("/");
+        String[] splitURI = this.resourceURI.getPath().split("/");
         return splitURI[splitURI.length-1];
     }
 	

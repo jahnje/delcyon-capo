@@ -45,7 +45,7 @@ public class FileResourceDescriptor extends AbstractResourceDescriptor implement
 	
 	private FileResourceContentMetaData buildContentMetatData(ResourceParameter...resourceParameters) throws Exception
 	{		
-		FileResourceContentMetaData contentMetaData = new FileResourceContentMetaData(getResourceURI(),resourceParameters);		
+		FileResourceContentMetaData contentMetaData = new FileResourceContentMetaData(getResourceURI().getBaseURI(),resourceParameters);		
 		return contentMetaData;
 	}
 	
@@ -71,7 +71,7 @@ public class FileResourceDescriptor extends AbstractResourceDescriptor implement
 		if (parentDirParameter != null && parentDirParameter.isEmpty() == false)
 		{
 		    //this must be converted to a URI before processing or file treats it as a string and append things wierdly. 
-			parentDir = new File(new URI(CapoApplication.getDataManager().getResourceDirectory(parentDirParameter).getResourceURI()));			
+			parentDir = new File(new URI(CapoApplication.getDataManager().getResourceDirectory(parentDirParameter).getResourceURI().getBaseURI()));			
 		}
 		else if(rootDirParameter != null && rootDirParameter.isEmpty() == false)
 		{
@@ -80,35 +80,35 @@ public class FileResourceDescriptor extends AbstractResourceDescriptor implement
 		//Set default dir to capo dir on file requests, if one wasn't specified, and we have everything running
 		else if(CapoApplication.getDataManager() != null && CapoApplication.getDataManager().getResourceDirectory(PREFERENCE.CAPO_DIR.toString()) != null)
 		{			
-			parentDir = new File(new URI(CapoApplication.getDataManager().getResourceDirectory(PREFERENCE.CAPO_DIR.toString()).getResourceURI()));
+			parentDir = new File(new URI(CapoApplication.getDataManager().getResourceDirectory(PREFERENCE.CAPO_DIR.toString()).getResourceURI().getBaseURI()));
 		}
 				
 		//this lets us use custom relative URIs for files.
 		// file:filename and file:/filename file://filename
 		
-		if (ResourceURI.isOpaque(getResourceURI()) || ResourceURI.getAuthroity(getResourceURI()) != null || ResourceURI.getScheme(getResourceURI()) == null)
+		if (getResourceURI().isOpaque() || getResourceURI().getAuthority() != null || getResourceURI().getScheme() == null)
 		{
 		    String uri = null;
 			if (parentDir == null)
 			{
-			    uri = new File(getResourceURI().replaceFirst("file:(//){0,1}", "")).toURI().toString();
+			    uri = new File(getResourceURI().getBaseURI().replaceFirst("file:(//){0,1}", "")).toURI().toString();
 			}
 			else
 			{
 			    //if the parent dir is already included in the URI, don't use it.
 			    //and we're not specifically adding it with the parentDir parameter.
 			    //The ROOT_DIR parameter will cascade down to child resource, so it has to be stripped out.
-			    uri = new File(parentDir,getResourceURI().replaceFirst("file:(//){0,1}", "")).toURI().toString();
+			    uri = new File(parentDir,getResourceURI().getBaseURI().replaceFirst("file:(//){0,1}", "")).toURI().toString();
 			    if (uri.toString().startsWith(parentDir.toURI().toString()) && rootDirParameter != null && rootDirParameter.trim().isEmpty() == false)
 			    {
-			        uri = new File(getResourceURI().replaceFirst("file:(//){0,1}", "")).toURI().toString();
+			        uri = new File(getResourceURI().getBaseURI().replaceFirst("file:(//){0,1}", "")).toURI().toString();
 			    }
 			}
 			if (uri.endsWith(File.separator))
 			{
 			    uri = uri.substring(0, uri.length()-File.separator.length());
 			}
-			setResourceURI(uri);
+			setResourceURI(new ResourceURI(uri));
 		}
 		else
 		{
@@ -164,8 +164,8 @@ public class FileResourceDescriptor extends AbstractResourceDescriptor implement
 			open(variableContainer,resourceParameters);
 		}
 		
-		iterationContentMetaData = new FileResourceContentMetaData(getResourceURI());		
-		return trackInputStream(iterationContentMetaData.wrapInputStream(new FileInputStream(new File(new URI(getResourceURI())))));
+		iterationContentMetaData = new FileResourceContentMetaData(getResourceURI().getBaseURI());		
+		return trackInputStream(iterationContentMetaData.wrapInputStream(new FileInputStream(new File(new URI(getResourceURI().getBaseURI())))));
 	}
 
 	@Override
@@ -175,8 +175,8 @@ public class FileResourceDescriptor extends AbstractResourceDescriptor implement
 		{
 			open(variableContainer,resourceParameters);
 		}
-		iterationContentMetaData = new FileResourceContentMetaData(getResourceURI());
-		File outputFile = new File(new URI(getResourceURI()));
+		iterationContentMetaData = new FileResourceContentMetaData(getResourceURI().getBaseURI());
+		File outputFile = new File(new URI(getResourceURI().getBaseURI()));
 		if (outputFile.exists() == false)
 		{
 		    new File(outputFile.getParent()).mkdirs();
@@ -194,7 +194,7 @@ public class FileResourceDescriptor extends AbstractResourceDescriptor implement
 		super.close(variableContainer,resourceParameters);
 		if (iterationContentMetaData != null)
 		{
-			iterationContentMetaData.refresh(getResourceURI());
+			iterationContentMetaData.refresh(getResourceURI().getBaseURI());
 		}
 	}
 	
@@ -203,7 +203,7 @@ public class FileResourceDescriptor extends AbstractResourceDescriptor implement
 	public void create() throws Exception
 	{
 		
-		File file = new File(new URI(getResourceURI()));
+		File file = new File(new URI(getResourceURI().getBaseURI()));
 		if (file.exists() == false)
 		{
 			String path = file.getCanonicalPath();
@@ -254,7 +254,7 @@ public class FileResourceDescriptor extends AbstractResourceDescriptor implement
 	public boolean performAction(VariableContainer variableContainer,Action action,ResourceParameter... resourceParameters) throws Exception
 	{
 	    super.addResourceParameters(variableContainer, resourceParameters);
-	    URI uri = new URI(getResourceURI());
+	    URI uri = new URI(getResourceURI().getBaseURI());
 	    if (uri.isAbsolute() == false)
 	    {
 	        CapoApplication.logger.log(Level.WARNING, "URI isn't absolute! "+uri);

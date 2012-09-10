@@ -74,7 +74,7 @@ public class ShellResourceDescriptor extends AbstractResourceDescriptor
 	
 	private SimpleContentMetaData buildContentMetaData()
 	{
-		SimpleContentMetaData simpleContentMetaData  = new SimpleContentMetaData(getResourceURI());
+		SimpleContentMetaData simpleContentMetaData  = new SimpleContentMetaData(getResourceURI().getBaseURI());
 		simpleContentMetaData.addSupportedAttribute(Attributes.exists,Attributes.readable,Attributes.writeable);
 		
 		simpleContentMetaData.setValue(Attributes.exists,true);
@@ -117,7 +117,7 @@ public class ShellResourceDescriptor extends AbstractResourceDescriptor
 		super.open(variableContainer,resourceParameters);
 		
 		ProcessBuilder processBuilder = new ProcessBuilder();
-		String[] commands = getResourceURI().split(" ");		
+		String[] commands = getResourceURI().getBaseURI().split(" ");		
 		processBuilder.command(commands);
 		processBuilder.redirectErrorStream(true);
 		process = processBuilder.start();

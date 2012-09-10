@@ -38,6 +38,7 @@ import com.delcyon.capo.protocol.client.XMLServerResponse;
 import com.delcyon.capo.protocol.client.XMLServerResponseProcessor;
 import com.delcyon.capo.protocol.client.XMLServerResponseProcessorProvider;
 import com.delcyon.capo.resourcemanager.ResourceDescriptor;
+import com.delcyon.capo.resourcemanager.ResourceURI;
 import com.delcyon.capo.resourcemanager.remote.RemoteResourceDescriptorMessage.MessageType;
 import com.delcyon.capo.xml.XPath;
 
@@ -371,7 +372,7 @@ public class RemoteResourceResponseProcessor implements XMLServerResponseProcess
 			catch (Exception exception)
 			{	
 			    	ResourceDescriptor currentResourceDescriptor = getResourceDescriptorHashtable().get(sessionID);
-			    	String uri = null;
+			    	ResourceURI uri = null;
 			    	if (currentResourceDescriptor != null)
 			    	{
 			    	    uri = currentResourceDescriptor.getResourceURI();

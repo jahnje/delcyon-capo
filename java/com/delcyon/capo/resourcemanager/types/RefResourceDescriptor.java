@@ -40,7 +40,7 @@ public class RefResourceDescriptor extends AbstractResourceDescriptor
 
 	private SimpleContentMetaData buildContentMetatData()
 	{
-		SimpleContentMetaData simpleContentMetaData  = new SimpleContentMetaData(getResourceURI());
+		SimpleContentMetaData simpleContentMetaData  = new SimpleContentMetaData(getResourceURI().getBaseURI());
 		simpleContentMetaData.addSupportedAttribute(Attributes.exists,Attributes.readable,Attributes.writeable,Attributes.container);		
 		simpleContentMetaData.setValue(Attributes.exists,true);
 		simpleContentMetaData.setValue(Attributes.readable,true);
@@ -121,11 +121,11 @@ public class RefResourceDescriptor extends AbstractResourceDescriptor
 		{
 			if (getVarValue(variableContainer, Parameters.XMLNS) != null)
 			{
-				return (Element) XPath.selectNSNode(contextControlElement.getControlElementDeclaration(), ResourceURI.getSchemeSpecificPart(getResourceURI()),getVarValue(variableContainer, Parameters.XMLNS).split(","));
+				return (Element) XPath.selectNSNode(contextControlElement.getControlElementDeclaration(), getResourceURI().getSchemeSpecificPart(),getVarValue(variableContainer, Parameters.XMLNS).split(","));
 			}
 			else
 			{ 
-				return (Element) XPath.selectSingleNode(contextControlElement.getControlElementDeclaration(), ResourceURI.getSchemeSpecificPart(getResourceURI()));
+				return (Element) XPath.selectSingleNode(contextControlElement.getControlElementDeclaration(), getResourceURI().getSchemeSpecificPart());
 			}
 		}
 		else

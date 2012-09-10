@@ -43,6 +43,9 @@ public class ResourceURI
 	private ResourceURI childResourceURI = null;
 	
 
+	/** needed for serialization **/
+	private ResourceURI(){};
+	
 	public ResourceURI(String resourceURI)
 	{
 		this.resourceURIString = resourceURI;

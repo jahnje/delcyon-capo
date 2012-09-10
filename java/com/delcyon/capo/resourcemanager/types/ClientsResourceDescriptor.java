@@ -46,7 +46,7 @@ public class ClientsResourceDescriptor extends AbstractResourceDescriptor
 	{		
 		super.init(variableContainer, lifeCycle, iterate, resourceParameters);
 		
-		clientResourceDescriptor = CapoApplication.getDataManager().getResourceDescriptor(null, CapoApplication.getDataManager().getResourceDirectory(Preferences.CLIENTS_DIR.toString()).getResourceURI()+"/"+ResourceURI.getSchemeSpecificPart(getResourceURI()));
+		clientResourceDescriptor = CapoApplication.getDataManager().getResourceDescriptor(null, CapoApplication.getDataManager().getResourceDirectory(Preferences.CLIENTS_DIR.toString()).getResourceURI().getBaseURI()+"/"+getResourceURI().getSchemeSpecificPart());
 		
 		this.contentMetaData = clientResourceDescriptor.getContentMetaData(variableContainer, resourceParameters);
 		
@@ -109,11 +109,11 @@ public class ClientsResourceDescriptor extends AbstractResourceDescriptor
 		{
 			if (getVarValue(variableContainer, Parameters.XMLNS) != null)
 			{
-				return (Element) XPath.selectNSNode(contextControlElement.getControlElementDeclaration(), ResourceURI.getSchemeSpecificPart(getResourceURI()),getVarValue(variableContainer, Parameters.XMLNS).split(","));
+				return (Element) XPath.selectNSNode(contextControlElement.getControlElementDeclaration(), getResourceURI().getSchemeSpecificPart(),getVarValue(variableContainer, Parameters.XMLNS).split(","));
 			}
 			else
 			{ 
-				return (Element) XPath.selectSingleNode(contextControlElement.getControlElementDeclaration(), ResourceURI.getSchemeSpecificPart(getResourceURI()));
+				return (Element) XPath.selectSingleNode(contextControlElement.getControlElementDeclaration(), getResourceURI().getSchemeSpecificPart());
 			}
 		}
 		else

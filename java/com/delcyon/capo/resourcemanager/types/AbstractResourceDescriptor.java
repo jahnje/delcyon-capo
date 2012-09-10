@@ -44,6 +44,7 @@ import com.delcyon.capo.resourcemanager.ResourceParameter;
 import com.delcyon.capo.resourcemanager.ResourceType;
 import com.delcyon.capo.resourcemanager.ResourceParameter.EvaluationContext;
 import com.delcyon.capo.resourcemanager.ResourceParameter.Source;
+import com.delcyon.capo.resourcemanager.ResourceURI;
 import com.delcyon.capo.server.CapoServer;
 import com.delcyon.capo.util.ReflectionUtility;
 import com.delcyon.capo.xml.XPath;
@@ -58,7 +59,7 @@ public abstract class AbstractResourceDescriptor implements ResourceDescriptor
 	private HashMap<String, String> delayedParameterHashMap = new HashMap<String, String>(); //
 	private HashMap<String, String> contextParameterHashMap = new HashMap<String, String>();
 	private HashMap<StreamType, State> streamStateHashMap = new HashMap<StreamType, State>();
-	private String resourceURI = null; 
+	private ResourceURI resourceURI = null; 
 	private ResourceParameter[] initialResourceParameters = null;
 	private HashMap<State, StateParameters> stateParametersHashMap = new HashMap<State, StateParameters>();
 	
@@ -78,7 +79,7 @@ public abstract class AbstractResourceDescriptor implements ResourceDescriptor
 	{
 		this.resourceState = State.NONE;
 		this.resourceType = resourceType;
-		this.resourceURI = resourceURI;
+		this.resourceURI = new ResourceURI(resourceURI);
 		this.lifeCycle = resourceType.getDefaultLifeCycle();
 		
 	}
@@ -110,7 +111,11 @@ public abstract class AbstractResourceDescriptor implements ResourceDescriptor
 		//process resource parameters
 			
 			initialResourceParameters = resourceParameters;
-
+			
+			//store parameters from URI
+			
+			declaredParameterHashMap.putAll(resourceURI.getParameterMap());
+			
 			for (ResourceParameter resourceParameter : initialResourceParameters)
 			{
 				if (resourceParameter.getEvaluationContext() == EvaluationContext.NOW)
@@ -281,16 +286,16 @@ public abstract class AbstractResourceDescriptor implements ResourceDescriptor
         }
         else if (getResourceState() == State.RELEASED)
         {
-        	setup(resourceType, resourceURI);
+        	setup(resourceType, resourceURI.getResourceURIString());
         }
 	}
 	
 	
-	public String getResourceURI()
+	public ResourceURI getResourceURI()
 	{
 		return resourceURI;
 	}
-	protected void setResourceURI(String resourceURI)
+	protected void setResourceURI(ResourceURI resourceURI)
 	{
 		this.resourceURI = resourceURI;
 	}
@@ -299,7 +304,7 @@ public abstract class AbstractResourceDescriptor implements ResourceDescriptor
 	@Override
 	public String getLocalName()
 	{
-	    String[] splitURI = this.resourceURI.split("/");
+	    String[] splitURI = this.resourceURI.getPath().split("/");
 	    return splitURI[splitURI.length-1];
 	}
 	

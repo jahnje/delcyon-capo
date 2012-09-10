@@ -136,7 +136,7 @@ public abstract class ResourceDescriptorTest
     @Test
     public void testSetup() throws Exception
     {
-        ResourceDescriptor  resourceDescriptor = this.resourceDescriptor.getResourceType().getResourceDescriptor(this.resourceDescriptor.getResourceURI());
+        ResourceDescriptor  resourceDescriptor = this.resourceDescriptor.getResourceType().getResourceDescriptor(this.resourceDescriptor.getResourceURI().getResourceURIString());
         Assert.assertSame(State.NONE,resourceDescriptor.getResourceState());
         Assert.assertSame(this.resourceDescriptor.getResourceType(),resourceDescriptor.getResourceType());
         Assert.assertSame(this.resourceDescriptor.getResourceURI(),resourceDescriptor.getResourceURI());
@@ -147,7 +147,7 @@ public abstract class ResourceDescriptorTest
     @Test
     public void testInit() throws Exception
     {
-    	ResourceDescriptor  resourceDescriptor = this.resourceDescriptor.getResourceType().getResourceDescriptor(this.resourceDescriptor.getResourceURI());
+    	ResourceDescriptor  resourceDescriptor = this.resourceDescriptor.getResourceType().getResourceDescriptor(this.resourceDescriptor.getResourceURI().getResourceURIString());
         resourceDescriptor.init(null, LifeCycle.EXPLICIT, false);
         Assert.assertSame(State.INITIALIZED,resourceDescriptor.getResourceState());
         Assert.assertNotNull(resourceDescriptor.getResourceURI());

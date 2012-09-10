@@ -40,7 +40,7 @@ public class HttpResourceDescriptor extends AbstractResourceDescriptor
 	
 	private SimpleContentMetaData buildContentMetatData(boolean useInputStream) throws Exception
 	{
-		SimpleContentMetaData simpleContentMetaData  = new SimpleContentMetaData(getResourceURI());
+		SimpleContentMetaData simpleContentMetaData  = new SimpleContentMetaData(getResourceURI().getBaseURI());
 		simpleContentMetaData.addSupportedAttribute(Attributes.exists,Attributes.readable);
 		simpleContentMetaData.setValue(Attributes.exists,true);
 		simpleContentMetaData.setValue(Attributes.readable,true);
@@ -69,7 +69,7 @@ public class HttpResourceDescriptor extends AbstractResourceDescriptor
 	public InputStream getInputStream(VariableContainer variableContainer,ResourceParameter... resourceParameters) throws Exception
 	{		
 		iterationContentMetaData = buildContentMetatData(false);
-		URL url = new URL(getResourceURI());	
+		URL url = new URL(getResourceURI().getBaseURI());	
 		return iterationContentMetaData.wrapInputStream(url.openConnection().getInputStream());		
 	}
 
@@ -77,7 +77,7 @@ public class HttpResourceDescriptor extends AbstractResourceDescriptor
 	public OutputStream getOutputStream(VariableContainer variableContainer,ResourceParameter... resourceParameters) throws Exception
 	{
 		iterationContentMetaData = buildContentMetatData(false);
-		URL url = new URL(getResourceURI());	
+		URL url = new URL(getResourceURI().getBaseURI());	
 		return iterationContentMetaData.wrapOutputStream(url.openConnection().getOutputStream());
 	}
 	

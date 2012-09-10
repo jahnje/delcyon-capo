@@ -57,7 +57,7 @@ public class JdbcResourceDescriptor extends AbstractResourceDescriptor
 	
 	private SimpleContentMetaData buildContentMetatData()
 	{
-		SimpleContentMetaData simpleContentMetaData  = new SimpleContentMetaData(getResourceURI());
+		SimpleContentMetaData simpleContentMetaData  = new SimpleContentMetaData(getResourceURI().getBaseURI());
 		simpleContentMetaData.addSupportedAttribute(Attributes.exists,Attributes.readable,Attributes.writeable,Attributes.container);		
 		simpleContentMetaData.setValue(Attributes.exists,true);
 		simpleContentMetaData.setValue(Attributes.readable,true);

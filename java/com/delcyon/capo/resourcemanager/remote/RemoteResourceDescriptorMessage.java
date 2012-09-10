@@ -20,13 +20,14 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
 import com.delcyon.capo.protocol.server.AbstractResponse;
-import com.delcyon.capo.resourcemanager.ResourceParameter;
-import com.delcyon.capo.resourcemanager.ResourceType;
 import com.delcyon.capo.resourcemanager.ResourceDescriptor.Action;
 import com.delcyon.capo.resourcemanager.ResourceDescriptor.LifeCycle;
 import com.delcyon.capo.resourcemanager.ResourceDescriptor.State;
 import com.delcyon.capo.resourcemanager.ResourceDescriptor.StreamFormat;
 import com.delcyon.capo.resourcemanager.ResourceDescriptor.StreamType;
+import com.delcyon.capo.resourcemanager.ResourceParameter;
+import com.delcyon.capo.resourcemanager.ResourceType;
+import com.delcyon.capo.resourcemanager.ResourceURI;
 import com.delcyon.capo.resourcemanager.types.ContentMetaData;
 import com.delcyon.capo.server.CapoServer;
 import com.delcyon.capo.util.XMLSerializer;
@@ -83,7 +84,7 @@ public class RemoteResourceDescriptorMessage extends AbstractResponse
 	}
 
 	private MessageType messageType;
-	private String resourceURI;
+	private ResourceURI resourceURI;
 	private ResourceType resourceType;
 	private Boolean iterate;
 	private LifeCycle lifeCycle;
@@ -123,12 +124,12 @@ public class RemoteResourceDescriptorMessage extends AbstractResponse
 		
 	}
 
-	public void setResourceURI(String resourceURI)
+	public void setResourceURI(ResourceURI resourceURI)
 	{
 		this.resourceURI = resourceURI;		
 	}
 	
-	public String getResourceURI()
+	public ResourceURI getResourceURI()
 	{
 		return resourceURI;
 	}
