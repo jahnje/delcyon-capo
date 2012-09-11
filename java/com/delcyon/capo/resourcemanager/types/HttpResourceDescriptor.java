@@ -40,7 +40,7 @@ public class HttpResourceDescriptor extends AbstractResourceDescriptor
 	
 	private SimpleContentMetaData buildContentMetatData(boolean useInputStream) throws Exception
 	{
-		SimpleContentMetaData simpleContentMetaData  = new SimpleContentMetaData(getResourceURI().getBaseURI());
+		SimpleContentMetaData simpleContentMetaData  = new SimpleContentMetaData(getResourceURI());
 		simpleContentMetaData.addSupportedAttribute(Attributes.exists,Attributes.readable);
 		simpleContentMetaData.setValue(Attributes.exists,true);
 		simpleContentMetaData.setValue(Attributes.readable,true);

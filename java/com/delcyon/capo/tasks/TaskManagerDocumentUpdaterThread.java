@@ -100,7 +100,7 @@ public class TaskManagerDocumentUpdaterThread extends Thread
 			        {
 				    	taskManagerDocumentFileDescriptor.performAction(null, Action.CREATE);
 			        }
-				    CapoServer.logger.log(Level.FINE, "updating task file: "+taskManagerDocumentFileDescriptor.getResourceURI());
+				    CapoServer.logger.log(Level.FINE, "updating task file: "+taskManagerDocumentFileDescriptor.getResourceURI().getBaseURI());
 				    taskManagerDocument.normalizeDocument();
 				    taskManagerDocument.normalize();
 				    taskManagerDocumentFileDescriptor.open(null);

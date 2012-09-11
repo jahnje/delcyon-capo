@@ -20,6 +20,7 @@ import java.util.HashMap;
 import java.util.List;
 
 import com.delcyon.capo.resourcemanager.ContentFormatType;
+import com.delcyon.capo.resourcemanager.ResourceURI;
 
 /**
  * @author jeremiah
@@ -86,6 +87,6 @@ public interface ContentMetaData
 
 	public void addContainedResource(ContentMetaData contentMetaData);
 
-	public String getResourceURI();
+	public ResourceURI getResourceURI();
 	
 }

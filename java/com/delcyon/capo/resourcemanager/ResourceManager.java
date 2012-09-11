@@ -394,14 +394,14 @@ public class ResourceManager extends CapoDataManager
         List<ContentMetaData> childResourceList = contentMetaData.getContainedResources();
         for (ContentMetaData childContentMetaData : childResourceList)
         {
-            if (childContentMetaData.isContainer() == false && childContentMetaData.getResourceURI().matches(".*/"+documentName+"\\.[Xx][MmSs][Ll]"))
+            if (childContentMetaData.isContainer() == false && childContentMetaData.getResourceURI().getPath().matches(".*/"+documentName+"\\.[Xx][MmSs][Ll]"))
             {
-                return  CapoApplication.getDataManager().getResourceDescriptor(null, childContentMetaData.getResourceURI());
+                return  CapoApplication.getDataManager().getResourceDescriptor(null, childContentMetaData.getResourceURI().getResourceURIString());
                 
             }
-            else if (childContentMetaData.isContainer() && childContentMetaData.getResourceURI().endsWith("/"+documentName))
+            else if (childContentMetaData.isContainer() && childContentMetaData.getResourceURI().getPath().endsWith("/"+documentName))
             {
-                ResourceDescriptor moduleResourceDescriptor =  CapoApplication.getDataManager().getResourceDescriptor(null, childContentMetaData.getResourceURI());
+                ResourceDescriptor moduleResourceDescriptor =  CapoApplication.getDataManager().getResourceDescriptor(null, childContentMetaData.getResourceURI().getResourceURIString());
                 return getDocumentResourceDescriptor(moduleResourceDescriptor, documentName);
             }
         }
@@ -418,14 +418,14 @@ public class ResourceManager extends CapoDataManager
         List<ContentMetaData> childResourceList = contentMetaData.getContainedResources();
         for (ContentMetaData childContentMetaData : childResourceList)
         {
-            if (childContentMetaData.isContainer() == false && childContentMetaData.getResourceURI().matches(".*\\.[Xx][MmSs][Ll]"))
+            if (childContentMetaData.isContainer() == false && childContentMetaData.getResourceURI().getPath().matches(".*\\.[Xx][MmSs][Ll]"))
             {
-                resourceDescriptorVector.add(CapoApplication.getDataManager().getResourceDescriptor(null, childContentMetaData.getResourceURI()));
+                resourceDescriptorVector.add(CapoApplication.getDataManager().getResourceDescriptor(null, childContentMetaData.getResourceURI().getResourceURIString()));
                 
             }
             else if (childContentMetaData.isContainer())
             {
-                ResourceDescriptor moduleResourceDescriptor =  CapoApplication.getDataManager().getResourceDescriptor(null, childContentMetaData.getResourceURI());
+                ResourceDescriptor moduleResourceDescriptor =  CapoApplication.getDataManager().getResourceDescriptor(null, childContentMetaData.getResourceURI().getResourceURIString());
                 resourceDescriptorVector.addAll(findDocuments(moduleResourceDescriptor));
             }
         }

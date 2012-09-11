@@ -44,7 +44,7 @@ public class ResourceElement extends ResourceNode implements Element
         prefix = resourceDescriptor.getResourceType().getName();
         localName = resourceDescriptor.getLocalName();
         contentMetaData = resourceDescriptor.getContentMetaData(null);
-        attributeList.add(new ResourceAttr(this,"uri", contentMetaData.getResourceURI()));
+        attributeList.add(new ResourceAttr(this,"uri", contentMetaData.getResourceURI().getBaseURI()));
         List<String> supportedAttributeList = contentMetaData.getSupportedAttributes();
         for (String attributeName : supportedAttributeList)
         {
@@ -101,7 +101,7 @@ public class ResourceElement extends ResourceNode implements Element
                 
                 try
                 {
-                    nodeList.add(new ResourceElement(this,CapoApplication.getDataManager().getResourceDescriptor(null, childContentMetaData.getResourceURI())));
+                    nodeList.add(new ResourceElement(this,CapoApplication.getDataManager().getResourceDescriptor(null, childContentMetaData.getResourceURI().getBaseURI())));
                 }
                 catch (Exception e)
                 {
@@ -110,7 +110,7 @@ public class ResourceElement extends ResourceNode implements Element
             }
             if (contentMetaData.isContainer() == false)
             {
-                System.err.println(contentMetaData.getResourceURI()+" has data!");
+                System.err.println(contentMetaData.getResourceURI().getBaseURI()+" has data!");
                 if (contentMetaData.getContentFormatType() == ContentFormatType.XML)
                 {
                     try

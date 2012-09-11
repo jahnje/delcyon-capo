@@ -36,6 +36,7 @@ import com.delcyon.capo.datastream.stream_attribute_filter.SizeFilterInputStream
 import com.delcyon.capo.datastream.stream_attribute_filter.StreamAttributeFilter;
 import com.delcyon.capo.resourcemanager.ContentFormatType;
 import com.delcyon.capo.resourcemanager.ResourceParameter;
+import com.delcyon.capo.resourcemanager.ResourceURI;
 import com.delcyon.capo.util.ReflectionUtility;
 
 /**
@@ -116,7 +117,7 @@ public abstract class AbstractContentMetaData implements ContentMetaData
 	
 	
 	private boolean isInitialized = false;
-	private String resourceURI = null;
+	private ResourceURI resourceURI = null;
 	private HashMap<String, String> attributeHashMap = new HashMap<String, String>();
 	private transient Vector<StreamAttributeFilter> streamAttributeFilterVector = new Vector<StreamAttributeFilter>();
 	private Vector<ContentMetaData> childContentMetaDataVector = new Vector<ContentMetaData>();
@@ -189,8 +190,9 @@ public abstract class AbstractContentMetaData implements ContentMetaData
 				attributeHashMap.put(streamAttributeFilter.getName(), streamAttributeFilter.getValue());
 			}
 		}
-		attributeHashMap.put(Attributes.path.toString(), getResourceURI()+"");
-		attributeHashMap.put(Attributes.uri.toString(), getResourceURI()+"");
+		
+		attributeHashMap.put(Attributes.path.toString(), getResourceURI().getPath());
+		attributeHashMap.put(Attributes.uri.toString(), getResourceURI().getBaseURI());
 		return attributeHashMap;
 	}
 	
@@ -385,13 +387,13 @@ public abstract class AbstractContentMetaData implements ContentMetaData
 		return defaultValue;
 	}
 	
-	public void setResourceURI(String resourceURI)
+	public void setResourceURI(ResourceURI resourceURI)
 	{
 		this.resourceURI = resourceURI;
 	}
 	
 	@Override
-	public String getResourceURI()
+	public ResourceURI getResourceURI()
 	{
 		return resourceURI;
 	}

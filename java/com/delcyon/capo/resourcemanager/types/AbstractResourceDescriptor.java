@@ -886,13 +886,13 @@ public abstract class AbstractResourceDescriptor implements ResourceDescriptor
 	        List<ContentMetaData> childContentMetaDataList = getContentMetaData(null).getContainedResources();
 	        for (ContentMetaData childContentMetaData : childContentMetaDataList)
 	        {	            
-	            if(childContentMetaData.getResourceURI().endsWith(relativeURI))
+	            if(childContentMetaData.getResourceURI().getBaseURI().endsWith(relativeURI))
 	            {
-	                return CapoApplication.getDataManager().getResourceDescriptor(callingControlElement, childContentMetaData.getResourceURI());
+	                return CapoApplication.getDataManager().getResourceDescriptor(callingControlElement, childContentMetaData.getResourceURI().getBaseURI());
 	            }
 	        }
 	        //return CapoApplication.getDataManager().getResourceDescriptor(callingControlElement, getResourceURI()+(relativeURI.startsWith("/") ? relativeURI : "/"+relativeURI));
-	        return CapoApplication.getDataManager().getResourceDescriptor(callingControlElement, getResourceURI()+"/"+relativeURI);
+	        return CapoApplication.getDataManager().getResourceDescriptor(callingControlElement, getResourceURI().getBaseURI()+"/"+relativeURI);
 	    }
 	    else
 	    {

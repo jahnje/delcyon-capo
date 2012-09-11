@@ -175,7 +175,7 @@ public class ResourceMetaDataElement extends AbstractControl
 				}
 				else
 				{
-					resourceElement.setAttribute("uri", childContentMetaData.getResourceURI().toString());
+					resourceElement.setAttribute("uri", childContentMetaData.getResourceURI().getResourceURIString());
 				}
 				//resourceElement.setAttribute("uri", resourceDescriptor.isRemoteResource() ? "remote:"+ childContentMetaData.getResourceURI().toString() : childContentMetaData.getResourceURI().toString());
 				containerElement.appendChild(resourceElement);

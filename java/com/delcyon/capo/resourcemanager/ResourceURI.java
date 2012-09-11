@@ -18,6 +18,8 @@ package com.delcyon.capo.resourcemanager;
 
 import java.util.HashMap;
 
+import com.delcyon.capo.util.ReflectionUtility;
+
 /**
  * @author jeremiah
  * <a href="http://en.wikipedia.org/wiki/URI_scheme">Based on</a>
@@ -71,10 +73,10 @@ public class ResourceURI
 		if (this.query != null)
 		{
 		
-			String[] parameterSplit = query.split("&(?<!\\\\&)");// now split off the parameters from parameter section
+			String[] parameterSplit = query.split("&(?<!\\\\&)|;(?<!\\\\;)");// now split off the parameters from parameter section
 			for (String parameter : parameterSplit)
 			{				
-				String[] avp = parameter.replaceAll("\\\\(?=&)", "").split("=(?<!\\\\=)");// now split off the parameters from parameter section
+				String[] avp = parameter.replaceAll("\\\\((?=&)|(?=;))", "").split("=(?<!\\\\=)");// now split off the parameters from parameter section
 				String parameterName = avp[0].replaceAll("\\\\(?==)", "");
 				String parameterValue = "";
 				if(avp.length > 1)
@@ -163,6 +165,25 @@ public class ResourceURI
 		return childResourceURI;
 	}
 
+	@Override
+	public boolean equals(Object obj)
+	{		
+		if (obj instanceof ResourceURI)
+		{
+			return resourceURIString.equals(((ResourceURI) obj).getResourceURIString());
+		}
+		else
+		{
+			return false;
+		}
+	}
+	
+	@Override
+	public String toString()
+	{
+		return ReflectionUtility.processToString(this);
+	}
+	
 //================================start static methods==============================================
 
 
@@ -378,5 +399,6 @@ public class ResourceURI
 		
 		return path;
 	}
+	
 	
 }

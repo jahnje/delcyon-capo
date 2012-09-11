@@ -112,7 +112,7 @@ public class FileResourceDescriptor extends AbstractResourceDescriptor implement
 		}
 		else
 		{
-		   CapoApplication.logger.log(Level.FINE, "Not rewriting URI: "+getResourceURI());
+		   CapoApplication.logger.log(Level.FINE, "Not rewriting URI: "+getResourceURI().getBaseURI());
 		}
 	}
 	

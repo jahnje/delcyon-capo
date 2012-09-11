@@ -74,7 +74,7 @@ public class ShellResourceDescriptor extends AbstractResourceDescriptor
 	
 	private SimpleContentMetaData buildContentMetaData()
 	{
-		SimpleContentMetaData simpleContentMetaData  = new SimpleContentMetaData(getResourceURI().getBaseURI());
+		SimpleContentMetaData simpleContentMetaData  = new SimpleContentMetaData(getResourceURI());
 		simpleContentMetaData.addSupportedAttribute(Attributes.exists,Attributes.readable,Attributes.writeable);
 		
 		simpleContentMetaData.setValue(Attributes.exists,true);

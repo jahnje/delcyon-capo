@@ -134,12 +134,12 @@ public class RemoteResourceDescriptorProxy  implements ResourceDescriptor,Client
             List<ContentMetaData> childContentMetaDataList = getContentMetaData(null).getContainedResources();
             for (ContentMetaData childContentMetaData : childContentMetaDataList)
             {
-                if(childContentMetaData.getResourceURI().endsWith(relativeURI))
+                if(childContentMetaData.getResourceURI().getPath().endsWith(relativeURI))
                 {
-                    return CapoApplication.getDataManager().getResourceDescriptor(callingControlElement, "remote:"+childContentMetaData.getResourceURI());
+                    return CapoApplication.getDataManager().getResourceDescriptor(callingControlElement, "remote:"+childContentMetaData.getResourceURI().getResourceURIString());
                 }
             }
-            return CapoApplication.getDataManager().getResourceDescriptor(callingControlElement, "remote:"+getResourceURI()+"/"+relativeURI);
+            return CapoApplication.getDataManager().getResourceDescriptor(callingControlElement, "remote:"+getResourceURI().getResourceURIString()+"/"+relativeURI);
         }
         else
         {

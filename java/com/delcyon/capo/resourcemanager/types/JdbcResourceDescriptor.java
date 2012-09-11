@@ -57,7 +57,7 @@ public class JdbcResourceDescriptor extends AbstractResourceDescriptor
 	
 	private SimpleContentMetaData buildContentMetatData()
 	{
-		SimpleContentMetaData simpleContentMetaData  = new SimpleContentMetaData(getResourceURI().getBaseURI());
+		SimpleContentMetaData simpleContentMetaData  = new SimpleContentMetaData(getResourceURI());
 		simpleContentMetaData.addSupportedAttribute(Attributes.exists,Attributes.readable,Attributes.writeable,Attributes.container);		
 		simpleContentMetaData.setValue(Attributes.exists,true);
 		simpleContentMetaData.setValue(Attributes.readable,true);
@@ -82,7 +82,7 @@ public class JdbcResourceDescriptor extends AbstractResourceDescriptor
 	@Override
 	public void open(VariableContainer variableContainer,ResourceParameter... resourceParameters) throws Exception
 	{
-		connection = DriverManager.getConnection(getResourceURI().toString(), getVarValue(getDeclaringVariableContainer(),"user"), getVarValue(getDeclaringVariableContainer(),"password"));
+		connection = DriverManager.getConnection(getResourceURI().getBaseURI(), getVarValue(getDeclaringVariableContainer(),"user"), getVarValue(getDeclaringVariableContainer(),"password"));
 		if (isIterating() && getResourceState() == State.OPEN)
 		{
 			readXML(variableContainer,resourceParameters);

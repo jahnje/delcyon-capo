@@ -77,14 +77,19 @@ public class FileResourceContentMetaData extends AbstractContentMetaData
 			{
 				String uriString = uri.toString();
 				uriString = uriString.replaceFirst(getString(Attributes.path,null,resourceParameters),"");
-				setResourceURI(ResourceURI.removeURN(uriString));
+				setResourceURI(new ResourceURI(ResourceURI.removeURN(uriString)));
 			}
 		}
 		else
 		{
-			setResourceURI(uri);
+			setResourceURI(new ResourceURI(uri));
 		}
+		
 		File file = new File(new URI(uri));
+		if(getResourceURI() == null)
+		{
+			setResourceURI(new ResourceURI(file.toURI().toString()));
+		}
 		getAttributeMap().put(Attributes.exists.toString(), file.exists()+"");
 
 		getAttributeMap().put(Attributes.executable.toString(), file.canExecute()+"");

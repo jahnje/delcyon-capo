@@ -139,7 +139,7 @@ public abstract class ResourceDescriptorTest
         ResourceDescriptor  resourceDescriptor = this.resourceDescriptor.getResourceType().getResourceDescriptor(this.resourceDescriptor.getResourceURI().getResourceURIString());
         Assert.assertSame(State.NONE,resourceDescriptor.getResourceState());
         Assert.assertSame(this.resourceDescriptor.getResourceType(),resourceDescriptor.getResourceType());
-        Assert.assertSame(this.resourceDescriptor.getResourceURI(),resourceDescriptor.getResourceURI());
+        Assert.assertEquals(this.resourceDescriptor.getResourceURI(),resourceDescriptor.getResourceURI());
         Assert.assertSame(this.resourceDescriptor.getResourceType().getDefaultLifeCycle(),resourceDescriptor.getLifeCycle());
         resourceDescriptor.release(null);
     }
@@ -462,7 +462,7 @@ public abstract class ResourceDescriptorTest
     		List<ContentMetaData> childContentMetaDataList = resourceDescriptor.getContentMetaData(null).getContainedResources();
     		for (ContentMetaData contentMetaData : childContentMetaDataList)
 			{
-				Assert.assertNotNull(resourceDescriptor.getChildResourceDescriptor(null, contentMetaData.getResourceURI()));
+				Assert.assertNotNull(resourceDescriptor.getChildResourceDescriptor(null, contentMetaData.getResourceURI().getBaseURI()));
 			}
     	}
         

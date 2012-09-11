@@ -27,6 +27,8 @@ public class ResourceURITest
 {
 
 	private static final String testURI = "jdbc:hsqldb:file:testdb/testdb?user=user\\?&password&\\&\\!systems=\\=!systems?id=:242";
+	private static final String testSemiColonURI = "jdbc:hsqldb:file:testdb/testdb?user=user\\?;password;\\;\\!systems=\\=!systems?id=:242";
+	private static final String testMixedURI = "jdbc:hsqldb:file:testdb/testdb?user=user\\?&password;\\&\\;semicolon=\\;&ampersand=\\&&\\!systems=\\=!systems?id=:242";
 	private static final String opaqueTestURI = "scheme:/schemespecific";
 	private static final String testURL = "foo://username:password@example.com:8042/over/there/index.dtb?type=animal&name=narwhal#nose";
 	private static final String testURNPath = "urn:example:animal:ferret:nose";
@@ -55,6 +57,54 @@ public class ResourceURITest
 		Assert.assertEquals("user?", resourceURI.getParameterMap().get("user"));
 		Assert.assertEquals("", resourceURI.getParameterMap().get("password"));
 		Assert.assertEquals("=", resourceURI.getParameterMap().get("&!systems"));
+		Assert.assertNotNull(resourceURI.getChildResourceURI());
+		Assert.assertEquals(1, resourceURI.getChildResourceURI().getParameterMap().size());
+		Assert.assertEquals(":242", resourceURI.getChildResourceURI().getParameterMap().get("id"));
+		
+		
+		resourceURI = new ResourceURI(testSemiColonURI);
+		Assert.assertEquals(null, resourceURI.getAuthority());
+		Assert.assertEquals("jdbc:hsqldb:file:testdb/testdb?user=user\\?;password;\\;!systems=\\=", resourceURI.getBaseURI());		
+		Assert.assertEquals(null, resourceURI.getHierarchy());
+		Assert.assertEquals(null, resourceURI.getHostname());		
+		Assert.assertEquals("testdb/testdb", resourceURI.getPath());
+		Assert.assertEquals(null, resourceURI.getPort());
+		Assert.assertEquals("user=user?;password;\\;!systems=\\=", resourceURI.getQuery());
+		Assert.assertEquals(null, resourceURI.getFragment());
+		Assert.assertEquals("jdbc:hsqldb:file:testdb/testdb?user=user\\?;password;\\;\\!systems=\\=!systems?id=:242", resourceURI.getResourceURIString());
+		Assert.assertEquals("jdbc", resourceURI.getScheme());
+		Assert.assertEquals("hsqldb:file:testdb/testdb?user=user\\?;password;\\;\\!systems=\\=!systems?id=:242", resourceURI.getSchemeSpecificPart());
+		Assert.assertEquals(null, resourceURI.getUserInfo());
+		Assert.assertEquals(true, resourceURI.isOpaque());
+		Assert.assertEquals(3, resourceURI.getParameterMap().size());
+		Assert.assertEquals("user?", resourceURI.getParameterMap().get("user"));
+		Assert.assertEquals("", resourceURI.getParameterMap().get("password"));
+		Assert.assertEquals("=", resourceURI.getParameterMap().get(";!systems"));
+		Assert.assertNotNull(resourceURI.getChildResourceURI());
+		Assert.assertEquals(1, resourceURI.getChildResourceURI().getParameterMap().size());
+		Assert.assertEquals(":242", resourceURI.getChildResourceURI().getParameterMap().get("id"));
+		
+		resourceURI = new ResourceURI(testMixedURI);
+		Assert.assertEquals(null, resourceURI.getAuthority());
+		Assert.assertEquals("jdbc:hsqldb:file:testdb/testdb?user=user\\?&password;\\&\\;semicolon=\\;&ampersand=\\&&!systems=\\=", resourceURI.getBaseURI());		
+		Assert.assertEquals(null, resourceURI.getHierarchy());
+		Assert.assertEquals(null, resourceURI.getHostname());		
+		Assert.assertEquals("testdb/testdb", resourceURI.getPath());
+		Assert.assertEquals(null, resourceURI.getPort());
+		Assert.assertEquals("user=user?&password;\\&\\;semicolon=\\;&ampersand=\\&&!systems=\\=", resourceURI.getQuery());
+		Assert.assertEquals(null, resourceURI.getFragment());
+		Assert.assertEquals("jdbc:hsqldb:file:testdb/testdb?user=user\\?&password;\\&\\;semicolon=\\;&ampersand=\\&&\\!systems=\\=!systems?id=:242", resourceURI.getResourceURIString());
+		Assert.assertEquals("jdbc", resourceURI.getScheme());
+		Assert.assertEquals("hsqldb:file:testdb/testdb?user=user\\?&password;\\&\\;semicolon=\\;&ampersand=\\&&\\!systems=\\=!systems?id=:242", resourceURI.getSchemeSpecificPart());
+		Assert.assertEquals(null, resourceURI.getUserInfo());
+		Assert.assertEquals(true, resourceURI.isOpaque());
+		Assert.assertEquals(5, resourceURI.getParameterMap().size());
+		System.out.println(resourceURI.getParameterMap());
+		Assert.assertEquals("user?", resourceURI.getParameterMap().get("user"));
+		Assert.assertEquals("", resourceURI.getParameterMap().get("password"));
+		Assert.assertEquals("&", resourceURI.getParameterMap().get("ampersand"));
+		Assert.assertEquals(";", resourceURI.getParameterMap().get("&;semicolon"));
+		Assert.assertEquals("=", resourceURI.getParameterMap().get("!systems"));
 		Assert.assertNotNull(resourceURI.getChildResourceURI());
 		Assert.assertEquals(1, resourceURI.getChildResourceURI().getParameterMap().size());
 		Assert.assertEquals(":242", resourceURI.getChildResourceURI().getParameterMap().get("id"));
@@ -88,6 +138,7 @@ public class ResourceURITest
 	public void testGetScheme()
 	{
 		Assert.assertEquals("jdbc",ResourceURI.getScheme(testURI));
+		Assert.assertEquals("jdbc",ResourceURI.getScheme(testSemiColonURI));
 		Assert.assertEquals("foo",ResourceURI.getScheme(testURL));
 		Assert.assertEquals("scheme",ResourceURI.getScheme(opaqueTestURI));
 	}
@@ -181,6 +232,7 @@ public class ResourceURITest
 	public void testGetPath()
 	{
 		Assert.assertEquals("/over/there/index.dtb",ResourceURI.getPath(testURL));
+		Assert.assertEquals("testdb/testdb",ResourceURI.getPath(testSemiColonURI));
 		Assert.assertEquals("testdb/testdb",ResourceURI.getPath(testURI));
 		Assert.assertEquals("/schemespecific",ResourceURI.getPath(opaqueTestURI));
 		Assert.assertEquals("example:animal:ferret:nose",ResourceURI.getPath(testURNPath));
@@ -193,6 +245,7 @@ public class ResourceURITest
 	{
 		Assert.assertEquals("type=animal&name=narwhal",ResourceURI.getQuery(testURL));
 		Assert.assertEquals("user=user?&password&\\&!systems=\\=",ResourceURI.getQuery(testURI));
+		Assert.assertEquals("user=user?;password;\\;!systems=\\=",ResourceURI.getQuery(testSemiColonURI));
 		Assert.assertEquals(null,ResourceURI.getQuery(opaqueTestURI));
 		Assert.assertEquals(null,ResourceURI.getQuery(testURNPath));
 		Assert.assertEquals("subject=Topic",ResourceURI.getQuery(testMailToURN));

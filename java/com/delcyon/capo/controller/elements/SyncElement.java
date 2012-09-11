@@ -205,14 +205,14 @@ public class SyncElement extends AbstractControl
                 HashMap<String, ContentMetaData> destinationContainedResourceHashMap = new HashMap<String, ContentMetaData>();
                 for (ContentMetaData contentMetaData : destinationContainedResources)
                 {
-                    String localName = contentMetaData.getResourceURI().replaceAll(destinationContentMetaData.getResourceURI(), "");                
+                    String localName = contentMetaData.getResourceURI().getPath().replaceAll(destinationContentMetaData.getResourceURI().getPath(), "");                
                     destinationContainedResourceHashMap.put(localName, contentMetaData);
                 } 
 
 
                 for (ContentMetaData contentMetaData : sourceContainedResources)
                 {
-                    String localName = contentMetaData.getResourceURI().replaceAll(sourceContentMetaData.getResourceURI(), "");                
+                    String localName = contentMetaData.getResourceURI().getPath().replaceAll(sourceContentMetaData.getResourceURI().getPath(), "");                
                     ResourceDescriptor childDestinationResourceDescriptor = destinationResourceDescriptor.getChildResourceDescriptor(this, localName);
                     ResourceDescriptor childSourceResourceDescriptor = sourceResourceDescriptor.getChildResourceDescriptor(this, localName);
                     destinationContainedResourceHashMap.remove(localName);
@@ -227,7 +227,7 @@ public class SyncElement extends AbstractControl
                     for (Entry<String, ContentMetaData> entry : unknownDestinationResourceEntrySet)
                     {
                         ResourceDescriptor childDestinationResourceDescriptor = destinationResourceDescriptor.getChildResourceDescriptor(this, entry.getKey());
-                        CapoApplication.logger.log(Level.WARNING, "Removing dst resource: "+childDestinationResourceDescriptor.getResourceURI());
+                        CapoApplication.logger.log(Level.WARNING, "Removing dst resource: "+childDestinationResourceDescriptor.getResourceURI().getBaseURI());
                         childDestinationResourceDescriptor.performAction(null, Action.DELETE);
                     }
                 }
@@ -243,7 +243,7 @@ public class SyncElement extends AbstractControl
             String destMD5 = destinationResourceDescriptor.getContentMetaData(getParentGroup(), ResourceParameterBuilder.getResourceParameters(getControlElementDeclaration())).getMD5();
             if (destMD5 == null || destMD5.equals(srcMD5) == false)
             {
-                CapoApplication.logger.log(Level.INFO, "Syncing file: "+sourceResourceDescriptor.getResourceURI()+" ==> "+destinationResourceDescriptor.getResourceURI());
+                CapoApplication.logger.log(Level.INFO, "Syncing file: "+sourceResourceDescriptor.getResourceURI().getBaseURI()+" ==> "+destinationResourceDescriptor.getResourceURI().getBaseURI());
                 OutputStream filteredOutputStream = wrapOutputStream(destinationResourceDescriptor.getOutputStream(getParentGroup(), ResourceParameterBuilder.getResourceParameters(getControlElementDeclaration())),getControlElementDeclaration());
                 StreamUtil.readInputStreamIntoOutputStream(sourceResourceDescriptor.getInputStream(getParentGroup(),ResourceParameterBuilder.getResourceParameters(getControlElementDeclaration())), filteredOutputStream);
                 filteredOutputStream.flush();

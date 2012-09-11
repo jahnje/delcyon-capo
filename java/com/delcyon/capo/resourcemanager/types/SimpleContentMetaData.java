@@ -21,6 +21,7 @@ import java.util.List;
 import java.util.Vector;
 
 import com.delcyon.capo.resourcemanager.ResourceParameter;
+import com.delcyon.capo.resourcemanager.ResourceURI;
 
 /**
  * @author jeremiah
@@ -31,7 +32,7 @@ public class SimpleContentMetaData extends AbstractContentMetaData
 	
 	@SuppressWarnings("unchecked")
 	private transient List<Enum> supportedAttributeList = new Vector<Enum>();
-	private String resourceURI = null;
+	private ResourceURI resourceURI = null;
 	
 	@SuppressWarnings("unused")
 	private SimpleContentMetaData()
@@ -39,7 +40,7 @@ public class SimpleContentMetaData extends AbstractContentMetaData
 		
 	}
 	
-	public SimpleContentMetaData(String resourceURI, ResourceParameter... resourceParameters)
+	public SimpleContentMetaData(ResourceURI resourceURI, ResourceParameter... resourceParameters)
 	{
 		this.resourceURI = resourceURI;
 	}
@@ -126,7 +127,7 @@ public class SimpleContentMetaData extends AbstractContentMetaData
 	}
 
 	@Override
-	public String getResourceURI()
+	public ResourceURI getResourceURI()
 	{		
 		return resourceURI;
 	}

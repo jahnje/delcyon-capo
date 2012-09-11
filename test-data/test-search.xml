@@ -36,7 +36,7 @@
         </server:search>-->
     
         <!-- Start with the resource that we want to search against -->
-        <server:resource name="jdbcTestSearch"  uri="jdbc:hsqldb:file:testdb/testdb?user=user&password=!systems" dumpVars="true" sleep="1000" dumpRef="..">            
+        <server:resource name="jdbcTestSearch"  uri="jdbc:hsqldb:file:testdb/testdb?user=user;password=!systems" dumpVars="true" sleep="1000" dumpRef="..">            
             <resource:child name="systems" path="SYSTEMS">
                 <resource:rule constraint="NAME" constraintType="equals"  value="%"/>
                 <resource:rule constraint="LAST_CONNECT" constraintType="expression"  value="> now() - 1hr"/>

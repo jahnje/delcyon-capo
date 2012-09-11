@@ -181,7 +181,7 @@ public class RemoteResourceResponseProcessor implements XMLServerResponseProcess
 			switch (message.getMessageType())
 			{
 				case SETUP:
-					resourceDescriptor = CapoApplication.getDataManager().getResourceDescriptor(null, message.getResourceURI().toString());
+					resourceDescriptor = CapoApplication.getDataManager().getResourceDescriptor(null, message.getResourceURI().getResourceURIString());
 					reply.setResourceURI(resourceDescriptor.getResourceURI());
 					reply.setResourceType(resourceDescriptor.getResourceType());
 					getResourceDescriptorHashtable().put(sessionID, resourceDescriptor);
