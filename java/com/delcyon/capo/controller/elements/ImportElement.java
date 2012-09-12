@@ -115,6 +115,10 @@ public class ImportElement extends AbstractControl implements XPathFunctionProce
 		}
 		
 		ResourceDescriptor resourceDescriptor = getParentGroup().getResourceDescriptor(this, src);
+		if (resourceDescriptor == null)
+		{
+			throw new Exception("src="+src+" not found");
+		}
 		resourceDescriptor.addResourceParameters(getParentGroup(), new ResourceParameter(FileResourceType.Parameters.PARENT_PROVIDED_DIRECTORY,PREFERENCE.RESOURCE_DIR,Source.CALL));
 		
 		Document importedDocument = null;
