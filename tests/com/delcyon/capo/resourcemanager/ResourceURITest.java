@@ -33,6 +33,7 @@ public class ResourceURITest
 	private static final String testURL = "foo://username:password@example.com:8042/over/there/index.dtb?type=animal&name=narwhal#nose";
 	private static final String testURNPath = "urn:example:animal:ferret:nose";
 	private static final String testMailToURN = "mailto:username@example.com?subject=Topic";
+	
 	/**
 	 * Test method for {@link com.delcyon.capo.resourcemanager.ResourceURI#ResourceURI(java.lang.String)}.
 	 */
@@ -236,8 +237,7 @@ public class ResourceURITest
 		Assert.assertEquals("testdb/testdb",ResourceURI.getPath(testURI));
 		Assert.assertEquals("/schemespecific",ResourceURI.getPath(opaqueTestURI));
 		Assert.assertEquals("example:animal:ferret:nose",ResourceURI.getPath(testURNPath));
-		Assert.assertEquals("username@example.com",ResourceURI.getPath(testMailToURN));
-
+		Assert.assertEquals("username@example.com",ResourceURI.getPath(testMailToURN));		
 	}
 	
 	@Test
