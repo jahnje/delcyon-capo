@@ -40,8 +40,8 @@ public class ResourceElement extends ResourceNode implements Element
     {
         this.resourceDescriptor = resourceDescriptor;
         this.parentNode = parentNode;
-        namespaceURI = CapoApplication.RESOURCE_NAMESPACE_URI+"/"+resourceDescriptor.getResourceType().getName();
-        prefix = resourceDescriptor.getResourceType().getName();
+        namespaceURI = parentNode.getNamespaceURI();
+        prefix = parentNode.getPrefix();
         localName = resourceDescriptor.getLocalName();
         contentMetaData = resourceDescriptor.getContentMetaData(null);
         attributeList.add(new ResourceAttr(this,"uri", contentMetaData.getResourceURI().getBaseURI()));
@@ -58,6 +58,12 @@ public class ResourceElement extends ResourceNode implements Element
                 
     }
 
+    public ResourceDescriptor getResourceDescriptor()
+	{
+		return resourceDescriptor;
+	}
+    
+    
     @Override
     public String getNodeName()
     {

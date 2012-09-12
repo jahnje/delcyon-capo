@@ -39,6 +39,7 @@ import com.delcyon.capo.resourcemanager.ResourceDescriptor.LifeCycle;
 import com.delcyon.capo.resourcemanager.ResourceDescriptor.State;
 import com.delcyon.capo.server.CapoServer;
 import com.delcyon.capo.xml.XPath;
+import com.delcyon.capo.xml.dom.ResourceDocument;
 
 public class Group implements VariableContainer
 {
@@ -389,6 +390,21 @@ public class Group implements VariableContainer
 				if (resourceElementHashMap.containsKey(resourceName))
 				{
 					return resourceElementHashMap.get(resourceName).getResourceDescriptor();
+				}
+				else if (resourceElementHashMap.containsKey(ResourceURI.getScheme(resourceName)))
+				{
+					ResourceElement resourceElement = resourceElementHashMap.get(ResourceURI.getScheme(resourceName));
+					ResourceDocument resourceDocument = resourceElement.getResourceDocument();
+					Node node = XPath.selectSingleNode(resourceDocument, ResourceURI.getSchemeSpecificPart(resourceName));
+					if (node != null && node instanceof com.delcyon.capo.xml.dom.ResourceElement)
+					{
+						return ((com.delcyon.capo.xml.dom.ResourceElement) node).getResourceDescriptor();
+					}
+					else
+					{
+						return null;
+					}
+					
 				}
 				else if (parentGroup != null)
 				{

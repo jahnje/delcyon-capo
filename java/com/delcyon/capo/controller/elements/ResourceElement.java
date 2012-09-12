@@ -26,13 +26,12 @@ import com.delcyon.capo.controller.ControlElementProvider;
 import com.delcyon.capo.controller.Group;
 import com.delcyon.capo.controller.server.ControllerClientRequestProcessor;
 import com.delcyon.capo.resourcemanager.ResourceDescriptor;
-import com.delcyon.capo.resourcemanager.ResourceParameter;
-import com.delcyon.capo.resourcemanager.ResourceParameterBuilder;
 import com.delcyon.capo.resourcemanager.ResourceDescriptor.LifeCycle;
 import com.delcyon.capo.xml.XPath;
 import com.delcyon.capo.xml.XPathFunctionProcessor;
 import com.delcyon.capo.xml.XPathFunctionProvider;
 import com.delcyon.capo.xml.XPathFunctionUtility;
+import com.delcyon.capo.xml.dom.ResourceDocument;
 
 /**
  * @author jeremiah
@@ -65,6 +64,8 @@ public class ResourceElement extends AbstractControl implements XPathFunctionPro
 	
 	private LifeCycle lifeCycle;
 	private ResourceDescriptor resourceDescriptor;
+
+	private ResourceDocument resourceDocument;
 	
 	@Override
 	public Attributes[] getAttributes()
@@ -103,6 +104,10 @@ public class ResourceElement extends AbstractControl implements XPathFunctionPro
 				throw new Exception("invalid @lifcycle attribute value '"+lifeCycleString+"' on "+XPath.getXPath(controlElementDeclaration));
 			}
 		}
+		else
+		{
+			lifeCycle = LifeCycle.GROUP;
+		}
 		
 	}
 
@@ -111,12 +116,15 @@ public class ResourceElement extends AbstractControl implements XPathFunctionPro
 		return lifeCycle;
 	}
 
+	public ResourceDocument getResourceDocument()
+	{
+		return this.resourceDocument;
+	}
+	
 	@Override
 	public Object processServerSideElement() throws Exception
 	{
-		ResourceParameter[] resourceParameters = ResourceParameterBuilder.getResourceParameters(getControlElementDeclaration());
-		this.resourceDescriptor = CapoApplication.getDataManager().getResourceDescriptor(this, getAttributeValue(Attributes.uri));
-		this.resourceDescriptor.init(getParentGroup(),this.lifeCycle,getAttributeValue(Attributes.step).equalsIgnoreCase("true"),resourceParameters);
+        resourceDocument = new ResourceDocument(this);
 		getParentGroup().putResourceElement(this);		
 		return null;
 	}
@@ -166,5 +174,7 @@ public class ResourceElement extends AbstractControl implements XPathFunctionPro
 	{
 		return getAttributeValue(Attributes.step).equalsIgnoreCase("true");
 	}
+
+	
 	
 }

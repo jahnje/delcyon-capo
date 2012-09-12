@@ -18,8 +18,11 @@ import org.w3c.dom.ProcessingInstruction;
 import org.w3c.dom.Text;
 import org.w3c.dom.UserDataHandler;
 
+import com.delcyon.capo.CapoApplication;
+import com.delcyon.capo.controller.elements.ResourceElement.Attributes;
 import com.delcyon.capo.resourcemanager.ResourceDescriptor;
-import com.delcyon.capo.resourcemanager.types.FileResourceType;
+import com.delcyon.capo.resourcemanager.ResourceParameter;
+import com.delcyon.capo.resourcemanager.ResourceParameterBuilder;
 
 public class ResourceDocument extends ResourceNode implements Document
 {
@@ -30,7 +33,8 @@ public class ResourceDocument extends ResourceNode implements Document
     private Element documentElement;
     private ResourceNodeList resourceNodeList = new ResourceNodeList();
     private ResourceDOMImplemetation resourceDOMImplemetation = new ResourceDOMImplemetation();
-    
+    private String prefix = "resource";
+    private String namespaceURI = CapoApplication.RESOURCE_NAMESPACE_URI;
     
     public ResourceDocument(ResourceDescriptor resourceDescriptor) throws Exception
     {
@@ -39,6 +43,18 @@ public class ResourceDocument extends ResourceNode implements Document
        resourceNodeList.add(documentElement);
     }
 
+    public ResourceDocument(com.delcyon.capo.controller.elements.ResourceElement resourceControlElement) throws Exception
+    {
+    	this.prefix = resourceControlElement.getControlElementDeclaration().getPrefix();
+    	this.namespaceURI = resourceControlElement.getControlElementDeclaration().getNamespaceURI();
+    	this.resourceDescriptor = CapoApplication.getDataManager().getResourceDescriptor(resourceControlElement, resourceControlElement.getAttributeValue(Attributes.uri));
+    	this.resourceDescriptor.init(resourceControlElement.getParentGroup(),resourceControlElement.getLifeCycle(),resourceControlElement.getAttributeValue(Attributes.step).equalsIgnoreCase("true"),ResourceParameterBuilder.getResourceParameters(resourceControlElement.getControlElementDeclaration()));
+    	this.resourceDescriptor.open(resourceControlElement.getParentGroup());
+    	resourceControlElement.setResourceDescriptor(this.resourceDescriptor);
+    	this.documentElement = new ResourceElement(this,resourceDescriptor);
+    	resourceNodeList.add(documentElement);
+    }
+    
     @Override
     public String getNodeName()
     {
@@ -183,15 +199,13 @@ public class ResourceDocument extends ResourceNode implements Document
     @Override
     public String getNamespaceURI()
     {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+        return this.namespaceURI;
     }
 
     @Override
     public String getPrefix()
     {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+        return this.prefix;
     }
 
     @Override

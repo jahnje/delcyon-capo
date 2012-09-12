@@ -51,7 +51,7 @@ public class JdbcResourceDescriptor extends AbstractResourceDescriptor
 	private SimpleContentMetaData iterationContentMetaData;
 	private ResultSet resultSet;
 	private Statement statement;
-	
+	private boolean table = false;
 	
 	
 	
@@ -73,7 +73,11 @@ public class JdbcResourceDescriptor extends AbstractResourceDescriptor
 	@Override
 	public void init(VariableContainer variableContainer,LifeCycle lifeCycle, boolean iterate, ResourceParameter... resourceParameters) throws Exception
 	{
-	
+		
+		if (getResourceURI().getChildResourceURI() != null)
+		{
+			this.table = true;
+		}
 		super.init(variableContainer,lifeCycle, iterate, resourceParameters);
 		
 		contentMetaData = buildContentMetatData();
