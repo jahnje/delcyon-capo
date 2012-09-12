@@ -247,7 +247,7 @@ public abstract class CapoApplication extends ContextThread implements WrapperLi
 	}
 	
 	/**
-	 * This is mostly here for the sake of completeion and testing. Other than testing there's probably no good reason to use this.
+	 * This is mostly here for the sake of completion and testing. Other than testing there's probably no good reason to use this.
 	 * @param application
 	 */
 	protected static void setApplication(CapoApplication application)
