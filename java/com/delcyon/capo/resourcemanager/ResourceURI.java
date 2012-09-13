@@ -16,6 +16,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 package com.delcyon.capo.resourcemanager;
 
+import java.util.Arrays;
 import java.util.HashMap;
 
 import com.delcyon.capo.util.ReflectionUtility;
@@ -399,6 +400,13 @@ public class ResourceURI
 		
 		return path;
 	}
+	
+	public static String[] getParts(String resourceURI)
+    {
+        String[] parts = resourceURI.split("&(?<!\\\\&)|;(?<!\\\\;)|\\?(?<!\\\\\\?)|#(?<!\\\\#)|!(?<!\\\\!)|:(?<!\\\\:)|/(?<!\\\\/)");        
+        return parts;
+    }
+	
 	
 	
 }

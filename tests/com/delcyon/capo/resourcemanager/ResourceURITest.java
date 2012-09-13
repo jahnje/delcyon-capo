@@ -273,4 +273,15 @@ public class ResourceURITest
 		Assert.assertEquals("/schemespecific",ResourceURI.removeURN(opaqueTestURI));
 	}
 
+	@Test
+	public void testGetParts()
+	{
+	    Assert.assertEquals(3, ResourceURI.getParts(testMailToURN).length);
+	    Assert.assertEquals(13, ResourceURI.getParts(testMixedURI).length);
+	    Assert.assertEquals(11, ResourceURI.getParts(testSemiColonURI).length);
+	    Assert.assertEquals(11, ResourceURI.getParts(testURI).length);
+	    Assert.assertEquals(12, ResourceURI.getParts(testURL).length);
+	    Assert.assertEquals(5, ResourceURI.getParts(testURNPath).length);	    
+	}
+	
 }
