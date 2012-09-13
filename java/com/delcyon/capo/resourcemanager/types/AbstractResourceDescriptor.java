@@ -72,7 +72,7 @@ public abstract class AbstractResourceDescriptor implements ResourceDescriptor
 	
 	private Vector<OutputStream> openOutputStreamVector = new Vector<OutputStream>();
 	private Vector<InputStream> openInputStreamVector = new Vector<InputStream>();
-	
+	private String localName = null;
 	
 	@Override
 	public void setup(ResourceType resourceType, String resourceURI) throws Exception
@@ -304,9 +304,21 @@ public abstract class AbstractResourceDescriptor implements ResourceDescriptor
 	@Override
 	public String getLocalName()
 	{
-	    String[] splitURI = this.resourceURI.getPath().split("/");
-	    return splitURI[splitURI.length-1];
+	    if (localName != null)
+	    {
+	        return this.localName;
+	    }
+	    else
+	    {
+	        String[] splitURI = this.resourceURI.getPath().split("/");
+	        return splitURI[splitURI.length-1];
+	    }
 	}
+	
+	public void setLocalName(String localName)
+    {
+        this.localName = localName;
+    }
 	
 	@Override
 	public ResourceType getResourceType()

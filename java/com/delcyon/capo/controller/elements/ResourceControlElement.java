@@ -39,7 +39,7 @@ import com.delcyon.capo.xml.dom.ResourceDocument;
  */
 @ControlElementProvider(name="resource")
 @XPathFunctionProvider
-public class ResourceElement extends AbstractControl implements XPathFunctionProcessor
+public class ResourceControlElement extends AbstractControl implements XPathFunctionProcessor
 {
 	
 	public enum Attributes

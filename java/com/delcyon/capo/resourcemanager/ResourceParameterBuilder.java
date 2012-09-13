@@ -22,6 +22,7 @@ import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
+import com.delcyon.capo.CapoApplication;
 import com.delcyon.capo.resourcemanager.ResourceParameter.EvaluationContext;
 import com.delcyon.capo.resourcemanager.ResourceParameter.Source;
 import com.delcyon.capo.util.ReflectionUtility;
@@ -47,7 +48,7 @@ public class ResourceParameterBuilder
 	
 	public void addAll(Node node) throws Exception
 	{
-		NodeList nodeList = XPath.selectNSNodes(node, "descendant::resource:parameter", "resource=http://www.delcyon.com/capo/resource");
+		NodeList nodeList = XPath.selectNSNodes(node, "descendant::resource:parameter", "resource="+CapoApplication.RESOURCE_NAMESPACE_URI);
 		for(int index = 0; index < nodeList.getLength(); index++)
 		{
 			Node parameterNode = nodeList.item(index);

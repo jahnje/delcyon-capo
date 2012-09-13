@@ -2,7 +2,7 @@ package com.delcyon.capo.xml.dom;
 
 import org.w3c.dom.Document;
 
-import com.delcyon.capo.controller.elements.ResourceElement;
+import com.delcyon.capo.controller.elements.ResourceControlElement;
 import com.delcyon.capo.resourcemanager.ResourceDescriptor;
 
 public class ResourceDocumentBuilder
@@ -20,10 +20,10 @@ public class ResourceDocumentBuilder
     }
     
     
-    public Document buildDocument(ResourceElement resourceElement) throws Exception
+    public Document buildDocument(ResourceControlElement resourceControlElement) throws Exception
     {
         
-        ResourceDocument resourceDocument = new ResourceDocument(resourceElement);
+        ResourceDocument resourceDocument = new ResourceDocument(resourceControlElement);
         return resourceDocument;
     }
 }

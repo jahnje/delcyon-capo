@@ -28,9 +28,13 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
 import com.delcyon.capo.CapoApplication;
+import com.delcyon.capo.controller.ControlElement;
 import com.delcyon.capo.controller.VariableContainer;
 import com.delcyon.capo.resourcemanager.ContentFormatType;
+import com.delcyon.capo.resourcemanager.ResourceDescriptor;
 import com.delcyon.capo.resourcemanager.ResourceParameter;
+import com.delcyon.capo.resourcemanager.ResourceParameterBuilder;
+import com.delcyon.capo.resourcemanager.ResourceURI;
 import com.delcyon.capo.resourcemanager.types.ContentMetaData.Attributes;
 
 /**
@@ -86,12 +90,15 @@ public class JdbcResourceDescriptor extends AbstractResourceDescriptor
 	@Override
 	public void open(VariableContainer variableContainer,ResourceParameter... resourceParameters) throws Exception
 	{
-		connection = DriverManager.getConnection(getResourceURI().getBaseURI(), getVarValue(getDeclaringVariableContainer(),"user"), getVarValue(getDeclaringVariableContainer(),"password"));
-		if (isIterating() && getResourceState() == State.OPEN)
-		{
-			readXML(variableContainer,resourceParameters);
-		}
-		super.open(variableContainer,resourceParameters);
+	    if (getResourceState().ordinal() < State.OPEN.ordinal())
+	    {
+	        connection = DriverManager.getConnection(getResourceURI().getBaseURI(), getVarValue(getDeclaringVariableContainer(),"user"), getVarValue(getDeclaringVariableContainer(),"password"));
+	        if (isIterating() && getResourceState() == State.OPEN)
+	        {
+	            readXML(variableContainer,resourceParameters);
+	        }
+	        super.open(variableContainer,resourceParameters);
+	    }
 	}
 	
 	
@@ -138,7 +145,14 @@ public class JdbcResourceDescriptor extends AbstractResourceDescriptor
 		if (connection != null && connection.isClosed() == false)
 		{			
 			statement = connection.createStatement();
-			resultSet = statement.executeQuery(getVarValue(variableContainer,"query"));
+			if(getVarValue(variableContainer,"query") != null && getVarValue(variableContainer,"query").isEmpty() == false)
+			{
+			    resultSet = statement.executeQuery(getVarValue(variableContainer,"query"));
+			}
+			else
+			{
+			    resultSet = statement.executeQuery("select * from "+getLocalName());
+			}
 			
 			if (isIterating() == false)
 			{
@@ -259,6 +273,19 @@ public class JdbcResourceDescriptor extends AbstractResourceDescriptor
 			connection.close();
 		}
 		super.release(variableContainer, resourceParameters);
+	}
+	
+	@Override
+	public ResourceDescriptor getChildResourceDescriptor(ControlElement callingControlElement, String relativeURI) throws Exception
+	{
+	    JdbcResourceDescriptor jdbcResourceDescriptor = new JdbcResourceDescriptor();
+	    jdbcResourceDescriptor.connection = this.connection;
+	    jdbcResourceDescriptor.setResourceType(getResourceType());
+	    jdbcResourceDescriptor.setResourceURI(new ResourceURI(getResourceURI().getBaseURI()+"!"+relativeURI));
+	    jdbcResourceDescriptor.init(getDeclaringVariableContainer(), getLifeCycle(), isIterating(),ResourceParameterBuilder.getResourceParameters(callingControlElement.getControlElementDeclaration()));
+	    jdbcResourceDescriptor.setLocalName(relativeURI);
+	    jdbcResourceDescriptor.setResourceState(State.OPEN);
+	    return jdbcResourceDescriptor;
 	}
 	
 }

@@ -54,6 +54,16 @@ public class ResourceParameter
 		DELAYED
 	}
 	
+	public enum Type
+	{
+	    parameter,
+	    child,
+	    rule,
+	    include,
+	    exclude,
+	    join
+	}
+	
 	public static final String ELEMENT_NAME = "parameter"; //TODO don't like this name, should we use a namespace on the resource/parameters?
 	public static final String NAME_ATTRIBUTE_NAME = "name";
 	public static final String VALUE_ATTRIBUTE_NAME = "value";

@@ -19,15 +19,11 @@ import org.w3c.dom.Text;
 import org.w3c.dom.UserDataHandler;
 
 import com.delcyon.capo.CapoApplication;
-import com.delcyon.capo.controller.elements.ResourceElement.Attributes;
+import com.delcyon.capo.controller.elements.ResourceControlElement;
 import com.delcyon.capo.resourcemanager.ResourceDescriptor;
-import com.delcyon.capo.resourcemanager.ResourceParameter;
-import com.delcyon.capo.resourcemanager.ResourceParameterBuilder;
 
 public class ResourceDocument extends ResourceNode implements Document
 {
-
-    
     
     private ResourceDescriptor resourceDescriptor;
     private Element documentElement;
@@ -35,6 +31,7 @@ public class ResourceDocument extends ResourceNode implements Document
     private ResourceDOMImplemetation resourceDOMImplemetation = new ResourceDOMImplemetation();
     private String prefix = "resource";
     private String namespaceURI = CapoApplication.RESOURCE_NAMESPACE_URI;
+    private ResourceControlElement resourceControlElement = null;
     
     public ResourceDocument(ResourceDescriptor resourceDescriptor) throws Exception
     {
@@ -43,16 +40,33 @@ public class ResourceDocument extends ResourceNode implements Document
        resourceNodeList.add(documentElement);
     }
 
-    public ResourceDocument(com.delcyon.capo.controller.elements.ResourceElement resourceControlElement) throws Exception
+    public ResourceDocument(ResourceControlElement resourceControlElement) throws Exception
     {
     	this.prefix = resourceControlElement.getControlElementDeclaration().getPrefix();
     	this.namespaceURI = resourceControlElement.getControlElementDeclaration().getNamespaceURI();
-    	this.resourceDescriptor = CapoApplication.getDataManager().getResourceDescriptor(resourceControlElement, resourceControlElement.getAttributeValue(Attributes.uri));
-    	this.resourceDescriptor.init(resourceControlElement.getParentGroup(),resourceControlElement.getLifeCycle(),resourceControlElement.getAttributeValue(Attributes.step).equalsIgnoreCase("true"),ResourceParameterBuilder.getResourceParameters(resourceControlElement.getControlElementDeclaration()));
-    	this.resourceDescriptor.open(resourceControlElement.getParentGroup());
-    	resourceControlElement.setResourceDescriptor(this.resourceDescriptor);
-    	this.documentElement = new ResourceElement(this,resourceDescriptor);
+    	
+    	
+    	this.documentElement = new ResourceElement(this,resourceControlElement);
+    	
+    	
+//    	this.resourceDescriptor = CapoApplication.getDataManager().getResourceDescriptor(resourceControlElement, resourceControlElement.getAttributeValue(Attributes.uri));
+//    	this.resourceDescriptor.init(resourceControlElement.getParentGroup(),resourceControlElement.getLifeCycle(),resourceControlElement.getAttributeValue(Attributes.step).equalsIgnoreCase("true"),ResourceParameterBuilder.getResourceParameters(resourceControlElement.getControlElementDeclaration()));
+//    	this.resourceDescriptor.open(resourceControlElement.getParentGroup());
+//    	resourceControlElement.setResourceDescriptor(this.resourceDescriptor);
+//    	this.documentElement = new ResourceElement(this,resourceDescriptor);
     	resourceNodeList.add(documentElement);
+    }
+    
+    @Override
+    public ResourceDescriptor getResourceDescriptor()
+    {
+        return this.resourceDescriptor;
+    }
+    
+    @Override
+    public ResourceControlElement getResourceControlElement()
+    {
+        return this.resourceControlElement;
     }
     
     @Override

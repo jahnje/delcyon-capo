@@ -40,7 +40,7 @@ import com.delcyon.capo.Configuration.PREFERENCE;
 import com.delcyon.capo.annotations.DefaultDocumentProvider;
 import com.delcyon.capo.annotations.DirectoyProvider;
 import com.delcyon.capo.controller.ControlElement;
-import com.delcyon.capo.controller.elements.ResourceElement;
+import com.delcyon.capo.controller.elements.ResourceControlElement;
 import com.delcyon.capo.preferences.Preference;
 import com.delcyon.capo.preferences.PreferenceInfo;
 import com.delcyon.capo.preferences.PreferenceInfoHelper;
@@ -274,20 +274,20 @@ public class ResourceManager extends CapoDataManager
 	 * This gets called from ResourceElement when we encounter a resource element declaration
 	 */
 	
-	public ResourceDescriptor createResourceDescriptor(ResourceElement resourceElement, ResourceParameter[] resourceParameters) throws Exception
+	public ResourceDescriptor createResourceDescriptor(ResourceControlElement resourceControlElement, ResourceParameter[] resourceParameters) throws Exception
 	{
 
 	    //TODO verify our special brand of file URLs
 	    String resourceURI = null;
-	    if (resourceElement != null)
+	    if (resourceControlElement != null)
 	    {
-	        resourceURI = resourceElement.getURIValue();
+	        resourceURI = resourceControlElement.getURIValue();
 	    }
 
 	    //figure out resource type
 		String scheme = ResourceURI.getScheme(resourceURI);
 		//if we don't know what this assume it's a default resource type. Which unless overridden is a file.
-		if (resourceURI != null && scheme == null && resourceElement == null)
+		if (resourceURI != null && scheme == null && resourceControlElement == null)
 		{
 			scheme = CapoApplication.getConfiguration().getValue(Preferences.DEFAULT_RESOURCE_TYPE);
 		}

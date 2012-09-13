@@ -36,22 +36,27 @@
         </server:search>-->
     
         <!-- Start with the resource that we want to search against -->
-        <resource:resource name="jdbcTestResource"  uri="jdbc:hsqldb:file:testdb/testdb?user=user;password=" >            
+        <resource:resource name="jdbcTestResource"  uri="jdbc:hsqldb:file:testdb/testdb?user=user" >
+            <resource:parameter name="password" value=""/>
             <resource:child name="systems" path="SYSTEMS">
-                <resource:rule constraint="NAME" constraintType="equals"  value="%"/>
-                <resource:rule constraint="LAST_CONNECT" constraintType="expression"  value="> now() - 1hr"/>
+                <resource:rule match="all">
+                    <resource:rule value="NAME like '%'"/>
+                    <resource:rule value="LAST_CONNECT > now() - 1hr"/>
+                </resource:rule>
                 <resource:include name="NAME"/>
                 <resource:include name="OS"/>
                 <resource:child name="interfaces" path="INTERFACES">
-                    <resource:rule constraint="SYSTEM_ID" constraintType="equals"  value="SYSTEMS.ID"/>
-                    <resource:rule constraint="STATUS" constraintType="equals"  value="ACTIVE"/>
+                    <resource:rule match="all">
+                        <resource:rule value="SYSTEM_ID = SYSTEMS.ID"/>
+                        <resource:rule value="STATUS = 'ACTIVE'"/>
+                    </resource:rule>
                     <resource:include name="IP"/>
                     <resource:include name="MAC"/>
                 </resource:child>    
             </resource:child>
         </resource:resource>
         
-        <server:import name="jdbcTestImport" src="resource:jdbcTestResource:resource:testdb/resource:systems"  dumpVars="true" sleep="1000" dumpRef=".."/>
+        <server:import name="jdbcTestImport" src="resource:jdbcTestResource/resource:systems/resource:interfaces"  dumpVars="true" sleep="1000" dumpRef=".."/>
     </server:group>
     
     <!-- new smaple output 

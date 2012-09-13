@@ -18,10 +18,10 @@ package com.delcyon.capo.controller;
 
 import java.io.PrintStream;
 import java.util.HashMap;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.Stack;
 import java.util.Vector;
-import java.util.Map.Entry;
 import java.util.logging.Level;
 
 import org.w3c.dom.Element;
@@ -30,23 +30,24 @@ import org.w3c.dom.Node;
 
 import com.delcyon.capo.CapoApplication;
 import com.delcyon.capo.controller.elements.GroupElement;
-import com.delcyon.capo.controller.elements.ResourceElement;
+import com.delcyon.capo.controller.elements.ResourceControlElement;
 import com.delcyon.capo.controller.server.ControllerClientRequestProcessor;
 import com.delcyon.capo.resourcemanager.ResourceDescriptor;
-import com.delcyon.capo.resourcemanager.ResourceParameterBuilder;
-import com.delcyon.capo.resourcemanager.ResourceURI;
 import com.delcyon.capo.resourcemanager.ResourceDescriptor.LifeCycle;
 import com.delcyon.capo.resourcemanager.ResourceDescriptor.State;
+import com.delcyon.capo.resourcemanager.ResourceParameterBuilder;
+import com.delcyon.capo.resourcemanager.ResourceURI;
 import com.delcyon.capo.server.CapoServer;
 import com.delcyon.capo.xml.XPath;
 import com.delcyon.capo.xml.dom.ResourceDocument;
+import com.delcyon.capo.xml.dom.ResourceElement;
 
 public class Group implements VariableContainer
 {
 	
 	private HashMap<String, String> entryHashMap = new HashMap<String, String>();
 	private HashMap<String, String> variableHashMap = new HashMap<String, String>();
-	private transient HashMap<String,ResourceElement> resourceElementHashMap = new HashMap<String, ResourceElement>();
+	private transient HashMap<String,ResourceControlElement> resourceElementHashMap = new HashMap<String, ResourceControlElement>();
 	private transient Vector<ResourceDescriptor> openResourceDescriptorVector = new Vector<ResourceDescriptor>();
 	private String groupName;
 	private transient Group parentGroup;
@@ -349,9 +350,9 @@ public class Group implements VariableContainer
 		this.variableHashMap = variableHashMap;
 	}
 	
-	public void putResourceElement(ResourceElement resourceElement)
+	public void putResourceElement(ResourceControlElement resourceControlElement)
 	{
-		resourceElementHashMap.put(resourceElement.getName(), resourceElement);
+		resourceElementHashMap.put(resourceControlElement.getName(), resourceControlElement);
 	}
 
 	public ResourceDescriptor openResourceDescriptor(ControlElement callingControlElement,String resourceURIString) throws Exception
@@ -385,20 +386,21 @@ public class Group implements VariableContainer
 		if (scheme != null && scheme.equals("resource"))
 		{
 			String resourceName = uriRemainder;
+			String[] parts = ResourceURI.getParts(uriRemainder); 
 			if (resourceName != null)
 			{
 				if (resourceElementHashMap.containsKey(resourceName))
 				{
 					return resourceElementHashMap.get(resourceName).getResourceDescriptor();
 				}
-				else if (resourceElementHashMap.containsKey(ResourceURI.getScheme(resourceName)))
+				else if (resourceElementHashMap.containsKey(parts[0]))
 				{
-					ResourceElement resourceElement = resourceElementHashMap.get(ResourceURI.getScheme(resourceName));
-					ResourceDocument resourceDocument = resourceElement.getResourceDocument();
-					Node node = XPath.selectSingleNode(resourceDocument, ResourceURI.getSchemeSpecificPart(resourceName));
+					ResourceControlElement resourceControlElement = resourceElementHashMap.get(parts[0]);
+					ResourceDocument resourceDocument = resourceControlElement.getResourceDocument();
+					Node node = XPath.selectSingleNode(resourceDocument, resourceURIString);
 					if (node != null && node instanceof com.delcyon.capo.xml.dom.ResourceElement)
 					{
-						return ((com.delcyon.capo.xml.dom.ResourceElement) node).getResourceDescriptor();
+						return ((ResourceElement) node).getResourceDescriptor();
 					}
 					else
 					{
@@ -433,8 +435,8 @@ public class Group implements VariableContainer
 
 	public void closeResourceDescriptors(LifeCycle lifeCycle) throws Exception
 	{
-		Set<Entry<String, ResourceElement>> resourceDescriptorEntrySet = resourceElementHashMap.entrySet();
-		for (Entry<String, ResourceElement> resourceElementEntry : resourceDescriptorEntrySet)
+		Set<Entry<String, ResourceControlElement>> resourceDescriptorEntrySet = resourceElementHashMap.entrySet();
+		for (Entry<String, ResourceControlElement> resourceElementEntry : resourceDescriptorEntrySet)
 		{
 			if (resourceElementEntry.getValue().getResourceDescriptor().getLifeCycle() == lifeCycle)
 			{
@@ -463,8 +465,8 @@ public class Group implements VariableContainer
 		closeResourceDescriptors(LifeCycle.GROUP);
 		
 		//call release on everything, this will close EVERYTHING including explicit resource descriptors
-		Set<Entry<String, ResourceElement>> resourceDescriptorEntrySet = resourceElementHashMap.entrySet();
-		for (Entry<String, ResourceElement> resourceElementEntry : resourceDescriptorEntrySet)
+		Set<Entry<String, ResourceControlElement>> resourceDescriptorEntrySet = resourceElementHashMap.entrySet();
+		for (Entry<String, ResourceControlElement> resourceElementEntry : resourceDescriptorEntrySet)
 		{
 
 			if (resourceElementEntry.getValue().getResourceDescriptor().getResourceState() != State.RELEASED)

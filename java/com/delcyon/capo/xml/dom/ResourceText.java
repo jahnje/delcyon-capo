@@ -1,5 +1,7 @@
 package com.delcyon.capo.xml.dom;
 
+import java.lang.reflect.Modifier;
+
 import org.w3c.dom.DOMException;
 import org.w3c.dom.Document;
 import org.w3c.dom.NamedNodeMap;
@@ -8,10 +10,18 @@ import org.w3c.dom.NodeList;
 import org.w3c.dom.Text;
 import org.w3c.dom.UserDataHandler;
 
+import com.delcyon.capo.controller.elements.ResourceControlElement;
+import com.delcyon.capo.resourcemanager.ResourceDescriptor;
+import com.delcyon.capo.util.ReflectionUtility;
+import com.delcyon.capo.util.ToStringControl;
+import com.delcyon.capo.util.ToStringControl.Control;
+
+@ToStringControl(control=Control.exclude,modifiers=Modifier.FINAL+Modifier.STATIC)
 public class ResourceText extends ResourceNode implements Text
 {
 
 	private String data;
+	@ToStringControl(control=Control.exclude)
 	private ResourceNode parentNode;
 
 	public ResourceText(ResourceNode parentNode,String data)
@@ -53,6 +63,18 @@ public class ResourceText extends ResourceNode implements Text
 
     }
 
+    @Override
+    public ResourceDescriptor getResourceDescriptor()
+    {
+        return this.parentNode.getResourceDescriptor();
+    }
+    
+    @Override
+    public ResourceControlElement getResourceControlElement()
+    {
+        return this.parentNode.getResourceControlElement();
+    }
+    
     @Override
     public void insertData(int offset, String arg) throws DOMException
     {
@@ -366,4 +388,9 @@ public class ResourceText extends ResourceNode implements Text
         
     }
 
+    @Override
+    public String toString()
+    {
+        return ReflectionUtility.processToString(this);
+    }
 }

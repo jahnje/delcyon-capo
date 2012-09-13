@@ -1,5 +1,7 @@
 package com.delcyon.capo.xml.dom;
 
+import java.lang.reflect.Modifier;
+
 import org.w3c.dom.Attr;
 import org.w3c.dom.DOMException;
 import org.w3c.dom.Document;
@@ -10,9 +12,17 @@ import org.w3c.dom.NodeList;
 import org.w3c.dom.TypeInfo;
 import org.w3c.dom.UserDataHandler;
 
+import com.delcyon.capo.controller.elements.ResourceControlElement;
+import com.delcyon.capo.resourcemanager.ResourceDescriptor;
+import com.delcyon.capo.util.ReflectionUtility;
+import com.delcyon.capo.util.ToStringControl;
+import com.delcyon.capo.util.ToStringControl.Control;
+
+@ToStringControl(control=Control.exclude,modifiers=Modifier.FINAL+Modifier.STATIC)
 public class ResourceAttr extends ResourceNode implements Attr
 {
 
+    @ToStringControl(control=Control.exclude)
     private ResourceElement parentElement = null;
     private String name = null;
     private ResourceText value = null;
@@ -23,6 +33,18 @@ public class ResourceAttr extends ResourceNode implements Attr
         this.value = new ResourceText(this,value);
     }
 
+    @Override
+    public ResourceDescriptor getResourceDescriptor()
+    {
+        return this.parentElement.getResourceDescriptor();
+    }
+    
+    @Override
+    public ResourceControlElement getResourceControlElement()
+    {
+        return this.parentElement.getResourceControlElement();
+    }
+    
     @Override
     public String getNodeName()
     {        
@@ -54,7 +76,7 @@ public class ResourceAttr extends ResourceNode implements Attr
         return parentElement;
     }
 
-    @Override
+    @Override    
     public NodeList getChildNodes()
     {
         throw new UnsupportedOperationException();
@@ -319,4 +341,10 @@ public class ResourceAttr extends ResourceNode implements Attr
         
     }
 
+    @Override
+    public String toString()
+    {
+        return ReflectionUtility.processToString(this);
+    }
+    
 }
