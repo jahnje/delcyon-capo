@@ -20,11 +20,17 @@ import java.lang.reflect.Array;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.lang.reflect.Type;
 import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Vector;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
+import com.delcyon.capo.util.ToStringControl.Control;
 
 /**
  * @author jeremiah
@@ -197,8 +203,44 @@ public class ReflectionUtility
 	}
 
 	/**
+     * This walks all of the super classes and interfaces of an object and
+     * creates a vector of declared methods where the first method in the vector is the first
+     * method in the super most class
+     */
+    @SuppressWarnings("unchecked")
+    public static Vector<Method> getMethodVector(Object object)
+    {
+        Vector<Class> classVector = new Vector<Class>();
+        Vector<Method> methodVector = new Vector<Method>();
+
+        Class currentClass = object.getClass();
+        while (currentClass != null)
+        {
+            classVector.insertElementAt(currentClass, 0);
+            Class[] interfaceClasses = currentClass.getInterfaces();
+            for (Class interfaceClass : interfaceClasses)
+            {
+                classVector.insertElementAt(interfaceClass, 0);
+            }
+            currentClass = currentClass.getSuperclass();
+        }
+
+        for (Class clazz : classVector)
+        {
+            Method[] methods = clazz.getDeclaredMethods();
+            for (Method method : methods)
+            {
+                methodVector.add(method);
+            }
+        }
+
+        return methodVector;
+    }
+	
+	
+	/**
 	 * This walks all of the super classes and interfaces of an object and
-	 * creates a vector of declared fields where the first filed in the first
+	 * creates a vector of declared fields where the first field in the vector is the first
 	 * field in the super most class
 	 */
 	@SuppressWarnings("unchecked")
@@ -272,15 +314,65 @@ public class ReflectionUtility
 			seperator = ",";
 		}
 		StringBuilder stringBuffer = new StringBuilder(toStringObject.getClass().getSimpleName() + "[");
+		
 		Vector<Field> fieldVector = ReflectionUtility.getFieldVector(toStringObject);
-		for (int currentField = 0; currentField < fieldVector.size(); currentField++)
+		Vector<Method> methodVector = ReflectionUtility.getMethodVector(toStringObject);
+		
+		
+		ToStringControl classToStringControl = toStringObject.getClass().getAnnotation(ToStringControl.class);
+        if(classToStringControl != null)
+        {
+            if(classToStringControl.control() == Control.exclude && classToStringControl.modifiers() == 0)
+            {
+                fieldVector.clear();
+                methodVector.clear();
+            }
+        }
+        
+		for (int currentField = 0,actualFieldCount = 0; currentField < fieldVector.size(); currentField++)
 		{
 			Field field = fieldVector.get(currentField);
 			field.setAccessible(true);
-			if (currentField != 0)
+			ToStringControl fieldToStringControl = field.getAnnotation(ToStringControl.class);
+			boolean forceInclude = false;
+			if(fieldToStringControl != null)
+			{
+			    if(fieldToStringControl.control() == Control.exclude)
+			    {
+			        continue;    
+			    }
+			    else
+			    {
+			        forceInclude = true;
+			    }
+			}
+			
+			if(classToStringControl != null && forceInclude == false)
+	        {
+	            if(classToStringControl.control() == Control.exclude)
+	            {
+	                if((field.getModifiers() & classToStringControl.modifiers()) != 0) //exclude if the modifiers match
+	                {
+	                    continue;
+	                }
+	            }
+	            else
+	            {
+	                if((field.getModifiers() & classToStringControl.modifiers()) == 0) //exclude if the modifiers don't match
+                    {
+                        continue;
+                    }
+	            }
+	        }
+			
+			
+			
+			if (actualFieldCount != 0)
 			{
 				stringBuffer.append(seperator);
 			}
+			actualFieldCount++;
+			
 			try
 			{
 				Object fieldValue = field.get(toStringObject);
@@ -315,6 +407,28 @@ public class ReflectionUtility
 			}
 		}
 
+		for (Method method : methodVector)
+        {
+            if(method.getAnnotation(ToStringControl.class) != null)
+            {
+                if(method.getAnnotation(ToStringControl.class).control() == Control.include)
+                {
+                    method.setAccessible(true);
+                    if(method.getParameterTypes().length == 0)
+                    {
+                        try
+                        {
+                            stringBuffer.append(method.getName() + "='" + method.invoke(toStringObject, new Object[]{}) + "'");
+                        }
+                        catch (Exception e)
+                        {                            
+                            Logger.getLogger(Logger.GLOBAL_LOGGER_NAME).log(Level.WARNING, "Error invoking "+method.getName()+" on "+toStringObject.getClass().getCanonicalName(), e);
+                        }                        
+                    }
+                }
+            }
+        }
+		
 		stringBuffer.append("]");
 
 		return stringBuffer.toString();
