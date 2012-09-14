@@ -45,9 +45,8 @@
                 </resource:rule>
                 <resource:include name="NAME"/>
                 <resource:include name="OS"/>
-                <resource:child name="interfaces" path="INTERFACES">
-                    <resource:rule match="all">
-                        <resource:rule value="SYSTEM_ID = SYSTEMS.ID"/>
+                <resource:child name="interfaces" path="INTERFACES">                    
+                    <resource:rule match="all">                        
                         <resource:rule value="STATUS = 'ACTIVE'"/>
                     </resource:rule>
                     <resource:include name="IP"/>
@@ -56,7 +55,7 @@
             </resource:child>
         </resource:resource>
         
-        <server:import name="jdbcTestImport" src="resource:jdbcTestResource/resource:systems/resource:interfaces"  dumpVars="true" sleep="1000" dumpRef=".."/>
+        <server:import name="jdbcTestImport" src="resource:jdbcTestResource/resource:systems"  dumpVars="true" sleep="1000" dumpRef=".."/>
     </server:group>
     
     <!-- new smaple output 

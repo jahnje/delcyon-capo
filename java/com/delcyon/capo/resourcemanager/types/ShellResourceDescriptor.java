@@ -39,6 +39,7 @@ import com.delcyon.capo.resourcemanager.ResourceURI;
 import com.delcyon.capo.resourcemanager.types.ContentMetaData.Attributes;
 import com.delcyon.capo.util.diff.InputStreamTokenizer;
 import com.delcyon.capo.util.diff.InputStreamTokenizer.TokenList;
+import com.delcyon.capo.xml.dom.ResourceElement;
 
 /**
  * @author jeremiah
@@ -90,10 +91,10 @@ public class ShellResourceDescriptor extends AbstractResourceDescriptor
 	 
 	
 	@Override
-	public void init(VariableContainer variableContainer,LifeCycle lifeCycle, boolean iterate, ResourceParameter... resourceParameters) throws Exception
+	public void init(ResourceElement declaringResourceElement,VariableContainer variableContainer, LifeCycle lifeCycle, boolean iterate, ResourceParameter... resourceParameters) throws Exception
 	{
 	
-		super.init(variableContainer,lifeCycle, iterate, resourceParameters);		
+		super.init(declaringResourceElement,variableContainer, lifeCycle, iterate, resourceParameters);		
 		contentMetaData = buildContentMetaData();
 		if(getVarValue(variableContainer, Parameter.DEBUG) != null && getVarValue(variableContainer, Parameter.DEBUG).equalsIgnoreCase("true"))
 		{

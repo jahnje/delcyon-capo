@@ -190,6 +190,7 @@ public class XPath
 			NamespaceContextMap namespaceContextMap = new NamespaceContextMap();
 			namespaceContextMap.addNamespace("server", CapoApplication.SERVER_NAMESPACE_URI);
 			namespaceContextMap.addNamespace("client", CapoApplication.CLIENT_NAMESPACE_URI);
+			namespaceContextMap.addNamespace("resource", CapoApplication.RESOURCE_NAMESPACE_URI);
 			xPath.setNamespaceContext(namespaceContextMap);
 			XPathExpression xPathExpression = xPath.compile(path);
 			return (NodeList) xPathExpression.evaluate(node,XPathConstants.NODESET);

@@ -27,6 +27,7 @@ import com.delcyon.capo.resourcemanager.ResourceURI;
 import com.delcyon.capo.resourcemanager.types.RefResourceType.Parameters;
 import com.delcyon.capo.server.CapoServer.Preferences;
 import com.delcyon.capo.xml.XPath;
+import com.delcyon.capo.xml.dom.ResourceElement;
 
 /**
  * @author jeremiah
@@ -42,9 +43,9 @@ public class ClientsResourceDescriptor extends AbstractResourceDescriptor
 	
 	
 	@Override
-	public void init(VariableContainer variableContainer, LifeCycle lifeCycle, boolean iterate, ResourceParameter... resourceParameters) throws Exception
+	public void init(ResourceElement declaringResourceElement, VariableContainer variableContainer, LifeCycle lifeCycle, boolean iterate, ResourceParameter... resourceParameters) throws Exception
 	{		
-		super.init(variableContainer, lifeCycle, iterate, resourceParameters);
+		super.init(declaringResourceElement, variableContainer, lifeCycle, iterate, resourceParameters);
 		
 		clientResourceDescriptor = CapoApplication.getDataManager().getResourceDescriptor(null, CapoApplication.getDataManager().getResourceDirectory(Preferences.CLIENTS_DIR.toString()).getResourceURI().getBaseURI()+"/"+getResourceURI().getSchemeSpecificPart());
 		

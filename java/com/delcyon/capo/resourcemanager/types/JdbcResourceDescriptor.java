@@ -22,10 +22,12 @@ import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.Statement;
+import java.util.HashMap;
 import java.util.logging.Level;
 
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
+import org.w3c.dom.NodeList;
 
 import com.delcyon.capo.CapoApplication;
 import com.delcyon.capo.controller.ControlElement;
@@ -36,6 +38,8 @@ import com.delcyon.capo.resourcemanager.ResourceParameter;
 import com.delcyon.capo.resourcemanager.ResourceParameterBuilder;
 import com.delcyon.capo.resourcemanager.ResourceURI;
 import com.delcyon.capo.resourcemanager.types.ContentMetaData.Attributes;
+import com.delcyon.capo.xml.XPath;
+import com.delcyon.capo.xml.dom.ResourceElement;
 
 /**
  * @author jeremiah
@@ -50,7 +54,9 @@ public class JdbcResourceDescriptor extends AbstractResourceDescriptor
 	}
 	
 	private Connection connection = null;
-	
+	private HashMap<String, Boolean> keyMap = new HashMap<String, Boolean>();
+	private HashMap<String, Boolean> includeMap = new HashMap<String, Boolean>();
+	private HashMap<String, Boolean> excludeMap = new HashMap<String, Boolean>();
 	private SimpleContentMetaData contentMetaData;
 	private SimpleContentMetaData iterationContentMetaData;
 	private ResultSet resultSet;
@@ -75,14 +81,31 @@ public class JdbcResourceDescriptor extends AbstractResourceDescriptor
 	}
 	
 	@Override
-	public void init(VariableContainer variableContainer,LifeCycle lifeCycle, boolean iterate, ResourceParameter... resourceParameters) throws Exception
+	public void init(ResourceElement declaringResourceElement,VariableContainer variableContainer, LifeCycle lifeCycle, boolean iterate, ResourceParameter... resourceParameters) throws Exception
 	{
-		
+
+	    super.init(declaringResourceElement,variableContainer, lifeCycle, iterate, resourceParameters);
+	    
 		if (getResourceURI().getChildResourceURI() != null)
 		{
 			this.table = true;
 		}
-		super.init(variableContainer,lifeCycle, iterate, resourceParameters);
+		if(getDeclaringResourceElement() != null)
+		{
+		    ResourceElement resourceElement = getDeclaringResourceElement();
+		    Element controlElementDeclaration = resourceElement.getResourceControlElement().getControlElementDeclaration();
+		    NodeList includeNodeList = XPath.selectNodes(controlElementDeclaration, "resource:include");
+		    for(int index = 0; index < includeNodeList.getLength(); index++)
+		    {
+		        includeMap.put(((Element) includeNodeList.item(index)).getAttribute("name"), true);
+		    }
+		    NodeList excludeNodeList = XPath.selectNodes(controlElementDeclaration, "resource:exclude");
+            for(int index = 0; index < excludeNodeList.getLength(); index++)
+            {
+                excludeMap.put(((Element) excludeNodeList.item(index)).getAttribute("name"), true);
+            }
+		}
+
 		
 		contentMetaData = buildContentMetatData();
 	}
@@ -98,6 +121,14 @@ public class JdbcResourceDescriptor extends AbstractResourceDescriptor
 	            readXML(variableContainer,resourceParameters);
 	        }
 	        super.open(variableContainer,resourceParameters);
+	    }
+	    if (table == true)
+	    {
+	        ResultSet tableResultSet = connection.getMetaData().getPrimaryKeys(null, null, getLocalName());	        
+	        while(tableResultSet.next())
+	        {
+	            keyMap.put(tableResultSet.getString("COLUMN_NAME"), true);	            	            
+	        }	        
 	    }
 	}
 	
@@ -150,7 +181,7 @@ public class JdbcResourceDescriptor extends AbstractResourceDescriptor
 			    resultSet = statement.executeQuery(getVarValue(variableContainer,"query"));
 			}
 			else
-			{
+			{			    
 			    resultSet = statement.executeQuery("select * from "+getLocalName());
 			}
 			
@@ -184,19 +215,41 @@ public class JdbcResourceDescriptor extends AbstractResourceDescriptor
 
 	private Element buildElementFromResultSet(Document document,ResultSet resultSet) throws Exception
 	{
-		Element rowElement = document.createElement("Row");
+	    ResultSetMetaData resultSetMetaData = resultSet.getMetaData();
+		Element rowElement = document.createElement(getLocalName());
 		rowElement.setAttribute("number", resultSet.getRow()+"");
 		
-		ResultSetMetaData resultSetMetaData = resultSet.getMetaData();
 		int columnCount = resultSetMetaData.getColumnCount();
+		String keyString = "";
+		
 		for(int currentColumn = 1; currentColumn <= columnCount; currentColumn++)
 		{
-			Element columnElement = document.createElement("Column");
-			rowElement.appendChild(columnElement);
-			columnElement.setAttribute("name", resultSetMetaData.getColumnName(currentColumn));
-			columnElement.setAttribute("type", resultSetMetaData.getColumnTypeName(currentColumn));
-			columnElement.setTextContent(resultSet.getString(currentColumn));
+		    String columName = resultSetMetaData.getColumnName(currentColumn);
+		    String value = resultSet.getString(currentColumn);
+		    
+		    if(includeMap.isEmpty() == false && includeMap.containsKey(columName))
+		    {
+		        rowElement.setAttribute(columName,value);
+		    }
+		    else if(includeMap.isEmpty() == true && excludeMap.containsKey(columName) == false)
+		    {
+		        rowElement.setAttribute(columName,value);
+		    }
+		    else if(includeMap.isEmpty() && excludeMap.isEmpty())
+		    {
+		        rowElement.setAttribute(columName,value);
+		    }
+		    
+		    if(keyMap.size() > 0 && keyMap.containsKey(columName))
+		    {
+		        keyString += columName+"="+value+";"; 
+		    }
+		    else if(keyMap.size() == 0)//if there are no primary keys, then we have to use all of the results for the key
+		    {
+		        keyString += columName+"="+value+";";
+		    }
 		}
+		rowElement.setAttribute("uri", getResourceURI().getResourceURIString()+"?"+keyString);
 		return rowElement;
 	}
 	
@@ -282,7 +335,7 @@ public class JdbcResourceDescriptor extends AbstractResourceDescriptor
 	    jdbcResourceDescriptor.connection = this.connection;
 	    jdbcResourceDescriptor.setResourceType(getResourceType());
 	    jdbcResourceDescriptor.setResourceURI(new ResourceURI(getResourceURI().getBaseURI()+"!"+relativeURI));
-	    jdbcResourceDescriptor.init(getDeclaringVariableContainer(), getLifeCycle(), isIterating(),ResourceParameterBuilder.getResourceParameters(callingControlElement.getControlElementDeclaration()));
+	    jdbcResourceDescriptor.init(null, getDeclaringVariableContainer(), getLifeCycle(),isIterating(), ResourceParameterBuilder.getResourceParameters(callingControlElement.getControlElementDeclaration()));
 	    jdbcResourceDescriptor.setLocalName(relativeURI);
 	    jdbcResourceDescriptor.setResourceState(State.OPEN);
 	    return jdbcResourceDescriptor;

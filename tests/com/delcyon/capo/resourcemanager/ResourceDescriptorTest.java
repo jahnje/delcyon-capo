@@ -79,7 +79,7 @@ public abstract class ResourceDescriptorTest
         resourceDescriptor.reset(State.NONE);
         Assert.assertSame(State.NONE,resourceDescriptor.getResourceState());
         resourceDescriptor.reset(State.NONE);
-        resourceDescriptor.init(null, LifeCycle.EXPLICIT, false);
+        resourceDescriptor.init(null, null, LifeCycle.EXPLICIT, false);
         Assert.assertSame(State.INITIALIZED,resourceDescriptor.getResourceState());
         resourceDescriptor.reset(State.NONE);
         resourceDescriptor.open(null);
@@ -98,7 +98,7 @@ public abstract class ResourceDescriptorTest
     public void testPerformAction() throws Exception
     {
         resourceDescriptor.reset(State.NONE);
-        resourceDescriptor.init(null, LifeCycle.EXPLICIT, false);
+        resourceDescriptor.init(null, null, LifeCycle.EXPLICIT, false);
         if (resourceDescriptor.isSupportedAction(Action.DELETE))
         {
         	Assert.assertTrue(resourceDescriptor.getContentMetaData(null).exists());
@@ -121,7 +121,7 @@ public abstract class ResourceDescriptorTest
     public void testIsSupportedAction() throws Exception
     {
     	resourceDescriptor.reset(State.NONE);
-        resourceDescriptor.init(null, LifeCycle.EXPLICIT, false);
+        resourceDescriptor.init(null, null, LifeCycle.EXPLICIT, false);
         Assert.assertNotNull(resourceDescriptor.isSupportedAction(Action.CREATE));
         Assert.assertNotNull(resourceDescriptor.isSupportedAction(Action.DELETE));
     }
@@ -148,7 +148,7 @@ public abstract class ResourceDescriptorTest
     public void testInit() throws Exception
     {
     	ResourceDescriptor  resourceDescriptor = this.resourceDescriptor.getResourceType().getResourceDescriptor(this.resourceDescriptor.getResourceURI().getResourceURIString());
-        resourceDescriptor.init(null, LifeCycle.EXPLICIT, false);
+        resourceDescriptor.init(null, null, LifeCycle.EXPLICIT, false);
         Assert.assertSame(State.INITIALIZED,resourceDescriptor.getResourceState());
         Assert.assertNotNull(resourceDescriptor.getResourceURI());
         Assert.assertNotNull(resourceDescriptor.getLocalName());
@@ -160,7 +160,7 @@ public abstract class ResourceDescriptorTest
     public void testOpen() throws Exception
     {
         resourceDescriptor.reset(State.NONE);
-        resourceDescriptor.init(null, LifeCycle.EXPLICIT, false);
+        resourceDescriptor.init(null, null, LifeCycle.EXPLICIT, false);
         resourceDescriptor.open(null);
         Assert.assertSame(State.OPEN,resourceDescriptor.getResourceState());
       //TODO check for open content meta data
@@ -170,7 +170,7 @@ public abstract class ResourceDescriptorTest
     public void testReadXML() throws Exception
     {
     	resourceDescriptor.reset(State.NONE);
-        resourceDescriptor.init(null, LifeCycle.EXPLICIT, false);
+        resourceDescriptor.init(null, null, LifeCycle.EXPLICIT, false);
         resourceDescriptor.open(null);
         Assert.assertSame(State.OPEN,resourceDescriptor.getResourceState());
         Element element = resourceDescriptor.readXML(null);
@@ -197,7 +197,7 @@ public abstract class ResourceDescriptorTest
     public void testReadBlock() throws Exception
     {
     	resourceDescriptor.reset(State.NONE);
-        resourceDescriptor.init(null, LifeCycle.EXPLICIT, false);
+        resourceDescriptor.init(null, null, LifeCycle.EXPLICIT, false);
         resourceDescriptor.open(null);
         Assert.assertSame(State.OPEN,resourceDescriptor.getResourceState());
         byte[] data = resourceDescriptor.readBlock(null);
@@ -210,7 +210,7 @@ public abstract class ResourceDescriptorTest
     public void testWriteXML() throws Exception
     {
     	resourceDescriptor.reset(State.NONE);
-        resourceDescriptor.init(null, LifeCycle.EXPLICIT, false);
+        resourceDescriptor.init(null, null, LifeCycle.EXPLICIT, false);
         resourceDescriptor.open(null);
         if (resourceDescriptor.isSupportedStreamFormat(StreamType.OUTPUT,StreamFormat.XML_BLOCK))
         {
@@ -235,7 +235,7 @@ public abstract class ResourceDescriptorTest
     public void testWriteBlock() throws Exception
     {
     	resourceDescriptor.reset(State.NONE);
-        resourceDescriptor.init(null, LifeCycle.EXPLICIT, false);
+        resourceDescriptor.init(null, null, LifeCycle.EXPLICIT, false);
         resourceDescriptor.open(null);
         if (resourceDescriptor.isSupportedStreamFormat(StreamType.OUTPUT,StreamFormat.BLOCK))
         {
@@ -249,7 +249,7 @@ public abstract class ResourceDescriptorTest
     public void testNext() throws Exception
     {
     	resourceDescriptor.reset(State.NONE);
-        resourceDescriptor.init(null, LifeCycle.EXPLICIT, true);
+        resourceDescriptor.init(null, null, LifeCycle.EXPLICIT, true);
         resourceDescriptor.open(null);
         if(resourceDescriptor.getResourceType().isIterable())
         {
@@ -277,7 +277,7 @@ public abstract class ResourceDescriptorTest
     public void testProcessOutput() throws Exception
     {
     	resourceDescriptor.reset(State.NONE);
-        resourceDescriptor.init(null, LifeCycle.EXPLICIT, false);
+        resourceDescriptor.init(null, null, LifeCycle.EXPLICIT, false);
         resourceDescriptor.open(null);
         if (resourceDescriptor.isSupportedStreamFormat(StreamType.OUTPUT, StreamFormat.PROCESS))
         {
@@ -295,7 +295,7 @@ public abstract class ResourceDescriptorTest
     public void testProcessInput() throws Exception
     {
     	resourceDescriptor.reset(State.NONE);
-        resourceDescriptor.init(null, LifeCycle.EXPLICIT, false);
+        resourceDescriptor.init(null, null, LifeCycle.EXPLICIT, false);
         resourceDescriptor.open(null);
         if (resourceDescriptor.isSupportedStreamFormat(StreamType.INPUT, StreamFormat.PROCESS))
         {
@@ -313,7 +313,7 @@ public abstract class ResourceDescriptorTest
     public void testGetInputStream() throws Exception
     {
     	resourceDescriptor.reset(State.NONE);
-        resourceDescriptor.init(null, LifeCycle.EXPLICIT, false);
+        resourceDescriptor.init(null, null, LifeCycle.EXPLICIT, false);
         resourceDescriptor.open(null);
         if (resourceDescriptor.isSupportedStreamFormat(StreamType.INPUT, StreamFormat.STREAM))
         {
@@ -336,7 +336,7 @@ public abstract class ResourceDescriptorTest
     public void testGetOutputStream() throws Exception
     {
     	resourceDescriptor.reset(State.NONE);
-        resourceDescriptor.init(null, LifeCycle.EXPLICIT, false);
+        resourceDescriptor.init(null, null, LifeCycle.EXPLICIT, false);
         resourceDescriptor.open(null);
         if (resourceDescriptor.isSupportedStreamFormat(StreamType.OUTPUT, StreamFormat.STREAM))
         {
@@ -359,7 +359,7 @@ public abstract class ResourceDescriptorTest
     public void testClose() throws Exception
     {
     	resourceDescriptor.reset(State.NONE);
-        resourceDescriptor.init(null, LifeCycle.EXPLICIT, false);
+        resourceDescriptor.init(null, null, LifeCycle.EXPLICIT, false);
         resourceDescriptor.open(null);
         Assert.assertSame(State.OPEN,resourceDescriptor.getResourceState());
         resourceDescriptor.close(null);
@@ -370,7 +370,7 @@ public abstract class ResourceDescriptorTest
     public void testRelease() throws Exception
     {
     	resourceDescriptor.reset(State.NONE);
-        resourceDescriptor.init(null, LifeCycle.EXPLICIT, false);
+        resourceDescriptor.init(null, null, LifeCycle.EXPLICIT, false);
         resourceDescriptor.open(null);
         Assert.assertSame(State.OPEN,resourceDescriptor.getResourceState());
         resourceDescriptor.close(null);
@@ -384,7 +384,7 @@ public abstract class ResourceDescriptorTest
     public void testGetContentMetaData() throws Exception
     {
     	resourceDescriptor.reset(State.NONE);
-        resourceDescriptor.init(null, LifeCycle.EXPLICIT, false);
+        resourceDescriptor.init(null, null, LifeCycle.EXPLICIT, false);
         resourceDescriptor.open(null);
         Assert.assertSame(State.OPEN,resourceDescriptor.getResourceState());
         ContentMetaData contentMetaData = resourceDescriptor.getContentMetaData(null);
@@ -404,7 +404,7 @@ public abstract class ResourceDescriptorTest
     	if (resourceDescriptor.getResourceType().isIterable())
     	{
     		resourceDescriptor.reset(State.NONE);
-    		resourceDescriptor.init(null, LifeCycle.EXPLICIT, false);
+    		resourceDescriptor.init(null, null, LifeCycle.EXPLICIT, false);
     		resourceDescriptor.open(null);
     		resourceDescriptor.next(null);
     		ContentMetaData contentMetaData = resourceDescriptor.getIterationMetaData(null);
@@ -455,7 +455,7 @@ public abstract class ResourceDescriptorTest
     public void testGetChildResourceDescriptor() throws Exception
     {
     	resourceDescriptor.reset(State.NONE);
-    	resourceDescriptor.init(null, LifeCycle.EXPLICIT, false);
+    	resourceDescriptor.init(null, null, LifeCycle.EXPLICIT, false);
     	resourceDescriptor.open(null);
     	if (resourceDescriptor.getContentMetaData(null).isContainer())
     	{

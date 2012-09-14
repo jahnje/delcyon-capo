@@ -41,13 +41,14 @@ import com.delcyon.capo.datastream.StreamUtil;
 import com.delcyon.capo.resourcemanager.ContentFormatType;
 import com.delcyon.capo.resourcemanager.ResourceDescriptor;
 import com.delcyon.capo.resourcemanager.ResourceParameter;
-import com.delcyon.capo.resourcemanager.ResourceType;
 import com.delcyon.capo.resourcemanager.ResourceParameter.EvaluationContext;
 import com.delcyon.capo.resourcemanager.ResourceParameter.Source;
+import com.delcyon.capo.resourcemanager.ResourceType;
 import com.delcyon.capo.resourcemanager.ResourceURI;
 import com.delcyon.capo.server.CapoServer;
 import com.delcyon.capo.util.ReflectionUtility;
 import com.delcyon.capo.xml.XPath;
+import com.delcyon.capo.xml.dom.ResourceElement;
 
 /**
  * @author jeremiah
@@ -73,10 +74,12 @@ public abstract class AbstractResourceDescriptor implements ResourceDescriptor
 	private Vector<OutputStream> openOutputStreamVector = new Vector<OutputStream>();
 	private Vector<InputStream> openInputStreamVector = new Vector<InputStream>();
 	private String localName = null;
+    private ResourceElement declaringResourceElement;
 	
 	@Override
 	public void setup(ResourceType resourceType, String resourceURI) throws Exception
 	{
+	   
 		this.resourceState = State.NONE;
 		this.resourceType = resourceType;
 		this.resourceURI = new ResourceURI(resourceURI);
@@ -85,9 +88,9 @@ public abstract class AbstractResourceDescriptor implements ResourceDescriptor
 	}
 	
 	@Override
-	public void init(VariableContainer variableContainer,LifeCycle lifeCycle, boolean iterate, ResourceParameter... resourceParameters) throws Exception
+	public void init(ResourceElement declaringResourceElement,VariableContainer variableContainer, LifeCycle lifeCycle, boolean iterate, ResourceParameter... resourceParameters) throws Exception
 	{		
-			
+	        this.declaringResourceElement = declaringResourceElement;	
 			this.declaringVariableContainer = variableContainer;
 			//override life cycle
 			if (lifeCycle == null)
@@ -137,7 +140,7 @@ public abstract class AbstractResourceDescriptor implements ResourceDescriptor
 	{
 		if (resourceState == State.NONE)
 		{
-			init(variableContainer,null,false,resourceParameters);
+			init(null,variableContainer,null,false, resourceParameters);
 		}
 		
 		if (resourceState == State.OPEN || resourceState == State.STEPPING)
@@ -270,7 +273,7 @@ public abstract class AbstractResourceDescriptor implements ResourceDescriptor
 	{
 		if (getResourceState() == State.NONE)
         {
-        	init(variableContainer, lifeCycle, isIterating, resourceParameters);
+        	init(null, variableContainer, lifeCycle, isIterating, resourceParameters);
         }
         else if (getResourceState() == State.INITIALIZED)
         {
@@ -288,6 +291,11 @@ public abstract class AbstractResourceDescriptor implements ResourceDescriptor
         {
         	setup(resourceType, resourceURI.getResourceURIString());
         }
+	}
+	
+	protected ResourceElement getDeclaringResourceElement()
+	{
+	    return this.declaringResourceElement;
 	}
 	
 	

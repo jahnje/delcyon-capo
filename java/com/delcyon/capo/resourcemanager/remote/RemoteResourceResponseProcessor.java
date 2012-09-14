@@ -187,7 +187,7 @@ public class RemoteResourceResponseProcessor implements XMLServerResponseProcess
 					getResourceDescriptorHashtable().put(sessionID, resourceDescriptor);
 					break;
 				case INIT:				
-					resourceDescriptor.init(this, message.getLifeCycle(), message.isIterate(), message.getResourceParameters());
+					resourceDescriptor.init(null, this, message.getLifeCycle(), message.isIterate(), message.getResourceParameters());
 					break;
 				case GET_RESOURCE_STATE:
 					reply.setResourceState(resourceDescriptor.getResourceState());

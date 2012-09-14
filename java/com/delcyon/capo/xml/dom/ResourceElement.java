@@ -19,6 +19,7 @@ import com.delcyon.capo.controller.elements.ResourceControlElement;
 import com.delcyon.capo.resourcemanager.ContentFormatType;
 import com.delcyon.capo.resourcemanager.ResourceDescriptor;
 import com.delcyon.capo.resourcemanager.ResourceParameterBuilder;
+import com.delcyon.capo.resourcemanager.ResourceDescriptor.LifeCycle;
 import com.delcyon.capo.resourcemanager.types.ContentMetaData;
 import com.delcyon.capo.util.ReflectionUtility;
 import com.delcyon.capo.util.ToStringControl;
@@ -97,6 +98,7 @@ public class ResourceElement extends ResourceNode implements Element
         if(attributeList.getNamedItem("uri") != null)
         {
             this.resourceDescriptor = CapoApplication.getDataManager().getResourceDescriptor(resourceControlElement, attributeList.getNamedItem("uri").getNodeValue());
+            
             this.resourceControlElement.setResourceDescriptor(resourceDescriptor);
         }
         else if(attributeList.getNamedItem("path") != null) //check for a path attribute, and ask our parent to load us
@@ -109,6 +111,7 @@ public class ResourceElement extends ResourceNode implements Element
             throw new Exception("Must have a uri or a path attribute");
         }
         
+        resourceDescriptor.init(this,resourceControlElement.getParentGroup(), LifeCycle.EXPLICIT,false,ResourceParameterBuilder.getResourceParameters(resourceControlElement.getControlElementDeclaration()));
         resourceDescriptor.open(resourceControlElement.getParentGroup(), ResourceParameterBuilder.getResourceParameters(resourceControlElement.getControlElementDeclaration()));
         
         NodeList childResourceElementDeclarationNodeList =  XPath.selectNSNodes(resourceControlElement.getControlElementDeclaration(), prefix+":child", prefix+"="+namespaceURI);

@@ -362,7 +362,7 @@ public class Group implements VariableContainer
 		{
 			if (resourceDescriptor.getResourceState() == State.NONE)
 			{				
-				resourceDescriptor.init(this,null,false,ResourceParameterBuilder.getResourceParameters(callingControlElement.getControlElementDeclaration())); 
+				resourceDescriptor.init(null,this,null,false, ResourceParameterBuilder.getResourceParameters(callingControlElement.getControlElementDeclaration())); 
 			}
 			if (resourceDescriptor.getResourceState() != State.OPEN && resourceDescriptor.getResourceState() != State.STEPPING)
 			{

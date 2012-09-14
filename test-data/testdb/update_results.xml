@@ -1,27 +1,23 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ResultSet sql="select * from systems">
-    <Row number="1">
-        <Column name="ID" type="VARCHAR">capo.client.1</Column>
-        <Column name="NAME" type="VARCHAR">host1.local</Column>
-        <Column name="LAST_CONNECT" type="TIMESTAMP">2012-06-22 10:33:11.840000</Column>
-        <Column name="OS" type="VARCHAR">OSX</Column>
-    </Row>
-    <Row number="2">
-        <Column name="ID" type="VARCHAR">capo.client.2</Column>
-        <Column name="NAME" type="VARCHAR">host2.local</Column>
-        <Column name="LAST_CONNECT" type="TIMESTAMP">2012-06-22 10:33:11.840000</Column>
-        <Column name="OS" type="VARCHAR">LINUX</Column>
-    </Row>
-    <Row number="3">
-        <Column name="ID" type="VARCHAR">capo.client.3</Column>
-        <Column name="NAME" type="VARCHAR">host3.local</Column>
-        <Column name="LAST_CONNECT" type="TIMESTAMP">2012-06-22 10:33:11.840000</Column>
-        <Column name="OS" type="VARCHAR">LINUX</Column>
-    </Row>
-    <Row number="4">
-        <Column name="ID" type="VARCHAR">BS-ID</Column>
-        <Column name="NAME" type="VARCHAR">BS-NAME</Column>
-        <Column name="LAST_CONNECT" type="TIMESTAMP">2012-06-22 10:33:11.840000</Column>
-        <Column name="OS" type="VARCHAR">BS-OS</Column>
-    </Row>
+    <testdb ID="BS-ID" LAST_CONNECT="2012-06-22 10:33:11.840000" NAME="BS-NAME" OS="BS-OS"
+        number="1"
+        uri="jdbc:hsqldb:file:testdb/testdb?user=user&amp;password=?ID=BS-ID;NAME=BS-NAME;LAST_CONNECT=2012-06-22 10:33:11.840000;OS=BS-OS;"
+        />
+    <testdb ID="capo.client.1" LAST_CONNECT="2012-06-22 10:33:11.840000" NAME="host1.local"
+        OS="OSX"
+        number="2"
+        uri="jdbc:hsqldb:file:testdb/testdb?user=user&amp;password=?ID=capo.client.1;NAME=host1.local;LAST_CONNECT=2012-06-22 10:33:11.840000;OS=OSX;"
+        />
+    <testdb ID="capo.client.2" LAST_CONNECT="2012-06-22 10:33:11.840000" NAME="host2.local"
+        OS="LINUX"
+        number="3"
+        uri="jdbc:hsqldb:file:testdb/testdb?user=user&amp;password=?ID=capo.client.2;NAME=host2.local;LAST_CONNECT=2012-06-22 10:33:11.840000;OS=LINUX;"
+        />
+    <testdb ID="capo.client.3" LAST_CONNECT="2012-06-22 10:33:11.840000" NAME="host3.local"
+        OS="LINUX"
+        number="4"
+        uri="jdbc:hsqldb:file:testdb/testdb?user=user&amp;password=?ID=capo.client.3;NAME=host3.local;LAST_CONNECT=2012-06-22 10:33:11.840000;OS=LINUX;"
+        />
+
 </ResultSet>

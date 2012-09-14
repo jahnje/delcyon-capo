@@ -82,7 +82,7 @@ public class ShellResourceDescriptorTest extends ResourceDescriptorTest
     public void testWriteBlock() throws Exception
     {
         resourceDescriptor.reset(State.NONE);
-        resourceDescriptor.init(null, LifeCycle.EXPLICIT, false);
+        resourceDescriptor.init(null, null, LifeCycle.EXPLICIT, false);
         resourceDescriptor.open(null);
         if (resourceDescriptor.isSupportedStreamFormat(StreamType.OUTPUT,StreamFormat.BLOCK))
         {
@@ -102,7 +102,7 @@ public class ShellResourceDescriptorTest extends ResourceDescriptorTest
     public void testNext() throws Exception
     {
         resourceDescriptor.reset(State.NONE);
-        resourceDescriptor.init(null, LifeCycle.EXPLICIT, true);
+        resourceDescriptor.init(null, null, LifeCycle.EXPLICIT, true);
         resourceDescriptor.open(null);
         resourceDescriptor.next(null,new ResourceParameter(StepElement.Parameters.UNTIL,".*\\$ "),new ResourceParameter(StepElement.Parameters.TIMEOUT,"2500"));
         resourceDescriptor.writeBlock(null,"ls -l capo\n".getBytes());

@@ -27,6 +27,7 @@ import com.delcyon.capo.resourcemanager.ResourceURI;
 import com.delcyon.capo.resourcemanager.types.ContentMetaData.Attributes;
 import com.delcyon.capo.resourcemanager.types.RefResourceType.Parameters;
 import com.delcyon.capo.xml.XPath;
+import com.delcyon.capo.xml.dom.ResourceElement;
 
 /**
  * @author jeremiah
@@ -54,9 +55,9 @@ public class RefResourceDescriptor extends AbstractResourceDescriptor
 	}
 	
 	@Override
-	public void init(VariableContainer variableContainer, LifeCycle lifeCycle, boolean iterate, ResourceParameter... resourceParameters) throws Exception
+	public void init(ResourceElement declaringResourceElement, VariableContainer variableContainer, LifeCycle lifeCycle, boolean iterate, ResourceParameter... resourceParameters) throws Exception
 	{		
-		super.init(variableContainer, lifeCycle, iterate, resourceParameters);
+		super.init(declaringResourceElement, variableContainer, lifeCycle, iterate, resourceParameters);
 		this.contentMetaData = buildContentMetatData();
 		
 		if(Thread.currentThread() instanceof ContextThread && ((ContextThread)Thread.currentThread()).getContext() != null && ((ContextThread)Thread.currentThread()).getContext() instanceof ControlElement)
