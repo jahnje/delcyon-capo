@@ -70,6 +70,12 @@ public class ResourceText extends ResourceNode implements Text
     }
     
     @Override
+    public ResourceDescriptor getProxyedResourceDescriptor()
+    {
+    	return this.parentNode.getProxyedResourceDescriptor();
+    }
+    
+    @Override
     public ResourceControlElement getResourceControlElement()
     {
         return this.parentNode.getResourceControlElement();

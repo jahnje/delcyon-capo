@@ -212,7 +212,7 @@ public class JdbcResourceDescriptor extends AbstractResourceDescriptor
 			{
 				statement.close();
 				resultSet = null;
-				setResourceState(State.STEPPING);
+				setResourceState(State.OPEN);
 			}
 		}
 		return false;
@@ -230,9 +230,8 @@ public class JdbcResourceDescriptor extends AbstractResourceDescriptor
 		
 		if (getResourceState() == State.STEPPING && resultSet != null)
 		{
-			Element rowElement = buildElementFromResultSet(document,resultSet);
-			rootElement.appendChild(rowElement);
-			return document.getDocumentElement();
+			Element rowElement = buildElementFromResultSet(document,resultSet);			
+			return rowElement;
 		}
 		
 		if (connection != null && connection.isClosed() == false)

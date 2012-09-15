@@ -111,7 +111,7 @@ public class ResourceElement extends ResourceNode implements Element
             throw new Exception("Must have a uri or a path attribute");
         }
         
-        resourceDescriptor.init(this,resourceControlElement.getParentGroup(), LifeCycle.EXPLICIT,false,ResourceParameterBuilder.getResourceParameters(resourceControlElement.getControlElementDeclaration()));
+        resourceDescriptor.init(this,resourceControlElement.getParentGroup(), LifeCycle.EXPLICIT,true,ResourceParameterBuilder.getResourceParameters(resourceControlElement.getControlElementDeclaration()));
         resourceDescriptor.open(resourceControlElement.getParentGroup(), ResourceParameterBuilder.getResourceParameters(resourceControlElement.getControlElementDeclaration()));
         
         NodeList childResourceElementDeclarationNodeList =  XPath.selectNSNodes(resourceControlElement.getControlElementDeclaration(), prefix+":child", prefix+"="+namespaceURI);
@@ -127,9 +127,15 @@ public class ResourceElement extends ResourceNode implements Element
    @Override
    public ResourceDescriptor getResourceDescriptor()
    {
-       return this.resourceDescriptor;
+       return new ResourceElementResourceDescriptor(this);
    }
 
+   @Override
+   public ResourceDescriptor getProxyedResourceDescriptor()
+   {
+	   return this.resourceDescriptor;
+   }
+   
    @Override
    public ResourceControlElement getResourceControlElement()
    {

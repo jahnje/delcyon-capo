@@ -60,7 +60,13 @@ public class ResourceDocument extends ResourceNode implements Document
     @Override
     public ResourceDescriptor getResourceDescriptor()
     {
-        return this.resourceDescriptor;
+        return new ResourceElementResourceDescriptor((ResourceElement) this.documentElement);
+    }
+    
+    @Override
+    public ResourceDescriptor getProxyedResourceDescriptor()
+    {
+    	return this.resourceDescriptor;
     }
     
     @Override

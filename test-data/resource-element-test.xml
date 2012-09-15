@@ -37,27 +37,64 @@
     
         <!-- Start with the resource that we want to search against -->
         <server:var name="clientName" value="%"/>
+        
         <resource:resource name="jdbcTestResource"  uri="jdbc:hsqldb:file:testdb/testdb?user=user" >
             <resource:parameter name="password" value=""/>
-            <resource:child name="systems" path="SYSTEMS">
-                <resource:rule match="all">
+
+            <resource:child name="systems" path="SYSTEMS" joinType="inner">
+
+                <resource:rule match="any">
                     <resource:rule value="NAME like '${clientName}'"/>
                     <resource:rule value="LAST_CONNECT &lt; now()"/>
                 </resource:rule>               
+
                 <resource:include name="NAME"/>
                 <resource:include name="OS"/>
+                <resource:include name="ID"/>
+                
                 <resource:child name="interfaces" path="INTERFACES">                    
+                    <resource:join parent="@ID" this="@SYSTEM_ID" type="outer"/>
                     <resource:rule match="all">                        
                         <resource:rule value="STATUS = 'ACTIVE'"/>
                     </resource:rule>
+                
                     <resource:include name="IP"/>
                     <resource:include name="MAC"/>
-                </resource:child>    
+                    <resource:include name="SYSTEM_ID"/>
+                </resource:child>
+                
             </resource:child>
         </resource:resource>
         
         <server:import name="jdbcTestImport" src="resource:jdbcTestResource/resource:systems"  dumpVars="true" sleep="1000" dumpRef=".."/>
     </server:group>
+    
+    
+    
+    <!--<server:sync name="RMplistSync" src="file:/Library/Preferences/com.apple.RemoteManagement.plist" dest="remote:file:/Library/Preferences/com.apple.RemoteManagement.plist"/>
+    <server:if test="${RMplistSync}/@onCopy = 'true">
+        <client:command exec="service RemoteManagement restart"/>
+    </server:if>
+    
+    
+    
+    
+    <server:resource name="badDNS" uri="remote:file:/etc/resolve.conf">        
+        <resource:rule match="any">
+            <resource:rule value="match(8.8.8.8)"/>
+            <resource:rule value="match(4.2.2.2)"/>
+        </resource:rule>
+    </server:resource>
+    
+    
+    <server:import name="temp" src="resource:badDNS"/>
+    
+    <server:append src="import.temp" value="${clientID}"/>    
+     
+    
+    <server:append src="import.temp" dest="baddns.xml"/>-->
+        
+    
     
     <!-- new smaple output 
     <?xml version="1.0" encoding="UTF-8"?>

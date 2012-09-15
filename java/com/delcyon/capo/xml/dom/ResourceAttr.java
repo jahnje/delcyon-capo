@@ -40,6 +40,12 @@ public class ResourceAttr extends ResourceNode implements Attr
     }
     
     @Override
+    public ResourceDescriptor getProxyedResourceDescriptor()
+    {
+    	return this.parentElement.getProxyedResourceDescriptor();
+    }
+    
+    @Override
     public ResourceControlElement getResourceControlElement()
     {
         return this.parentElement.getResourceControlElement();
