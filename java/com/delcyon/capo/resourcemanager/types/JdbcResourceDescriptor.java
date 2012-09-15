@@ -62,7 +62,7 @@ public class JdbcResourceDescriptor extends AbstractResourceDescriptor
 	private ResultSet resultSet;
 	private Statement statement;
 	private boolean table = false;
-	
+	private String rule = null;
 	
 	
 	private SimpleContentMetaData buildContentMetatData()
@@ -104,10 +104,72 @@ public class JdbcResourceDescriptor extends AbstractResourceDescriptor
             {
                 excludeMap.put(((Element) excludeNodeList.item(index)).getAttribute("name"), true);
             }
+            
+            StringBuffer buffer = new StringBuffer();
+            processRules(controlElementDeclaration, buffer);
+            this.rule = buffer.toString();
+            
 		}
 
 		
 		contentMetaData = buildContentMetatData();
+	}
+	
+	
+	private void processRules(Element ruleContainingElement,StringBuffer buffer) throws Exception
+	{
+		NodeList ruleNodeList = XPath.selectNodes(ruleContainingElement, "resource:rule");
+		for(int index = 0; index < ruleNodeList.getLength(); index++)
+        {
+            Element ruleElement = (Element) ruleNodeList.item(index);
+            if(ruleElement.hasAttribute("match"))
+            {
+            	if(ruleElement.getAttribute("match").equalsIgnoreCase("all"))
+            	{
+            		//(...and...)
+            		buffer.append("(");
+            		NodeList childRuleNodeList = XPath.selectNodes(ruleElement, "resource:rule");
+            		for(int childIndex = 0; childIndex < childRuleNodeList.getLength(); childIndex++)
+                    {
+            			if(childIndex != 0)
+            			{
+            				buffer.append(" and ");
+            			}
+                        Element childRuleElement = (Element) childRuleNodeList.item(childIndex);
+                        processRules(childRuleElement, buffer);                        
+                    }
+            		buffer.append(")");
+            	}
+            	else if (ruleElement.getAttribute("match").equalsIgnoreCase("any"))
+            	{
+            		//(...or...)
+            		buffer.append("(");
+            		NodeList childRuleNodeList = XPath.selectNodes(ruleElement, "resource:rule");
+            		for(int childIndex = 0; childIndex < childRuleNodeList.getLength(); childIndex++)
+                    {
+            			if(childIndex != 0)
+            			{
+            				buffer.append(" or ");
+            			}
+                        Element childRuleElement = (Element) childRuleNodeList.item(childIndex);
+                        processRules(childRuleElement, buffer);                        
+                    }
+            		buffer.append(")");
+            	}
+            }
+            else if(ruleElement.hasAttribute("value"))
+            {
+            	if(index != 0)
+    			{
+    				buffer.append(" and ");
+    			}
+            	buffer.append(ruleElement.getAttribute("value"));
+            }
+        }
+		if (ruleContainingElement.hasAttribute("value"))
+        {
+        	buffer.append(ruleContainingElement.getAttribute("value"));
+        }		
 	}
 	
 	@Override
@@ -181,8 +243,15 @@ public class JdbcResourceDescriptor extends AbstractResourceDescriptor
 			    resultSet = statement.executeQuery(getVarValue(variableContainer,"query"));
 			}
 			else
-			{			    
-			    resultSet = statement.executeQuery("select * from "+getLocalName());
+			{
+				if (rule == null)
+				{
+					resultSet = statement.executeQuery("select * from "+getLocalName());
+				}
+				else
+				{
+					 resultSet = statement.executeQuery("select * from "+getLocalName()+" where "+rule);
+				}
 			}
 			
 			if (isIterating() == false)
