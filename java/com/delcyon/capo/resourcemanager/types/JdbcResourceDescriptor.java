@@ -250,7 +250,8 @@ public class JdbcResourceDescriptor extends AbstractResourceDescriptor
 				}
 				else
 				{
-					 resultSet = statement.executeQuery("select * from "+getLocalName()+" where "+rule);
+					String sql = "select * from "+getLocalName()+" where "+processVars(variableContainer, rule);					
+					resultSet = statement.executeQuery(sql);					 
 				}
 			}
 			
