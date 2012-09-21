@@ -44,8 +44,6 @@ public class ResourceDocument extends ResourceNode implements Document
     {
     	this.prefix = resourceControlElement.getControlElementDeclaration().getPrefix();
     	this.namespaceURI = resourceControlElement.getControlElementDeclaration().getNamespaceURI();
-    	
-    	
     	this.documentElement = new ResourceElement(this,resourceControlElement);
     	
     	

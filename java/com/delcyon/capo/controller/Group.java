@@ -391,7 +391,17 @@ public class Group implements VariableContainer
 			{
 				if (resourceElementHashMap.containsKey(resourceName))
 				{
-					return resourceElementHashMap.get(resourceName).getResourceDescriptor();
+				    ResourceControlElement resourceControlElement = resourceElementHashMap.get(resourceName);
+					if(resourceControlElement.getResourceDocument() != null)
+					{
+					    return ((ResourceElement) resourceControlElement.getResourceDocument().getDocumentElement()).getResourceDescriptor();
+					}
+					else
+					{
+					    return resourceControlElement.getResourceDescriptor();
+					}
+					
+					
 				}
 				else if (resourceElementHashMap.containsKey(parts[0]))
 				{

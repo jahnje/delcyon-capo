@@ -40,9 +40,10 @@
         
         <resource:resource name="jdbcTestResource"  uri="jdbc:hsqldb:file:testdb/testdb?user=user" >
             <resource:parameter name="password" value=""/>
-
-            <resource:child name="systems" path="SYSTEMS" joinType="inner">
-
+            <resource:include name="TABLE_NAME"/>
+            
+            <resource:child name="systems" path="SYSTEMS" joinType="outer">
+                <resource:join parent="@TABLE_NAME" this="'SYSTEMS'"/>
                 <resource:rule match="any">
                     <resource:rule value="NAME like '${clientName}'"/>
                     <resource:rule value="LAST_CONNECT &lt; now()"/>
@@ -52,7 +53,7 @@
                 <resource:include name="OS"/>
                 <resource:include name="ID"/>
                 
-                <resource:child name="interfaces" path="INTERFACES" joinType="inner">                    
+                <resource:child name="interfaces" path="INTERFACES" joinType="outer">                    
                     <resource:join parent="@ID" this="@SYSTEM_ID"/>
                     <resource:rule match="all">                        
                         <resource:rule value="STATUS = 'ACTIVE'"/>
@@ -63,10 +64,10 @@
                     <resource:include name="SYSTEM_ID"/>
                 </resource:child>
                 
-                <resource:child name="asc" path="system_service_asc" joinType="inner">                    
-                    <resource:join parent="INTERFACES/@SYSTEM_ID" this="@SYSTEM_ID" />
+                <resource:child name="asc" path="system_service_asc" joinType="outer">                    
+                    <resource:join parent="@ID" this="@SYSTEM_ID" />
                     
-                    <resource:child name="services" path="services" joinType="inner">                    
+                    <resource:child name="services" path="services" joinType="outer">                    
                         <resource:join parent="@SERVICE_ID" this="@ID" />
                     </resource:child>
                     
@@ -76,7 +77,7 @@
             
         </resource:resource>
         
-        <server:import name="jdbcTestImport" src="resource:jdbcTestResource/resource:systems"  dumpVars="true" sleep="1000" dumpRef=".."/>
+        <server:import name="jdbcTestImport" src="resource:jdbcTestResource"  dumpVars="true" sleep="1000" dumpRef=".."/>
     </server:group>
     
     
