@@ -146,64 +146,76 @@ public class ResourceElementResourceDescriptor implements ResourceDescriptor
 	private Element readXML(Element parentTestElement, VariableContainer variableContainer, ResourceParameter... resourceParameters) throws Exception
 	{
 		
-		
+		//create our return element
 		Element readResultElement = parentTestElement.getOwnerDocument().createElement(getLocalName());
 		
-		//get our join types
+		//get our join types, and see if this is an outer join type
 		boolean outerJoinType = this.declaringResourceElemnt.getResourceControlElement().getControlElementDeclaration().getAttribute("joinType").equalsIgnoreCase("outer");
+		
+		//get the declared resourceElement children. This is used to define our structure of what we are looking for
+        NodeList declaringResourceElementChildrenNodeList = declaringResourceElemnt.getChildNodes();
 		
 		//iterate through all of the iterable children
 		while(proxyedResourceDescriptor.next(variableContainer, resourceParameters))
 		{
-			//read our element element
-			Element importedElement = (Element) parentTestElement.getOwnerDocument().importNode(proxyedResourceDescriptor.readXML(variableContainer, resourceParameters),true);
-			//append it to the test limb
-			parentTestElement.appendChild(importedElement);
-			XPath.dumpNode(parentTestElement.getOwnerDocument(), System.out);
-			//see if we have any declared resource element children
-			NodeList childNodeList = declaringResourceElemnt.getChildNodes();
+			//get the readXML from the actual resource descriptor
+			Element readXMLElement = (Element) parentTestElement.getOwnerDocument().importNode(proxyedResourceDescriptor.readXML(variableContainer, resourceParameters),true);
 			
+			//append it to the test limb, so we can run join tests against the parent xml
+			parentTestElement.appendChild(readXMLElement);
+			XPath.dumpNode(parentTestElement.getOwnerDocument(), System.out);
+			
+			//keep a pointer so that we know if we've actually done something inside the for loop
 			boolean hasChildrenAdded = false;
+			
 			//for each declared child resource element
-			for(int index = 0; index < childNodeList.getLength(); index++)
+			for(int index = 0; index < declaringResourceElementChildrenNodeList.getLength(); index++)
 			{
 				//check to make sure we're only dealing with resource elements
-				if (childNodeList.item(index) instanceof ResourceElement)
+				if (declaringResourceElementChildrenNodeList.item(index) instanceof ResourceElement)
 				{
 					
-					ResourceElement childResourceElement = (ResourceElement) childNodeList.item(index);
-					NodeList joinNodeList = XPath.selectNodes(childResourceElement.getResourceControlElement().getControlElementDeclaration(), "resource:join");
+					ResourceElement childResourceElement = (ResourceElement) declaringResourceElementChildrenNodeList.item(index);
 					
+					//get the child resource element's list of joins, for testing later 
+					NodeList childResourceElementJoinNodeList = XPath.selectNodes(childResourceElement.getResourceControlElement().getControlElementDeclaration(), "resource:join");
 					
-					
-					//run the query against the child resource element
-					Element childElement = ((ResourceElementResourceDescriptor)childResourceElement.getResourceDescriptor()).readXML(importedElement,variableContainer, resourceParameters);
+					//!! RECURSE !! into the childResourceElement's ResourceElementResourceDescriptor
+					//we walk all the way to the bottom of the tree before we start filtering out things, with the join rules
+					Element childResourceElementReadResultElement = ((ResourceElementResourceDescriptor)childResourceElement.getResourceDescriptor()).readXML(readXMLElement,variableContainer, resourceParameters);
 
-					NodeList subChildNodeList = childElement.getChildNodes();
-					for(int subChildIndex = 0; subChildIndex < subChildNodeList.getLength(); subChildIndex++)
+					//the contract says that we always return an element, but it doesn't have to have any children
+					//so get the list of actual Child readResultElements
+					NodeList childReadResultElementNodeList = childResourceElementReadResultElement.getChildNodes();					
+					for(int childReadResultElementIndex = 0; childReadResultElementIndex < childReadResultElementNodeList.getLength(); childReadResultElementIndex++)
 					{
-						Element subChildElement = (Element) subChildNodeList.item(subChildIndex);
-
-
-
-						System.out.println("got successful join");
-
+					    //get a handle on the childReadResultElement
+					    //if we are here, then all of the children we encountered, passed all of the grand children's join rules
+					    Element childReadResultElement = (Element) childReadResultElementNodeList.item(childReadResultElementIndex);
+					    
+					    //import this into our document
+					    childReadResultElement = (Element) parentTestElement.getOwnerDocument().importNode(childReadResultElement, true);
+					    
+					    //keep a pointer so we can tell if the for loop did something
 						boolean joinRulesPassed = true;						
-						subChildElement = (Element) parentTestElement.getOwnerDocument().importNode(subChildElement, true);
 
-						for(int joinIndex = 0; joinIndex < joinNodeList.getLength();joinIndex++)
+						//start checking this childReadResultElement against the childResourceElement's join rules
+						for(int joinIndex = 0; joinIndex < childResourceElementJoinNodeList.getLength(); joinIndex++)
 						{
-							Element joinElement = (Element) joinNodeList.item(joinIndex);
+						      
+							Element joinElement = (Element) childResourceElementJoinNodeList.item(joinIndex);
 							String parentPath = joinElement.getAttribute("parent");
 							String thisPath = joinElement.getAttribute("this");
 							
 							System.out.println("===============PARENT IN JOIN=======================");
-							XPath.dumpNode(importedElement, System.out);
-							String parentValue = XPath.selectSingleNodeValue(importedElement, parentPath);
+							XPath.dumpNode(readXMLElement, System.out);
+							//we use the readXML element here, because it should be the bottom node on the test limb at this point
+							//as opposed to the element that was passed in to the method call.
+							String parentValue = XPath.selectSingleNodeValue(readXMLElement, parentPath);
 
 							System.out.println("===============child IN JOIN=======================");
-							XPath.dumpNode(subChildElement, System.out);
-							String thisValue = XPath.selectSingleNodeValue(subChildElement, thisPath);
+							XPath.dumpNode(childReadResultElement, System.out);
+							String thisValue = XPath.selectSingleNodeValue(childReadResultElement, thisPath);
 
 							//if these two values aren't the same, then we're done testing
 							if (EqualityProcessor.areSame(parentValue, thisValue) == false)
@@ -213,58 +225,35 @@ public class ResourceElementResourceDescriptor implements ResourceDescriptor
 							}
 						}
 
+						//if our join rules all passed, then we can go ahead, and add this to our local readXML element
 						if(joinRulesPassed)
 						{
-							importedElement.appendChild(subChildElement);
+							readXMLElement.appendChild(childReadResultElement);
 							hasChildrenAdded = true;
 						}
 
-					}
+					} //end childReadResultElement
 					
-				}
-			}
+				} //end resource element instanceof check
+				
+			} //end declaringResourceElementChildrenNodeList
 			
 			//we're done with he children, so we don't need to be in the tree any more.
-			parentTestElement.removeChild(importedElement);
+            parentTestElement.removeChild(readXMLElement);
 			
-			boolean joinRulesPassed = false;
 			
-			//if we don't have any children, then we need to just need to check our own join rules
-			if(childNodeList.getLength() == 0)
+			
+			//if we don't have any children, then just add ourself, because we're a leaf.
+			if(declaringResourceElementChildrenNodeList.getLength() == 0)
 			{
-				NodeList joinNodeList = XPath.selectNodes(declaringResourceElemnt.getResourceControlElement().getControlElementDeclaration(), "resource:join");
-				
-				
-				for(int index = 0; index < joinNodeList.getLength();index++)
-				{
-					Element joinElement = (Element) joinNodeList.item(index);
-					String parentPath = joinElement.getAttribute("parent");
-					String thisPath = joinElement.getAttribute("this");
-					
-					
-					System.out.println("===============PARENT IN JOIN=======================");
-					XPath.dumpNode(parentTestElement, System.out);
-					String parentValue = XPath.selectSingleNodeValue(parentTestElement, parentPath);
-					String thisValue = XPath.selectSingleNodeValue(importedElement, thisPath);
-					
-					//if these two values aren't the same, then we're done testing
-					if (EqualityProcessor.areSame(parentValue, thisValue) == false)
-					{
-						joinRulesPassed = false;
-						break;
-					}
-					else
-					{
-						joinRulesPassed = true;
-					}
-				}
+			    readResultElement.appendChild(readXMLElement);
+								
 			}
+			else if ((outerJoinType == true && hasChildrenAdded == false) || hasChildrenAdded == true)
+            {
+                readResultElement.appendChild(readXMLElement);
+            }
 
-			//if we passed any join rules, then append our results.
-			if (joinRulesPassed == true || (outerJoinType == true && hasChildrenAdded == false) || hasChildrenAdded == true)
-			{
-				readResultElement.appendChild(importedElement);
-			}
 		}
 		return readResultElement;
 	}

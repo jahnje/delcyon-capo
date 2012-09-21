@@ -249,7 +249,14 @@ public class JdbcResourceDescriptor extends AbstractResourceDescriptor
 				}
 				else
 				{
-					String sql = "select * from "+getLocalName()+" where "+processVars(variableContainer, rule);					
+				    String sql = "select * from "+getLocalName();
+				    String whereClause = processVars(variableContainer, rule);
+				    if (whereClause.trim().isEmpty() == false)
+				    {
+				        sql+=" where "+whereClause;
+				    }
+					CapoApplication.logger.log(Level.WARNING, "RUNNING SQL = '"+sql+"'");
+					System.err.println("RUNNING SQL = '"+sql+"'");
 					resultSet = statement.executeQuery(sql);					 
 				}
 			}
@@ -286,7 +293,7 @@ public class JdbcResourceDescriptor extends AbstractResourceDescriptor
 	{
 	    ResultSetMetaData resultSetMetaData = resultSet.getMetaData();
 		Element rowElement = document.createElement(getLocalName());
-		rowElement.setAttribute("number", resultSet.getRow()+"");
+		//rowElement.setAttribute("number", resultSet.getRow()+"");
 		
 		int columnCount = resultSetMetaData.getColumnCount();
 		String keyString = "";
@@ -318,7 +325,7 @@ public class JdbcResourceDescriptor extends AbstractResourceDescriptor
 		        keyString += columName+"="+value+";";
 		    }
 		}
-		rowElement.setAttribute("uri", getResourceURI().getResourceURIString()+"?"+keyString);
+		//rowElement.setAttribute("uri", getResourceURI().getResourceURIString()+"?"+keyString);
 		return rowElement;
 	}
 	

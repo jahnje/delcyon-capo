@@ -52,8 +52,8 @@
                 <resource:include name="OS"/>
                 <resource:include name="ID"/>
                 
-                <resource:child name="interfaces" path="INTERFACES">                    
-                    <resource:join parent="@ID" this="@SYSTEM_ID" type="outer"/>
+                <resource:child name="interfaces" path="INTERFACES" joinType="inner">                    
+                    <resource:join parent="@ID" this="@SYSTEM_ID"/>
                     <resource:rule match="all">                        
                         <resource:rule value="STATUS = 'ACTIVE'"/>
                     </resource:rule>
@@ -63,7 +63,17 @@
                     <resource:include name="SYSTEM_ID"/>
                 </resource:child>
                 
+                <resource:child name="asc" path="system_service_asc" joinType="inner">                    
+                    <resource:join parent="INTERFACES/@SYSTEM_ID" this="@SYSTEM_ID" />
+                    
+                    <resource:child name="services" path="services" joinType="inner">                    
+                        <resource:join parent="@SERVICE_ID" this="@ID" />
+                    </resource:child>
+                    
+                </resource:child>
+                
             </resource:child>
+            
         </resource:resource>
         
         <server:import name="jdbcTestImport" src="resource:jdbcTestResource/resource:systems"  dumpVars="true" sleep="1000" dumpRef=".."/>
