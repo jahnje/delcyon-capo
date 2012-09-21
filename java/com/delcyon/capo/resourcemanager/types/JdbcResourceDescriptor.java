@@ -240,6 +240,7 @@ public class JdbcResourceDescriptor extends AbstractResourceDescriptor
 			if(getVarValue(variableContainer,"query") != null && getVarValue(variableContainer,"query").isEmpty() == false)
 			{
 			    resultSet = statement.executeQuery(getVarValue(variableContainer,"query"));
+			    table = true;
 			}
 			else
 			{
@@ -249,15 +250,23 @@ public class JdbcResourceDescriptor extends AbstractResourceDescriptor
 				}
 				else
 				{
-				    String sql = "select * from "+getLocalName();
-				    String whereClause = processVars(variableContainer, rule);
-				    if (whereClause.trim().isEmpty() == false)
+				    if(table == true)
 				    {
-				        sql+=" where "+whereClause;
+				        String sql = "select * from "+getLocalName();
+				        String whereClause = processVars(variableContainer, rule);
+				        if (whereClause.trim().isEmpty() == false)
+				        {
+				            sql+=" where "+whereClause;
+				        }
+				        CapoApplication.logger.log(Level.WARNING, "RUNNING SQL = '"+sql+"'");
+				        System.err.println("RUNNING SQL = '"+sql+"'");
+				        resultSet = statement.executeQuery(sql);
 				    }
-					CapoApplication.logger.log(Level.WARNING, "RUNNING SQL = '"+sql+"'");
-					System.err.println("RUNNING SQL = '"+sql+"'");
-					resultSet = statement.executeQuery(sql);					 
+				    //we're working with a DB, so give them the description
+				    else
+				    {
+				        resultSet = connection.getMetaData().getTables(null, null, null, null);
+				    }
 				}
 			}
 			
@@ -303,17 +312,23 @@ public class JdbcResourceDescriptor extends AbstractResourceDescriptor
 		    String columName = resultSetMetaData.getColumnName(currentColumn);
 		    String value = resultSet.getString(currentColumn);
 		    
+		    //check to see if we're supposed to include this
 		    if(includeMap.isEmpty() == false && includeMap.containsKey(columName))
 		    {
 		        rowElement.setAttribute(columName,value);
 		    }
-		    else if(includeMap.isEmpty() == true && excludeMap.containsKey(columName) == false)
+		    //if we don't have any includes and we're not supposed to exclude it then add it 
+		    else if(includeMap.isEmpty() == true && excludeMap.isEmpty() == false && excludeMap.containsKey(columName) == false)
 		    {
 		        rowElement.setAttribute(columName,value);
 		    }
+		    //this is the fall through, but we're only going to add  non empty things
 		    else if(includeMap.isEmpty() && excludeMap.isEmpty())
 		    {
-		        rowElement.setAttribute(columName,value);
+		        if(value != null && value.trim().isEmpty() == false)
+	            {
+		            rowElement.setAttribute(columName,value);
+	            }		        
 		    }
 		    
 		    if(keyMap.size() > 0 && keyMap.containsKey(columName))
@@ -325,7 +340,14 @@ public class JdbcResourceDescriptor extends AbstractResourceDescriptor
 		        keyString += columName+"="+value+";";
 		    }
 		}
-		//rowElement.setAttribute("uri", getResourceURI().getResourceURIString()+"?"+keyString);
+		if(table == true)
+		{
+		    rowElement.setAttribute("uri", getResourceURI().getResourceURIString()+"?"+keyString);
+		}
+		else // assume we're working with a DB result
+		{
+		    rowElement.setAttribute("uri", getResourceURI().getResourceURIString()+"!"+resultSet.getString("TABLE_NAME"));
+		}
 		return rowElement;
 	}
 	
