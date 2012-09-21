@@ -18,6 +18,7 @@ package com.delcyon.capo.xml.dom;
 
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.Vector;
 
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -42,12 +43,12 @@ public class ResourceElementResourceDescriptor implements ResourceDescriptor
 {
 
 	
-	private ResourceElement declaringResourceElemnt;
+	private ResourceElement declaringResourceElement;
 	private ResourceDescriptor proxyedResourceDescriptor;
 	
 	public ResourceElementResourceDescriptor(ResourceElement declaringResourceElemnt)
 	{
-		this.declaringResourceElemnt = declaringResourceElemnt;
+		this.declaringResourceElement = declaringResourceElemnt;
 		this.proxyedResourceDescriptor = declaringResourceElemnt.getProxyedResourceDescriptor();
 	}
 	
@@ -150,17 +151,33 @@ public class ResourceElementResourceDescriptor implements ResourceDescriptor
 		Element readResultElement = parentTestElement.getOwnerDocument().createElement(getLocalName());
 		
 		//get our join types, and see if this is an outer join type
-		boolean outerJoinType = this.declaringResourceElemnt.getResourceControlElement().getControlElementDeclaration().getAttribute("joinType").equalsIgnoreCase("outer");
+		boolean outerJoinType = this.declaringResourceElement.getResourceControlElement().getControlElementDeclaration().getAttribute("joinType").equalsIgnoreCase("outer");
 		
 		//get the declared resourceElement children. This is used to define our structure of what we are looking for
-        NodeList declaringResourceElementChildrenNodeList = declaringResourceElemnt.getChildNodes();
-		
-		//iterate through all of the iterable children
-		while(proxyedResourceDescriptor.next(variableContainer, resourceParameters))
-		{
-			//get the readXML from the actual resource descriptor
-			Element readXMLElement = (Element) parentTestElement.getOwnerDocument().importNode(proxyedResourceDescriptor.readXML(variableContainer, resourceParameters),true);
-			
+        NodeList declaringResourceElementChildrenNodeList = declaringResourceElement.getChildNodes();
+	
+        //implement some caching, since we'll always run the same query, with the same rules for each resourceDescriptor.
+        //this isn't everything that can be, done but will hold us for a while
+        Vector<Element> cacheVector = declaringResourceElement.getCacheVector();         
+        if (cacheVector == null)
+        {
+            cacheVector = new Vector<Element>();
+            //iterate through all of the iterable children
+            while(proxyedResourceDescriptor.next(variableContainer, resourceParameters))
+            {
+                //get the readXML from the actual resource descriptor
+                Element readXMLElement = (Element) parentTestElement.getOwnerDocument().importNode(proxyedResourceDescriptor.readXML(variableContainer, resourceParameters),true);
+                cacheVector.add(readXMLElement);
+            }
+            //use our declaring resource element as a place to store the cache data.
+            declaringResourceElement.setCacheVector(cacheVector);
+        }
+        
+		for (Element readXMLElementOriginal : cacheVector)
+        {
+		    //since we're going to be modifying things, make a copy of the element
+		    Element readXMLElement = (Element) readXMLElementOriginal.cloneNode(true);
+		    
 			//append it to the test limb, so we can run join tests against the parent xml
 			parentTestElement.appendChild(readXMLElement);
 			XPath.dumpNode(parentTestElement.getOwnerDocument(), System.out);

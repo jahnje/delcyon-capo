@@ -2,6 +2,7 @@ package com.delcyon.capo.xml.dom;
 
 import java.lang.reflect.Modifier;
 import java.util.List;
+import java.util.Vector;
 import java.util.logging.Level;
 
 import org.w3c.dom.Attr;
@@ -43,7 +44,9 @@ public class ResourceElement extends ResourceNode implements Element
 	private ResourceNode parentNode;
 	@ToStringControl(control=Control.exclude)
     private ResourceControlElement resourceControlElement;
-	private boolean recursive = true; 
+	private boolean recursive = true;
+
+    private Vector<Element> cacheVector = null; 
 	
     
     
@@ -625,5 +628,15 @@ public class ResourceElement extends ResourceNode implements Element
     public String toString()
     {
         return ReflectionUtility.processToString(this);
+    }
+
+    public Vector<Element> getCacheVector()
+    {
+        return this.cacheVector ;
+    }
+    
+    public void setCacheVector(Vector<Element> cacheVector)
+    {
+        this.cacheVector = cacheVector;
     }
 }
