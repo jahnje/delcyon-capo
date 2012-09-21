@@ -27,7 +27,7 @@ import com.delcyon.capo.resourcemanager.ResourceDescriptor.LifeCycle;
  * @author jeremiah
  *
  */
-@ResourceTypeProvider(schemes="remote",defaultLifeCycle=LifeCycle.GROUP,providerClass=ResourceElementResourceDescriptor.class)
+@ResourceTypeProvider(schemes="resource",defaultLifeCycle=LifeCycle.GROUP,providerClass=ResourceElementResourceDescriptor.class)
 public class ResourceElementResourceType implements ResourceType
 {
 
