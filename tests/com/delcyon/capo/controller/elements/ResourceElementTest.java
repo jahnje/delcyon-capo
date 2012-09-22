@@ -20,6 +20,7 @@ package com.delcyon.capo.controller.elements;
 import java.io.FileInputStream;
 
 import org.junit.After;
+import org.junit.Assert;
 import org.junit.Test;
 import org.w3c.dom.Document;
 
@@ -27,6 +28,8 @@ import com.delcyon.capo.CapoApplication;
 import com.delcyon.capo.controller.LocalRequestProcessor;
 import com.delcyon.capo.tests.util.TestServer;
 import com.delcyon.capo.tests.util.Util;
+import com.delcyon.capo.xml.XMLDiff;
+import com.delcyon.capo.xml.XPath;
 
 public class ResourceElementTest
 {
@@ -46,9 +49,20 @@ public class ResourceElementTest
     	Util.copyTree("test-data/capo", "capo", true, true);
     	Util.copyTree("test-data/testdb", "testdb", true, true);
         TestServer.start();
-        Document document = CapoApplication.getDocumentBuilder().parse(new FileInputStream("test-data/resource-element-test.xml"));
+        Document document = CapoApplication.getDocumentBuilder().parse(new FileInputStream("test-data/resource_element_tests/resource-element-test.xml"));
         LocalRequestProcessor localRequestProcessor = new LocalRequestProcessor();
         localRequestProcessor.process(document);
+        
+        Document expectedDocument = CapoApplication.getDocumentBuilder().parse(new FileInputStream("test-data/resource_element_tests/resource_element_test_output.xml"));
+        Document resultDocument = CapoApplication.getDocumentBuilder().parse(new FileInputStream("capo/server/jdbcTestOutput.xml"));
+        
+        XMLDiff xmlDiff = new XMLDiff();
+        Document xmlDiffDocument = xmlDiff.getDifferences(expectedDocument, resultDocument);
+        if(XMLDiff.EQUALITY.equals(xmlDiffDocument.getDocumentElement().getAttribute(XMLDiff.XDIFF_PREFIX+":"+XMLDiff.XDIFF_ELEMENT_ATTRIBUTE_NAME)) == false)
+        {
+            XPath.dumpNode(xmlDiffDocument.getDocumentElement(), System.err);
+        }
+        Assert.assertEquals(XMLDiff.EQUALITY, xmlDiffDocument.getDocumentElement().getAttribute(XMLDiff.XDIFF_PREFIX+":"+XMLDiff.XDIFF_ELEMENT_ATTRIBUTE_NAME));
     }
     
 }

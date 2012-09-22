@@ -42,7 +42,7 @@
             <resource:parameter name="password" value=""/>
             <resource:include name="TABLE_NAME"/>
             
-            <resource:child name="systems" path="SYSTEMS" joinType="outer">
+            <resource:child name="systems" path="SYSTEMS" >
                 <resource:join parent="@TABLE_NAME" this="'SYSTEMS'"/>
                 <resource:rule match="any">
                     <resource:rule value="NAME like '${clientName}'"/>
@@ -53,7 +53,20 @@
                 <resource:include name="OS"/>
                 <resource:include name="ID"/>
                 
-                <resource:child name="interfaces" path="INTERFACES" joinType="outer">                    
+                <resource:child name="asc" path="system_service_asc" >                    
+                    <resource:join parent="@ID" this="@SYSTEM_ID" />
+                    
+                    <resource:child name="services" path="services" >                    
+                        <resource:join parent="@SERVICE_ID" this="@ID" />
+                    </resource:child>
+                    
+                    <resource:child name="services" path="services">                    
+                        <resource:join parent="@SERVICE_ID" this="'BOGUS'" />
+                    </resource:child>
+                    
+                </resource:child>
+                
+                <resource:child name="interfaces" path="INTERFACES" joinType="inner">                    
                     <resource:join parent="@ID" this="@SYSTEM_ID"/>
                     <resource:rule match="all">                        
                         <resource:rule value="STATUS = 'ACTIVE'"/>
@@ -64,20 +77,14 @@
                     <resource:include name="SYSTEM_ID"/>
                 </resource:child>
                 
-                <resource:child name="asc" path="system_service_asc" joinType="outer">                    
-                    <resource:join parent="@ID" this="@SYSTEM_ID" />
-                    
-                    <resource:child name="services" path="services" joinType="outer">                    
-                        <resource:join parent="@SERVICE_ID" this="@ID" />
-                    </resource:child>
-                    
-                </resource:child>
+                
                 
             </resource:child>
             
         </resource:resource>
         
         <server:import name="jdbcTestImport" src="resource:jdbcTestResource"  dumpVars="true" sleep="1000" dumpRef=".."/>
+        <server:export dest="jdbcTestOutput.xml" ref="${import.jdbcTestImport}/testdb" />
     </server:group>
     
     

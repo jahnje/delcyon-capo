@@ -1,6 +1,7 @@
 package com.delcyon.capo.xml.dom;
 
 import java.lang.reflect.Modifier;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Vector;
 import java.util.logging.Level;
@@ -46,7 +47,9 @@ public class ResourceElement extends ResourceNode implements Element
     private ResourceControlElement resourceControlElement;
 	private boolean recursive = true;
 
-    private Vector<Element> cacheVector = null; 
+    private Vector<Element> cacheVector = null;
+
+	private HashMap<String, Vector<Element>> joinHashMap = null;; 
 	
     
     
@@ -639,4 +642,14 @@ public class ResourceElement extends ResourceNode implements Element
     {
         this.cacheVector = cacheVector;
     }
+
+	public void setJoinHashMap(HashMap<String, Vector<Element>> joinHashMap)
+	{
+		this.joinHashMap  = joinHashMap;		
+	}
+	
+	public HashMap<String, Vector<Element>> getJoinHashMap()
+	{
+		return joinHashMap;
+	}
 }
