@@ -21,9 +21,11 @@ import java.io.OutputStream;
 import java.util.HashMap;
 import java.util.Vector;
 
+import org.w3c.dom.Attr;
 import org.w3c.dom.DOMException;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
+import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.NodeList;
 
 import com.delcyon.capo.CapoApplication;
@@ -31,10 +33,13 @@ import com.delcyon.capo.controller.ControlElement;
 import com.delcyon.capo.controller.VariableContainer;
 import com.delcyon.capo.resourcemanager.ResourceDescriptor;
 import com.delcyon.capo.resourcemanager.ResourceParameter;
+import com.delcyon.capo.resourcemanager.ResourceParameterBuilder;
 import com.delcyon.capo.resourcemanager.ResourceType;
 import com.delcyon.capo.resourcemanager.ResourceURI;
+import com.delcyon.capo.resourcemanager.ResourceDescriptor.LifeCycle;
 import com.delcyon.capo.resourcemanager.types.ContentMetaData;
 import com.delcyon.capo.util.EqualityProcessor;
+import com.delcyon.capo.util.VariableContainerWrapper;
 import com.delcyon.capo.xml.XPath;
 
 /**
@@ -158,12 +163,22 @@ public class ResourceElementResourceDescriptor implements ResourceDescriptor
 	 * @param resourceParameters
 	 * @throws Exception
 	 */
-	private void loadCacheVectors(Element parentElement,VariableContainer variableContainer, ResourceParameter... resourceParameters) throws Exception
+	private void loadCacheVectors(boolean recurse,Element parentElement,VariableContainer variableContainer, ResourceParameter... resourceParameters) throws Exception
 	{
 		//implement some caching, since we'll always run the same query, with the same rules for each resourceDescriptor.
         //this isn't everything that can be, done but will hold us for a while
-        Vector<Element> cacheVector = declaringResourceElement.getCacheVector();         
-        if (cacheVector == null)
+        Vector<Element> cacheVector = declaringResourceElement.getCacheVector();
+        if(proxyedResourceDescriptor.getResourceState().ordinal() < State.OPEN.ordinal())
+        {
+        	System.out.println("found an unititialized resource");
+        	recurse = false;
+        }
+        else if(proxyedResourceDescriptor.getContentMetaData(null).exists() == false)
+        {
+        	System.out.println("found an unexisting resource");
+        	recurse = false;
+        }
+        else if (cacheVector == null)
         {
             cacheVector = new Vector<Element>();
             HashMap<String, Vector<Element>> joinHashMap = new HashMap<String, Vector<Element>>();
@@ -189,20 +204,22 @@ public class ResourceElementResourceDescriptor implements ResourceDescriptor
             declaringResourceElement.setJoinHashMap(joinHashMap);
            
         }
-        
-      //get the declared resourceElement children. This is used to define our structure of what we are looking for
-        NodeList declaringResourceElementChildrenNodeList = declaringResourceElement.getChildNodes();
-        
-        for(int index = 0; index < declaringResourceElementChildrenNodeList.getLength(); index++)
-		{
-			//check to make sure we're only dealing with resource elements
-			if (declaringResourceElementChildrenNodeList.item(index) instanceof ResourceElement)
-			{
-				ResourceElement childResourceElement = (ResourceElement) declaringResourceElementChildrenNodeList.item(index);
-				((ResourceElementResourceDescriptor)childResourceElement.getResourceDescriptor()).loadCacheVectors(parentElement, variableContainer, resourceParameters);
-			}
-		}
-        
+
+        if (recurse == true)
+        {
+        	//get the declared resourceElement children. This is used to define our structure of what we are looking for
+        	NodeList declaringResourceElementChildrenNodeList = declaringResourceElement.getChildNodes();
+
+        	for(int index = 0; index < declaringResourceElementChildrenNodeList.getLength(); index++)
+        	{
+        		//check to make sure we're only dealing with resource elements
+        		if (declaringResourceElementChildrenNodeList.item(index) instanceof ResourceElement)
+        		{
+        			ResourceElement childResourceElement = (ResourceElement) declaringResourceElementChildrenNodeList.item(index);
+        			((ResourceElementResourceDescriptor)childResourceElement.getResourceDescriptor()).loadCacheVectors(true,parentElement, variableContainer, resourceParameters);
+        		}
+        	}
+        }
 	}
 	
 	/**
@@ -221,68 +238,120 @@ public class ResourceElementResourceDescriptor implements ResourceDescriptor
 		
 		//get the declared resourceElement children. This is used to define our structure of what we are looking for
         NodeList declaringResourceElementChildrenNodeList = declaringResourceElement.getChildNodes();
-	
+	        
         
-        boolean hasChildrenAdded = false;
-        //get the expected key for this element's parents, now that we have them 
-        String parentJoinResultClause = getHashJoinKey(KeyType.parent,parentElement, this.declaringResourceElement.getResourceControlElement().getControlElementDeclaration());
-        Vector<Element> matchingResultVector = declaringResourceElement.getJoinHashMap().get(parentJoinResultClause);
-        
-        //The first element in the tree is always bad, so process against everything
-        if(parentElement.equals(parentElement.getOwnerDocument().getDocumentElement()))
+        boolean isDynamic = false;
+        if(declaringResourceElement.getJoinHashMap() == null && declaringResourceElement.getResourceControlElement().getControlElementDeclaration().getAttribute("dynamic").equalsIgnoreCase("true"))
         {
-        	matchingResultVector = declaringResourceElement.getCacheVector();
+        	isDynamic = true;
+        	VariableContainerWrapper variableContainerWrapper = new VariableContainerWrapper(declaringResourceElement.getResourceControlElement().getParentGroup());
+        	NamedNodeMap attributeNamedNodeMap = declaringResourceElement.getResourceControlElement().getControlElementDeclaration().getAttributes();
+        	String uri = null;
+        	for(int index = 0; index < attributeNamedNodeMap.getLength(); index++)
+        	{
+        		Attr attribute = (Attr) attributeNamedNodeMap.item(index);
+        		if(attribute.getLocalName().matches("(dynamic)|(uri)|(name)|(path)|(joinType)") == false)
+        		{
+        			variableContainerWrapper.setVar(attribute.getLocalName(), XPath.selectSingleNodeValue(parentElement, attribute.getValue()));
+        		}
+        		else if(attribute.getLocalName().matches("uri") == true)
+        		{
+        			uri = attribute.getValue();
+        		}
+        	}
+        	
+        	ResourceDescriptor originalResourceDescriptor = proxyedResourceDescriptor;
+        	if(uri != null)
+            {
+        		uri = variableContainerWrapper.processVars(uri);
+        		proxyedResourceDescriptor = CapoApplication.getDataManager().getResourceDescriptor(declaringResourceElement.getResourceControlElement(), uri);
+                
+        		declaringResourceElement.getResourceControlElement().setResourceDescriptor(proxyedResourceDescriptor);
+            }
+        	
+        	proxyedResourceDescriptor.init(declaringResourceElement,variableContainerWrapper, LifeCycle.EXPLICIT,true,ResourceParameterBuilder.getResourceParameters(declaringResourceElement.getResourceControlElement().getControlElementDeclaration()));
+        	proxyedResourceDescriptor.open(variableContainerWrapper, ResourceParameterBuilder.getResourceParameters(declaringResourceElement.getResourceControlElement().getControlElementDeclaration()));
+        	
+        	loadCacheVectors(false,parentElement, variableContainerWrapper, resourceParameters);
+        	//done, so reset everything
+        	proxyedResourceDescriptor = originalResourceDescriptor;
+        	declaringResourceElement.getResourceControlElement().setResourceDescriptor(originalResourceDescriptor);
         }
         
-        //if we had a result in our cache, then walk each element in it
-        if(matchingResultVector != null)
-        {
-        	 for (Element element : matchingResultVector)
-			 {
-        		 //make a copy, so we don't mess with the originals.
-        		Element resultElement =  (Element) element.cloneNode(true);
-        		
-        		//add it to the parent for testing in the children
-        		parentElement.appendChild(resultElement);
-        		
-        		//keep a pointer to see if we were successful within the for loop
-        		boolean resultHadChildrenAdded = false;
-        		
-        		//walk each resource declaration, and let them add any children they need to.
-    			for(int index = 0; index < declaringResourceElementChildrenNodeList.getLength(); index++)
-    			{
-    				//check to make sure we're only dealing with resource elements
-    				if (declaringResourceElementChildrenNodeList.item(index) instanceof ResourceElement)
-    				{
+        boolean hasChildrenAdded = false;
 
-    					ResourceElement childResourceElement = (ResourceElement) declaringResourceElementChildrenNodeList.item(index);
-    					//first process the children, for joins, we work from the bottom up.
-    					if(((ResourceElementResourceDescriptor)childResourceElement.getResourceDescriptor()).readXML(resultElement, variableContainer, resourceParameters) == true)
-    					{
-    						hasChildrenAdded = true;
-    						resultHadChildrenAdded = true;
-    					}
-    					//if we didn't get any children, and we're an inner join, then bail out
-    					else if(childResourceElement.getResourceControlElement().getControlElementDeclaration().getAttribute("joinType").equalsIgnoreCase("inner") == true)
-    					{
-    						resultHadChildrenAdded = false;
-    						break;
-    					}    				
-    				}
-    			}
-    			//if we don't have any declared children, then we won't have any joins, so we should add ourselves, since we did have a match from the cache.
-    			if(declaringResourceElementChildrenNodeList.getLength() == 0)
-    			{
-    				hasChildrenAdded = true;
-					resultHadChildrenAdded = true;
-    			}
-    			
-    			//clean ourselves up, if we didn't have any children added.
-				if(resultHadChildrenAdded == false)
-				{
-					parentElement.removeChild(resultElement);
-				}
-			 }
+        //get the expected key for this element's parents, now that we have them 
+        String parentJoinResultClause = getHashJoinKey(KeyType.parent,parentElement, this.declaringResourceElement.getResourceControlElement().getControlElementDeclaration());
+        if(declaringResourceElement.getJoinHashMap() != null)
+        {
+        	Vector<Element> matchingResultVector = declaringResourceElement.getJoinHashMap().get(parentJoinResultClause);
+
+
+
+        	//The first element in the tree is always bad, so process against everything
+        	if(parentElement.equals(parentElement.getOwnerDocument().getDocumentElement()))
+        	{
+        		matchingResultVector = declaringResourceElement.getCacheVector();
+        	}
+
+
+
+        	//if we had a result in our cache, then walk each element in it
+        	if(matchingResultVector != null)
+        	{
+        		for (Element element : matchingResultVector)
+        		{
+        			//make a copy, so we don't mess with the originals.
+        			Element resultElement =  (Element) element.cloneNode(true);
+
+        			//add it to the parent for testing in the children
+        			parentElement.appendChild(resultElement);
+
+        			//keep a pointer to see if we were successful within the for loop
+        			boolean resultHadChildrenAdded = false;
+
+        			//walk each resource declaration, and let them add any children they need to.
+        			for(int index = 0; index < declaringResourceElementChildrenNodeList.getLength(); index++)
+        			{
+        				//check to make sure we're only dealing with resource elements
+        				if (declaringResourceElementChildrenNodeList.item(index) instanceof ResourceElement)
+        				{
+
+        					ResourceElement childResourceElement = (ResourceElement) declaringResourceElementChildrenNodeList.item(index);
+        					//first process the children, for joins, we work from the bottom up.
+        					if(((ResourceElementResourceDescriptor)childResourceElement.getResourceDescriptor()).readXML(resultElement, variableContainer, resourceParameters) == true)
+        					{
+        						hasChildrenAdded = true;
+        						resultHadChildrenAdded = true;
+        					}
+        					//if we didn't get any children, and we're an inner join, then bail out
+        					else if(childResourceElement.getResourceControlElement().getControlElementDeclaration().getAttribute("joinType").equalsIgnoreCase("inner") == true)
+        					{
+        						resultHadChildrenAdded = false;
+        						break;
+        					}    				
+        				}
+        			}
+        			//if we don't have any declared children, then we won't have any joins, so we should add ourselves, since we did have a match from the cache.
+        			if(declaringResourceElementChildrenNodeList.getLength() == 0)
+        			{
+        				hasChildrenAdded = true;
+        				resultHadChildrenAdded = true;
+        			}
+
+        			//clean ourselves up, if we didn't have any children added.
+        			if(resultHadChildrenAdded == false)
+        			{
+        				parentElement.removeChild(resultElement);
+        			}
+        		}
+        	}
+        }
+        //if we're dynamic, cleanup our mess we made, so the next dynamic guy will reload as well.
+        if(isDynamic == true)
+        {
+        	declaringResourceElement.setCacheVector(null);
+        	declaringResourceElement.setJoinHashMap(null);
         }
             
 
@@ -336,7 +405,7 @@ public class ResourceElementResourceDescriptor implements ResourceDescriptor
 		Document document = CapoApplication.getDocumentBuilder().newDocument();
 		Element rootElement = document.createElement(getLocalName());
 		document.appendChild(rootElement);
-		loadCacheVectors(rootElement, variableContainer, resourceParameters);
+		loadCacheVectors(true,rootElement, variableContainer, resourceParameters);
 		readXML(rootElement, variableContainer, resourceParameters);
 		return rootElement;
 	}

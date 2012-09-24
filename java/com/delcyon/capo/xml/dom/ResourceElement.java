@@ -117,14 +117,21 @@ public class ResourceElement extends ResourceNode implements Element
             throw new Exception("Must have a uri or a path attribute");
         }
         
-        resourceDescriptor.init(this,resourceControlElement.getParentGroup(), LifeCycle.EXPLICIT,true,ResourceParameterBuilder.getResourceParameters(resourceControlElement.getControlElementDeclaration()));
-        resourceDescriptor.open(resourceControlElement.getParentGroup(), ResourceParameterBuilder.getResourceParameters(resourceControlElement.getControlElementDeclaration()));
+        //sometimes we may have variables that need to be filled out laster, so we can't init or open this yet.  
+        if(resourceControlElement.getControlElementDeclaration().getAttribute("dynamic").equalsIgnoreCase("true") == false)
+        {
+        	resourceDescriptor.init(this,resourceControlElement.getParentGroup(), LifeCycle.EXPLICIT,true,ResourceParameterBuilder.getResourceParameters(resourceControlElement.getControlElementDeclaration()));
+        	resourceDescriptor.open(resourceControlElement.getParentGroup(), ResourceParameterBuilder.getResourceParameters(resourceControlElement.getControlElementDeclaration()));
+        }
         
         NodeList childResourceElementDeclarationNodeList =  XPath.selectNSNodes(resourceControlElement.getControlElementDeclaration(), prefix+":child", prefix+"="+namespaceURI);
         for(int index = 0; index < childResourceElementDeclarationNodeList.getLength(); index++)
         {
             ResourceControlElement childResourceControlElement = new ResourceControlElement();
-            childResourceControlElement.init((Element) childResourceElementDeclarationNodeList.item(index), resourceControlElement, resourceControlElement.getParentGroup(), resourceControlElement.getControllerClientRequestProcessor());
+            //XXX This is a hack! we are setting the parent group to null, so that it won't process any of the attributes that might have vars.
+            childResourceControlElement.init((Element) childResourceElementDeclarationNodeList.item(index), resourceControlElement, null, resourceControlElement.getControllerClientRequestProcessor());
+            //XXX then we set it back here, so the we still have the full var stack. This would all be fine until we change the init method in the AbstractControl class. 
+            childResourceControlElement.setParentGroup(resourceControlElement.getParentGroup());
             nodeList.add(new ResourceElement(this, childResourceControlElement));
         }
     }

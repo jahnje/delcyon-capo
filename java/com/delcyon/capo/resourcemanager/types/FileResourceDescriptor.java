@@ -43,7 +43,7 @@ public class FileResourceDescriptor extends AbstractResourceDescriptor implement
 
 	private FileResourceContentMetaData contentMetaData = null;
 	private FileResourceContentMetaData iterationContentMetaData = null;
-	
+	private boolean next = true;
 	private FileResourceContentMetaData buildContentMetatData(ResourceParameter...resourceParameters) throws Exception
 	{		
 		FileResourceContentMetaData contentMetaData = new FileResourceContentMetaData(getResourceURI().getBaseURI(),resourceParameters);		
@@ -144,6 +144,17 @@ public class FileResourceDescriptor extends AbstractResourceDescriptor implement
 		    this.contentMetaData = buildContentMetatData(resourceParameters);
 		}
 		return this.contentMetaData;
+	}
+	
+	@Override
+	public boolean next(VariableContainer variableContainer, ResourceParameter... resourceParameters) throws Exception
+	{
+		if (next == true)
+		{
+			next = false;
+			return true;
+		}
+		return false;
 	}
 	
 	@Override

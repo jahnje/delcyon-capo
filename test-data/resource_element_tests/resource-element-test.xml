@@ -45,14 +45,15 @@
             <resource:child name="systems" path="SYSTEMS" >
                 <resource:join parent="@TABLE_NAME" this="'SYSTEMS'"/>
                 <resource:rule match="any">
-                    <resource:rule value="NAME like '${clientName}'"/>
+                    <resource:rule value="NAME like '%'"/>
                     <resource:rule value="LAST_CONNECT &lt; now()"/>
                 </resource:rule>               
-
+                
                 <resource:include name="NAME"/>
                 <resource:include name="OS"/>
                 <resource:include name="ID"/>
-                
+                <resource:child name="status" uri="clients:${clientName}/status.xml" clientName="@ID" dynamic="true"/>
+                <resource:child name="identity" uri="clients:${clientName}/identity.xml" clientName="@ID" dynamic="true"/>
                 <resource:child name="asc" path="system_service_asc" >                    
                     <resource:join parent="@ID" this="@SYSTEM_ID" />
                     

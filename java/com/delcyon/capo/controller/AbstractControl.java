@@ -309,7 +309,7 @@ public abstract class AbstractControl implements ServerSideControl
 		return parentGroup;
 	}
 	
-	protected void setParentGroup(Group parentGroup)
+	public void setParentGroup(Group parentGroup)
 	{
 		this.parentGroup = parentGroup;
 	}
