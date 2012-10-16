@@ -343,11 +343,11 @@ public class JdbcResourceDescriptor extends AbstractResourceDescriptor
 		}
 		if(table == true)
 		{
-		    rowElement.setAttribute("uri", getResourceURI().getResourceURIString()+"?"+keyString);
+		    iterationContentMetaData.setResourceURI(new ResourceURI(getResourceURI().getResourceURIString()+"?"+keyString));		    
 		}
 		else // assume we're working with a DB result
 		{
-		    rowElement.setAttribute("uri", getResourceURI().getResourceURIString()+"!"+resultSet.getString("TABLE_NAME"));
+		    iterationContentMetaData.setResourceURI(new ResourceURI(getResourceURI().getResourceURIString()+"!"+resultSet.getString("TABLE_NAME")));		    
 		}
 		return rowElement;
 	}
