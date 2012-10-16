@@ -22,4 +22,4 @@ server: java -jar server.jar
 
 client: java -jar client.jar
 
-Status: alpha 
+Status: pre-alpha 
