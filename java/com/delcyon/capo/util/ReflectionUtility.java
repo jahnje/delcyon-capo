@@ -21,7 +21,6 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.lang.reflect.Modifier;
 import java.lang.reflect.Type;
 import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
@@ -49,7 +48,7 @@ public class ReflectionUtility
 	 * @param clazz
 	 * @return
 	 */
-	@SuppressWarnings("unchecked")
+	@SuppressWarnings({ "unchecked", "rawtypes" })
 	public static boolean isPrimitive(Class clazz)
 	{
 		if (clazz.isPrimitive())
@@ -88,7 +87,7 @@ public class ReflectionUtility
 	 * @return
 	 * @throws Exception
 	 */
-	@SuppressWarnings("unchecked")
+	@SuppressWarnings({ "unchecked", "rawtypes" })
 	public static Object getPrimitiveInstance(Type type, String valueString) throws Exception
 	{
 
@@ -207,7 +206,7 @@ public class ReflectionUtility
      * creates a vector of declared methods where the first method in the vector is the first
      * method in the super most class
      */
-    @SuppressWarnings("unchecked")
+    @SuppressWarnings({ "unchecked", "rawtypes" })
     public static Vector<Method> getMethodVector(Object object)
     {
         Vector<Class> classVector = new Vector<Class>();
@@ -243,7 +242,7 @@ public class ReflectionUtility
 	 * creates a vector of declared fields where the first field in the vector is the first
 	 * field in the super most class
 	 */
-	@SuppressWarnings("unchecked")
+	@SuppressWarnings({ "unchecked", "rawtypes" })
 	public static Vector<Field> getFieldVector(Object object)
 	{
 		Vector<Class> classVector = new Vector<Class>();
@@ -435,7 +434,7 @@ public class ReflectionUtility
 
 	}
 
-	@SuppressWarnings("unchecked")
+	@SuppressWarnings({ "unchecked", "rawtypes" })
 	public static Object getComplexInstance(Class type) throws IllegalArgumentException, InstantiationException, IllegalAccessException, InvocationTargetException
 	{
 		Constructor[] constructors = type.getDeclaredConstructors();
@@ -460,7 +459,7 @@ public class ReflectionUtility
 		}
 	}
 
-	@SuppressWarnings("unchecked")
+	@SuppressWarnings({ "unchecked", "rawtypes" })
 	public static Constructor getDefaultConstructor(Class type)
 	{
 		for (Constructor constructor : type.getDeclaredConstructors())

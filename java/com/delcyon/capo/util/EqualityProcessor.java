@@ -5,23 +5,27 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
-import java.lang.reflect.ParameterizedType;
-import java.lang.reflect.Type;
 import java.util.Collection;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.Vector;
-import java.util.Map.Entry;
 
 import org.w3c.dom.Element;
-import org.w3c.dom.NodeList;
+
+import com.delcyon.capo.util.CloneControl.Clone;
 
 
 
 
 public abstract class EqualityProcessor {
 
-	
+	/**
+	 * Compares to objects to see if they are equal. It also does null comparisons
+	 * @param object1
+	 * @param object2
+	 * @return
+	 */
 	public static boolean areSame(Object object1, Object object2) {
 		if (object1 == null ^ object2 == null){
 			return false;
@@ -32,14 +36,22 @@ public abstract class EqualityProcessor {
 		else return object1.equals(object2);
 	}
 	
-
-	@SuppressWarnings("unchecked")
-	public  static <T> T  clone(T cloneable) throws Exception
+	/**
+	 * This is a utility method that can be used to clone anything, regardless of whether or not that object implements the clone interface.
+	 * @see CloneControl CloneControl for more information, on controlling what gets cloned.  
+	 * @param cloneable, any object, does NOT have to implement clonable
+	 * @return cloned object, unless it couldn't be cloned in which case it will return null;
+	 * @throws Exception
+	 */
+	@SuppressWarnings({ "unchecked", "rawtypes" })
+	public static <T> T  clone(T cloneable) throws Exception
 	{
 		if(cloneable == null)
 		{
 			return null;
 		}
+		
+		
 		
 		if(ReflectionUtility.isPrimitive(cloneable.getClass()))
 		{	
@@ -49,11 +61,54 @@ public abstract class EqualityProcessor {
 		Constructor<T> constructor = ReflectionUtility.getDefaultConstructor(cloneable.getClass());
 		T clone = (T) constructor.newInstance();
 		Vector<Field> fieldVector = ReflectionUtility.getFieldVector(cloneable);
+		
+		CloneControl classCloneControl = cloneable.getClass().getAnnotation(CloneControl.class);
+        if(classCloneControl != null)
+        {
+            if(classCloneControl.filter() == Clone.exclude && classCloneControl.modifiers() == 0)
+            {
+                fieldVector.clear();                
+            }
+        }
+		
 		for (Field field : fieldVector)
 		{
 			if (Modifier.isStatic(field.getModifiers()) == false)
 			{
 				field.setAccessible(true);
+				
+				CloneControl fieldToStringControl = field.getAnnotation(CloneControl.class);
+	            boolean forceInclude = false;
+	            if(fieldToStringControl != null)
+	            {
+	                if(fieldToStringControl.filter() == Clone.exclude)
+	                {
+	                    continue;    
+	                }
+	                else
+	                {
+	                    forceInclude = true;
+	                }
+	            }
+	            
+	            if(classCloneControl != null && forceInclude == false)
+	            {
+	                if(classCloneControl.filter() == Clone.exclude)
+	                {
+	                    if((field.getModifiers() & classCloneControl.modifiers()) != 0) //exclude if the modifiers match
+	                    {
+	                        continue;
+	                    }
+	                }
+	                else
+	                {
+	                    if((field.getModifiers() & classCloneControl.modifiers()) == 0) //exclude if the modifiers don't match
+	                    {
+	                        continue;
+	                    }
+	                }
+	            }
+				
 				Object cloneableFieldInstance = field.get(cloneable);
 				if(cloneableFieldInstance != null)
 				{
@@ -71,8 +126,7 @@ public abstract class EqualityProcessor {
 						{
 							if(childMethod.getName().equals("clone") && childMethod.getParameterTypes().length == 0 && Modifier.isPublic(childMethod.getModifiers()) == true)
 							{
-								cloneMethod = childMethod;
-								break;
+								cloneMethod = childMethod;								
 							}
 						}
 						
@@ -133,6 +187,19 @@ public abstract class EqualityProcessor {
 				}
 			}
 		}
+		
+		//process any CloneControl methods
+		Vector<Method> methodVector = ReflectionUtility.getMethodVector(cloneable);
+		for (Method method : methodVector)
+        {
+		   
+            CloneControl cloneControl = method.getAnnotation(CloneControl.class);
+            if (cloneControl != null && cloneControl.filter() == Clone.include)
+            {
+                method.setAccessible(true);
+                method.invoke(cloneable, clone);
+            }
+        }
 		return clone;
 	}
 	
