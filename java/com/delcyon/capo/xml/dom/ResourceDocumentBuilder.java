@@ -29,9 +29,13 @@ public class ResourceDocumentBuilder
         
         ResourceDeclarationElement resourceDeclarationElement = new ResourceDeclarationElement(resourceControlElement);
         ResourceElement rootResourceElement = resourceDeclarationElement.readXML(resourceControlElement.getParentGroup(), ResourceParameterBuilder.getResourceParameters(resourceControlElement.getControlElementDeclaration()));
-        XPath.dumpNode(rootResourceElement, System.out);
+        
         //TODO this doesn't work at all
-        ResourceDocument resourceDocument = new ResourceDocument(rootResourceElement);
+        ResourceDocument resourceDocument = rootResourceElement.getOwnerResourceDocument();
+        resourceDocument.setContentOnly(true);
+        XPath.dumpNode(resourceDocument, System.out);
+        //resourceDocument.setContentOnly(false);
+        //XPath.dumpNode(resourceDocument, System.out);
         return resourceDocument;
     }
     

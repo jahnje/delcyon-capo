@@ -1,5 +1,15 @@
 package com.delcyon.capo.xml.dom;
 
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.transform.OutputKeys;
+import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.dom.DOMResult;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamResult;
+
 import org.w3c.dom.Attr;
 import org.w3c.dom.CDATASection;
 import org.w3c.dom.Comment;
@@ -34,6 +44,7 @@ public class ResourceDocument extends ResourceNode implements Document
     private String prefix = "resource";
     private String namespaceURI = CapoApplication.RESOURCE_NAMESPACE_URI;
     private ResourceControlElement resourceControlElement = null;
+    private boolean exportContentOnly = false;
     
     
     public ResourceDocument()
@@ -76,6 +87,16 @@ public class ResourceDocument extends ResourceNode implements Document
 ////    	this.documentElement = new ResourceElement(this,resourceDescriptor);
 //    	resourceNodeList.add(documentElement);
 //    }
+    
+    public void setContentOnly(boolean exportContentOnly)
+    {
+        this.exportContentOnly = exportContentOnly;        
+    }
+    
+    public boolean isContentOnly()
+    {
+        return exportContentOnly;
+    }
     
     @Override
     public ResourceDescriptor getResourceDescriptor()
@@ -572,5 +593,22 @@ public class ResourceDocument extends ResourceNode implements Document
 	{
 		return new ResourceElement(this, localName, content, contentMetaData);
 	}
+
+    public static Document export(Node node) throws Exception
+    {
+        TransformerFactory tFactory = TransformerFactory.newInstance();
+        DocumentBuilderFactory documentBuilderFactory = DocumentBuilderFactory.newInstance();
+        documentBuilderFactory.setNamespaceAware(true);
+        DocumentBuilder documentBuilder = documentBuilderFactory.newDocumentBuilder();      
+        Document indentityTransforDocument = documentBuilder.parse(ClassLoader.getSystemResource("defaults/identity_transform.xsl").openStream());
+        Transformer transformer = tFactory.newTransformer(new DOMSource(indentityTransforDocument));
+        transformer.setOutputProperty(OutputKeys.INDENT, "yes");
+        //transformer.setOutputProperty(SaxonOutputKeys.INDENT_SPACES,"4");
+        DOMResult domResult = new DOMResult();
+        transformer.transform(new DOMSource(node), domResult);
+        return (Document) domResult.getNode();
+    }
+
+   
 
 }

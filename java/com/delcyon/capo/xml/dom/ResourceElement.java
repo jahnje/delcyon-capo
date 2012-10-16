@@ -1,9 +1,7 @@
 package com.delcyon.capo.xml.dom;
 
 import java.lang.reflect.Modifier;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Vector;
 import java.util.logging.Level;
 
 import org.w3c.dom.Attr;
@@ -20,36 +18,42 @@ import com.delcyon.capo.CapoApplication;
 import com.delcyon.capo.controller.elements.ResourceControlElement;
 import com.delcyon.capo.resourcemanager.ContentFormatType;
 import com.delcyon.capo.resourcemanager.ResourceDescriptor;
-import com.delcyon.capo.resourcemanager.ResourceParameterBuilder;
 import com.delcyon.capo.resourcemanager.ResourceURI;
-import com.delcyon.capo.resourcemanager.ResourceDescriptor.LifeCycle;
 import com.delcyon.capo.resourcemanager.types.ContentMetaData;
+import com.delcyon.capo.util.CloneControl;
+import com.delcyon.capo.util.CloneControl.Clone;
 import com.delcyon.capo.util.EqualityProcessor;
 import com.delcyon.capo.util.ReflectionUtility;
 import com.delcyon.capo.util.ToStringControl;
 import com.delcyon.capo.util.ToStringControl.Control;
 import com.delcyon.capo.xml.XPath;
 
+@CloneControl(filter=CloneControl.Clone.exclude,modifiers=Modifier.STATIC+Modifier.FINAL)
 @ToStringControl(control=Control.exclude,modifiers=Modifier.STATIC+Modifier.FINAL)
 public class ResourceElement extends ResourceNode implements Element
 {
 
-    private ResourceDescriptor resourceDescriptor;
+    @CloneControl(filter=Clone.exclude)
+    @ToStringControl(control=Control.exclude)
+    private ResourceNode parentNode;
     
+    @CloneControl(filter=Clone.exclude)
+    @ToStringControl(control=Control.exclude)
+    private ResourceControlElement resourceControlElement;
+    
+    @CloneControl(filter=Clone.exclude)
+    @ToStringControl(control=Control.exclude)
+    private ResourceDocument ownerResourceDocument;
+    
+    private ResourceDescriptor resourceDescriptor;    
     private String namespaceURI = null;
     private String localName = null;
     private List<ContentMetaData> childResourceContentMetaData;
     private ContentMetaData contentMetaData;
     private ResourceNodeList nodeList = new ResourceNodeList();
     private ResourceNamedNodeMap attributeList = new ResourceNamedNodeMap();
-	private String prefix;
-	@ToStringControl(control=Control.exclude)
-	private ResourceNode parentNode;
-	@ToStringControl(control=Control.exclude)
-    private ResourceControlElement resourceControlElement;
-	private boolean recursive = true;
-
-	private ResourceDocument ownerResourceDocument;
+	private String prefix;	
+	private boolean dynamic = true;
 	private ResourceURI resourceURI;
 	private Element content;
 	
@@ -63,7 +67,7 @@ public class ResourceElement extends ResourceNode implements Element
 		this.namespaceURI = ownerResourceDocument.getNamespaceURI();
 		this.prefix = ownerResourceDocument.getPrefix();
 		this.localName = localName;
-		this.recursive = false;
+		this.dynamic = false;
 		setContentMetatData(contentMetaData);
 		
 	}
@@ -73,7 +77,7 @@ public class ResourceElement extends ResourceNode implements Element
     	this.ownerResourceDocument = ownerResourceDocument;
         this.resourceDescriptor = resourceDescriptor;
         this.parentNode = parentNode;
-        this.recursive = false;
+        this.dynamic = false;
         namespaceURI = ownerResourceDocument.getNamespaceURI();
         prefix = ownerResourceDocument.getPrefix();
         localName = resourceDescriptor.getLocalName();        
@@ -194,7 +198,14 @@ public class ResourceElement extends ResourceNode implements Element
     @Override
     public String getNodeName()
     {
-        return prefix+":"+getLocalName();
+        if(getOwnerResourceDocument().isContentOnly() && content != null)
+        {
+            return content.getNodeName();
+        }
+        else
+        {
+            return prefix+":"+getLocalName();
+        }
     }
 
     @Override
@@ -225,17 +236,27 @@ public class ResourceElement extends ResourceNode implements Element
 
     @Override
     public NodeList getChildNodes()
-    {
-    	
+    {    	
         //depending on how we're created, we either know the list, or we want to figure it out.
-        if (recursive == false)
+        if (dynamic == false)
         {
         	try
-        	{
-        		ResourceNodeList tempNodeList = EqualityProcessor.clone(nodeList);
+        	{        		
         		if( content != null)
         		{
-        			tempNodeList.add(content);
+        		    ResourceNodeList tempNodeList = null;
+        		    if(getOwnerResourceDocument().isContentOnly() == false)
+        		    {
+        		        tempNodeList = EqualityProcessor.clone(nodeList);
+        		        tempNodeList.add(0,content);
+        		    }
+        		    else
+        		    {
+        		        tempNodeList = new ResourceNodeList();
+        		        tempNodeList.addAll(content.getChildNodes());
+        		        tempNodeList.addAll(EqualityProcessor.clone(nodeList));
+        		    }
+        			
         			return tempNodeList;
         		}
         	} catch (Exception e)
@@ -345,7 +366,21 @@ public class ResourceElement extends ResourceNode implements Element
     @Override
     public NamedNodeMap getAttributes()
     {
-        return attributeList;
+        if(getOwnerResourceDocument().isContentOnly())
+        {
+            if(content != null)
+            {
+                return content.getAttributes();
+            }
+            else
+            {
+                return null;
+            }
+        }
+        else
+        {
+            return attributeList;
+        }
     }
 
     @Override
@@ -405,19 +440,30 @@ public class ResourceElement extends ResourceNode implements Element
         return getChildNodes().getLength() > 0;
     }
 
+    @CloneControl(filter=Clone.include)
+    private void postClone(Object clonedObject)
+    {
+        ResourceElement clonedResourceElement = (ResourceElement) clonedObject;
+        //we treat these differently, because we don't want them to recurse
+        clonedResourceElement.ownerResourceDocument = ownerResourceDocument;
+        clonedResourceElement.parentNode = parentNode;
+        clonedResourceElement.resourceControlElement = resourceControlElement;
+
+    }
+    
     @Override
     public Node cloneNode(boolean deep)
     {
-    	ResourceElement resourceElement = null;
+    	ResourceElement clonedResourceElement = null;
     	try
     	{
-    		resourceElement = EqualityProcessor.clone(this);
-    	} 
+    		clonedResourceElement = EqualityProcessor.clone(this);
+    	}
     	catch (Exception exception)
     	{
     		CapoApplication.logger.log(Level.SEVERE, "Couldn't clone "+this, exception);
     	}
-    	return resourceElement;
+    	return clonedResourceElement;
     }
 
     @Override
@@ -436,8 +482,15 @@ public class ResourceElement extends ResourceNode implements Element
 
     @Override
     public String getNamespaceURI()
-    {
-        return namespaceURI;
+    {        
+        if(getOwnerResourceDocument().isContentOnly() == true && content != null)
+        {
+            return content.getNamespaceURI();
+        }
+        else
+        {
+            return namespaceURI;
+        }
     }
 
     @Override
@@ -456,7 +509,14 @@ public class ResourceElement extends ResourceNode implements Element
     @Override
     public String getLocalName()
     {
-        return this.localName;
+        if(getOwnerResourceDocument().isContentOnly() == true && content != null)
+        {
+            return content.getLocalName();
+        }
+        else
+        {
+            return this.localName;
+        }
     }
 
     @Override
@@ -569,8 +629,7 @@ public class ResourceElement extends ResourceNode implements Element
     @Override
     public void setAttribute(String name, String value) throws DOMException
     {
-        // TODO Auto-generated method stub
-    	throw new UnsupportedOperationException();
+       attributeList.setNamedItem(new ResourceAttr(this, name, value));
     }
 
     @Override
@@ -707,6 +766,11 @@ public class ResourceElement extends ResourceNode implements Element
     public String toString()
     {
         return ReflectionUtility.processToString(this);
+    }
+
+    public Element export() throws Exception
+    {
+        return ResourceDocument.export(this).getDocumentElement();
     }
 
 	

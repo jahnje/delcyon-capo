@@ -132,6 +132,11 @@ public class ExportElement extends AbstractControl
 		{
 			refNode = getControlElementDeclaration();
 		}
+		
+		if (refNode == null)
+		{
+		    throw new Exception("Couldn't find anything at "+ref+" to export. Check your path.");
+		}
 		//trim all of the whitespace out of the text nodes
 		if (trim != null && trim.equalsIgnoreCase("true"))
 		{

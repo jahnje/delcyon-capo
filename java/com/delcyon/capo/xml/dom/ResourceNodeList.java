@@ -20,4 +20,22 @@ public class ResourceNodeList extends ArrayList<Node> implements NodeList
         return size();
     }
 
+    public void addAll(NodeList childNodes)
+    {
+        for(int index = 0; index < childNodes.getLength(); index++)
+        {
+            add(childNodes.item(index));
+        }
+        
+    }
+    
+    public void addAll(ResourceNodeList childNodes)
+    {        
+        for(int index = 0; index < childNodes.getLength(); index++)
+        {
+            add(childNodes.item(index));
+        }
+        
+    }
+
 }

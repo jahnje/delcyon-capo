@@ -38,6 +38,7 @@ import com.delcyon.capo.xml.XPath;
 import com.delcyon.capo.xml.XPathFunctionProcessor;
 import com.delcyon.capo.xml.XPathFunctionProvider;
 import com.delcyon.capo.xml.XPathFunctionUtility;
+import com.delcyon.capo.xml.dom.ResourceElement;
 
 /**
  * @author jeremiah
@@ -130,6 +131,10 @@ public class ImportElement extends AbstractControl implements XPathFunctionProce
 		    {
 		        importedDocument = CapoApplication.getDocumentBuilder().newDocument();
 		        Element readElement = resourceDescriptor.readXML(getParentGroup(),resourceParameters);
+		        if(readElement instanceof ResourceElement)
+		        {
+		            readElement = ((ResourceElement) readElement).export();
+		        }
 		        importedDocument.adoptNode(readElement);
 		        importedDocument.appendChild(readElement);
 		    }

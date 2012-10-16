@@ -52,8 +52,8 @@
                 <resource:include name="NAME"/>
                 <resource:include name="OS"/>
                 <resource:include name="ID"/>
-               <!-- <resource:child name="status" uri="clients:${clientName}/status.xml" clientName="@ID" dynamic="true"/>
-                <resource:child name="identity" uri="clients:${clientName}/identity.xml" clientName="@ID" dynamic="true"/>-->
+                <resource:child name="status" uri="clients:${clientName}/status.xml" clientName="@ID" dynamic="true"/>
+                <resource:child name="identity" uri="clients:${clientName}/identity.xml" clientName="@ID" dynamic="true"/>
                 <resource:child name="asc" path="system_service_asc" >                    
                     <resource:join parent="@ID" this="@SYSTEM_ID" />
                     
@@ -85,7 +85,7 @@
         </resource:resource>
         
         <server:import name="jdbcTestImport" src="resource:jdbcTestResource"  dumpVars="true" sleep="1000" dumpRef=".."/>
-        <server:export dest="jdbcTestOutput.xml" ref="${import.jdbcTestImport}/testdb" />
+        <server:export dest="jdbcTestOutput.xml" ref="${import.jdbcTestImport}/resource:testdb" />
     </server:group>
     
     

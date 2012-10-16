@@ -51,10 +51,11 @@ public class ResourceElementResourceDescriptor implements ResourceDescriptor
 
 	
 	private ResourceDescriptor proxyedResourceDescriptor;
+	private ResourceElement resourceElement;
 	
 	public ResourceElementResourceDescriptor(ResourceElement declaringResourceElemnt)
 	{
-		
+		this.resourceElement = declaringResourceElemnt;		        
 		this.proxyedResourceDescriptor = declaringResourceElemnt.getProxyedResourceDescriptor();
 	}
 	
@@ -155,7 +156,7 @@ public class ResourceElementResourceDescriptor implements ResourceDescriptor
 	@Override
 	public Element readXML(VariableContainer variableContainer, ResourceParameter... resourceParameters) throws Exception
 	{
-		return proxyedResourceDescriptor.readXML(variableContainer, resourceParameters);
+		return resourceElement;
 	}
 	
 	@Override

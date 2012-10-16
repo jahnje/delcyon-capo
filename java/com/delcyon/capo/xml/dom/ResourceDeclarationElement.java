@@ -16,6 +16,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 package com.delcyon.capo.xml.dom;
 
+import java.net.URISyntaxException;
 import java.util.HashMap;
 import java.util.Vector;
 
@@ -125,22 +126,30 @@ public class ResourceDeclarationElement
             throw new Exception("Must have a uri or a path attribute");
         }
         
-      //sometimes we may have variables that need to be filled out laster, so we can't init or open this yet.  
-        if(resourceControlElement.getControlElementDeclaration().getAttribute("dynamic").equalsIgnoreCase("true") == false)
+      //sometimes we may have variables that need to be filled out later, so we can't init or open this yet.  
+        if(declaringElement.getAttribute("dynamic").equalsIgnoreCase("true") == false)
         {
+            try
+            {
         	resourceDescriptor.init(this,resourceControlElement.getParentGroup(), LifeCycle.EXPLICIT,true,ResourceParameterBuilder.getResourceParameters(resourceControlElement.getControlElementDeclaration()));
         	resourceDescriptor.open(resourceControlElement.getParentGroup(), ResourceParameterBuilder.getResourceParameters(resourceControlElement.getControlElementDeclaration()));
-        }
-        
-//        NodeList childResourceElementDeclarationNodeList =  XPath.selectNSNodes(resourceControlElement.getControlElementDeclaration(), prefix+":child", prefix+"="+namespaceURI);
-//        for(int index = 0; index < childResourceElementDeclarationNodeList.getLength(); index++)
+            } catch (URISyntaxException syntaxException)
+            {
+                System.out.println(syntaxException);
+            }
+        }        
+//        else // this is a dynamic request
 //        {
-//            ResourceControlElement childResourceControlElement = new ResourceControlElement();
-//            //XXX This is a hack! we are setting the parent group to null, so that it won't process any of the attributes that might have vars.
-//            childResourceControlElement.init((Element) childResourceElementDeclarationNodeList.item(index), resourceControlElement, null, resourceControlElement.getControllerClientRequestProcessor());
-//            //XXX then we set it back here, so the we still have the full var stack. This would all be fine until we change the init method in the AbstractControl class. 
-//            childResourceControlElement.setParentGroup(resourceControlElement.getParentGroup());
-//            nodeList.add(new ResourceElement(this, childResourceControlElement));
+//            NodeList childResourceElementDeclarationNodeList =  XPath.selectNSNodes(resourceControlElement.getControlElementDeclaration(), "resource:child", "resource="+CapoApplication.RESOURCE_NAMESPACE_URI);
+//            for(int index = 0; index < childResourceElementDeclarationNodeList.getLength(); index++)
+//            {
+//                ResourceControlElement childResourceControlElement = new ResourceControlElement();
+//                //XXX This is a hack! we are setting the parent group to null, so that it won't process any of the attributes that might have vars.
+//                childResourceControlElement.init((Element) childResourceElementDeclarationNodeList.item(index), resourceControlElement, null, resourceControlElement.getControllerClientRequestProcessor());
+//                //XXX then we set it back here, so the we still have the full var stack. This would all be fine until we change the init method in the AbstractControl class. 
+//                childResourceControlElement.setParentGroup(resourceControlElement.getParentGroup());
+//                nodeList.add(new ResourceElement(this, childResourceControlElement));
+//            }
 //        }
 	}
 	
@@ -161,6 +170,7 @@ public class ResourceDeclarationElement
 		ResourceDocument resourceDocument = new ResourceDocument();
 		
 		ResourceElement rootResourceElement = new ResourceElement(resourceDocument,resourceDocument,resourceDescriptor);
+		resourceDocument.setDocumentElement(rootResourceElement);
 		Document testDocument = CapoApplication.getDocumentBuilder().newDocument();
 		Element testRootElement = testDocument.createElement(getLocalName());
 		testDocument.appendChild(testRootElement);
@@ -194,7 +204,8 @@ public class ResourceDeclarationElement
         }
         else if(resourceDescriptor.getContentMetaData(null).exists() == false)
         {
-        	System.out.println("found an unexisting resource");
+            //If it doesn't exist, skip it, this is a join after all
+        	//System.out.println("found an unexisting resource: "+resourceDescriptor.getResourceURI());
         	recurse = false;
         }
         else if (cacheVector == null)
@@ -205,11 +216,10 @@ public class ResourceDeclarationElement
             while(resourceDescriptor.next(variableContainer, resourceParameters))
             {
                 //get the result xml from the actual resource descriptor
-                Element readXMLElement = (Element) parentElement.getOwnerDocument().importNode(resourceDescriptor.readXML(variableContainer, resourceParameters),true);
-                XPath.dumpNode(readXMLElement, System.out);
+                Element readXMLElement = (Element) parentElement.getOwnerDocument().importNode(resourceDescriptor.readXML(variableContainer, resourceParameters),true);                
                 ResourceDocument resourceDocument = parentResourceElement.getOwnerResourceDocument();
-                ResourceElement readResourceElement = resourceDocument.createResourceElement(getLocalName(),readXMLElement,resourceDescriptor.getIterationMetaData(variableContainer, resourceParameters));
-                
+                ResourceElement readResourceElement = resourceDocument.createResourceElement("resource",readXMLElement,resourceDescriptor.getIterationMetaData(variableContainer, resourceParameters));
+                readResourceElement.setAttribute("name", getLocalName());
                 //TODO convert to ResourceElement
                 cacheVector.add(readResourceElement);
                
