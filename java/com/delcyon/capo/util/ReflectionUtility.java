@@ -129,7 +129,7 @@ public class ReflectionUtility
 			}
 			else if (type == String.class)
 			{
-				return valueString;
+				return new String(valueString);
 			}
 			else if (((Class) type).isEnum())
 			{
@@ -460,6 +460,21 @@ public class ReflectionUtility
 		}
 	}
 
+	@SuppressWarnings("unchecked")
+	public static Constructor getDefaultConstructor(Class type)
+	{
+		for (Constructor constructor : type.getDeclaredConstructors())
+        {
+            constructor.setAccessible(true);
+            if (constructor.getParameterTypes().length == 0)
+            {
+                return constructor;
+            }
+        }                               
+        return null;
+	}
+	
+	
 	@SuppressWarnings("rawtypes")
     public static boolean hasDefaultContructor(Class type)
 	{

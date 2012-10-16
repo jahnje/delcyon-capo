@@ -32,6 +32,7 @@ import com.delcyon.capo.xml.XPathFunctionProcessor;
 import com.delcyon.capo.xml.XPathFunctionProvider;
 import com.delcyon.capo.xml.XPathFunctionUtility;
 import com.delcyon.capo.xml.dom.ResourceDocument;
+import com.delcyon.capo.xml.dom.ResourceDocumentBuilder;
 
 /**
  * @author jeremiah
@@ -124,7 +125,8 @@ public class ResourceControlElement extends AbstractControl implements XPathFunc
 	@Override
 	public Object processServerSideElement() throws Exception
 	{
-        resourceDocument = new ResourceDocument(this);
+		ResourceDocumentBuilder resourceDocumentBuilder = new ResourceDocumentBuilder();
+		resourceDocument = resourceDocumentBuilder.buildDocument(this);        
 		getParentGroup().putResourceElement(this);		
 		return null;
 	}

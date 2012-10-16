@@ -21,8 +21,10 @@ import com.delcyon.capo.controller.elements.ResourceControlElement;
 import com.delcyon.capo.resourcemanager.ContentFormatType;
 import com.delcyon.capo.resourcemanager.ResourceDescriptor;
 import com.delcyon.capo.resourcemanager.ResourceParameterBuilder;
+import com.delcyon.capo.resourcemanager.ResourceURI;
 import com.delcyon.capo.resourcemanager.ResourceDescriptor.LifeCycle;
 import com.delcyon.capo.resourcemanager.types.ContentMetaData;
+import com.delcyon.capo.util.EqualityProcessor;
 import com.delcyon.capo.util.ReflectionUtility;
 import com.delcyon.capo.util.ToStringControl;
 import com.delcyon.capo.util.ToStringControl.Control;
@@ -47,22 +49,42 @@ public class ResourceElement extends ResourceNode implements Element
     private ResourceControlElement resourceControlElement;
 	private boolean recursive = true;
 
-    private Vector<Element> cacheVector = null;
-
-	private HashMap<String, Vector<Element>> joinHashMap = null;; 
+	private ResourceDocument ownerResourceDocument;
+	private ResourceURI resourceURI;
+	private Element content;
 	
+	
+	private ResourceElement(){}
+	
+	public ResourceElement(ResourceDocument ownerResourceDocument, String localName, Element content,ContentMetaData contentMetaData)
+	{
+		this.ownerResourceDocument = ownerResourceDocument;		
+		this.content = content;
+		this.namespaceURI = ownerResourceDocument.getNamespaceURI();
+		this.prefix = ownerResourceDocument.getPrefix();
+		this.localName = localName;
+		this.recursive = false;
+		setContentMetatData(contentMetaData);
+		
+	}
     
-    
-    public ResourceElement(ResourceNode parentNode,ResourceDescriptor resourceDescriptor) throws Exception
+    public ResourceElement(ResourceDocument ownerResourceDocument,ResourceNode parentNode,ResourceDescriptor resourceDescriptor) throws Exception
     {
+    	this.ownerResourceDocument = ownerResourceDocument;
         this.resourceDescriptor = resourceDescriptor;
         this.parentNode = parentNode;
-        this.recursive = true;
-        namespaceURI = parentNode.getNamespaceURI();
-        prefix = parentNode.getPrefix();
-        localName = resourceDescriptor.getLocalName();
-        contentMetaData = resourceDescriptor.getContentMetaData(null);
-        attributeList.add(new ResourceAttr(this,"uri", contentMetaData.getResourceURI().getBaseURI()));
+        this.recursive = false;
+        namespaceURI = ownerResourceDocument.getNamespaceURI();
+        prefix = ownerResourceDocument.getPrefix();
+        localName = resourceDescriptor.getLocalName();        
+        setContentMetatData(resourceDescriptor.getContentMetaData(null));
+    }
+
+    public void setContentMetatData(ContentMetaData contentMetaData)
+    {
+    	this.contentMetaData = contentMetaData;
+    	this.resourceURI = contentMetaData.getResourceURI();
+    	attributeList.add(new ResourceAttr(this,"uri", contentMetaData.getResourceURI().getResourceURIString()));
         List<String> supportedAttributeList = contentMetaData.getSupportedAttributes();
         for (String attributeName : supportedAttributeList)
         {
@@ -72,76 +94,89 @@ public class ResourceElement extends ResourceNode implements Element
                 attributeList.add(resourceAttr);
             }
         }
-        
-                
-    }
-
-    public ResourceElement(ResourceNode parentNode, ResourceControlElement resourceControlElement) throws Exception
-    {
-        this.parentNode = parentNode;
-        this.resourceControlElement = resourceControlElement;
-        this.recursive = false;
-        namespaceURI = parentNode.getNamespaceURI();
-        prefix = parentNode.getPrefix();
-        NamedNodeMap attributeNamedNodeMap = resourceControlElement.getControlElementDeclaration().getAttributes();
-        for(int index = 0; index < attributeNamedNodeMap.getLength(); index++)
-        {
-            Attr attr = (Attr) attributeNamedNodeMap.item(index);
-            ResourceAttr resourceAttr = new ResourceAttr(this,attr.getNodeName(), attr.getNodeValue());            
-            attributeList.add(resourceAttr);
-        }
-        
-        if(attributeList.getNamedItem("name") != null)
-        {
-            localName = attributeList.getNamedItem("name").getNodeValue();
-        }
-        else
-        {
-            localName = resourceControlElement.getControlElementDeclaration().getLocalName();
-        }
-        
-        //if we have a URI, then we can go ahead a load a resourceDescriptor for this element 
-        if(attributeList.getNamedItem("uri") != null)
-        {
-            this.resourceDescriptor = CapoApplication.getDataManager().getResourceDescriptor(resourceControlElement, attributeList.getNamedItem("uri").getNodeValue());
-            
-            this.resourceControlElement.setResourceDescriptor(resourceDescriptor);
-        }
-        else if(attributeList.getNamedItem("path") != null) //check for a path attribute, and ask our parent to load us
-        {
-            this.resourceDescriptor = parentNode.getResourceDescriptor().getChildResourceDescriptor(resourceControlElement, attributeList.getNamedItem("path").getNodeValue());
-        }
-        else
-        {
-            //we don't have anything, throw an exception for now?
-            throw new Exception("Must have a uri or a path attribute");
-        }
-        
-        //sometimes we may have variables that need to be filled out laster, so we can't init or open this yet.  
-        if(resourceControlElement.getControlElementDeclaration().getAttribute("dynamic").equalsIgnoreCase("true") == false)
-        {
-        	resourceDescriptor.init(this,resourceControlElement.getParentGroup(), LifeCycle.EXPLICIT,true,ResourceParameterBuilder.getResourceParameters(resourceControlElement.getControlElementDeclaration()));
-        	resourceDescriptor.open(resourceControlElement.getParentGroup(), ResourceParameterBuilder.getResourceParameters(resourceControlElement.getControlElementDeclaration()));
-        }
-        
-        NodeList childResourceElementDeclarationNodeList =  XPath.selectNSNodes(resourceControlElement.getControlElementDeclaration(), prefix+":child", prefix+"="+namespaceURI);
-        for(int index = 0; index < childResourceElementDeclarationNodeList.getLength(); index++)
-        {
-            ResourceControlElement childResourceControlElement = new ResourceControlElement();
-            //XXX This is a hack! we are setting the parent group to null, so that it won't process any of the attributes that might have vars.
-            childResourceControlElement.init((Element) childResourceElementDeclarationNodeList.item(index), resourceControlElement, null, resourceControlElement.getControllerClientRequestProcessor());
-            //XXX then we set it back here, so the we still have the full var stack. This would all be fine until we change the init method in the AbstractControl class. 
-            childResourceControlElement.setParentGroup(resourceControlElement.getParentGroup());
-            nodeList.add(new ResourceElement(this, childResourceControlElement));
-        }
     }
     
+    
+//    public ResourceElement(ResourceNode parentNode, ResourceControlElement resourceControlElement) throws Exception
+//    {
+//        this.parentNode = parentNode;
+//        this.resourceControlElement = resourceControlElement;
+//        this.recursive = false;
+//        namespaceURI = parentNode.getNamespaceURI();
+//        prefix = parentNode.getPrefix();
+//        NamedNodeMap attributeNamedNodeMap = resourceControlElement.getControlElementDeclaration().getAttributes();
+//        for(int index = 0; index < attributeNamedNodeMap.getLength(); index++)
+//        {
+//            Attr attr = (Attr) attributeNamedNodeMap.item(index);
+//            ResourceAttr resourceAttr = new ResourceAttr(this,attr.getNodeName(), attr.getNodeValue());            
+//            attributeList.add(resourceAttr);
+//        }
+//        
+//        if(attributeList.getNamedItem("name") != null)
+//        {
+//            localName = attributeList.getNamedItem("name").getNodeValue();
+//        }
+//        else
+//        {
+//            localName = resourceControlElement.getControlElementDeclaration().getLocalName();
+//        }
+//        
+//        //if we have a URI, then we can go ahead a load a resourceDescriptor for this element 
+//        if(attributeList.getNamedItem("uri") != null)
+//        {
+//            this.resourceDescriptor = CapoApplication.getDataManager().getResourceDescriptor(resourceControlElement, attributeList.getNamedItem("uri").getNodeValue());
+//            
+//            this.resourceControlElement.setResourceDescriptor(resourceDescriptor);
+//        }
+//        else if(attributeList.getNamedItem("path") != null) //check for a path attribute, and ask our parent to load us
+//        {
+//            this.resourceDescriptor = parentNode.getResourceDescriptor().getChildResourceDescriptor(resourceControlElement, attributeList.getNamedItem("path").getNodeValue());
+//        }
+//        else
+//        {
+//            //we don't have anything, throw an exception for now?
+//            throw new Exception("Must have a uri or a path attribute");
+//        }
+//        
+//        //sometimes we may have variables that need to be filled out laster, so we can't init or open this yet.  
+//        if(resourceControlElement.getControlElementDeclaration().getAttribute("dynamic").equalsIgnoreCase("true") == false)
+//        {
+//        	resourceDescriptor.init(this,resourceControlElement.getParentGroup(), LifeCycle.EXPLICIT,true,ResourceParameterBuilder.getResourceParameters(resourceControlElement.getControlElementDeclaration()));
+//        	resourceDescriptor.open(resourceControlElement.getParentGroup(), ResourceParameterBuilder.getResourceParameters(resourceControlElement.getControlElementDeclaration()));
+//        }
+//        
+//        NodeList childResourceElementDeclarationNodeList =  XPath.selectNSNodes(resourceControlElement.getControlElementDeclaration(), prefix+":child", prefix+"="+namespaceURI);
+//        for(int index = 0; index < childResourceElementDeclarationNodeList.getLength(); index++)
+//        {
+//            ResourceControlElement childResourceControlElement = new ResourceControlElement();
+//            //XXX This is a hack! we are setting the parent group to null, so that it won't process any of the attributes that might have vars.
+//            childResourceControlElement.init((Element) childResourceElementDeclarationNodeList.item(index), resourceControlElement, null, resourceControlElement.getControllerClientRequestProcessor());
+//            //XXX then we set it back here, so the we still have the full var stack. This would all be fine until we change the init method in the AbstractControl class. 
+//            childResourceControlElement.setParentGroup(resourceControlElement.getParentGroup());
+//            nodeList.add(new ResourceElement(this, childResourceControlElement));
+//        }
+//    }
+    
+    public void setContent(Element content)
+	{
+		this.content = content;
+	}
+    
+    public Element getContent()
+	{
+		return content;
+	}
+    
+    public void setParentNode(ResourceNode parentNode)
+    {
+    	this.parentNode = parentNode;
+    }
 
-   @Override
-   public ResourceDescriptor getResourceDescriptor()
-   {
-       return new ResourceElementResourceDescriptor(this);
-   }
+    @Override
+    public ResourceDescriptor getResourceDescriptor()
+    {
+    	return new ResourceElementResourceDescriptor(this);
+    }
 
    @Override
    public ResourceDescriptor getProxyedResourceDescriptor()
@@ -159,7 +194,7 @@ public class ResourceElement extends ResourceNode implements Element
     @Override
     public String getNodeName()
     {
-        return prefix+":"+resourceDescriptor.getLocalName();
+        return prefix+":"+getLocalName();
     }
 
     @Override
@@ -191,9 +226,25 @@ public class ResourceElement extends ResourceNode implements Element
     @Override
     public NodeList getChildNodes()
     {
+    	
         //depending on how we're created, we either know the list, or we want to figure it out.
         if (recursive == false)
         {
+        	try
+        	{
+        		ResourceNodeList tempNodeList = EqualityProcessor.clone(nodeList);
+        		if( content != null)
+        		{
+        			tempNodeList.add(content);
+        			return tempNodeList;
+        		}
+        	} catch (Exception e)
+        	{
+        		// TODO Auto-generated catch block
+        		e.printStackTrace();
+        	}
+
+        	
             return nodeList;
         }
         
@@ -205,7 +256,7 @@ public class ResourceElement extends ResourceNode implements Element
                 
                 try
                 {
-                    nodeList.add(new ResourceElement(this,CapoApplication.getDataManager().getResourceDescriptor(null, childContentMetaData.getResourceURI().getBaseURI())));
+                    nodeList.add(new ResourceElement(ownerResourceDocument,this,CapoApplication.getDataManager().getResourceDescriptor(null, childContentMetaData.getResourceURI().getBaseURI())));
                 }
                 catch (Exception e)
                 {
@@ -300,16 +351,14 @@ public class ResourceElement extends ResourceNode implements Element
     @Override
     public Document getOwnerDocument()
     {
-        if (parentNode instanceof Document)
-        {
-        	return (Document) parentNode;
-        }
-        else
-        {
-        	return parentNode.getOwnerDocument();
-        }
+        return ownerResourceDocument;
     }
 
+    public ResourceDocument getOwnerResourceDocument()
+	{
+		return ownerResourceDocument;
+	}
+    
     @Override
     public Node insertBefore(Node newChild, Node refChild) throws DOMException
     {
@@ -327,15 +376,27 @@ public class ResourceElement extends ResourceNode implements Element
     @Override
     public Node removeChild(Node oldChild) throws DOMException
     {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+        if(nodeList.remove(oldChild) == true)
+        {
+        	return oldChild;
+        }
+        else
+        {
+        	return null;
+        }
     }
 
     @Override
     public Node appendChild(Node newChild) throws DOMException
     {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+        if(nodeList.add(newChild) == true)
+        {
+        	return newChild;
+        }
+        else
+        {
+        	return null;
+        }
     }
 
     @Override
@@ -347,8 +408,16 @@ public class ResourceElement extends ResourceNode implements Element
     @Override
     public Node cloneNode(boolean deep)
     {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+    	ResourceElement resourceElement = null;
+    	try
+    	{
+    		resourceElement = EqualityProcessor.clone(this);
+    	} 
+    	catch (Exception exception)
+    	{
+    		CapoApplication.logger.log(Level.SEVERE, "Couldn't clone "+this, exception);
+    	}
+    	return resourceElement;
     }
 
     @Override
@@ -640,23 +709,7 @@ public class ResourceElement extends ResourceNode implements Element
         return ReflectionUtility.processToString(this);
     }
 
-    public Vector<Element> getCacheVector()
-    {
-        return this.cacheVector ;
-    }
-    
-    public void setCacheVector(Vector<Element> cacheVector)
-    {
-        this.cacheVector = cacheVector;
-    }
-
-	public void setJoinHashMap(HashMap<String, Vector<Element>> joinHashMap)
-	{
-		this.joinHashMap  = joinHashMap;		
-	}
 	
-	public HashMap<String, Vector<Element>> getJoinHashMap()
-	{
-		return joinHashMap;
-	}
+
+    
 }

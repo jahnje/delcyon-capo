@@ -25,7 +25,7 @@ import com.delcyon.capo.controller.ControlElement;
 import com.delcyon.capo.controller.VariableContainer;
 import com.delcyon.capo.resourcemanager.ResourceDescriptor.State;
 import com.delcyon.capo.resourcemanager.types.ContentMetaData;
-import com.delcyon.capo.xml.dom.ResourceElement;
+import com.delcyon.capo.xml.dom.ResourceDeclarationElement;
 
 /**
  * @author jeremiah
@@ -126,7 +126,7 @@ public interface ResourceDescriptor
 	public void setup(ResourceType resourceType, String resourceURI) throws Exception;
 	/** occurs when a ResourceElement is declared 
 	 * @param declaringResourceElement TODO*/
-	public void init(ResourceElement declaringResourceElement, VariableContainer variableContainer,LifeCycle lifeCycle,boolean iterate, ResourceParameter... resourceParameters) throws Exception;
+	public void init(ResourceDeclarationElement declaringResourceElement, VariableContainer variableContainer,LifeCycle lifeCycle,boolean iterate, ResourceParameter... resourceParameters) throws Exception;
 	/** occurs after the resource is initialized/declared is controlled by LifeCycle attribute/parameter */
 	public void open(VariableContainer variableContainer, ResourceParameter... resourceParameters) throws Exception;
 	

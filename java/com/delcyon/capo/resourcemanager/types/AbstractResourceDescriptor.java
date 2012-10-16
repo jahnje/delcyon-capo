@@ -48,6 +48,7 @@ import com.delcyon.capo.resourcemanager.ResourceURI;
 import com.delcyon.capo.server.CapoServer;
 import com.delcyon.capo.util.ReflectionUtility;
 import com.delcyon.capo.xml.XPath;
+import com.delcyon.capo.xml.dom.ResourceDeclarationElement;
 import com.delcyon.capo.xml.dom.ResourceElement;
 
 /**
@@ -74,7 +75,7 @@ public abstract class AbstractResourceDescriptor implements ResourceDescriptor
 	private Vector<OutputStream> openOutputStreamVector = new Vector<OutputStream>();
 	private Vector<InputStream> openInputStreamVector = new Vector<InputStream>();
 	private String localName = null;
-    private ResourceElement declaringResourceElement;
+    private ResourceDeclarationElement declaringResourceElement;
 	
 	@Override
 	public void setup(ResourceType resourceType, String resourceURI) throws Exception
@@ -88,7 +89,7 @@ public abstract class AbstractResourceDescriptor implements ResourceDescriptor
 	}
 	
 	@Override
-	public void init(ResourceElement declaringResourceElement,VariableContainer variableContainer, LifeCycle lifeCycle, boolean iterate, ResourceParameter... resourceParameters) throws Exception
+	public void init(ResourceDeclarationElement declaringResourceElement,VariableContainer variableContainer, LifeCycle lifeCycle, boolean iterate, ResourceParameter... resourceParameters) throws Exception
 	{		
 	        this.declaringResourceElement = declaringResourceElement;	
 			this.declaringVariableContainer = variableContainer;
@@ -293,7 +294,7 @@ public abstract class AbstractResourceDescriptor implements ResourceDescriptor
         }
 	}
 	
-	protected ResourceElement getDeclaringResourceElement()
+	protected ResourceDeclarationElement getDeclaringResourceElement()
 	{
 	    return this.declaringResourceElement;
 	}

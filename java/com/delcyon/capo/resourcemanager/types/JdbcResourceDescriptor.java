@@ -39,6 +39,7 @@ import com.delcyon.capo.resourcemanager.ResourceParameterBuilder;
 import com.delcyon.capo.resourcemanager.ResourceURI;
 import com.delcyon.capo.resourcemanager.types.ContentMetaData.Attributes;
 import com.delcyon.capo.xml.XPath;
+import com.delcyon.capo.xml.dom.ResourceDeclarationElement;
 import com.delcyon.capo.xml.dom.ResourceElement;
 
 /**
@@ -81,7 +82,7 @@ public class JdbcResourceDescriptor extends AbstractResourceDescriptor
 	}
 	
 	@Override
-	public void init(ResourceElement declaringResourceElement,VariableContainer variableContainer, LifeCycle lifeCycle, boolean iterate, ResourceParameter... resourceParameters) throws Exception
+	public void init(ResourceDeclarationElement declaringResourceElement,VariableContainer variableContainer, LifeCycle lifeCycle, boolean iterate, ResourceParameter... resourceParameters) throws Exception
 	{
 
 	    super.init(declaringResourceElement,variableContainer, lifeCycle, iterate, resourceParameters);
@@ -92,8 +93,8 @@ public class JdbcResourceDescriptor extends AbstractResourceDescriptor
 		}
 		if(getDeclaringResourceElement() != null)
 		{
-		    ResourceElement resourceElement = getDeclaringResourceElement();
-		    Element controlElementDeclaration = resourceElement.getResourceControlElement().getControlElementDeclaration();
+			ResourceDeclarationElement resourceDeclarationElement = getDeclaringResourceElement();
+		    Element controlElementDeclaration = resourceDeclarationElement.getDeclaration();
 		    NodeList includeNodeList = XPath.selectNodes(controlElementDeclaration, "resource:include");
 		    for(int index = 0; index < includeNodeList.getLength(); index++)
 		    {

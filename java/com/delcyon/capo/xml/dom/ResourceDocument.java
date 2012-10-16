@@ -21,6 +21,8 @@ import org.w3c.dom.UserDataHandler;
 import com.delcyon.capo.CapoApplication;
 import com.delcyon.capo.controller.elements.ResourceControlElement;
 import com.delcyon.capo.resourcemanager.ResourceDescriptor;
+import com.delcyon.capo.resourcemanager.ResourceURI;
+import com.delcyon.capo.resourcemanager.types.ContentMetaData;
 
 public class ResourceDocument extends ResourceNode implements Document
 {
@@ -33,27 +35,47 @@ public class ResourceDocument extends ResourceNode implements Document
     private String namespaceURI = CapoApplication.RESOURCE_NAMESPACE_URI;
     private ResourceControlElement resourceControlElement = null;
     
+    
+    public ResourceDocument()
+    {
+    	
+    }
+    
+    public void setDocumentElement(ResourceElement documentElement)
+    {
+    	resourceNodeList.clear();
+    	this.resourceDescriptor = documentElement.getProxyedResourceDescriptor();
+    	this.documentElement = documentElement;
+    	resourceNodeList.add(documentElement);
+    }
+    
     public ResourceDocument(ResourceDescriptor resourceDescriptor) throws Exception
     {
        this.resourceDescriptor = resourceDescriptor;
-       this.documentElement = new ResourceElement(this,resourceDescriptor);
+       this.documentElement = new ResourceElement(this,this,resourceDescriptor);
        resourceNodeList.add(documentElement);
     }
 
-    public ResourceDocument(ResourceControlElement resourceControlElement) throws Exception
-    {
-    	this.prefix = resourceControlElement.getControlElementDeclaration().getPrefix();
-    	this.namespaceURI = resourceControlElement.getControlElementDeclaration().getNamespaceURI();
-    	this.documentElement = new ResourceElement(this,resourceControlElement);
-    	
-    	
-//    	this.resourceDescriptor = CapoApplication.getDataManager().getResourceDescriptor(resourceControlElement, resourceControlElement.getAttributeValue(Attributes.uri));
-//    	this.resourceDescriptor.init(resourceControlElement.getParentGroup(),resourceControlElement.getLifeCycle(),resourceControlElement.getAttributeValue(Attributes.step).equalsIgnoreCase("true"),ResourceParameterBuilder.getResourceParameters(resourceControlElement.getControlElementDeclaration()));
-//    	this.resourceDescriptor.open(resourceControlElement.getParentGroup());
-//    	resourceControlElement.setResourceDescriptor(this.resourceDescriptor);
-//    	this.documentElement = new ResourceElement(this,resourceDescriptor);
-    	resourceNodeList.add(documentElement);
+    public ResourceDocument(ResourceElement documentResourceElement) throws Exception
+    {       
+       this.documentElement = documentResourceElement;
+       resourceNodeList.add(documentElement);
     }
+    
+//    public ResourceDocument(ResourceControlElement resourceControlElement) throws Exception
+//    {
+//    	this.prefix = resourceControlElement.getControlElementDeclaration().getPrefix();
+//    	this.namespaceURI = resourceControlElement.getControlElementDeclaration().getNamespaceURI();
+//    	this.documentElement = new ResourceElement(this,resourceControlElement);
+//    	
+//    	
+////    	this.resourceDescriptor = CapoApplication.getDataManager().getResourceDescriptor(resourceControlElement, resourceControlElement.getAttributeValue(Attributes.uri));
+////    	this.resourceDescriptor.init(resourceControlElement.getParentGroup(),resourceControlElement.getLifeCycle(),resourceControlElement.getAttributeValue(Attributes.step).equalsIgnoreCase("true"),ResourceParameterBuilder.getResourceParameters(resourceControlElement.getControlElementDeclaration()));
+////    	this.resourceDescriptor.open(resourceControlElement.getParentGroup());
+////    	resourceControlElement.setResourceDescriptor(this.resourceDescriptor);
+////    	this.documentElement = new ResourceElement(this,resourceDescriptor);
+//    	resourceNodeList.add(documentElement);
+//    }
     
     @Override
     public ResourceDescriptor getResourceDescriptor()
@@ -545,5 +567,10 @@ public class ResourceDocument extends ResourceNode implements Document
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException();
     }
+
+	public ResourceElement createResourceElement(String localName, Element content,ContentMetaData contentMetaData)
+	{
+		return new ResourceElement(this, localName, content, contentMetaData);
+	}
 
 }
