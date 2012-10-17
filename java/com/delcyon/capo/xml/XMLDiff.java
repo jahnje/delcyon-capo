@@ -284,10 +284,6 @@ public class XMLDiff
 		 * when end of children is reached, output opposite side until that list is exhausted  
 		 */
 		
-		long scriptPosition = 0;
-		long baseStreamPosition = 0l;
-		long otherStreamPosition = 0l;
-		
 		while(true)
 		{	
 			
@@ -378,7 +374,7 @@ public class XMLDiff
 					}
 
 					baseWindowItemsIndex++;				
-					baseStreamPosition++;
+					
 					if (parentDifferenceElement != null)
 					{
 						setAttribute(parentDifferenceElement, XDIFF_NAMESPACE_URI, XDIFF_PREFIX, XDIFF_ELEMENT_ATTRIBUTE_NAME, INEQUALITY);
@@ -394,14 +390,8 @@ public class XMLDiff
 				while(otherWindowItems.size() > otherWindowItemsIndex && otherWindowItems.get(otherWindowItemsIndex).getStreamPosition() < otherWindowChainStartPosition)
 				{
 					Node outputNode = null;
-//					try
-//					{
-						outputNode = differenceDocument.importNode((Node) otherWindowItems.get(otherWindowItemsIndex).getObject(),true);
-//					} catch(DOMException domException)
-//					{
-//						XPath.dumpNode((Node) otherWindowItems.get(otherWindowItemsIndex).getObject(), System.err);
-//						
-//					}
+					outputNode = differenceDocument.importNode((Node) otherWindowItems.get(otherWindowItemsIndex).getObject(),true);
+					
 					if (outputNode instanceof Element)
 					{
 						differenceElement.appendChild(outputNode);
@@ -417,9 +407,7 @@ public class XMLDiff
 						setAttribute(differenceElement, XDIFF_NAMESPACE_URI, XDIFF_PREFIX, XDIFF_ELEMENT_ATTRIBUTE_NAME, INEQUALITY);
 					}
 					
-					otherWindowItemsIndex++;				
-					scriptPosition++;
-					otherStreamPosition++;
+					otherWindowItemsIndex++;									
 					if (parentDifferenceElement != null)
 					{
 						setAttribute(parentDifferenceElement, XDIFF_NAMESPACE_URI, XDIFF_PREFIX, XDIFF_ELEMENT_ATTRIBUTE_NAME, INEQUALITY);
@@ -481,12 +469,7 @@ public class XMLDiff
 							}
 							setAttribute(differenceElement, XDIFF_NAMESPACE_URI, XDIFF_PREFIX, XDIFF_ELEMENT_ATTRIBUTE_NAME, INEQUALITY);								
 						}
-					}
-					//TODO check for child differences
-					
-					scriptPosition++;
-					baseStreamPosition++;
-					otherStreamPosition++;
+					}					
 				}
 			}
 			//cleanup
@@ -502,7 +485,14 @@ public class XMLDiff
 		}
 		if (parentDifferenceElement != null && parentDifferenceElement.hasAttributeNS(XDIFF_NAMESPACE_URI, XDIFF_ELEMENT_ATTRIBUTE_NAME) == false)
 		{
-			setAttribute(parentDifferenceElement, XDIFF_NAMESPACE_URI, XDIFF_PREFIX, XDIFF_ELEMENT_ATTRIBUTE_NAME, EQUALITY);
+		    if(differenceElement.hasAttributeNS(XDIFF_NAMESPACE_URI, XDIFF_ELEMENT_ATTRIBUTE_NAME))
+		    {
+		        setAttribute(parentDifferenceElement, XDIFF_NAMESPACE_URI, XDIFF_PREFIX, XDIFF_ELEMENT_ATTRIBUTE_NAME, differenceElement.getAttributeNS(XDIFF_NAMESPACE_URI, XDIFF_ELEMENT_ATTRIBUTE_NAME));
+		    }
+		    else
+		    {
+		        setAttribute(parentDifferenceElement, XDIFF_NAMESPACE_URI, XDIFF_PREFIX, XDIFF_ELEMENT_ATTRIBUTE_NAME, EQUALITY);
+		    }
 		}
 		return differenceElement;
 	}
@@ -784,7 +774,7 @@ public class XMLDiff
 	}
 	
 	
-	@SuppressWarnings("unchecked")
+	@SuppressWarnings({ "unchecked", "rawtypes" })
 	private void setAttribute(Element element, String namespaceURI, String prefix, Enum name, Object value)
 	{
 		setAttribute(element, namespaceURI, prefix, name.toString(), value);
