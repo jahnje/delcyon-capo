@@ -77,7 +77,7 @@ public class ResourceElement extends ResourceNode implements Element
     	this.ownerResourceDocument = ownerResourceDocument;
         this.resourceDescriptor = resourceDescriptor;
         this.parentNode = parentNode;
-        this.dynamic = false;
+        this.dynamic = true;
         namespaceURI = ownerResourceDocument.getNamespaceURI();
         prefix = ownerResourceDocument.getPrefix();
         localName = resourceDescriptor.getLocalName();        
