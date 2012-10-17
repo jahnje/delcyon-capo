@@ -58,12 +58,6 @@ public class FileResourceType extends AbstractResourceType
 	}
 	
 	@Override
-	public boolean isIterable()
-	{
-		return false;
-	}
-	
-	@Override
 	public boolean runtimeDefineableTokenLists()
 	{
 		return true;

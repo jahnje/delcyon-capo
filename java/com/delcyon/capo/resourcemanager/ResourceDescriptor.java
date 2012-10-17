@@ -23,7 +23,6 @@ import org.w3c.dom.Element;
 
 import com.delcyon.capo.controller.ControlElement;
 import com.delcyon.capo.controller.VariableContainer;
-import com.delcyon.capo.resourcemanager.ResourceDescriptor.State;
 import com.delcyon.capo.resourcemanager.types.ContentMetaData;
 import com.delcyon.capo.xml.dom.ResourceDeclarationElement;
 

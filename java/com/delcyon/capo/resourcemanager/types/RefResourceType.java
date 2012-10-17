@@ -46,16 +46,7 @@ public class RefResourceType extends AbstractResourceType
 		return null;
 	}
 
-	/* (non-Javadoc)
-	 * @see com.delcyon.capo.resourcemanager.ResourceType#isIterable()
-	 */
-	@Override
-	public boolean isIterable()
-	{
-		// TODO Auto-generated method stub
-		return false;
-	}
-
+	
 	/* (non-Javadoc)
 	 * @see com.delcyon.capo.resourcemanager.ResourceType#runtimeDefineableTokenLists()
 	 */

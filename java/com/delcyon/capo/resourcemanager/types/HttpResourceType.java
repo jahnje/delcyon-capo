@@ -34,11 +34,6 @@ public class HttpResourceType extends AbstractResourceType
 		return TokenList.NEW_LINE.getTokenLists();
 	}
 	
-	@Override
-	public boolean isIterable()
-	{
-		return false;
-	}
 	
 	@Override
 	public boolean runtimeDefineableTokenLists()

@@ -57,13 +57,7 @@ public class ResourceElementResourceType implements ResourceType
 	{
 		throw new UnsupportedOperationException("call without declaring resource");
 	}
-
-	@Override
-	public boolean isIterable()
-	{
-		return proxyedResourceType.isIterable();
-	}
-
+	
 	@Override
 	public boolean runtimeDefineableTokenLists()
 	{

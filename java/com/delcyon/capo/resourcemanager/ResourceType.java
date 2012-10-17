@@ -38,11 +38,6 @@ public interface ResourceType
 
 	public LifeCycle getDefaultLifeCycle();
 	
-	/**
-	 * returns a boolean indicating whether or not this resource can be iterated over.
-	 * @return
-	 */
-	public boolean isIterable();
 	
 	/**
 	 * Returns a boolean indicating if stream tokens can be defined at runtime in the XML.  

@@ -251,25 +251,19 @@ public abstract class ResourceDescriptorTest
     	resourceDescriptor.reset(State.NONE);
         resourceDescriptor.init(null, null, LifeCycle.EXPLICIT, true);
         resourceDescriptor.open(null);
-        if(resourceDescriptor.getResourceType().isIterable())
+        int recordCount = 0;
+        int hashCode = 0; 
+        while(resourceDescriptor.next(null))
         {
-            int recordCount = 0;
-            int hashCode = 0; 
-            while(resourceDescriptor.next(null))
-            {
-                recordCount++;
-                int tmpHashCode = new String(resourceDescriptor.readBlock(null)).hashCode();
-                Assert.assertTrue("records don't differ",hashCode != tmpHashCode);
-                hashCode = tmpHashCode;
-                tmpHashCode = new String(resourceDescriptor.readBlock(null)).hashCode();
-                Assert.assertTrue("record differs on second read",hashCode == tmpHashCode);
-            }
-        	Assert.assertTrue(recordCount > 0);
+            recordCount++;
+            int tmpHashCode = new String(resourceDescriptor.readBlock(null)).hashCode();
+            Assert.assertTrue("records don't differ",hashCode != tmpHashCode);
+            hashCode = tmpHashCode;
+            tmpHashCode = new String(resourceDescriptor.readBlock(null)).hashCode();
+            Assert.assertTrue("record differs on second read",hashCode == tmpHashCode);
         }
-        else
-        {
-        	Assert.assertTrue(resourceDescriptor.next(null) == false);
-        }
+        Assert.assertTrue(recordCount > 0);
+
         
     }
 
@@ -401,20 +395,18 @@ public abstract class ResourceDescriptorTest
     @Test
     public void testGetIterationMetaData() throws Exception
     {
-    	if (resourceDescriptor.getResourceType().isIterable())
-    	{
-    		resourceDescriptor.reset(State.NONE);
-    		resourceDescriptor.init(null, null, LifeCycle.EXPLICIT, false);
-    		resourceDescriptor.open(null);
-    		resourceDescriptor.next(null);
-    		ContentMetaData contentMetaData = resourceDescriptor.getIterationMetaData(null);
-    		List<String> attributeList = contentMetaData.getSupportedAttributes();
-    		for (String attribute : attributeList)
-    		{
-    			System.out.println(attribute+" = "+contentMetaData.getValue(attribute));
-    			Assert.assertNotNull(contentMetaData.getValue(attribute));
-    		}
-    	}
+        resourceDescriptor.reset(State.NONE);
+        resourceDescriptor.init(null, null, LifeCycle.EXPLICIT, false);
+        resourceDescriptor.open(null);
+        resourceDescriptor.next(null);
+        resourceDescriptor.readXML(null);
+        ContentMetaData contentMetaData = resourceDescriptor.getIterationMetaData(null);
+        List<String> attributeList = contentMetaData.getSupportedAttributes();
+        for (String attribute : attributeList)
+        {
+            System.out.println(attribute+" = "+contentMetaData.getValue(attribute));
+            Assert.assertNotNull(contentMetaData.getValue(attribute));
+        }
 
     }
 

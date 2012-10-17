@@ -72,16 +72,6 @@ public class ClientsResourceType implements ResourceType
 	}
 
 	/* (non-Javadoc)
-	 * @see com.delcyon.capo.resourcemanager.ResourceType#isIterable()
-	 */
-	@Override
-	public boolean isIterable()
-	{
-		// TODO Auto-generated method stub
-		return false;
-	}
-
-	/* (non-Javadoc)
 	 * @see com.delcyon.capo.resourcemanager.ResourceType#runtimeDefineableTokenLists()
 	 */
 	@Override

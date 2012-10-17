@@ -49,7 +49,6 @@ import com.delcyon.capo.server.CapoServer;
 import com.delcyon.capo.util.ReflectionUtility;
 import com.delcyon.capo.xml.XPath;
 import com.delcyon.capo.xml.dom.ResourceDeclarationElement;
-import com.delcyon.capo.xml.dom.ResourceElement;
 
 /**
  * @author jeremiah
@@ -68,6 +67,7 @@ public abstract class AbstractResourceDescriptor implements ResourceDescriptor
 	private LifeCycle lifeCycle;
 	private State resourceState = State.NONE;
 	private boolean isIterating = false;
+	private boolean next = true;
 	private ResourceType resourceType;
 	private VariableContainer declaringVariableContainer;
 	private OutputStreamTranslater outputStreamTranslater;
@@ -101,16 +101,9 @@ public abstract class AbstractResourceDescriptor implements ResourceDescriptor
 
 			if (iterate == true)
 			{
-				if (resourceType.isIterable() == false)
-				{
-					CapoServer.logger.log(Level.WARNING,"Resource '"+resourceType.getName()+" in not stepable, will default to returning all data");
-				}
-				else
-				{
-					isIterating = true;
-				}
+			    isIterating = true;
 			}
-		
+
 
 		//process resource parameters
 			
@@ -886,11 +879,19 @@ public abstract class AbstractResourceDescriptor implements ResourceDescriptor
 		}
 	}
 	
+	/**
+	 * This allows non-iterable resources to iterate over asingle result 
+	 */
 	@Override
-	public boolean next(VariableContainer variableContainer, ResourceParameter... resourceParameters) throws Exception
-	{		
-		return false;
-	}
+    public boolean next(VariableContainer variableContainer, ResourceParameter... resourceParameters) throws Exception
+    {
+        if (next == true)
+        {
+            next = false;
+            return true;
+        }
+        return false;
+    }
 
 	@Override
 	public boolean isRemoteResource()

@@ -37,11 +37,6 @@ public class ShellResourceType extends AbstractResourceType
 		return null;
 	}
 	
-	@Override
-	public boolean isIterable()
-	{	
-		return true;
-	}
 	
 	@Override
 	public boolean runtimeDefineableTokenLists()

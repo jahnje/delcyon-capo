@@ -24,6 +24,8 @@ import java.io.OutputStream;
 import java.net.URI;
 import java.util.logging.Level;
 
+import org.w3c.dom.Element;
+
 import com.delcyon.capo.CapoApplication;
 import com.delcyon.capo.Configuration.PREFERENCE;
 import com.delcyon.capo.controller.VariableContainer;
@@ -33,6 +35,7 @@ import com.delcyon.capo.resourcemanager.ResourceType;
 import com.delcyon.capo.resourcemanager.ResourceURI;
 import com.delcyon.capo.resourcemanager.types.ContentMetaData.Attributes;
 import com.delcyon.capo.resourcemanager.types.FileResourceType.Parameters;
+import com.delcyon.capo.util.XMLSerializer;
 import com.delcyon.capo.xml.dom.ResourceDeclarationElement;
 
 /**
@@ -42,8 +45,7 @@ public class FileResourceDescriptor extends AbstractResourceDescriptor implement
 {
 
 	private FileResourceContentMetaData contentMetaData = null;
-	private FileResourceContentMetaData iterationContentMetaData = null;
-	private boolean next = true;
+	private FileResourceContentMetaData iterationContentMetaData = null;	
 	private FileResourceContentMetaData buildContentMetatData(ResourceParameter...resourceParameters) throws Exception
 	{		
 		FileResourceContentMetaData contentMetaData = new FileResourceContentMetaData(getResourceURI().getBaseURI(),resourceParameters);		
@@ -147,17 +149,6 @@ public class FileResourceDescriptor extends AbstractResourceDescriptor implement
 	}
 	
 	@Override
-	public boolean next(VariableContainer variableContainer, ResourceParameter... resourceParameters) throws Exception
-	{
-		if (next == true)
-		{
-			next = false;
-			return true;
-		}
-		return false;
-	}
-	
-	@Override
 	public ContentMetaData getIterationMetaData(VariableContainer variableContainer,ResourceParameter... resourceParameters) throws Exception
 	{
 		if (getResourceState() != State.OPEN && getResourceState() != State.STEPPING)
@@ -165,6 +156,21 @@ public class FileResourceDescriptor extends AbstractResourceDescriptor implement
 			open(variableContainer,resourceParameters);
 		}
 		return iterationContentMetaData;
+	}
+	
+	@Override
+	public Element readXML(VariableContainer variableContainer, ResourceParameter... resourceParameters) throws Exception
+	{
+	    ContentMetaData contentMetaData = getContentMetaData(variableContainer, resourceParameters);
+	    if(contentMetaData.isContainer())
+	    {
+	        iterationContentMetaData = this.contentMetaData;
+	        return XMLSerializer.export(CapoApplication.getDocumentBuilder().newDocument(), contentMetaData);
+	    }
+	    else
+	    {
+	        return super.readXML(variableContainer, resourceParameters);
+	    }
 	}
 	
 

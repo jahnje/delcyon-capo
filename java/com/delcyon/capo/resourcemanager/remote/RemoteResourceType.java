@@ -64,12 +64,6 @@ public class RemoteResourceType implements ResourceType
 	}
 
 	@Override
-	public boolean isIterable()
-	{
-		return proxyedResourceType.isIterable();
-	}
-
-	@Override
 	public boolean runtimeDefineableTokenLists()
 	{
 		return proxyedResourceType.runtimeDefineableTokenLists();
