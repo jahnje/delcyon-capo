@@ -155,7 +155,7 @@ public class ImportElement extends AbstractControl implements XPathFunctionProce
 		{
 		    importedDocument = CapoApplication.getDocumentBuilder().newDocument();
 		    importedDocument.appendChild(importedDocument.createElement("text"));
-		    ByteArrayOutputStream bufferByteArrayOutputStream = new ByteArrayOutputStream(resourceDescriptor.getContentMetaData(getParentGroup(),resourceParameters).getLength().intValue());
+		    ByteArrayOutputStream bufferByteArrayOutputStream = new ByteArrayOutputStream(resourceDescriptor.getResourceMetaData(getParentGroup(),resourceParameters).getLength().intValue());
 		    StreamUtil.readInputStreamIntoOutputStream(resourceDescriptor.getInputStream(getParentGroup(),resourceParameters), bufferByteArrayOutputStream);
 		    importedDocument.getDocumentElement().setTextContent(bufferByteArrayOutputStream.toString());
 		}

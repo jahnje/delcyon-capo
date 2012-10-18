@@ -84,15 +84,15 @@ public class ResourceElementResourceDescriptor implements ResourceDescriptor
 	}
 	
 	@Override
-	public ContentMetaData getContentMetaData(VariableContainer variableContainer, ResourceParameter... resourceParameters) throws Exception
+	public ContentMetaData getResourceMetaData(VariableContainer variableContainer, ResourceParameter... resourceParameters) throws Exception
 	{
-		return proxyedResourceDescriptor.getContentMetaData(variableContainer, resourceParameters);	
+		return proxyedResourceDescriptor.getResourceMetaData(variableContainer, resourceParameters);	
 	}
 	
 	@Override
-	public ContentMetaData getIterationMetaData(VariableContainer variableContainer, ResourceParameter... resourceParameters) throws Exception
+	public ContentMetaData getContentMetaData(VariableContainer variableContainer, ResourceParameter... resourceParameters) throws Exception
 	{
-		return proxyedResourceDescriptor.getIterationMetaData(variableContainer, resourceParameters);
+		return proxyedResourceDescriptor.getContentMetaData(variableContainer, resourceParameters);
 	}
 	
 	@Override

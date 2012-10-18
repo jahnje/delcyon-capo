@@ -79,7 +79,7 @@ public class Util
     {
         startMinimalCapoApplication();
         ResourceDescriptor destinationResourceDescriptor = new FileResourceType().getResourceDescriptor(dest);
-        destinationResourceDescriptor.getContentMetaData(null,new ResourceParameter(FileResourceType.Parameters.ROOT_DIR, new File(".").getCanonicalPath()));
+        destinationResourceDescriptor.getResourceMetaData(null,new ResourceParameter(FileResourceType.Parameters.ROOT_DIR, new File(".").getCanonicalPath()));
         destinationResourceDescriptor.performAction(null, Action.DELETE);
     }
     

@@ -108,11 +108,11 @@ public class ResourceMetaDataElement extends AbstractControl
 			if (getAttributeValue(Attributes.useLastRead).equalsIgnoreCase("true"))
 			{
 				StreamUtil.readInputStreamIntoOutputStream(resourceDescriptor.getInputStream(getParentGroup(),resourceParameters),new NullOutputStream());
-				contentMetaData = resourceDescriptor.getIterationMetaData(getParentGroup(),resourceParameters);
+				contentMetaData = resourceDescriptor.getContentMetaData(getParentGroup(),resourceParameters);
 			}
 			else
 			{
-				contentMetaData = resourceDescriptor.getContentMetaData(getParentGroup(),resourceParameters);
+				contentMetaData = resourceDescriptor.getResourceMetaData(getParentGroup(),resourceParameters);
 			}
 			resourceDescriptor.close(getParentGroup(), resourceParameters);
 

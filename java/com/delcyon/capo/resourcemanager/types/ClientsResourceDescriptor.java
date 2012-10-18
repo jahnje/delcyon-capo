@@ -49,7 +49,7 @@ public class ClientsResourceDescriptor extends AbstractResourceDescriptor
 		
 		clientResourceDescriptor = CapoApplication.getDataManager().getResourceDescriptor(null, CapoApplication.getDataManager().getResourceDirectory(Preferences.CLIENTS_DIR.toString()).getResourceURI().getBaseURI()+"/"+getResourceURI().getSchemeSpecificPart());
 		
-		this.contentMetaData = clientResourceDescriptor.getContentMetaData(variableContainer, resourceParameters);
+		this.contentMetaData = clientResourceDescriptor.getResourceMetaData(variableContainer, resourceParameters);
 		
 	}
 	
@@ -60,7 +60,7 @@ public class ClientsResourceDescriptor extends AbstractResourceDescriptor
 	}
 
 	@Override
-	public ContentMetaData getContentMetaData(VariableContainer variableContainer, ResourceParameter... resourceParameters) throws Exception
+	public ContentMetaData getResourceMetaData(VariableContainer variableContainer, ResourceParameter... resourceParameters) throws Exception
 	{
 	    if (getResourceState() != State.OPEN)
 	    {
@@ -70,7 +70,7 @@ public class ClientsResourceDescriptor extends AbstractResourceDescriptor
 	}
 
 	@Override
-	public ContentMetaData getIterationMetaData(VariableContainer variableContainer, ResourceParameter... resourceParameters) throws Exception
+	public ContentMetaData getContentMetaData(VariableContainer variableContainer, ResourceParameter... resourceParameters) throws Exception
 	{
 		return contentMetaData;
 	}

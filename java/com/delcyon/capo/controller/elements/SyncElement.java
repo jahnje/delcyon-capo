@@ -117,7 +117,7 @@ public class SyncElement extends AbstractControl
 		//this was trying to work off of temp copy element, but don't know why
 		ResourceDescriptor sourceResourceDescriptor = getParentGroup().getResourceDescriptor(this,getAttributeValue(Attributes.src));
 		
-		if (sourceResourceDescriptor != null && sourceResourceDescriptor.getContentMetaData(getParentGroup(), ResourceParameterBuilder.getResourceParameters(getControlElementDeclaration())).exists())
+		if (sourceResourceDescriptor != null && sourceResourceDescriptor.getResourceMetaData(getParentGroup(), ResourceParameterBuilder.getResourceParameters(getControlElementDeclaration())).exists())
 		{
 			
 //			String destMD5 = null;			
@@ -166,8 +166,8 @@ public class SyncElement extends AbstractControl
 
 	public void syncTree(ResourceDescriptor sourceResourceDescriptor, ResourceDescriptor destinationResourceDescriptor) throws Exception
     {
-	    ContentMetaData sourceContentMetaData = sourceResourceDescriptor.getContentMetaData(getParentGroup(), ResourceParameterBuilder.getResourceParameters(getControlElementDeclaration()));
-	    ContentMetaData destinationContentMetaData = destinationResourceDescriptor.getContentMetaData(getParentGroup(), ResourceParameterBuilder.getResourceParameters(getControlElementDeclaration()));
+	    ContentMetaData sourceContentMetaData = sourceResourceDescriptor.getResourceMetaData(getParentGroup(), ResourceParameterBuilder.getResourceParameters(getControlElementDeclaration()));
+	    ContentMetaData destinationContentMetaData = destinationResourceDescriptor.getResourceMetaData(getParentGroup(), ResourceParameterBuilder.getResourceParameters(getControlElementDeclaration()));
 	    
 	    
         if (sourceContentMetaData.exists() == false)
@@ -239,8 +239,8 @@ public class SyncElement extends AbstractControl
         }
         else
         {
-            String srcMD5 = sourceResourceDescriptor.getContentMetaData(getParentGroup(), ResourceParameterBuilder.getResourceParameters(getControlElementDeclaration())).getMD5();
-            String destMD5 = destinationResourceDescriptor.getContentMetaData(getParentGroup(), ResourceParameterBuilder.getResourceParameters(getControlElementDeclaration())).getMD5();
+            String srcMD5 = sourceResourceDescriptor.getResourceMetaData(getParentGroup(), ResourceParameterBuilder.getResourceParameters(getControlElementDeclaration())).getMD5();
+            String destMD5 = destinationResourceDescriptor.getResourceMetaData(getParentGroup(), ResourceParameterBuilder.getResourceParameters(getControlElementDeclaration())).getMD5();
             if (destMD5 == null || destMD5.equals(srcMD5) == false)
             {
                 CapoApplication.logger.log(Level.INFO, "Syncing file: "+sourceResourceDescriptor.getResourceURI().getBaseURI()+" ==> "+destinationResourceDescriptor.getResourceURI().getBaseURI());

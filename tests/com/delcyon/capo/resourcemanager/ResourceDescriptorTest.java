@@ -101,14 +101,14 @@ public abstract class ResourceDescriptorTest
         resourceDescriptor.init(null, null, LifeCycle.EXPLICIT, false);
         if (resourceDescriptor.isSupportedAction(Action.DELETE))
         {
-        	Assert.assertTrue(resourceDescriptor.getContentMetaData(null).exists());
+        	Assert.assertTrue(resourceDescriptor.getResourceMetaData(null).exists());
         	resourceDescriptor.performAction(null, Action.DELETE);        
-        	Assert.assertTrue(resourceDescriptor.getContentMetaData(null).exists() == false);
+        	Assert.assertTrue(resourceDescriptor.getResourceMetaData(null).exists() == false);
         }
         if(resourceDescriptor.isSupportedAction(Action.CREATE))
         {
         	resourceDescriptor.performAction(null, Action.CREATE);
-        	Assert.assertTrue(resourceDescriptor.getContentMetaData(null).exists());
+        	Assert.assertTrue(resourceDescriptor.getResourceMetaData(null).exists());
         }
     }
 
@@ -381,7 +381,7 @@ public abstract class ResourceDescriptorTest
         resourceDescriptor.init(null, null, LifeCycle.EXPLICIT, false);
         resourceDescriptor.open(null);
         Assert.assertSame(State.OPEN,resourceDescriptor.getResourceState());
-        ContentMetaData contentMetaData = resourceDescriptor.getContentMetaData(null);
+        ContentMetaData contentMetaData = resourceDescriptor.getResourceMetaData(null);
         List<String> attributeList = contentMetaData.getSupportedAttributes();
         for (String attribute : attributeList)
 		{
@@ -400,7 +400,7 @@ public abstract class ResourceDescriptorTest
         resourceDescriptor.open(null);
         resourceDescriptor.next(null);
         resourceDescriptor.readXML(null);
-        ContentMetaData contentMetaData = resourceDescriptor.getIterationMetaData(null);
+        ContentMetaData contentMetaData = resourceDescriptor.getContentMetaData(null);
         List<String> attributeList = contentMetaData.getSupportedAttributes();
         for (String attribute : attributeList)
         {
@@ -449,9 +449,9 @@ public abstract class ResourceDescriptorTest
     	resourceDescriptor.reset(State.NONE);
     	resourceDescriptor.init(null, null, LifeCycle.EXPLICIT, false);
     	resourceDescriptor.open(null);
-    	if (resourceDescriptor.getContentMetaData(null).isContainer())
+    	if (resourceDescriptor.getResourceMetaData(null).isContainer())
     	{
-    		List<ContentMetaData> childContentMetaDataList = resourceDescriptor.getContentMetaData(null).getContainedResources();
+    		List<ContentMetaData> childContentMetaDataList = resourceDescriptor.getResourceMetaData(null).getContainedResources();
     		for (ContentMetaData contentMetaData : childContentMetaDataList)
 			{
 				Assert.assertNotNull(resourceDescriptor.getChildResourceDescriptor(null, contentMetaData.getResourceURI().getBaseURI()));

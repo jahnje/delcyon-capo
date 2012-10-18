@@ -120,7 +120,7 @@ public class DiffElement extends AbstractClientSideControl implements ClientSide
 		ResourceDescriptor modResourceDescriptor = getParentGroup().openResourceDescriptor(this, getAttributeValue(Attributes.mod));
 		ResourceParameter[] resourceParameters = ResourceParameterBuilder.getResourceParameters(getControlElementDeclaration());
 		//we always have to search for the lowest common denominator BIN=>TEXT=>XML
-		if (baseResourceDescriptor.getContentMetaData(getParentGroup(),resourceParameters).getContentFormatType() == ContentFormatType.XML || modResourceDescriptor.getContentMetaData(getParentGroup(),resourceParameters).getContentFormatType() == ContentFormatType.XML)
+		if (baseResourceDescriptor.getResourceMetaData(getParentGroup(),resourceParameters).getContentFormatType() == ContentFormatType.XML || modResourceDescriptor.getResourceMetaData(getParentGroup(),resourceParameters).getContentFormatType() == ContentFormatType.XML)
 		{
 			
 			Document baseDocument = CapoApplication.getDocumentBuilder().parse(baseResourceDescriptor.getInputStream(getParentGroup(),resourceParameters));
@@ -129,7 +129,7 @@ public class DiffElement extends AbstractClientSideControl implements ClientSide
 			Document differenceDocument = xmlDiff.getDifferences(baseDocument,modDocument);
 			getControlElementDeclaration().appendChild(getControlElementDeclaration().getOwnerDocument().adoptNode(differenceDocument.getDocumentElement()));
 		}
-		else if (baseResourceDescriptor.getContentMetaData(getParentGroup(),resourceParameters).getContentFormatType() == ContentFormatType.TEXT || modResourceDescriptor.getContentMetaData(getParentGroup(),resourceParameters).getContentFormatType() == ContentFormatType.TEXT)
+		else if (baseResourceDescriptor.getResourceMetaData(getParentGroup(),resourceParameters).getContentFormatType() == ContentFormatType.TEXT || modResourceDescriptor.getResourceMetaData(getParentGroup(),resourceParameters).getContentFormatType() == ContentFormatType.TEXT)
 		{						
 			Diff diff = new Diff(baseResourceDescriptor.getInputStream(getParentGroup(),resourceParameters), modResourceDescriptor.getInputStream(getParentGroup(),resourceParameters));
 			XMLTextDiff xmlTextDiff = new XMLTextDiff();

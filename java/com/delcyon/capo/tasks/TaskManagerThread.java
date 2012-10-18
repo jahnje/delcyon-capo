@@ -380,7 +380,7 @@ public class TaskManagerThread extends ContextThread
 					
 					NodeList tasksNodeList = XPath.selectNodes(taskManagerDocument, "//server:task");
 					String taskURI = resourceDescriptor.getLocalName();
-					String resourceMD5 = resourceDescriptor.getContentMetaData(null).getMD5();
+					String resourceMD5 = resourceDescriptor.getResourceMetaData(null).getMD5();
 					
 					//if we didn't find anything see if we are referring to a module
 					if (tasksNodeList.getLength() == 0)
@@ -830,7 +830,7 @@ public class TaskManagerThread extends ContextThread
 	    try
 	    {
 	        ResourceDescriptor taskDocumentResourceDescriptor = capoDataManager.findDocumentResourceDescriptor(taskID, clientID, Preferences.TASK_DIR);
-	        if (taskDocumentResourceDescriptor != null && taskDocumentResourceDescriptor.getContentMetaData(null).exists() == true)
+	        if (taskDocumentResourceDescriptor != null && taskDocumentResourceDescriptor.getResourceMetaData(null).exists() == true)
 	        {
 	            Document taskDocument = CapoApplication.getDocumentBuilder().parse(taskDocumentResourceDescriptor.getInputStream(null));
 	            Node taskDataNode = XPath.selectSingleNode(taskDocument, "//server:taskData");
@@ -866,7 +866,7 @@ public class TaskManagerThread extends ContextThread
         try
         {
             ResourceDescriptor taskDocumentResourceDescriptor = capoDataManager.findDocumentResourceDescriptor(taskID, clientID, Preferences.TASK_DIR);
-            if (taskDocumentResourceDescriptor != null && taskDocumentResourceDescriptor.getContentMetaData(null).exists() == true)
+            if (taskDocumentResourceDescriptor != null && taskDocumentResourceDescriptor.getResourceMetaData(null).exists() == true)
             {
                 Document taskDocument = CapoApplication.getDocumentBuilder().parse(taskDocumentResourceDescriptor.getInputStream(null));
                 Node taskDataNode = XPath.selectSingleNode(taskDocument, "//server:taskData/server:taskDataItem[@dependantID = '"+dependantID+"']/*");
@@ -925,10 +925,10 @@ public class TaskManagerThread extends ContextThread
 	        {
 	            ResourceDescriptor clientResourceDescriptor = capoDataManager.getResourceDescriptor(null, "clients:"+clientID);
 	            //see if we have a child filesystem
-	            if (clientResourceDescriptor.getContentMetaData(null).exists() == true)
+	            if (clientResourceDescriptor.getResourceMetaData(null).exists() == true)
 	            {
 	                ResourceDescriptor relaventChildResourceDescriptor = clientResourceDescriptor.getChildResourceDescriptor(null,CapoApplication.getConfiguration().getValue(Preferences.TASK_DIR));
-	                if (relaventChildResourceDescriptor != null && relaventChildResourceDescriptor.getContentMetaData(null).exists() == true)
+	                if (relaventChildResourceDescriptor != null && relaventChildResourceDescriptor.getResourceMetaData(null).exists() == true)
 	                {
 	                    //search the client filesystem
 	                	taskDocumentResourceDescriptor = relaventChildResourceDescriptor.getChildResourceDescriptor(taskElement, name+".xml");
@@ -943,7 +943,7 @@ public class TaskManagerThread extends ContextThread
 	    	}
 	        taskDocument = documentBuilder.newDocument();
 	    }
-	    else if (taskDocumentResourceDescriptor.getContentMetaData(null).exists() == false)
+	    else if (taskDocumentResourceDescriptor.getResourceMetaData(null).exists() == false)
 	    {	       
 	        taskDocument = documentBuilder.newDocument();
 	    }

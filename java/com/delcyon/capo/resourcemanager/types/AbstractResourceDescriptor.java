@@ -649,7 +649,7 @@ public abstract class AbstractResourceDescriptor implements ResourceDescriptor
 		{
 			ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
 			StreamUtil.readInputStreamIntoOutputStream(getInputStream(variableContainer, resourceParameters), byteArrayOutputStream) ;
-			if (getIterationMetaData(variableContainer, resourceParameters).getContentFormatType() == ContentFormatType.XML)
+			if (getContentMetaData(variableContainer, resourceParameters).getContentFormatType() == ContentFormatType.XML)
 			{
 			    dataElement = CapoApplication.getDocumentBuilder().parse(new ByteArrayInputStream(byteArrayOutputStream.toByteArray())).getDocumentElement();
 			}
@@ -902,10 +902,10 @@ public abstract class AbstractResourceDescriptor implements ResourceDescriptor
 	@Override
 	public ResourceDescriptor getChildResourceDescriptor(ControlElement callingControlElement, String relativeURI) throws Exception
 	{
-	    ContentMetaData contentMetaData = getContentMetaData(null);
+	    ContentMetaData contentMetaData = getResourceMetaData(null);
 	    if ( contentMetaData.isContainer() == true)
 	    {
-	        List<ContentMetaData> childContentMetaDataList = getContentMetaData(null).getContainedResources();
+	        List<ContentMetaData> childContentMetaDataList = getResourceMetaData(null).getContainedResources();
 	        for (ContentMetaData childContentMetaData : childContentMetaDataList)
 	        {	            
 	            if(childContentMetaData.getResourceURI().getBaseURI().endsWith(relativeURI))

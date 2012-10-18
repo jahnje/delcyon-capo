@@ -88,7 +88,7 @@ public class SetIDElement extends AbstractControl
 		String identityControlName = CapoApplication.getConfiguration().getValue(Preferences.DEFAULT_IDENTITY_FILE);
 
 		ResourceDescriptor clientResourceDescriptor = CapoApplication.getDataManager().getResourceDescriptor(null, "clients:"+clientID+"/"+identityControlName);
-		if (clientResourceDescriptor.getContentMetaData(null).exists() == false)
+		if (clientResourceDescriptor.getResourceMetaData(null).exists() == false)
 		{
 		    clientResourceDescriptor.performAction(null, Action.CREATE);
 		    CapoApplication.logger.log(Level.INFO,"Creating new identity document for "+clientID);

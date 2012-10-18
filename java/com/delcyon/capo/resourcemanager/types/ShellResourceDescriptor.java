@@ -296,7 +296,7 @@ public class ShellResourceDescriptor extends AbstractResourceDescriptor
 	
 	
  	@Override
-	public ContentMetaData getContentMetaData(VariableContainer variableContainer,ResourceParameter... resourceParameters) throws Exception
+	public ContentMetaData getResourceMetaData(VariableContainer variableContainer,ResourceParameter... resourceParameters) throws Exception
 	{
 		return contentMetaData;
 	}
@@ -310,7 +310,7 @@ public class ShellResourceDescriptor extends AbstractResourceDescriptor
  	}
  	
 	@Override
-	public ContentMetaData getIterationMetaData(VariableContainer variableContainer,ResourceParameter... resourceParameters) throws Exception
+	public ContentMetaData getContentMetaData(VariableContainer variableContainer,ResourceParameter... resourceParameters) throws Exception
 	{	    
 		return iterationContentMetaData;
 	}

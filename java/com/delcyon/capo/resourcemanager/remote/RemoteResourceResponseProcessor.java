@@ -209,10 +209,10 @@ public class RemoteResourceResponseProcessor implements XMLServerResponseProcess
 					resourceDescriptor.reset(message.getPreviousState());
 					break;
 				case GET_CONTENT_METADATA:
-					reply.setContentMetaData(resourceDescriptor.getContentMetaData(this, message.getResourceParameters()));
+					reply.setContentMetaData(resourceDescriptor.getResourceMetaData(this, message.getResourceParameters()));
 					break;
 				case GET_ITERATION_METADATA:
-					reply.setIterationMetaData(resourceDescriptor.getIterationMetaData(this, message.getResourceParameters()));
+					reply.setIterationMetaData(resourceDescriptor.getContentMetaData(this, message.getResourceParameters()));
 					break;
 				case GET_INPUTSTREAM:
 					capoConnection = new CapoConnection();

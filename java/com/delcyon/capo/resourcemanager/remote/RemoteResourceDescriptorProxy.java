@@ -107,7 +107,7 @@ public class RemoteResourceDescriptorProxy  implements ResourceDescriptor,Client
 	}
 	
 	@Override
-	public ContentMetaData getContentMetaData(VariableContainer variableContainer, ResourceParameter... resourceParameters) throws Exception
+	public ContentMetaData getResourceMetaData(VariableContainer variableContainer, ResourceParameter... resourceParameters) throws Exception
 	{
 		this.variableContainer = variableContainer;
 		RemoteResourceDescriptorMessage message = new RemoteResourceDescriptorMessage();
@@ -117,7 +117,7 @@ public class RemoteResourceDescriptorProxy  implements ResourceDescriptor,Client
 	}
 	
 	@Override
-	public ContentMetaData getIterationMetaData(VariableContainer variableContainer, ResourceParameter... resourceParameters) throws Exception
+	public ContentMetaData getContentMetaData(VariableContainer variableContainer, ResourceParameter... resourceParameters) throws Exception
 	{
 		this.variableContainer = variableContainer;
 		RemoteResourceDescriptorMessage message = new RemoteResourceDescriptorMessage();
@@ -129,10 +129,10 @@ public class RemoteResourceDescriptorProxy  implements ResourceDescriptor,Client
 	@Override
 	public ResourceDescriptor getChildResourceDescriptor(ControlElement callingControlElement, String relativeURI) throws Exception
 	{
-	    ContentMetaData contentMetaData = getContentMetaData(null);
+	    ContentMetaData contentMetaData = getResourceMetaData(null);
         if ( contentMetaData.isContainer() == true)
         {
-            List<ContentMetaData> childContentMetaDataList = getContentMetaData(null).getContainedResources();
+            List<ContentMetaData> childContentMetaDataList = getResourceMetaData(null).getContainedResources();
             for (ContentMetaData childContentMetaData : childContentMetaDataList)
             {
                 if(childContentMetaData.getResourceURI().getPath().endsWith(relativeURI))

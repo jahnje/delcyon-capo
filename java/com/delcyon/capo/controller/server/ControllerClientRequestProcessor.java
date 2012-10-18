@@ -243,7 +243,7 @@ public class ControllerClientRequestProcessor implements ClientRequestProcessor
 
         //make sure we have a document
         ResourceDescriptor clientResourceDescriptor = CapoApplication.getDataManager().getResourceDescriptor(null, "clients:"+clientID+"/"+identityControlName);
-        if (clientResourceDescriptor.getContentMetaData(null).exists() == false)
+        if (clientResourceDescriptor.getResourceMetaData(null).exists() == false)
         {
             clientResourceDescriptor.performAction(null, Action.CREATE);
             CapoApplication.logger.log(Level.INFO,"Creating new identity document for "+clientID);
@@ -395,7 +395,7 @@ public class ControllerClientRequestProcessor implements ClientRequestProcessor
 					
 					ResourceDescriptor includeResourceDescriptor = CapoApplication.getDataManager().getResourceDescriptor(null,src);
 					includeResourceDescriptor.addResourceParameters(null, new ResourceParameter(FileResourceType.Parameters.PARENT_PROVIDED_DIRECTORY,PREFERENCE.CONTROLLER_DIR));
-					if (includeResourceDescriptor.getContentMetaData(null).exists() == true)
+					if (includeResourceDescriptor.getResourceMetaData(null).exists() == true)
 					{
 					    Document importDocument = CapoApplication.getDocumentBuilder().parse(includeResourceDescriptor.getInputStream(null));					
 					    includeElement.getParentNode().replaceChild(includeElement.getOwnerDocument().importNode(importDocument.getDocumentElement(), true), includeElement);

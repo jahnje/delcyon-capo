@@ -81,7 +81,7 @@ public class ResourceElement extends ResourceNode implements Element
         namespaceURI = ownerResourceDocument.getNamespaceURI();
         prefix = ownerResourceDocument.getPrefix();
         localName = resourceDescriptor.getLocalName();        
-        setContentMetatData(resourceDescriptor.getContentMetaData(null));
+        setContentMetatData(resourceDescriptor.getResourceMetaData(null));
     }
 
     public void setContentMetatData(ContentMetaData contentMetaData)

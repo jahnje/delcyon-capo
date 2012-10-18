@@ -134,7 +134,7 @@ public class FileResourceDescriptor extends AbstractResourceDescriptor implement
 
 	
 	@Override
-	public ContentMetaData getContentMetaData(VariableContainer variableContainer,ResourceParameter... resourceParameters) throws Exception
+	public ContentMetaData getResourceMetaData(VariableContainer variableContainer,ResourceParameter... resourceParameters) throws Exception
 	{
 		if (getResourceState() != State.OPEN)
 		{
@@ -149,7 +149,7 @@ public class FileResourceDescriptor extends AbstractResourceDescriptor implement
 	}
 	
 	@Override
-	public ContentMetaData getIterationMetaData(VariableContainer variableContainer,ResourceParameter... resourceParameters) throws Exception
+	public ContentMetaData getContentMetaData(VariableContainer variableContainer,ResourceParameter... resourceParameters) throws Exception
 	{
 		if (getResourceState() != State.OPEN && getResourceState() != State.STEPPING)
 		{
@@ -161,7 +161,7 @@ public class FileResourceDescriptor extends AbstractResourceDescriptor implement
 	@Override
 	public Element readXML(VariableContainer variableContainer, ResourceParameter... resourceParameters) throws Exception
 	{
-	    ContentMetaData contentMetaData = getContentMetaData(variableContainer, resourceParameters);
+	    ContentMetaData contentMetaData = getResourceMetaData(variableContainer, resourceParameters);
 	    if(contentMetaData.isContainer())
 	    {
 	        iterationContentMetaData = this.contentMetaData;

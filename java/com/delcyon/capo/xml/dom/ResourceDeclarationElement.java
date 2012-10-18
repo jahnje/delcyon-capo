@@ -202,7 +202,7 @@ public class ResourceDeclarationElement
         	System.out.println("found an unititialized resource");
         	recurse = false;
         }
-        else if(resourceDescriptor.getContentMetaData(null).exists() == false)
+        else if(resourceDescriptor.getResourceMetaData(null).exists() == false)
         {
             //If it doesn't exist, skip it, this is a join after all
         	//System.out.println("found an unexisting resource: "+resourceDescriptor.getResourceURI());
@@ -218,7 +218,7 @@ public class ResourceDeclarationElement
                 //get the result xml from the actual resource descriptor
                 Element readXMLElement = (Element) parentElement.getOwnerDocument().importNode(resourceDescriptor.readXML(variableContainer, resourceParameters),true);                
                 ResourceDocument resourceDocument = parentResourceElement.getOwnerResourceDocument();
-                ResourceElement readResourceElement = resourceDocument.createResourceElement("resource",readXMLElement,resourceDescriptor.getIterationMetaData(variableContainer, resourceParameters));
+                ResourceElement readResourceElement = resourceDocument.createResourceElement("resource",readXMLElement,resourceDescriptor.getContentMetaData(variableContainer, resourceParameters));
                 readResourceElement.setAttribute("name", getLocalName());
                 //TODO convert to ResourceElement
                 cacheVector.add(readResourceElement);

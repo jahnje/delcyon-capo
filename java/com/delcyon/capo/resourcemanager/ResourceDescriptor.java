@@ -161,11 +161,11 @@ public interface ResourceDescriptor
 	/** occurs when the resource falls out of scope, and is dependent on the lifeCycle attribute to define that scope. */
 	public void release(VariableContainer variableContainer, ResourceParameter... resourceParameters) throws Exception;
 	
-	/** This will build the content meta data which requires reading the resource*/
-	public ContentMetaData getContentMetaData(VariableContainer variableContainer, ResourceParameter... resourceParameters) throws Exception;
+	/** This will return the resource metadata which can aquired without fully reading the resource. It will should always be available directly after the open() method is called*/
+	public ContentMetaData getResourceMetaData(VariableContainer variableContainer, ResourceParameter... resourceParameters) throws Exception;
 	
-	/** This is the ContentMeta Data available after an iteration of the stream, and iteration can be a full read*/
-	public ContentMetaData getIterationMetaData(VariableContainer variableContainer, ResourceParameter... resourceParameters) throws Exception;
+	/** This is the Content Metadata available after a call to next() */
+	public ContentMetaData getContentMetaData(VariableContainer variableContainer, ResourceParameter... resourceParameters) throws Exception;
 	
 	/** This returns the scope of a resource
 	 * @throws Exception */

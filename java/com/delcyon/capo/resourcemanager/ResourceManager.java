@@ -124,7 +124,7 @@ public class ResourceManager extends CapoDataManager
 		//Build and load directories		
 		//no place should use append resource URI's like this except here where the resource manager hasn't been loaded yet, so auto resolution can't happen.
 		dataDir =  getResourceDescriptor(null,CapoApplication.getConfiguration().getValue(PREFERENCE.CAPO_DIR));
-		ContentMetaData dataDirContentMetaData = dataDir.getContentMetaData(null);
+		ContentMetaData dataDirContentMetaData = dataDir.getResourceMetaData(null);
 		if (dataDirContentMetaData.exists() == false)
         {
 		    
@@ -152,7 +152,7 @@ public class ResourceManager extends CapoDataManager
             
             ResourceDescriptor dynamicDir = dataDir.getChildResourceDescriptor(null,CapoApplication.getConfiguration().getValue(preference));
             
-            ContentMetaData dynamicDirContentMetaData = dynamicDir.getContentMetaData(null);
+            ContentMetaData dynamicDirContentMetaData = dynamicDir.getResourceMetaData(null);
             if (dynamicDirContentMetaData.exists() == false)
             {            	
                 dynamicDir.performAction(null, Action.CREATE,new ResourceParameter(ResourceDescriptor.DefaultParameters.CONTAINER, "true"));
@@ -183,7 +183,7 @@ public class ResourceManager extends CapoDataManager
             for (String fileName : fileNames)
 			{
             	ResourceDescriptor dynamicFile = directoryHashMap.get(preference.toString()).getChildResourceDescriptor(null,fileName);
-                if (dynamicFile.getContentMetaData(null).exists() == false)
+                if (dynamicFile.getResourceMetaData(null).exists() == false)
                 {
                     Document document = CapoApplication.getDefaultDocument(fileName);
                     OutputStream outputStream = dynamicFile.getOutputStream(null);
@@ -320,10 +320,10 @@ public class ResourceManager extends CapoDataManager
         {
             ResourceDescriptor clientResourceDescriptor = getResourceDescriptor(null, "clients:"+clientID);
             //see if we have a child filesystem
-            if (clientResourceDescriptor.getContentMetaData(null).exists() == true)
+            if (clientResourceDescriptor.getResourceMetaData(null).exists() == true)
             {
                 ResourceDescriptor relaventChildResourceDescriptor = clientResourceDescriptor.getChildResourceDescriptor(null,CapoApplication.getConfiguration().getValue(directoryPreference));
-                if (relaventChildResourceDescriptor != null && relaventChildResourceDescriptor.getContentMetaData(null).exists() == true)
+                if (relaventChildResourceDescriptor != null && relaventChildResourceDescriptor.getResourceMetaData(null).exists() == true)
                 {
                     //search the client filesystem
                     foundResourceDescriptor = getDocumentResourceDescriptor(relaventChildResourceDescriptor, documentName);
@@ -337,14 +337,14 @@ public class ResourceManager extends CapoDataManager
         {
          
             ResourceDescriptor relaventChildResourceDescriptor = getResourceDirectory(directoryPreference.toString());
-            if (relaventChildResourceDescriptor != null && relaventChildResourceDescriptor.getContentMetaData(null).exists() == true)
+            if (relaventChildResourceDescriptor != null && relaventChildResourceDescriptor.getResourceMetaData(null).exists() == true)
             {
                 //search the relevant file system
                 foundResourceDescriptor = getDocumentResourceDescriptor(relaventChildResourceDescriptor, documentName);
             }
         }
         //if not null return parsed document
-        if (foundResourceDescriptor != null && foundResourceDescriptor.getContentMetaData(null).exists() == true)
+        if (foundResourceDescriptor != null && foundResourceDescriptor.getResourceMetaData(null).exists() == true)
         {
             return foundResourceDescriptor;
         }
@@ -389,7 +389,7 @@ public class ResourceManager extends CapoDataManager
     {
 		
         //bak here
-        ContentMetaData contentMetaData =  parentDirectory.getContentMetaData(null);
+        ContentMetaData contentMetaData =  parentDirectory.getResourceMetaData(null);
         
         List<ContentMetaData> childResourceList = contentMetaData.getContainedResources();
         for (ContentMetaData childContentMetaData : childResourceList)
@@ -413,7 +413,7 @@ public class ResourceManager extends CapoDataManager
 	public List<ResourceDescriptor> findDocuments(ResourceDescriptor parentDirectory) throws Exception
 	{
 	    Vector<ResourceDescriptor> resourceDescriptorVector = new Vector<ResourceDescriptor>();
-	    ContentMetaData contentMetaData =  parentDirectory.getContentMetaData(null);
+	    ContentMetaData contentMetaData =  parentDirectory.getResourceMetaData(null);
         
         List<ContentMetaData> childResourceList = contentMetaData.getContainedResources();
         for (ContentMetaData childContentMetaData : childResourceList)
@@ -440,7 +440,7 @@ public class ResourceManager extends CapoDataManager
 	{
 		ResourceDescriptor sequenceFile = getResourceDescriptor(null,sequenceName+".seq");
 		sequenceFile.addResourceParameters(null,new ResourceParameter(FileResourceType.Parameters.PARENT_PROVIDED_DIRECTORY,PREFERENCE.CONFIG_DIR));
-		if (sequenceFile.getContentMetaData(null).exists() == false)
+		if (sequenceFile.getResourceMetaData(null).exists() == false)
 		{
 			//initialize sequence file
 		    sequenceFile.performAction(null, Action.CREATE);

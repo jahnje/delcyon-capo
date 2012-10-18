@@ -235,7 +235,7 @@ public class CapoServer extends CapoApplication
 		ResourceDescriptor keystoreFile = getDataManager().getResourceDescriptor(null, getConfiguration().getValue(PREFERENCE.KEYSTORE));
 		keystoreFile.addResourceParameters(null,new ResourceParameter(FileResourceType.Parameters.PARENT_PROVIDED_DIRECTORY,PREFERENCE.CONFIG_DIR));
 		char[] password = getConfiguration().getValue(PREFERENCE.KEYSTORE_PASSWORD).toCharArray();
-		if (keystoreFile.getContentMetaData(null).exists() == false)
+		if (keystoreFile.getResourceMetaData(null).exists() == false)
 		{
             keyStore = buildKeyStore();
 		}
@@ -264,7 +264,7 @@ public class CapoServer extends CapoApplication
 	{
 	    ResourceDescriptor startupScriptFile = getDataManager().getResourceDescriptor(null,startupScriptName);
 	    startupScriptFile.addResourceParameters(null,new ResourceParameter(FileResourceType.Parameters.PARENT_PROVIDED_DIRECTORY,PREFERENCE.CONTROLLER_DIR));
-		if (startupScriptFile.getContentMetaData(null).exists() == false)
+		if (startupScriptFile.getResourceMetaData(null).exists() == false)
 		{
 		    startupScriptFile.performAction(null, Action.CREATE);
 		    startupScriptFile.close(null);
@@ -501,7 +501,7 @@ public class CapoServer extends CapoApplication
 
 	                        //check for a local client directory
 	                        ResourceDescriptor clientResourceDescriptor = getDataManager().getResourceDescriptor(null, "clients:"+clientID);
-	                        if (clientResourceDescriptor.getContentMetaData(null).exists() == false)
+	                        if (clientResourceDescriptor.getResourceMetaData(null).exists() == false)
 	                        {
 	                            logger.log(Level.INFO, "Creating new clients resource for "+clientID);
 	                            clientResourceDescriptor.performAction(null, Action.CREATE,new ResourceParameter(ResourceDescriptor.DefaultParameters.CONTAINER, "true"));
@@ -511,7 +511,7 @@ public class CapoServer extends CapoApplication
 
 	                        //check for a client resource directory
 	                        ResourceDescriptor clientResourcesResourceDescriptor = clientResourceDescriptor.getChildResourceDescriptor(null,getConfiguration().getValue(PREFERENCE.RESOURCE_DIR));
-	                        if (clientResourcesResourceDescriptor.getContentMetaData(null).exists() == false)
+	                        if (clientResourcesResourceDescriptor.getResourceMetaData(null).exists() == false)
 	                        {
 	                            logger.log(Level.INFO, "Creating new resource dir for "+clientID);
 	                            clientResourcesResourceDescriptor.performAction(null, Action.CREATE,new ResourceParameter(ResourceDescriptor.DefaultParameters.CONTAINER, "true"));
@@ -521,7 +521,7 @@ public class CapoServer extends CapoApplication
 
 	                      //check for a client tasks directory
                             ResourceDescriptor clientTasksResourceDescriptor = clientResourceDescriptor.getChildResourceDescriptor(null,getConfiguration().getValue(TaskManagerThread.Preferences.TASK_DIR));
-                            if (clientTasksResourceDescriptor.getContentMetaData(null).exists() == false)
+                            if (clientTasksResourceDescriptor.getResourceMetaData(null).exists() == false)
                             {
                                 logger.log(Level.INFO, "Creating new tasks dir for "+clientID);
                                 clientTasksResourceDescriptor.performAction(null, Action.CREATE,new ResourceParameter(ResourceDescriptor.DefaultParameters.CONTAINER, "true"));
@@ -532,7 +532,7 @@ public class CapoServer extends CapoApplication
 	                        //update status information
 	                        ResourceDescriptor statusResourceDescriptor = clientResourceDescriptor.getChildResourceDescriptor(null,"status.xml");
 	                        Element statusRootElement = null;
-	                        if (statusResourceDescriptor.getContentMetaData(null).exists() == false)
+	                        if (statusResourceDescriptor.getResourceMetaData(null).exists() == false)
 	                        {
 	                            statusResourceDescriptor.performAction(null, Action.CREATE);
 	                            statusRootElement = CapoApplication.getDefaultDocument("status.xml").getDocumentElement();

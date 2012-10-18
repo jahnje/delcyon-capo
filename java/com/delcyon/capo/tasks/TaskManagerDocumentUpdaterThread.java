@@ -96,7 +96,7 @@ public class TaskManagerDocumentUpdaterThread extends Thread
 				    }
 				    Document taskManagerDocument = documentUpdate.getDocument();
 				    ResourceDescriptor taskManagerDocumentFileDescriptor = documentUpdate.getDocumentResourceDescriptor();
-				    if (taskManagerDocumentFileDescriptor.getContentMetaData(null).exists() == false)
+				    if (taskManagerDocumentFileDescriptor.getResourceMetaData(null).exists() == false)
 			        {
 				    	taskManagerDocumentFileDescriptor.performAction(null, Action.CREATE);
 			        }

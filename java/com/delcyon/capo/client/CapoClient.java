@@ -195,7 +195,7 @@ public class CapoClient extends CapoApplication
 	{
 		ResourceDescriptor startupScriptFile = getDataManager().getResourceDescriptor(null,startupScriptName);
 		startupScriptFile.addResourceParameters(null,new ResourceParameter(FileResourceType.Parameters.PARENT_PROVIDED_DIRECTORY,PREFERENCE.CONFIG_DIR));
-		if (startupScriptFile.getContentMetaData(null).exists() == false)
+		if (startupScriptFile.getResourceMetaData(null).exists() == false)
 		{
 		    startupScriptFile.performAction(null, Action.CREATE);
 		    startupScriptFile.close(null);
@@ -438,7 +438,7 @@ public class CapoClient extends CapoApplication
 		KeyStore keyStore = KeyStore.getInstance(KeyStore.getDefaultType());
 		ResourceDescriptor keystoreFile = getDataManager().getResourceDescriptor(null,getConfiguration().getValue(PREFERENCE.KEYSTORE));
 		keystoreFile.addResourceParameters(null,new ResourceParameter(FileResourceType.Parameters.PARENT_PROVIDED_DIRECTORY,PREFERENCE.CONFIG_DIR));
-		if (keystoreFile.getContentMetaData(null).exists() == false)
+		if (keystoreFile.getResourceMetaData(null).exists() == false)
 		{
 			return false;
 		}
@@ -504,7 +504,7 @@ public class CapoClient extends CapoApplication
 		ResourceDescriptor keystoreFile = getDataManager().getResourceDescriptor(null, getConfiguration().getValue(PREFERENCE.KEYSTORE));
 		keystoreFile.addResourceParameters(null,new ResourceParameter(FileResourceType.Parameters.PARENT_PROVIDED_DIRECTORY,PREFERENCE.CONFIG_DIR));
 		char[] password = getConfiguration().getValue(PREFERENCE.KEYSTORE_PASSWORD).toCharArray();
-		if (keystoreFile.getContentMetaData(null).exists() == false)
+		if (keystoreFile.getResourceMetaData(null).exists() == false)
 		{
 			KeyPairGenerator rsakeyPairGenerator = KeyPairGenerator.getInstance("RSA");
             rsakeyPairGenerator.initialize(getConfiguration().getIntValue(Preferences.KEY_SIZE));
@@ -561,7 +561,7 @@ public class CapoClient extends CapoApplication
             KeyStore.PrivateKeyEntry privateKeyEntry = new PrivateKeyEntry(rsaKeyPair.getPrivate(), new Certificate[]{certificate});
             
             keyStore.setEntry(getConfiguration().getValue(Preferences.CLIENT_ID)+".private", privateKeyEntry,new KeyStore.PasswordProtection(password));
-            if (keystoreFile.getContentMetaData(null).exists() == false)
+            if (keystoreFile.getResourceMetaData(null).exists() == false)
             {
                 keystoreFile.performAction(null, Action.CREATE);
                 keystoreFile.close(null);

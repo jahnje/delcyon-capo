@@ -198,7 +198,7 @@ public class ExportElement extends AbstractControl
 		ResourceDescriptor resourceDescriptor = getParentGroup().getResourceDescriptor(this, dest);		
 		ResourceParameter[] resourceParameters = ResourceParameterBuilder.getResourceParameters(getControlElementDeclaration());
 		//don't save anything if the data hasn't changed
-		String md5 = resourceDescriptor.getContentMetaData(getParentGroup(),resourceParameters).getMD5();
+		String md5 = resourceDescriptor.getResourceMetaData(getParentGroup(),resourceParameters).getMD5();
 		
 		if (md5 != null)
 		{

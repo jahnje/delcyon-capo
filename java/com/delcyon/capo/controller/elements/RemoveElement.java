@@ -86,7 +86,7 @@ public class RemoveElement extends AbstractControl
 		else if (uri.isEmpty() == false)
 		{
 		    ResourceDescriptor resourceDescriptor = CapoApplication.getDataManager().getResourceDescriptor(this, uri);
-	        if (resourceDescriptor.getContentMetaData(null).exists() == true)
+	        if (resourceDescriptor.getResourceMetaData(null).exists() == true)
 	        {
 	            resourceDescriptor.performAction(null, Action.DELETE);	            
 	        }

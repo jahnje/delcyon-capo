@@ -66,9 +66,9 @@ public class HTTPStreamConsumer implements StreamProcessor
 		fileResourceDescriptor.addResourceParameters(null, new ResourceParameter(FileResourceType.Parameters.PARENT_PROVIDED_DIRECTORY,PREFERENCE.UPDATES_DIR,Source.CALL));
 		
 		
-		if (fileResourceDescriptor.getContentMetaData(null).exists() == true && fileResourceDescriptor.getContentMetaData(null).isReadable() == true)
+		if (fileResourceDescriptor.getResourceMetaData(null).exists() == true && fileResourceDescriptor.getResourceMetaData(null).isReadable() == true)
 		{
-			response.setHeader("Content-Length", fileResourceDescriptor.getContentMetaData(null).getLength()+"");
+			response.setHeader("Content-Length", fileResourceDescriptor.getResourceMetaData(null).getLength()+"");
 			response.setHeader("Content-Type", "application/octet-stream");
 			outputStream.write(response.getBytes());			
 			StreamUtil.readInputStreamIntoOutputStream(fileResourceDescriptor.getInputStream(null), outputStream);
