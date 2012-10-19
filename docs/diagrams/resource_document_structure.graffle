@@ -1142,7 +1142,7 @@ Should be split into two, it's shouldn't be used to build a resource element as 
 	<key>MasterSheets</key>
 	<array/>
 	<key>ModificationDate</key>
-	<string>2012-10-08 10:56:55 -0500</string>
+	<string>2012-10-08 14:33:10 -0500</string>
 	<key>Modifier</key>
 	<string>jeremiah</string>
 	<key>NotesVisible</key>
