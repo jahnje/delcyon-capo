@@ -19,14 +19,11 @@ package com.delcyon.capo.resourcemanager.types;
 import org.w3c.dom.Element;
 
 import com.delcyon.capo.CapoApplication;
-import com.delcyon.capo.controller.ControlElement;
 import com.delcyon.capo.controller.VariableContainer;
 import com.delcyon.capo.resourcemanager.ResourceDescriptor;
 import com.delcyon.capo.resourcemanager.ResourceParameter;
-import com.delcyon.capo.resourcemanager.ResourceURI;
-import com.delcyon.capo.resourcemanager.types.RefResourceType.Parameters;
+import com.delcyon.capo.resourcemanager.ResourceDescriptor.State;
 import com.delcyon.capo.server.CapoServer.Preferences;
-import com.delcyon.capo.xml.XPath;
 import com.delcyon.capo.xml.dom.ResourceDeclarationElement;
 
 /**
@@ -35,22 +32,14 @@ import com.delcyon.capo.xml.dom.ResourceDeclarationElement;
  */
 public class ClientsResourceDescriptor extends AbstractResourceDescriptor
 {
-
-	private ContentMetaData contentMetaData;
-	private ControlElement contextControlElement = null;
+		
 	private ResourceDescriptor clientResourceDescriptor = null;
-
-	
 	
 	@Override
 	public void init(ResourceDeclarationElement declaringResourceElement, VariableContainer variableContainer, LifeCycle lifeCycle, boolean iterate, ResourceParameter... resourceParameters) throws Exception
 	{		
 		super.init(declaringResourceElement, variableContainer, lifeCycle, iterate, resourceParameters);
-		
 		clientResourceDescriptor = CapoApplication.getDataManager().getResourceDescriptor(null, CapoApplication.getDataManager().getResourceDirectory(Preferences.CLIENTS_DIR.toString()).getResourceURI().getBaseURI()+"/"+getResourceURI().getSchemeSpecificPart());
-		
-		this.contentMetaData = clientResourceDescriptor.getResourceMetaData(variableContainer, resourceParameters);
-		
 	}
 	
 	@Override
@@ -59,22 +48,7 @@ public class ClientsResourceDescriptor extends AbstractResourceDescriptor
 		return new Action[]{Action.CREATE};
 	}
 
-	@Override
-	public ContentMetaData getResourceMetaData(VariableContainer variableContainer, ResourceParameter... resourceParameters) throws Exception
-	{
-	    if (getResourceState() != State.OPEN)
-	    {
-	        super.open(variableContainer, resourceParameters);
-	    }
-		return contentMetaData;
-	}
-
-	@Override
-	public ContentMetaData getContentMetaData(VariableContainer variableContainer, ResourceParameter... resourceParameters) throws Exception
-	{
-		return contentMetaData;
-	}
-
+	
 	@Override
 	public StreamFormat[] getSupportedStreamFormats(StreamType streamType) throws Exception
 	{
@@ -101,26 +75,33 @@ public class ClientsResourceDescriptor extends AbstractResourceDescriptor
 	@Override
 	public Element readXML(VariableContainer variableContainer, ResourceParameter... resourceParameters) throws Exception
 	{	
-		if (getResourceState() != State.OPEN)
-		{
-			open(variableContainer, resourceParameters);
-		}
-		addResourceParameters(variableContainer, resourceParameters);
-		if(contextControlElement != null)
-		{
-			if (getVarValue(variableContainer, Parameters.XMLNS) != null)
-			{
-				return (Element) XPath.selectNSNode(contextControlElement.getControlElementDeclaration(), getResourceURI().getSchemeSpecificPart(),getVarValue(variableContainer, Parameters.XMLNS).split(","));
-			}
-			else
-			{ 
-				return (Element) XPath.selectSingleNode(contextControlElement.getControlElementDeclaration(), getResourceURI().getSchemeSpecificPart());
-			}
-		}
-		else
-		{
-			return null;
-		}
+	    advanceState(State.STEPPING, variableContainer, resourceParameters);
+		return clientResourceDescriptor.readXML(variableContainer, resourceParameters);
 	}
+
+    @Override
+    public boolean next(VariableContainer variableContainer, ResourceParameter... resourceParameters) throws Exception
+    {
+        advanceState(State.OPEN, variableContainer, resourceParameters);
+        return clientResourceDescriptor.next(variableContainer, resourceParameters);
+    }
+
+    @Override
+    protected void clearContent() throws Exception
+    {
+        ((AbstractResourceDescriptor)clientResourceDescriptor).clearContent();
+        
+    }
+
+    @Override
+    protected ContentMetaData buildResourceMetaData() throws Exception
+    {
+        return ((AbstractResourceDescriptor)clientResourceDescriptor).buildResourceMetaData();
+    }
 	
+    @Override
+    public ContentMetaData getContentMetaData(VariableContainer variableContainer, ResourceParameter... resourceParameters) throws Exception
+    {
+        return clientResourceDescriptor.getContentMetaData(variableContainer, resourceParameters);
+    }
 }

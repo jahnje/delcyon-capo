@@ -54,7 +54,7 @@ public class ShellResourceDescriptor extends AbstractResourceDescriptor
 		PRINT_BUFFER
 	}
 	
-	private SimpleContentMetaData contentMetaData;
+	
 	private SimpleContentMetaData iterationContentMetaData;
 	private Process process;	
 	private OutputStream stdinOutputStream;
@@ -73,7 +73,9 @@ public class ShellResourceDescriptor extends AbstractResourceDescriptor
 		super.setup(resourceType, ResourceURI.getSchemeSpecificPart(resourceURI));
 	}
 	
-	private SimpleContentMetaData buildContentMetaData()
+	
+	@Override
+	protected SimpleContentMetaData buildResourceMetaData()
 	{
 		SimpleContentMetaData simpleContentMetaData  = new SimpleContentMetaData(getResourceURI());
 		simpleContentMetaData.addSupportedAttribute(Attributes.exists,Attributes.readable,Attributes.writeable);
@@ -94,8 +96,7 @@ public class ShellResourceDescriptor extends AbstractResourceDescriptor
 	public void init(ResourceDeclarationElement declaringResourceElement,VariableContainer variableContainer, LifeCycle lifeCycle, boolean iterate, ResourceParameter... resourceParameters) throws Exception
 	{
 	
-		super.init(declaringResourceElement,variableContainer, lifeCycle, iterate, resourceParameters);		
-		contentMetaData = buildContentMetaData();
+		super.init(declaringResourceElement,variableContainer, lifeCycle, iterate, resourceParameters);				
 		if(getVarValue(variableContainer, Parameter.DEBUG) != null && getVarValue(variableContainer, Parameter.DEBUG).equalsIgnoreCase("true"))
 		{
 		    debug = true;
@@ -171,10 +172,17 @@ public class ShellResourceDescriptor extends AbstractResourceDescriptor
 	}
 	
 	@Override
+	protected void clearContent()
+	{
+	    //TODO does nothing at the moment, verify later	    
+	}
+	
+	@Override
 	public boolean next(VariableContainer variableContainer, ResourceParameter... resourceParameters) throws Exception
 	{
+	    advanceState(State.OPEN, variableContainer, resourceParameters);
 		if(debug){System.out.println("stepping");}
-		
+		setResourceState(State.STEPPING);
 		addResourceParameters(variableContainer, resourceParameters);
 		
 		long timeout = getTimeout(variableContainer);
@@ -235,6 +243,7 @@ public class ShellResourceDescriptor extends AbstractResourceDescriptor
             buildIterationMetatData(stdoutThreadedInputStreamReader.getByteArrayOutputStream().toByteArray());
             return true;
 		}
+		setResourceState(State.OPEN);
 		return false;
 	}
 	
@@ -244,31 +253,30 @@ public class ShellResourceDescriptor extends AbstractResourceDescriptor
 		if(debug){System.out.println("reading block");}
 		
 		//make sure we've been opened
-		if (getResourceState() != State.OPEN && getResourceState() != State.STEPPING)
-		{
-			open(variableContainer, resourceParameters);
-		}
+		advanceState(State.STEPPING, variableContainer, resourceParameters);
 		
-		if (isIterating() == false)
-		{
-		    addResourceParameters(variableContainer, resourceParameters);
-            lock.lock();
-            stdoutThreadedInputStreamReader.okToRead(getTimeout(variableContainer));
-            if(debug){System.out.println("waiting for results");}
-            notification.await();
-            if(debug){System.out.println("done waiting for results");}
-		}
+//		if (isIterating() == false)
+//		{
+//		    addResourceParameters(variableContainer, resourceParameters);
+//            lock.lock();
+//            stdoutThreadedInputStreamReader.okToRead(getTimeout(variableContainer));
+//            if(debug){System.out.println("waiting for results");}
+//            notification.await();
+//            if(debug){System.out.println("done waiting for results");}
+//		}
 		//get the data
 		byte[] data = stdoutThreadedInputStreamReader.getByteArrayOutputStream().toByteArray();
 		buildIterationMetatData(data);
 		//clear the buffer once we've read it.
 		stdoutThreadedInputStreamReader.getByteArrayOutputStream().reset();
+		setResourceState(State.OPEN);
 		return data; 
 	}
 	
 	@Override
 	public void writeBlock(VariableContainer variableContainer, byte[] block, ResourceParameter... resourceParameters) throws Exception
 	{
+	    advanceState(State.OPEN, variableContainer, resourceParameters);
 		stdoutThreadedInputStreamReader.getByteArrayOutputStream().reset();		
 		command = new String(block);
 		if(debug){System.out.println("Running command:"+command);}
@@ -295,16 +303,11 @@ public class ShellResourceDescriptor extends AbstractResourceDescriptor
 //	}
 	
 	
- 	@Override
-	public ContentMetaData getResourceMetaData(VariableContainer variableContainer,ResourceParameter... resourceParameters) throws Exception
-	{
-		return contentMetaData;
-	}
-
+ 	
  	private void buildIterationMetatData(byte[] data) throws NoSuchAlgorithmException
  	{
  	  iterationContentMetaData = null;
- 	  iterationContentMetaData = buildContentMetaData();          
+ 	  iterationContentMetaData = buildResourceMetaData();          
       iterationContentMetaData.setValue("MD5",StreamUtil.getMD5(data));         
       iterationContentMetaData.setValue("size",data.length);
  	}

@@ -41,14 +41,19 @@ import com.delcyon.capo.xml.dom.ResourceDeclarationElement;
 /**
  * @author jeremiah
  */
-public class FileResourceDescriptor extends AbstractResourceDescriptor implements ResourceDescriptor
+public class FileResourceDescriptor extends AbstractResourceDescriptor
 {
-
+	
 	private FileResourceContentMetaData contentMetaData = null;
-	private FileResourceContentMetaData iterationContentMetaData = null;	
-	private FileResourceContentMetaData buildContentMetatData(ResourceParameter...resourceParameters) throws Exception
+	private FileResourceContentMetaData actionMetaData = null;
+	private FileResourceContentMetaData outputMetaData = null;
+	private InputStream contentInputStream = null;
+	private Element containerElement = null;
+	
+	@Override
+	protected FileResourceContentMetaData buildResourceMetaData() throws Exception
 	{		
-		FileResourceContentMetaData contentMetaData = new FileResourceContentMetaData(getResourceURI().getBaseURI(),resourceParameters);		
+		FileResourceContentMetaData contentMetaData = new FileResourceContentMetaData(getResourceURI().getBaseURI());		
 		return contentMetaData;
 	}
 	
@@ -119,35 +124,6 @@ public class FileResourceDescriptor extends AbstractResourceDescriptor implement
 		}
 	}
 	
-	
-
-	@Override
-	public void open(VariableContainer variableContainer,ResourceParameter... resourceParameters) throws Exception
-	{
-		super.open(variableContainer,resourceParameters);
-		
-		if (contentMetaData == null)
-		{			
-			contentMetaData = buildContentMetatData(resourceParameters);			
-		}		
-	}
-
-	
-	@Override
-	public ContentMetaData getResourceMetaData(VariableContainer variableContainer,ResourceParameter... resourceParameters) throws Exception
-	{
-		if (getResourceState() != State.OPEN)
-		{
-			open(variableContainer,resourceParameters);
-		}
-		//always refresh content meta data if this is a directory 
-		if (contentMetaData != null && contentMetaData.isContainer() == true)
-		{
-		    this.contentMetaData = buildContentMetatData(resourceParameters);
-		}
-		return this.contentMetaData;
-	}
-	
 	@Override
 	public ContentMetaData getContentMetaData(VariableContainer variableContainer,ResourceParameter... resourceParameters) throws Exception
 	{
@@ -155,17 +131,55 @@ public class FileResourceDescriptor extends AbstractResourceDescriptor implement
 		{
 			open(variableContainer,resourceParameters);
 		}
-		return iterationContentMetaData;
+		return contentMetaData;
+	}
+	
+	
+	@Override
+	protected void clearContent() throws Exception
+	{
+	    contentMetaData = null;
+	    if(contentInputStream != null)
+	    {
+	        contentInputStream.close();
+	    }
+	    containerElement = null;
 	}
 	
 	@Override
-	public Element readXML(VariableContainer variableContainer, ResourceParameter... resourceParameters) throws Exception
+	public boolean next(VariableContainer variableContainer, ResourceParameter... resourceParameters) throws Exception
 	{
-	    ContentMetaData contentMetaData = getResourceMetaData(variableContainer, resourceParameters);
-	    if(contentMetaData.isContainer())
+	    if(getResourceState() == State.OPEN)
 	    {
-	        iterationContentMetaData = this.contentMetaData;
-	        return XMLSerializer.export(CapoApplication.getDocumentBuilder().newDocument(), contentMetaData);
+	        setResourceState(State.STEPPING);
+	        if(getResourceMetaData(variableContainer, resourceParameters).isContainer())
+	        {
+	            contentMetaData = new FileResourceContentMetaData(getResourceURI().getBaseURI());
+	            containerElement = XMLSerializer.export(CapoApplication.getDocumentBuilder().newDocument(), getResourceMetaData(variableContainer, resourceParameters));
+	        }
+	        else
+	        {
+	            contentMetaData = new FileResourceContentMetaData(getResourceURI().getBaseURI());      
+	            contentInputStream = trackInputStream(contentMetaData.wrapInputStream(new FileInputStream(new File(new URI(getResourceURI().getBaseURI())))));
+	        }
+	        return true;
+	    }
+	    else if (getResourceState() == State.STEPPING)
+        {
+            setResourceState(State.OPEN);
+            return false;
+        }
+	    return false;
+	}
+	
+	//This is over written only to handle the special case of a directory, everything else actually goes through getInputStream() 
+	@Override
+	public Element readXML(VariableContainer variableContainer, ResourceParameter... resourceParameters) throws Exception
+	{	    
+	    if(getResourceMetaData(variableContainer, resourceParameters).isContainer())
+	    {
+	        advanceState(State.STEPPING, variableContainer, resourceParameters);
+	        return containerElement;
 	    }
 	    else
 	    {
@@ -176,24 +190,16 @@ public class FileResourceDescriptor extends AbstractResourceDescriptor implement
 
 	@Override
 	public InputStream getInputStream(VariableContainer variableContainer,ResourceParameter... resourceParameters) throws Exception
-	{
-		if (getResourceState() != State.OPEN)
-		{
-			open(variableContainer,resourceParameters);
-		}
-		
-		iterationContentMetaData = new FileResourceContentMetaData(getResourceURI().getBaseURI());		
-		return trackInputStream(iterationContentMetaData.wrapInputStream(new FileInputStream(new File(new URI(getResourceURI().getBaseURI())))));
+	{		    
+	    advanceState(State.STEPPING, variableContainer, resourceParameters);	    
+		return contentInputStream;
 	}
 
 	@Override
 	public OutputStream getOutputStream(VariableContainer variableContainer,ResourceParameter... resourceParameters) throws Exception
 	{
-		if (getResourceState() != State.OPEN)
-		{
-			open(variableContainer,resourceParameters);
-		}
-		iterationContentMetaData = new FileResourceContentMetaData(getResourceURI().getBaseURI());
+	    advanceState(State.OPEN, variableContainer, resourceParameters);
+		outputMetaData = new FileResourceContentMetaData(getResourceURI().getBaseURI());
 		File outputFile = new File(new URI(getResourceURI().getBaseURI()));
 		if (outputFile.exists() == false)
 		{
@@ -201,7 +207,7 @@ public class FileResourceDescriptor extends AbstractResourceDescriptor implement
 		    outputFile.createNewFile();
 		}
 		
-		return trackOutputStream(contentMetaData.wrapOutputStream(new FileOutputStream(outputFile)));	
+		return trackOutputStream(outputMetaData.wrapOutputStream(new FileOutputStream(outputFile)));	
 	}
 	
 	
@@ -210,9 +216,9 @@ public class FileResourceDescriptor extends AbstractResourceDescriptor implement
 	public void close(VariableContainer variableContainer,ResourceParameter... resourceParameters) throws Exception
 	{		
 		super.close(variableContainer,resourceParameters);
-		if (iterationContentMetaData != null)
+		if (contentMetaData != null)
 		{
-			iterationContentMetaData.refresh(getResourceURI().getBaseURI());
+			contentMetaData.refresh(getResourceURI().getBaseURI());
 		}
 	}
 	
@@ -348,12 +354,13 @@ public class FileResourceDescriptor extends AbstractResourceDescriptor implement
 	    
 		if (success == true)
 		{
-			this.contentMetaData = buildContentMetatData(resourceParameters);
+			refreshResourceMetaData();
 		}
 		return success;
 	}
 	
-	private boolean delete(File file) throws Exception
+	
+    private boolean delete(File file) throws Exception
 	{
 	    
 	    if (file.exists())

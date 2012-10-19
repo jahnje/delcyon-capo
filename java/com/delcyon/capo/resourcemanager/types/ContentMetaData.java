@@ -49,7 +49,12 @@ public interface ContentMetaData
 		
 	}
 	
-//BEGIN RESOURCE METADATA
+    //BEGIN RESOURCE METADATA
+	/**
+	 * Controls whether this metadata should be refreshed each time each time it's asked for. 
+	 * @return
+	 */
+	public boolean isDynamic();
 	
 	public boolean isInitialized();
 	

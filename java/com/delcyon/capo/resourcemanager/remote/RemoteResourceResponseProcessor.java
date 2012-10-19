@@ -208,6 +208,9 @@ public class RemoteResourceResponseProcessor implements XMLServerResponseProcess
 				case RESET:
 					resourceDescriptor.reset(message.getPreviousState());
 					break;
+				case ADVANCE_STATE:
+				    resourceDescriptor.advanceState(message.getDesiredState(), this, message.getResourceParameters());
+				    break;
 				case GET_CONTENT_METADATA:
 					reply.setContentMetaData(resourceDescriptor.getResourceMetaData(this, message.getResourceParameters()));
 					break;

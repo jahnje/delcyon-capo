@@ -146,6 +146,12 @@ public class ResourceElementResourceDescriptor implements ResourceDescriptor
 	}
 	
 	@Override
+	public void advanceState(State desiredState, VariableContainer variableContainer, ResourceParameter... resourceParameters) throws Exception
+	{
+	    proxyedResourceDescriptor.advanceState(desiredState, variableContainer, resourceParameters);	    
+	}
+	
+	@Override
 	public boolean next(VariableContainer variableContainer, ResourceParameter... resourceParameters) throws Exception
 	{
 		return proxyedResourceDescriptor.next(variableContainer, resourceParameters);

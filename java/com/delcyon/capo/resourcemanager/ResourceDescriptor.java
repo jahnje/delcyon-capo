@@ -119,7 +119,11 @@ public interface ResourceDescriptor
 	public boolean isRemoteResource();
 	//BEGIN BASIC LIFECYCLE METHODS
 	/** used to set the resource to a previous state, will throw an exception if the state requested is not a previous state**/
-	public void reset(State previousState) throws Exception;	
+	public void reset(State previousState) throws Exception;
+	
+	/** used to advance the state state of a resource descriptor from a previous state to a later state. This is generally used to auto open resources. **/
+	public void advanceState(State desiredState,VariableContainer variableContainer,ResourceParameter... resourceParameters) throws Exception;
+	
 	/**Called by resource type when Descriptor is constructed
 	 * @throws Exception */
 	public void setup(ResourceType resourceType, String resourceURI) throws Exception;

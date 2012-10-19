@@ -36,10 +36,12 @@ import com.delcyon.capo.xml.dom.ResourceDeclarationElement;
 public class RefResourceDescriptor extends AbstractResourceDescriptor
 {
 
-	private SimpleContentMetaData contentMetaData;
+	
 	private ControlElement contextControlElement = null;
+	private Element refElement = null;
 
-	private SimpleContentMetaData buildContentMetatData()
+	@Override
+	protected SimpleContentMetaData buildResourceMetaData()
 	{
 		SimpleContentMetaData simpleContentMetaData  = new SimpleContentMetaData(getResourceURI());
 		simpleContentMetaData.addSupportedAttribute(Attributes.exists,Attributes.readable,Attributes.writeable,Attributes.container);		
@@ -58,7 +60,7 @@ public class RefResourceDescriptor extends AbstractResourceDescriptor
 	public void init(ResourceDeclarationElement declaringResourceElement, VariableContainer variableContainer, LifeCycle lifeCycle, boolean iterate, ResourceParameter... resourceParameters) throws Exception
 	{		
 		super.init(declaringResourceElement, variableContainer, lifeCycle, iterate, resourceParameters);
-		this.contentMetaData = buildContentMetatData();
+		
 		
 		if(Thread.currentThread() instanceof ContextThread && ((ContextThread)Thread.currentThread()).getContext() != null && ((ContextThread)Thread.currentThread()).getContext() instanceof ControlElement)
 		{
@@ -74,16 +76,11 @@ public class RefResourceDescriptor extends AbstractResourceDescriptor
 		return new Action[]{};
 	}
 
-	@Override
-	public ContentMetaData getResourceMetaData(VariableContainer variableContainer, ResourceParameter... resourceParameters) throws Exception
-	{
-		return contentMetaData;
-	}
-
+	
 	@Override
 	public ContentMetaData getContentMetaData(VariableContainer variableContainer, ResourceParameter... resourceParameters) throws Exception
 	{
-		return contentMetaData;
+		return buildResourceMetaData();
 	}
 
 	@Override
@@ -111,28 +108,44 @@ public class RefResourceDescriptor extends AbstractResourceDescriptor
 	}
 	
 	@Override
+	protected void clearContent()
+	{
+	   refElement = null;	    
+	}
+	
+	@Override
+	public boolean next(VariableContainer variableContainer, ResourceParameter... resourceParameters) throws Exception
+	{
+	    advanceState(State.OPEN, variableContainer, resourceParameters);
+        addResourceParameters(variableContainer, resourceParameters);
+        
+        if(contextControlElement != null && getResourceState() == State.OPEN)
+        {
+            setResourceState(State.STEPPING);
+            if (getVarValue(variableContainer, Parameters.XMLNS) != null)
+            {
+                refElement =  (Element) XPath.selectNSNode(contextControlElement.getControlElementDeclaration(), getResourceURI().getSchemeSpecificPart(),getVarValue(variableContainer, Parameters.XMLNS).split(","));
+                return true;
+            }
+            else
+            { 
+                refElement =  (Element) XPath.selectSingleNode(contextControlElement.getControlElementDeclaration(), getResourceURI().getSchemeSpecificPart());
+                return true;
+            }
+        }
+        else
+        {
+            setResourceState(State.OPEN);
+            refElement = null;
+            return false;
+        }
+	}
+	
+	@Override
 	public Element readXML(VariableContainer variableContainer, ResourceParameter... resourceParameters) throws Exception
 	{	
-		if (getResourceState() != State.OPEN)
-		{
-			open(variableContainer, resourceParameters);
-		}
-		addResourceParameters(variableContainer, resourceParameters);
-		if(contextControlElement != null)
-		{
-			if (getVarValue(variableContainer, Parameters.XMLNS) != null)
-			{
-				return (Element) XPath.selectNSNode(contextControlElement.getControlElementDeclaration(), getResourceURI().getSchemeSpecificPart(),getVarValue(variableContainer, Parameters.XMLNS).split(","));
-			}
-			else
-			{ 
-				return (Element) XPath.selectSingleNode(contextControlElement.getControlElementDeclaration(), getResourceURI().getSchemeSpecificPart());
-			}
-		}
-		else
-		{
-			return null;
-		}
+	    advanceState(State.STEPPING, variableContainer, resourceParameters);
+		return refElement;
 	}
 	
 }

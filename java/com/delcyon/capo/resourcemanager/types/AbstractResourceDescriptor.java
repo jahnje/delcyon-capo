@@ -67,7 +67,7 @@ public abstract class AbstractResourceDescriptor implements ResourceDescriptor
 	private LifeCycle lifeCycle;
 	private State resourceState = State.NONE;
 	private boolean isIterating = false;
-	private boolean next = true;
+	
 	private ResourceType resourceType;
 	private VariableContainer declaringVariableContainer;
 	private OutputStreamTranslater outputStreamTranslater;
@@ -76,6 +76,8 @@ public abstract class AbstractResourceDescriptor implements ResourceDescriptor
 	private Vector<InputStream> openInputStreamVector = new Vector<InputStream>();
 	private String localName = null;
     private ResourceDeclarationElement declaringResourceElement;
+    private ContentMetaData resourceMetaData;
+   
 	
 	@Override
 	public void setup(ResourceType resourceType, String resourceURI) throws Exception
@@ -137,20 +139,58 @@ public abstract class AbstractResourceDescriptor implements ResourceDescriptor
 			init(null,variableContainer,null,false, resourceParameters);
 		}
 		
-		if (resourceState == State.OPEN || resourceState == State.STEPPING)
+		if (resourceState == State.STEPPING)
 		{
 			return ; 
 		}
 
+		if (resourceState == State.OPEN)
+		{
+		    this.resourceMetaData = buildResourceMetaData();
+	        clearContent();
+		    return ; 
+		}
+
 		addResourceParameters(variableContainer,resourceParameters);
 
-
+		this.resourceMetaData = buildResourceMetaData();
+		clearContent();
 		this.resourceState = State.OPEN;
 		this.stateParametersHashMap.put(State.OPEN, new StateParameters(resourceParameters, variableContainer));
  	}
 	
+	protected abstract void clearContent() throws Exception;
+	protected abstract ContentMetaData buildResourceMetaData() throws Exception;
 	
+	protected void refreshResourceMetaData() throws Exception
+    {
+	    this.resourceMetaData = buildResourceMetaData();        
+    }
+
+
 	@Override
+	public ContentMetaData getResourceMetaData(VariableContainer variableContainer, ResourceParameter... resourceParameters) throws Exception
+	{
+	    advanceState(State.OPEN, variableContainer, resourceParameters);
+	    if(resourceMetaData != null)
+	    {
+	        if(resourceMetaData.isDynamic())
+	        {
+	            refreshResourceMetaData();
+	        }
+	    }
+	    return resourceMetaData;
+	}
+	
+    @Override
+    public boolean isRemoteResource()
+    {   
+        return false;
+    }
+    
+    
+	
+    @Override
 	public void close(VariableContainer variableContainer,ResourceParameter... resourceParameters) throws Exception
 	{		
 		
@@ -262,6 +302,22 @@ public abstract class AbstractResourceDescriptor implements ResourceDescriptor
 	    
 	}
 	
+	/**
+	 * This is a utility method for subclases to move the resource forward to the desired state
+	 * @param desiredState
+	 * @param variableContainer
+	 * @param resourceParameters
+	 * @throws Exception
+	 */
+	@Override
+	public void advanceState(State desiredState,VariableContainer variableContainer,ResourceParameter... resourceParameters) throws Exception
+	{
+	    while(getResourceState().ordinal() < desiredState.ordinal())
+	    {
+	        nextState(variableContainer, resourceParameters);
+	    }
+	}
+	
 	/** This is just a simple mapping to allow us to jump to the next state. Maybe someday, we can put the proper method pointers in the enum declaration when available.*/
 	private void nextState(VariableContainer variableContainer,ResourceParameter... resourceParameters) throws Exception
 	{
@@ -272,10 +328,14 @@ public abstract class AbstractResourceDescriptor implements ResourceDescriptor
         else if (getResourceState() == State.INITIALIZED)
         {
         	open(variableContainer, resourceParameters);
-        }
-        else if (getResourceState() == State.OPEN || getResourceState() == State.STEPPING)
+        }		
+        else if (getResourceState() == State.OPEN)
         {
-        	close(variableContainer, resourceParameters);
+        	next(variableContainer, resourceParameters);
+        }
+        else if (getResourceState() == State.STEPPING)
+        {
+            close(variableContainer, resourceParameters);
         }
         else if (getResourceState() == State.CLOSED)
         {
@@ -551,7 +611,7 @@ public abstract class AbstractResourceDescriptor implements ResourceDescriptor
 			throw new UnsupportedOperationException();
 		}
 		else
-		{
+		{		    
 			return this.performAction(variableContainer,action,resourceParameters);
 		}
 	}
@@ -572,7 +632,8 @@ public abstract class AbstractResourceDescriptor implements ResourceDescriptor
 	
 	@Override //TODO
 	public InputStream getInputStream(VariableContainer variableContainer,ResourceParameter... resourceParameters) throws Exception
-	{		
+	{
+	    advanceState(State.STEPPING, variableContainer, resourceParameters);
 		StreamFormat streamFormat = getSupportedStreamFormats(StreamType.INPUT)[0];
 		ByteArrayInputStream byteArrayInputStream = null;
 		if(streamFormat == StreamFormat.XML_BLOCK)
@@ -603,6 +664,7 @@ public abstract class AbstractResourceDescriptor implements ResourceDescriptor
 	@Override
 	public OutputStream getOutputStream(VariableContainer variableContainer,ResourceParameter... resourceParameters) throws Exception
 	{
+	    advanceState(State.OPEN, variableContainer, resourceParameters);
 		StreamFormat streamFormat = getSupportedStreamFormats(StreamType.OUTPUT)[0];
 		if (outputStreamTranslater != null)
 		{
@@ -633,6 +695,7 @@ public abstract class AbstractResourceDescriptor implements ResourceDescriptor
 	@Override
 	public Element readXML(VariableContainer variableContainer, ResourceParameter... resourceParameters) throws Exception
 	{
+	    advanceState(State.STEPPING, variableContainer, resourceParameters);
 		Document document = CapoApplication.getDocumentBuilder().newDocument();
 		Element dataElement = document.createElement("Data");
 		document.appendChild(dataElement);
@@ -668,6 +731,7 @@ public abstract class AbstractResourceDescriptor implements ResourceDescriptor
 	@Override
 	public void writeXML(VariableContainer variableContainer, Element element, ResourceParameter... resourceParameters) throws Exception
 	{
+	    advanceState(State.OPEN, variableContainer, resourceParameters);
 		StreamFormat streamFormat = getSupportedStreamFormats(StreamType.OUTPUT)[0];
 		if(streamFormat == StreamFormat.BLOCK)
 		{	
@@ -693,7 +757,7 @@ public abstract class AbstractResourceDescriptor implements ResourceDescriptor
 	@Override
 	public byte[] readBlock(VariableContainer variableContainer, ResourceParameter... resourceParameters) throws Exception
 	{
-		
+	    advanceState(State.STEPPING, variableContainer, resourceParameters);
 		StreamFormat streamFormat = getSupportedStreamFormats(StreamType.INPUT)[0];
 		if(streamFormat == StreamFormat.XML_BLOCK)
 		{			
@@ -722,6 +786,7 @@ public abstract class AbstractResourceDescriptor implements ResourceDescriptor
 	@Override
 	public void writeBlock(VariableContainer variableContainer, byte[] block, ResourceParameter... resourceParameters) throws Exception
 	{
+	    advanceState(State.OPEN, variableContainer, resourceParameters);
 		StreamFormat streamFormat = getSupportedStreamFormats(StreamType.OUTPUT)[0];
 		if(streamFormat == StreamFormat.XML_BLOCK)
 		{
@@ -753,6 +818,7 @@ public abstract class AbstractResourceDescriptor implements ResourceDescriptor
 	@Override
 	public void processInput(VariableContainer variableContainer, ResourceParameter... resourceParameters) throws Exception
 	{
+	    advanceState(State.OPEN, variableContainer, resourceParameters);
 		StreamFormat streamFormat = getSupportedStreamFormats(StreamType.INPUT)[0];
 		if(streamFormat == StreamFormat.XML_BLOCK)
 		{
@@ -778,6 +844,7 @@ public abstract class AbstractResourceDescriptor implements ResourceDescriptor
 	@Override
 	public void processOutput(VariableContainer variableContainer, ResourceParameter... resourceParameters) throws Exception
 	{
+	    advanceState(State.OPEN, variableContainer, resourceParameters);
 		StreamFormat streamFormat = getSupportedStreamFormats(StreamType.OUTPUT)[0];
 		if(streamFormat == StreamFormat.XML_BLOCK)
 		{
@@ -802,6 +869,31 @@ public abstract class AbstractResourceDescriptor implements ResourceDescriptor
 		}
 		
 	}
+	
+	@Override
+    public ResourceDescriptor getChildResourceDescriptor(ControlElement callingControlElement, String relativeURI) throws Exception
+    {
+	    advanceState(State.OPEN, null);
+        ContentMetaData contentMetaData = getResourceMetaData(null);
+        if ( contentMetaData.isContainer() == true)
+        {
+            List<ContentMetaData> childContentMetaDataList = getResourceMetaData(null).getContainedResources();
+            for (ContentMetaData childContentMetaData : childContentMetaDataList)
+            {               
+                if(childContentMetaData.getResourceURI().getBaseURI().endsWith(relativeURI))
+                {
+                    return CapoApplication.getDataManager().getResourceDescriptor(callingControlElement, childContentMetaData.getResourceURI().getBaseURI());
+                }
+            }
+            //return CapoApplication.getDataManager().getResourceDescriptor(callingControlElement, getResourceURI()+(relativeURI.startsWith("/") ? relativeURI : "/"+relativeURI));
+            return CapoApplication.getDataManager().getResourceDescriptor(callingControlElement, getResourceURI().getBaseURI()+"/"+relativeURI);
+        }
+        else
+        {
+            return null;
+        }
+    }
+	
 	
 	private class OutputStreamTranslater implements StreamEventListener
 	{
@@ -879,47 +971,5 @@ public abstract class AbstractResourceDescriptor implements ResourceDescriptor
 		}
 	}
 	
-	/**
-	 * This allows non-iterable resources to iterate over asingle result 
-	 */
-	@Override
-    public boolean next(VariableContainer variableContainer, ResourceParameter... resourceParameters) throws Exception
-    {
-        if (next == true)
-        {
-            next = false;
-            return true;
-        }
-        return false;
-    }
-
-	@Override
-	public boolean isRemoteResource()
-	{	
-		return false;
-	}
-	
-	@Override
-	public ResourceDescriptor getChildResourceDescriptor(ControlElement callingControlElement, String relativeURI) throws Exception
-	{
-	    ContentMetaData contentMetaData = getResourceMetaData(null);
-	    if ( contentMetaData.isContainer() == true)
-	    {
-	        List<ContentMetaData> childContentMetaDataList = getResourceMetaData(null).getContainedResources();
-	        for (ContentMetaData childContentMetaData : childContentMetaDataList)
-	        {	            
-	            if(childContentMetaData.getResourceURI().getBaseURI().endsWith(relativeURI))
-	            {
-	                return CapoApplication.getDataManager().getResourceDescriptor(callingControlElement, childContentMetaData.getResourceURI().getBaseURI());
-	            }
-	        }
-	        //return CapoApplication.getDataManager().getResourceDescriptor(callingControlElement, getResourceURI()+(relativeURI.startsWith("/") ? relativeURI : "/"+relativeURI));
-	        return CapoApplication.getDataManager().getResourceDescriptor(callingControlElement, getResourceURI().getBaseURI()+"/"+relativeURI);
-	    }
-	    else
-	    {
-	        return null;
-	    }
-	}
 	
 }

@@ -16,6 +16,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 package com.delcyon.capo.resourcemanager.types;
 
+import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URL;
@@ -30,55 +31,72 @@ import com.delcyon.capo.resourcemanager.types.ContentMetaData.Attributes;
 public class HttpResourceDescriptor extends AbstractResourceDescriptor
 {
 	
-	private SimpleContentMetaData contentMetaData;
-	private SimpleContentMetaData iterationContentMetaData;
+	byte[] content = null;
+    private SimpleContentMetaData contentMetaData;
 
 	public HttpResourceDescriptor() throws Exception
 	{
 		
 	}
 	
-	private SimpleContentMetaData buildContentMetatData(boolean useInputStream) throws Exception
+	@Override
+	protected ContentMetaData buildResourceMetaData() throws Exception
 	{
-		SimpleContentMetaData simpleContentMetaData  = new SimpleContentMetaData(getResourceURI());
-		simpleContentMetaData.addSupportedAttribute(Attributes.exists,Attributes.readable);
-		simpleContentMetaData.setValue(Attributes.exists,true);
-		simpleContentMetaData.setValue(Attributes.readable,true);
-		if (useInputStream)
-		{
-			simpleContentMetaData.readInputStream(getInputStream(null));
-		}
-		return simpleContentMetaData;
+	    SimpleContentMetaData resourceMetaData  = new SimpleContentMetaData(getResourceURI());
+	    resourceMetaData.addSupportedAttribute(Attributes.exists,Attributes.readable);
+	    resourceMetaData.setValue(Attributes.exists,true);
+	    resourceMetaData.setValue(Attributes.readable,true);
+        
+        return resourceMetaData;
 	}
 	
 	@Override
-	public void open(VariableContainer variableContainer,ResourceParameter... resourceParameters) throws Exception
+	protected void clearContent()
 	{
-		super.open(variableContainer,resourceParameters);
-
-		if (contentMetaData == null)
-		{			
-			contentMetaData = buildContentMetatData(true);
-					
-		}
+	   content = null;	    
 	}
 	
+	@Override
+	public boolean next(VariableContainer variableContainer, ResourceParameter... resourceParameters) throws Exception
+	{
+	    advanceState(State.OPEN, variableContainer, resourceParameters);
+	    if(getResourceState() == State.OPEN)
+	    {
+	        
+	        contentMetaData = new SimpleContentMetaData(getResourceURI());
+	        URL url = new URL(getResourceURI().getBaseURI());   
+	        InputStream inputStream = contentMetaData.wrapInputStream(url.openConnection().getInputStream());
+	        content = contentMetaData.readInputStream(inputStream);
+	        setResourceState(State.STEPPING);
+	        return true;
+	    }
+	    else
+	    {
+	        setResourceState(State.OPEN);
+	        return false;
+	    }
+	}
 	
+	@Override
+	public ContentMetaData getContentMetaData(VariableContainer variableContainer, ResourceParameter... resourceParameters) throws Exception
+	{
+	    return contentMetaData;
+	}
 	
 	@Override
 	public InputStream getInputStream(VariableContainer variableContainer,ResourceParameter... resourceParameters) throws Exception
-	{		
-		iterationContentMetaData = buildContentMetatData(false);
-		URL url = new URL(getResourceURI().getBaseURI());	
-		return iterationContentMetaData.wrapInputStream(url.openConnection().getInputStream());		
+	{
+	    advanceState(State.STEPPING, variableContainer, resourceParameters);
+		return new ByteArrayInputStream(content);		
 	}
 
 	@Override
 	public OutputStream getOutputStream(VariableContainer variableContainer,ResourceParameter... resourceParameters) throws Exception
 	{
-		iterationContentMetaData = buildContentMetatData(false);
+	    advanceState(State.OPEN, variableContainer, resourceParameters);
+		SimpleContentMetaData outputMetaData = new SimpleContentMetaData(getResourceURI());
 		URL url = new URL(getResourceURI().getBaseURI());	
-		return iterationContentMetaData.wrapOutputStream(url.openConnection().getOutputStream());
+		return outputMetaData.wrapOutputStream(url.openConnection().getOutputStream());
 	}
 	
 	
@@ -87,18 +105,6 @@ public class HttpResourceDescriptor extends AbstractResourceDescriptor
 	public void close(VariableContainer variableContainer,ResourceParameter... resourceParameters) throws Exception
 	{		
 		super.close(variableContainer,resourceParameters);
-	}
-
-	@Override
-	public ContentMetaData getResourceMetaData(VariableContainer variableContainer,ResourceParameter... resourceParameters) throws Exception
-	{
-		return contentMetaData;
-	}
-
-	@Override
-	public ContentMetaData getContentMetaData(VariableContainer variableContainer,ResourceParameter... resourceParameters) throws Exception
-	{
-		return iterationContentMetaData;
 	}
 
 	

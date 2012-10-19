@@ -70,9 +70,10 @@ public class Util
         syncElement.appendChild(resourceParameterElement);
         Group group = new Group("test", null, null, null);
         syncControlElement.init(syncElement, null, group, null);        
-        ResourceDescriptor sourceResourceDescriptor = new FileResourceType().getResourceDescriptor(src);
-        ResourceDescriptor destinationResourceDescriptor = new FileResourceType().getResourceDescriptor(dest);
-        syncControlElement.syncTree(sourceResourceDescriptor, destinationResourceDescriptor);
+        //ResourceDescriptor sourceResourceDescriptor = new FileResourceType().getResourceDescriptor(src);        
+        //ResourceDescriptor destinationResourceDescriptor = new FileResourceType().getResourceDescriptor(dest);        
+        //syncControlElement.syncTree(sourceResourceDescriptor, destinationResourceDescriptor);
+        syncControlElement.processServerSideElement();
     }
     
     public static void deleteTree(String dest) throws Exception

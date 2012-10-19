@@ -23,6 +23,7 @@ import com.delcyon.capo.CapoApplication.ApplicationState;
 import com.delcyon.capo.controller.Group;
 import com.delcyon.capo.controller.client.ServerControllerResponse;
 import com.delcyon.capo.resourcemanager.ResourceDescriptor;
+import com.delcyon.capo.resourcemanager.ResourceDescriptor.LifeCycle;
 import com.delcyon.capo.server.CapoServer;
 import com.delcyon.capo.tasks.TaskManagerThread;
 import com.delcyon.capo.tasks.TaskManagerThread.Preferences;

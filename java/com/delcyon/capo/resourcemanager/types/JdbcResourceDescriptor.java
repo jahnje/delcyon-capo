@@ -37,10 +37,10 @@ import com.delcyon.capo.resourcemanager.ResourceDescriptor;
 import com.delcyon.capo.resourcemanager.ResourceParameter;
 import com.delcyon.capo.resourcemanager.ResourceParameterBuilder;
 import com.delcyon.capo.resourcemanager.ResourceURI;
+import com.delcyon.capo.resourcemanager.ResourceDescriptor.State;
 import com.delcyon.capo.resourcemanager.types.ContentMetaData.Attributes;
 import com.delcyon.capo.xml.XPath;
 import com.delcyon.capo.xml.dom.ResourceDeclarationElement;
-import com.delcyon.capo.xml.dom.ResourceElement;
 
 /**
  * @author jeremiah
@@ -58,15 +58,18 @@ public class JdbcResourceDescriptor extends AbstractResourceDescriptor
 	private HashMap<String, Boolean> keyMap = new HashMap<String, Boolean>();
 	private HashMap<String, Boolean> includeMap = new HashMap<String, Boolean>();
 	private HashMap<String, Boolean> excludeMap = new HashMap<String, Boolean>();
-	private SimpleContentMetaData contentMetaData;
-	private SimpleContentMetaData iterationContentMetaData;
+	
+	private SimpleContentMetaData contentMetaData = null;
+	private SimpleContentMetaData outputMetaData = null;
 	private ResultSet resultSet;
 	private Statement statement;
 	private boolean table = false;
 	private String rule = null;
+	private Element rowElement = null;
+	private Document document = null;
 	
-	
-	private SimpleContentMetaData buildContentMetatData()
+	@Override
+	protected SimpleContentMetaData buildResourceMetaData()
 	{
 		SimpleContentMetaData simpleContentMetaData  = new SimpleContentMetaData(getResourceURI());
 		simpleContentMetaData.addSupportedAttribute(Attributes.exists,Attributes.readable,Attributes.writeable,Attributes.container);		
@@ -85,6 +88,7 @@ public class JdbcResourceDescriptor extends AbstractResourceDescriptor
 	public void init(ResourceDeclarationElement declaringResourceElement,VariableContainer variableContainer, LifeCycle lifeCycle, boolean iterate, ResourceParameter... resourceParameters) throws Exception
 	{
 
+	    document = CapoApplication.getDocumentBuilder().newDocument();
 	    super.init(declaringResourceElement,variableContainer, lifeCycle, iterate, resourceParameters);
 	    
 		if (getResourceURI().getChildResourceURI() != null)
@@ -111,9 +115,7 @@ public class JdbcResourceDescriptor extends AbstractResourceDescriptor
             this.rule = buffer.toString();
             
 		}
-
 		
-		contentMetaData = buildContentMetatData();
 	}
 	
 	
@@ -195,18 +197,88 @@ public class JdbcResourceDescriptor extends AbstractResourceDescriptor
 	    }
 	}
 	
+	@Override
+	protected void clearContent() throws Exception
+	{
+	    rowElement = null;
+	    if(statement != null)
+	    {
+	        statement.close();
+	    }
+	}
 	
 	@Override
 	public boolean next(VariableContainer variableContainer, ResourceParameter... resourceParameters) throws Exception
 	{
+	    advanceState(State.OPEN, variableContainer, resourceParameters);
+	    if (connection == null && connection.isClosed() == true)
+        {
+	        setResourceState(State.CLOSED);
+	        return false;
+        }
+	    
+	    contentMetaData = buildResourceMetaData();
+	    
+	    //if we're open then we're going to be running a new query
 	    if (getResourceState() == State.OPEN)
-	    {
-	        readXML(variableContainer, resourceParameters);
+	    {	
+	        statement = connection.createStatement();
+	        
+	        //Build the SQL by processing any rules
+	        String sql = "select * from "+getLocalName();
+	        
+	        //see if the basic sql statement has been overridden	        
+	        if(getVarValue(variableContainer,"query") != null && getVarValue(variableContainer,"query").isEmpty() == false)
+	        {
+	            sql = getVarValue(variableContainer,"query");
+	            table = true;
+	        }
+	        
+	        //see if there are any rules to apply to the sql statement
+	        if (rule != null)
+            {            
+                String whereClause = processVars(variableContainer, rule);
+                if (whereClause.trim().isEmpty() == false)
+                {
+                    sql+=" where "+whereClause;
+                }
+                CapoApplication.logger.log(Level.FINE, "RUNNING SQL = '"+sql+"'");
+                System.err.println("RUNNING SQL = '"+sql+"'");
+            }
+	        
+	        //see if we are running some sql against a table, or a DB
+	        if(table == true)
+            {                
+                resultSet = statement.executeQuery(sql);
+            }
+            //we're working with a DB, so give them the description
+            else
+            {
+                resultSet = connection.getMetaData().getTables(null, null, null, null);
+            }
+	        
+	        //call next to verify if we got any reults
+	        if(resultSet.next())
+	        {
+	            rowElement = buildElementFromResultSet(resultSet);
+	            setResourceState(State.STEPPING);
+	            return true;
+	        }
+	        else //didn't get any, so bail out 
+	        {
+	            statement.close();
+                resultSet = null;
+                rowElement = null;
+	            return false;
+	        }
+	         
 	    }
-		if (getResourceState() == State.STEPPING && resultSet != null)
+	    //looks like were already in a query, so give them the next resultset. 
+	    else if (getResourceState() == State.STEPPING && resultSet != null)
 		{
 			if(resultSet.next())
 			{
+			    rowElement = buildElementFromResultSet(resultSet);
 				return true;
 			}
 			else
@@ -216,90 +288,24 @@ public class JdbcResourceDescriptor extends AbstractResourceDescriptor
 				setResourceState(State.OPEN);
 			}
 		}
+	    else //this just isn't valid, so make sure we don't give there user anything useful if they don't follow the rules.
+	    {
+	        contentMetaData = null;
+	    }
 		return false;
 	}
 	
 	@Override
 	public Element readXML(VariableContainer variableContainer,ResourceParameter... resourceParameters) throws Exception
 	{
-		iterationContentMetaData = buildContentMetatData();
-		
-		Document document = CapoApplication.getDocumentBuilder().newDocument();
-		Element rootElement = document.createElement("ResultSet");
-		rootElement.setAttribute("sql", getVarValue(variableContainer,"query"));
-		document.appendChild(rootElement);
-		
-		if (getResourceState() == State.STEPPING && resultSet != null)
-		{
-			Element rowElement = buildElementFromResultSet(document,resultSet);			
-			return rowElement;
-		}
-		
-		if (connection != null && connection.isClosed() == false)
-		{			
-			statement = connection.createStatement();
-			if(getVarValue(variableContainer,"query") != null && getVarValue(variableContainer,"query").isEmpty() == false)
-			{
-			    resultSet = statement.executeQuery(getVarValue(variableContainer,"query"));
-			    table = true;
-			}
-			else
-			{
-				if (rule == null)
-				{
-					resultSet = statement.executeQuery("select * from "+getLocalName());
-				}
-				else
-				{
-				    if(table == true)
-				    {
-				        String sql = "select * from "+getLocalName();
-				        String whereClause = processVars(variableContainer, rule);
-				        if (whereClause.trim().isEmpty() == false)
-				        {
-				            sql+=" where "+whereClause;
-				        }
-				        CapoApplication.logger.log(Level.WARNING, "RUNNING SQL = '"+sql+"'");
-				        System.err.println("RUNNING SQL = '"+sql+"'");
-				        resultSet = statement.executeQuery(sql);
-				    }
-				    //we're working with a DB, so give them the description
-				    else
-				    {
-				        resultSet = connection.getMetaData().getTables(null, null, null, null);
-				    }
-				}
-			}
-			
-			if (isIterating() == false)
-			{
-				while(resultSet.next())
-				{
-					Element rowElement = buildElementFromResultSet(document,resultSet);
-					rootElement.appendChild(rowElement);
-					
-				}
-				statement.close();
-			}
-			else
-			{
-				
-				setResourceState(State.STEPPING);
-			}
-			
-			return document.getDocumentElement();
-			
-		}
-		else
-		{
-			return null;
-		}
+	    advanceState(State.STEPPING, variableContainer, resourceParameters);
+		return rowElement;		
 	}
 	
 	
 
 
-	private Element buildElementFromResultSet(Document document,ResultSet resultSet) throws Exception
+	private Element buildElementFromResultSet(ResultSet resultSet) throws Exception
 	{
 	    ResultSetMetaData resultSetMetaData = resultSet.getMetaData();
 		Element rowElement = document.createElement(getLocalName());
@@ -343,11 +349,11 @@ public class JdbcResourceDescriptor extends AbstractResourceDescriptor
 		}
 		if(table == true)
 		{
-		    iterationContentMetaData.setResourceURI(new ResourceURI(getResourceURI().getResourceURIString()+"?"+keyString));		    
+		    contentMetaData.setResourceURI(new ResourceURI(getResourceURI().getResourceURIString()+"?"+keyString));		    
 		}
 		else // assume we're working with a DB result
 		{
-		    iterationContentMetaData.setResourceURI(new ResourceURI(getResourceURI().getResourceURIString()+"!"+resultSet.getString("TABLE_NAME")));		    
+		    contentMetaData.setResourceURI(new ResourceURI(getResourceURI().getResourceURIString()+"!"+resultSet.getString("TABLE_NAME")));		    
 		}
 		return rowElement;
 	}
@@ -355,14 +361,14 @@ public class JdbcResourceDescriptor extends AbstractResourceDescriptor
 	@Override
 	public void processOutput(VariableContainer variableContainer,ResourceParameter... resourceParameters) throws Exception
 	{
-		
-		iterationContentMetaData = buildContentMetatData();
-		iterationContentMetaData.addSupportedAttribute(LocalAttributes.values());
+	    advanceState(State.OPEN, variableContainer, resourceParameters);
+		outputMetaData = buildResourceMetaData();
+		outputMetaData.addSupportedAttribute(LocalAttributes.values());
 		try
 			{
 				Statement statement = connection.createStatement();
 				int rowCount = statement.executeUpdate(getVarValue(variableContainer,"update"));
-				iterationContentMetaData.setValue(LocalAttributes.rowCount, rowCount); 				
+				outputMetaData.setValue(LocalAttributes.rowCount, rowCount); 				
 			} 
 			catch (Exception exception)
 			{
@@ -371,16 +377,12 @@ public class JdbcResourceDescriptor extends AbstractResourceDescriptor
 	}
 	
 	
- 	@Override
-	public ContentMetaData getResourceMetaData(VariableContainer variableContainer,ResourceParameter... resourceParameters) throws Exception
-	{
-		return contentMetaData;
-	}
+ 	
 
 	@Override
 	public ContentMetaData getContentMetaData(VariableContainer variableContainer,ResourceParameter... resourceParameters) throws Exception
 	{
-		return iterationContentMetaData;
+		return contentMetaData;
 	}
 
 	
@@ -430,6 +432,7 @@ public class JdbcResourceDescriptor extends AbstractResourceDescriptor
 	@Override
 	public ResourceDescriptor getChildResourceDescriptor(ControlElement callingControlElement, String relativeURI) throws Exception
 	{
+	    advanceState(State.OPEN,null);
 	    JdbcResourceDescriptor jdbcResourceDescriptor = new JdbcResourceDescriptor();
 	    jdbcResourceDescriptor.connection = this.connection;
 	    jdbcResourceDescriptor.setResourceType(getResourceType());

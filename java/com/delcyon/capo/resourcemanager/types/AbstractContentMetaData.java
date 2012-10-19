@@ -16,10 +16,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 package com.delcyon.capo.resourcemanager.types;
 
+import java.io.ByteArrayOutputStream;
 import java.io.FilterInputStream;
 import java.io.FilterOutputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.lang.reflect.Modifier;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Set;
@@ -38,12 +40,15 @@ import com.delcyon.capo.resourcemanager.ContentFormatType;
 import com.delcyon.capo.resourcemanager.ResourceParameter;
 import com.delcyon.capo.resourcemanager.ResourceURI;
 import com.delcyon.capo.util.ReflectionUtility;
+import com.delcyon.capo.util.ToStringControl;
+import com.delcyon.capo.util.ToStringControl.Control;
 
 /**
  * @author jeremiah
  *
  */
 @SuppressWarnings("unchecked")
+@ToStringControl(control=Control.exclude,modifiers=Modifier.STATIC)
 public abstract class AbstractContentMetaData implements ContentMetaData
 {
 
@@ -115,7 +120,7 @@ public abstract class AbstractContentMetaData implements ContentMetaData
 		}
 	}
 	
-	
+	private boolean includeStreamAttributes = false;
 	private boolean isInitialized = false;
 	private ResourceURI resourceURI = null;
 	private HashMap<String, String> attributeHashMap = new HashMap<String, String>();
@@ -129,12 +134,15 @@ public abstract class AbstractContentMetaData implements ContentMetaData
 	 * @param inputStream
 	 * @throws Exception 
 	 */
-	protected void readInputStream(InputStream inputStream) throws Exception
+	protected byte[] readInputStream(InputStream inputStream) throws Exception
 	{
+	    this.includeStreamAttributes = true;
+	    ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
 		inputStream =  wrapInputStream(inputStream);
-		StreamUtil.readInputStreamIntoOutputStream(inputStream, new NullOutputStream());
+		StreamUtil.readInputStreamIntoOutputStream(inputStream, byteArrayOutputStream);
 		getAttributeMap(); //once we've read the file, load up he attribute map with any stream attributes.
-		this.isInitialized = true;
+		this.isInitialized = true;		
+		return byteArrayOutputStream.toByteArray();
 	}
 	
 	/**
@@ -146,6 +154,7 @@ public abstract class AbstractContentMetaData implements ContentMetaData
 	 */
 	protected InputStream wrapInputStream(InputStream inputStream) throws Exception
 	{
+	    this.includeStreamAttributes = true;
 		streamAttributeFilterVector.clear();
 		for (Class inputStreamAttributeFilterProviderClass : inputStreamAttributeFilterVector)
 		{			
@@ -157,6 +166,7 @@ public abstract class AbstractContentMetaData implements ContentMetaData
 	
 	protected OutputStream wrapOutputStream(OutputStream outputStream) throws Exception
 	{
+	    this.includeStreamAttributes = true;
 		streamAttributeFilterVector.clear();
 		for (Class outputStreamAttributeFilterProviderClass : outputStreamAttributeFilterVector)
 		{			
@@ -166,7 +176,19 @@ public abstract class AbstractContentMetaData implements ContentMetaData
 		return outputStream;
 	}
 	
-	
+	@Override
+    public boolean isDynamic()
+    {       
+        if(includeStreamAttributes == true)
+        {
+            return false;
+        }
+        else
+        {
+            return true;
+        }
+    }
+    
 	
 	@Override
 	public boolean isInitialized()
@@ -296,10 +318,13 @@ public abstract class AbstractContentMetaData implements ContentMetaData
 	public boolean isSupported(String attributeName)
 	{
 		List<String> supportedAttributeList = getSupportedAttributes();
-		for (Class inputStreamAttributeFilterProviderClass : inputStreamAttributeFilterVector)
-		{			
-			supportedAttributeList.add(((InputStreamAttributeFilterProvider) inputStreamAttributeFilterProviderClass.getAnnotation(InputStreamAttributeFilterProvider.class)).name());
-		}	
+		if(includeStreamAttributes == true)
+		{
+		    for (Class inputStreamAttributeFilterProviderClass : inputStreamAttributeFilterVector)
+		    {			
+		        supportedAttributeList.add(((InputStreamAttributeFilterProvider) inputStreamAttributeFilterProviderClass.getAnnotation(InputStreamAttributeFilterProvider.class)).name());
+		    }	
+		}
 		return supportedAttributeList.contains(attributeName);
 	}
 
@@ -313,9 +338,12 @@ public abstract class AbstractContentMetaData implements ContentMetaData
 			supportedAttributeVector.add(attributeEnum.toString());
 		}
 		
-		for (Class inputStreamAttributeFilterProviderClass : inputStreamAttributeFilterVector)
-		{			
-			supportedAttributeVector.add(((InputStreamAttributeFilterProvider) inputStreamAttributeFilterProviderClass.getAnnotation(InputStreamAttributeFilterProvider.class)).name());
+		if(includeStreamAttributes == true)
+		{
+		    for (Class inputStreamAttributeFilterProviderClass : inputStreamAttributeFilterVector)
+		    {			
+		        supportedAttributeVector.add(((InputStreamAttributeFilterProvider) inputStreamAttributeFilterProviderClass.getAnnotation(InputStreamAttributeFilterProvider.class)).name());
+		    }
 		}
 		supportedAttributeVector.add(Attributes.path.toString());
 		return supportedAttributeVector;

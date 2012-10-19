@@ -10,6 +10,7 @@ import org.junit.Test;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
+import com.delcyon.capo.CapoApplication;
 import com.delcyon.capo.resourcemanager.ResourceDescriptor;
 import com.delcyon.capo.resourcemanager.ResourceDescriptorTest;
 import com.delcyon.capo.resourcemanager.ResourceParameter;
@@ -19,6 +20,7 @@ import com.delcyon.capo.tests.util.TestServer;
 import com.delcyon.capo.tests.util.Util;
 import com.delcyon.capo.xml.XMLDiff;
 import com.delcyon.capo.xml.XPath;
+import com.sun.source.tree.AssertTree;
 
 public class JdbcResourceDescriptorTest extends ResourceDescriptorTest
 {
@@ -118,11 +120,20 @@ public class JdbcResourceDescriptorTest extends ResourceDescriptorTest
         resourceDescriptor.addResourceParameters(null, new ResourceParameter("update","INSERT INTO SYSTEMS VALUES('BS-ID','BS-NAME','2012-06-22 10:33:11.840000','BS-OS')"));
         super.testProcessOutput();
         resourceDescriptor.addResourceParameters(null, new ResourceParameter("query","select * from systems"));
-        Element readElement = resourceDescriptor.readXML(null);
+        Document modDocument = CapoApplication.getDocumentBuilder().newDocument();
+        Element resultSetElement = modDocument.createElement("ResultSet");
+        modDocument.appendChild(resultSetElement);
+        while(resourceDescriptor.next(null))
+        {
+            Element readElement = resourceDescriptor.readXML(null);
+            resultSetElement.appendChild(modDocument.adoptNode(readElement));
+        }
+        
+        
         XMLDiff xmlDiff = new XMLDiff();
         xmlDiff.setAllowNamespaceMismatches(true);
         Document baseDocument = TestServer.getServerInstance().getDocumentBuilder().parse(new File("test-data/testdb/update_results.xml"));
-        Element diffElement = xmlDiff.getDifferences(baseDocument.getDocumentElement(), readElement);
+        Element diffElement = xmlDiff.getDifferences(baseDocument.getDocumentElement(), resultSetElement);
         if(XMLDiff.EQUALITY.equals(diffElement.getAttribute(XMLDiff.XDIFF_PREFIX+":"+XMLDiff.XDIFF_ELEMENT_ATTRIBUTE_NAME)) == false)
         {
             XPath.dumpNode(diffElement, System.err);
@@ -133,9 +144,9 @@ public class JdbcResourceDescriptorTest extends ResourceDescriptorTest
     
     @Override
     @Test
-    public void testGetIterationMetaData() throws Exception
+    public void testGetContentMetaData() throws Exception
     {
         resourceDescriptor.addResourceParameters(null, new ResourceParameter("query","select * from systems"));
-        super.testGetIterationMetaData();
+        super.testGetContentMetaData();
     }
 }

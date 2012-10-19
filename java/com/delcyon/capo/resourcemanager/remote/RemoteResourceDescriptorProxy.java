@@ -246,6 +246,17 @@ public class RemoteResourceDescriptorProxy  implements ResourceDescriptor,Client
 	}
 	
 	@Override
+	public void advanceState(State desiredState, VariableContainer variableContainer, ResourceParameter... resourceParameters) throws Exception
+	{
+	    this.variableContainer = variableContainer;
+        RemoteResourceDescriptorMessage message = new RemoteResourceDescriptorMessage();
+        message.setResourceParameters(resourceParameters);
+        message.setDesiredState(desiredState);
+        message = sendResponse(message, MessageType.ADVANCE_STATE,false);
+	    
+	}
+	
+	@Override
 	public boolean next(VariableContainer variableContainer, ResourceParameter... resourceParameters) throws Exception
 	{
 		this.variableContainer = variableContainer;

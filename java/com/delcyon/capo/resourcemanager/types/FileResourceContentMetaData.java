@@ -135,10 +135,6 @@ public class FileResourceContentMetaData extends AbstractContentMetaData
 	}
 	
 
-	
-
-	
-
 	@Override
 	public Boolean exists()
 	{

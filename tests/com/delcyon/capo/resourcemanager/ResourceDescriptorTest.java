@@ -13,6 +13,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
+import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
@@ -172,18 +173,34 @@ public abstract class ResourceDescriptorTest
     	resourceDescriptor.reset(State.NONE);
         resourceDescriptor.init(null, null, LifeCycle.EXPLICIT, false);
         resourceDescriptor.open(null);
-        Assert.assertSame(State.OPEN,resourceDescriptor.getResourceState());
+        resourceDescriptor.next(null);
+        Assert.assertSame(State.STEPPING,resourceDescriptor.getResourceState());
         Element element = resourceDescriptor.readXML(null);
         Assert.assertNotNull(element);
-        Assert.assertTrue(element.hasChildNodes());
+        Assert.assertTrue(element.hasChildNodes() || element.hasAttributes());
         int count = 0;
-        NodeList nodeList = element.getChildNodes();
-        for(int index = 0; index < nodeList.getLength(); index++)
+        
+        if(element.hasChildNodes())
         {
-        	if (nodeList.item(index).getNodeType() == Node.ELEMENT_NODE)
-        	{
-        		count++;
-        	}
+            NodeList nodeList = element.getChildNodes();
+            for(int index = 0; index < nodeList.getLength(); index++)
+            {
+                if (nodeList.item(index).getNodeType() == Node.ELEMENT_NODE)
+                {
+                    count++;
+                }
+            }
+        }
+        if(element.hasAttributes())
+        {
+            NamedNodeMap namedNodeMap = element.getAttributes();
+            for(int index = 0; index < namedNodeMap.getLength(); index++)
+            {
+                if (namedNodeMap.item(index).getNodeType() == Node.ATTRIBUTE_NODE)
+                {
+                    count++;
+                }
+            }
         }
         System.out.println("readXML found "+count+" child elements");
         XPath.dumpNode(element, System.out);       
@@ -199,7 +216,8 @@ public abstract class ResourceDescriptorTest
     	resourceDescriptor.reset(State.NONE);
         resourceDescriptor.init(null, null, LifeCycle.EXPLICIT, false);
         resourceDescriptor.open(null);
-        Assert.assertSame(State.OPEN,resourceDescriptor.getResourceState());
+        resourceDescriptor.next(null);
+        Assert.assertSame(State.STEPPING,resourceDescriptor.getResourceState());
         byte[] data = resourceDescriptor.readBlock(null);
         Assert.assertTrue(data.length > 10);
         System.out.println("Read the following bloack data: '"+new String(data)+"'");
@@ -258,9 +276,7 @@ public abstract class ResourceDescriptorTest
             recordCount++;
             int tmpHashCode = new String(resourceDescriptor.readBlock(null)).hashCode();
             Assert.assertTrue("records don't differ",hashCode != tmpHashCode);
-            hashCode = tmpHashCode;
-            tmpHashCode = new String(resourceDescriptor.readBlock(null)).hashCode();
-            Assert.assertTrue("record differs on second read",hashCode == tmpHashCode);
+            hashCode = tmpHashCode;            
         }
         Assert.assertTrue(recordCount > 0);
 
@@ -309,6 +325,7 @@ public abstract class ResourceDescriptorTest
     	resourceDescriptor.reset(State.NONE);
         resourceDescriptor.init(null, null, LifeCycle.EXPLICIT, false);
         resourceDescriptor.open(null);
+        resourceDescriptor.next(null);
         if (resourceDescriptor.isSupportedStreamFormat(StreamType.INPUT, StreamFormat.STREAM))
         {
         	InputStream inputStream = resourceDescriptor.getInputStream(null);
@@ -375,12 +392,13 @@ public abstract class ResourceDescriptorTest
     }
 
     @Test
-    public void testGetContentMetaData() throws Exception
+    public void testGetResourceMetaData() throws Exception
     {
     	resourceDescriptor.reset(State.NONE);
         resourceDescriptor.init(null, null, LifeCycle.EXPLICIT, false);
         resourceDescriptor.open(null);
-        Assert.assertSame(State.OPEN,resourceDescriptor.getResourceState());
+        resourceDescriptor.next(null);
+        Assert.assertSame(State.STEPPING,resourceDescriptor.getResourceState());
         ContentMetaData contentMetaData = resourceDescriptor.getResourceMetaData(null);
         List<String> attributeList = contentMetaData.getSupportedAttributes();
         for (String attribute : attributeList)
@@ -393,7 +411,7 @@ public abstract class ResourceDescriptorTest
     }
 
     @Test
-    public void testGetIterationMetaData() throws Exception
+    public void testGetContentMetaData() throws Exception
     {
         resourceDescriptor.reset(State.NONE);
         resourceDescriptor.init(null, null, LifeCycle.EXPLICIT, false);
