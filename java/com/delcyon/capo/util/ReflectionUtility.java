@@ -25,10 +25,12 @@ import java.lang.reflect.Type;
 import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.Set;
 import java.util.Vector;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import com.delcyon.capo.CapoApplication;
 import com.delcyon.capo.util.ToStringControl.Control;
 
 /**
@@ -454,11 +456,44 @@ public class ReflectionUtility
 			return defaultConstructor.newInstance(new Object[0]);
 		}
 		else
-		{		    		    
-			throw new InstantiationException("Couldn't find a default contructor for "+type.getCanonicalName());
+		{
+		    Object instanceObject =  ReflectionUtility.getMarshalWrapperInstance(type.getCanonicalName());
+		    if (instanceObject == null)
+		    {
+		        throw new InstantiationException("Couldn't find a default contructor for "+type.getCanonicalName());
+		    }
+		    else
+		    {
+		        return instanceObject;
+		    }
 		}
 	}
 
+	public static Object getMarshalWrapperInstance(String className) throws InstantiationException, IllegalAccessException
+    {
+        
+        Object instanceObject = null;
+        Set<String> marshalWrapperSet = CapoApplication.getAnnotationMap().get(MarshalWrapper.class.getCanonicalName());
+        for (String wrapperClassName : marshalWrapperSet)
+        {
+            try
+            {
+                MarshalWrapper marshalWrapper = Class.forName(wrapperClassName).getAnnotation(MarshalWrapper.class);
+                if(marshalWrapper.marshalledClass().getCanonicalName().equals(className))
+                {
+                    MarshalWrapperInterface marshalWrapperInterface = (MarshalWrapperInterface) Class.forName(wrapperClassName).newInstance();
+                    return marshalWrapperInterface.getInstance();
+                }
+            
+            } catch (ClassNotFoundException classNotFoundException)
+            {
+                CapoApplication.logger.log(Level.WARNING, "Error getting document providers",classNotFoundException);
+            }
+            
+        }
+        return instanceObject;
+    }
+	
 	@SuppressWarnings({ "unchecked", "rawtypes" })
 	public static Constructor getDefaultConstructor(Class type)
 	{

@@ -22,6 +22,7 @@ import java.lang.reflect.Modifier;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -34,6 +35,11 @@ import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
+import com.delcyon.capo.CapoApplication;
+import com.delcyon.capo.annotations.DefaultDocumentProvider;
+
+import sun.management.StackTraceElementCompositeData;
+
 /**
  * @author jeremiah
  */
@@ -45,6 +51,9 @@ public class XMLSerializer
 	private String namespaceURI = null;
 	private String prefix = null;
 
+	
+	
+        
 	
 	
 	public XMLSerializer()
@@ -483,10 +492,14 @@ public class XMLSerializer
 									    if (ReflectionUtility.hasDefaultContructor(Class.forName(element.getAttribute(CLASS_ATTRIBUTE))))
 									    {
 									        instanceObject = ReflectionUtility.getComplexInstance(Class.forName(element.getAttribute(CLASS_ATTRIBUTE)));//, marnodeList.item(currentNode).getTextContent());
-									    }
+									    }									    
 									    else
 									    {
-									        Logger.global.log(Level.WARNING, "Skipping "+element.getAttribute(CLASS_ATTRIBUTE)+" because it has no default constructor");
+									        instanceObject = ReflectionUtility.getMarshalWrapperInstance(element.getAttribute(CLASS_ATTRIBUTE));
+									        if (instanceObject == null)
+									        {
+									            Logger.global.log(Level.WARNING, "Skipping "+element.getAttribute(CLASS_ATTRIBUTE)+" because it has no default constructor, try creating a MarshalWrapper");
+									        }
 									    }
 									}
 									else
@@ -498,13 +511,18 @@ public class XMLSerializer
                                         }
 									    else
 									    {
-									        Logger.global.log(Level.WARNING, "Skipping "+field.getType().getComponentType()+" because it has no default constructor");
+									        instanceObject = ReflectionUtility.getMarshalWrapperInstance(field.getType().getComponentType().getCanonicalName());
+                                            if (instanceObject == null)
+                                            {
+                                                Logger.global.log(Level.WARNING, "Skipping "+field.getType().getComponentType()+" because it has no default constructor, try creating a MarshalWrapper");
+                                            }
+									        
 									    }
 									}
 									
 									
 									if (instanceObject != null)
-									{																				
+									{																														
 										Array.set(arrayObject, elementIndex, instanceObject);
 										marshall(element, instanceObject);
 									}
@@ -747,6 +765,8 @@ public class XMLSerializer
 		
 	}
 
-
-
+	
+	
+	
+	
 }
