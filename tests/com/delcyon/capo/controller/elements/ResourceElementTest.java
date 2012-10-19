@@ -25,7 +25,9 @@ import org.junit.Test;
 import org.w3c.dom.Document;
 
 import com.delcyon.capo.CapoApplication;
+import com.delcyon.capo.CapoApplication.ApplicationState;
 import com.delcyon.capo.controller.LocalRequestProcessor;
+import com.delcyon.capo.tests.util.ExternalTestClient;
 import com.delcyon.capo.tests.util.TestServer;
 import com.delcyon.capo.tests.util.Util;
 import com.delcyon.capo.xml.XMLDiff;
@@ -43,7 +45,7 @@ public class ResourceElementTest
     
 
     @Test
-    public void simpleTest() throws Exception
+    public void dynamicQueryTest() throws Exception
     {
     	
     	Util.copyTree("test-data/capo", "capo", true, true);
@@ -63,6 +65,19 @@ public class ResourceElementTest
             XPath.dumpNode(xmlDiffDocument.getDocumentElement(), System.err);
         }
         Assert.assertEquals(XMLDiff.EQUALITY, xmlDiffDocument.getDocumentElement().getAttribute(XMLDiff.XDIFF_PREFIX+":"+XMLDiff.XDIFF_ELEMENT_ATTRIBUTE_NAME));
+    }
+    
+    @Test
+    public void fileScanTest() throws Exception
+    {
+        Util.copyTree("test-data/capo", "capo", true, true);
+        Util.copyTree("test-data/resource_element_tests/badDNS-resource-element-test.xml", "capo/server/controller/default.xml", false, true);
+        TestServer.start();
+        ExternalTestClient externalTestClient = new ExternalTestClient();
+        externalTestClient.startClient(ApplicationState.RUNNING);
+        
+        //Thread.sleep(10000);
+        externalTestClient.shutdown();
     }
     
 }

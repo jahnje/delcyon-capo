@@ -16,6 +16,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 package com.delcyon.capo.controller.elements;
 
+import org.w3c.dom.Element;
+
 import com.delcyon.capo.CapoApplication;
 import com.delcyon.capo.controller.AbstractControl;
 import com.delcyon.capo.controller.ControlElementProvider;
@@ -25,15 +27,15 @@ import com.delcyon.capo.xml.XPath;
  * @author jeremiah
  * Appends a node to the XML
  */
-@ControlElementProvider(name="append")
-public class AppendElement extends AbstractControl
+@ControlElementProvider(name="setAttribute")
+public class SetAttributeElement extends AbstractControl
 {
 
 	
 	
 	public enum Attributes
 	{
-		name,srcRef,destRef
+		name,srcRef,destRef,value
 	}
 	
 	
@@ -50,7 +52,7 @@ public class AppendElement extends AbstractControl
 	@Override
 	public Attributes[] getRequiredAttributes()
 	{
-		return new Attributes[]{Attributes.srcRef,Attributes.destRef};
+		return new Attributes[]{Attributes.name,Attributes.destRef};
 	}
 
 	
@@ -68,7 +70,26 @@ public class AppendElement extends AbstractControl
 		
 		String srcRef = getAttributeValue(Attributes.srcRef);
 		String dstRef = getAttributeValue(Attributes.destRef);
-		XPath.selectSingleNode(getControlElementDeclaration(), dstRef).appendChild(XPath.selectSingleNode(getControlElementDeclaration(), srcRef));		
+		String value = getAttributeValue(Attributes.value);
+		String name = getAttributeValue(Attributes.name);
+		if(value.isEmpty() == false)
+		{
+		    value = getParentGroup().processVars(value);
+		}
+		else if (srcRef.isEmpty() == false)
+		{
+		    value = XPath.selectSingleNodeValue(getControlElementDeclaration(), srcRef);    
+		}
+		else
+		{
+		    throw new Exception("Missing Attribute, must have srcRef or value attribute");
+		}
+		Element destElement = ((Element)XPath.selectSingleNode(getControlElementDeclaration(), dstRef));
+		if (destElement == null)
+		{
+		    throw new Exception("Couldn't find and element at "+dstRef);
+		}
+		destElement.setAttribute(name, value);		
 		return null;
 	}
 

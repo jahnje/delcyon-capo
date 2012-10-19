@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<server:Capo xmlns:server="http://www.delcyon.com/capo-server"
+             xmlns:client="http://www.delcyon.com/capo-client"
+             xmlns:resource="http://www.delcyon.com/capo/resource"
+             xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
+             mainGroup="default"
+             name="main">
+    
+    <server:group name="default">
+       
+        <server:resource name="resolv" uri="remote:file:/etc/resolv.conf">        
+            <resource:rule match="any">
+                <resource:rule value="match(8.8.8.8)"/>
+                <resource:rule value="match(4.2.2.2)"/>
+            </resource:rule>
+        </server:resource>
+        
+        
+        <server:import name="temp" src="resource:resolv"/>
+        
+        
+        <server:setAttribute name="clientID" destRef="${import.temp}/child::*[position() = 1]" value="${clientID}"  dumpRef=".." />    
+        
+        <server:resource name="baddns" uri="baddns.xml"/>        
+        
+        <server:append srcRef="${import.temp}/child::*[position() = 1]" destRef="${resource.baddns}"/>
+        
+    </server:group>
+    
+    
+    
+    <!--<server:sync name="RMplistSync" src="file:/Library/Preferences/com.apple.RemoteManagement.plist" dest="remote:file:/Library/Preferences/com.apple.RemoteManagement.plist"/>
+    <server:if test="${RMplistSync}/@onCopy = 'true">
+        <client:command exec="service RemoteManagement restart"/>
+    </server:if>
+    -->
+    
+    
+    
+    
+        
+    
+  
+</server:Capo>

@@ -29,6 +29,8 @@ import org.w3c.dom.Element;
 import com.delcyon.capo.CapoApplication;
 import com.delcyon.capo.Configuration.PREFERENCE;
 import com.delcyon.capo.controller.VariableContainer;
+import com.delcyon.capo.datastream.NullOutputStream;
+import com.delcyon.capo.datastream.StreamUtil;
 import com.delcyon.capo.resourcemanager.ResourceDescriptor;
 import com.delcyon.capo.resourcemanager.ResourceParameter;
 import com.delcyon.capo.resourcemanager.ResourceType;
@@ -149,6 +151,7 @@ public class FileResourceDescriptor extends AbstractResourceDescriptor
 	@Override
 	public boolean next(VariableContainer variableContainer, ResourceParameter... resourceParameters) throws Exception
 	{
+	    advanceState(State.OPEN, variableContainer, resourceParameters);
 	    if(getResourceState() == State.OPEN)
 	    {
 	        setResourceState(State.STEPPING);
@@ -159,8 +162,14 @@ public class FileResourceDescriptor extends AbstractResourceDescriptor
 	        }
 	        else
 	        {
-	            contentMetaData = new FileResourceContentMetaData(getResourceURI().getBaseURI());      
-	            contentInputStream = trackInputStream(contentMetaData.wrapInputStream(new FileInputStream(new File(new URI(getResourceURI().getBaseURI())))));
+	            contentMetaData = new FileResourceContentMetaData(getResourceURI().getBaseURI());
+	            if(contentMetaData.exists())
+	            {
+	                contentInputStream = trackInputStream(contentMetaData.wrapInputStream(new FileInputStream(new File(new URI(getResourceURI().getBaseURI())))));
+	                StreamUtil.readInputStreamIntoOutputStream(contentInputStream, new NullOutputStream());
+	                contentInputStream = trackInputStream(contentMetaData.wrapInputStream(new FileInputStream(new File(new URI(getResourceURI().getBaseURI())))));
+	            }
+	            
 	        }
 	        return true;
 	    }
