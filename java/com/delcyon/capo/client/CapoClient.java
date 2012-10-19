@@ -64,6 +64,7 @@ import com.delcyon.capo.protocol.client.CapoConnection;
 import com.delcyon.capo.protocol.client.Request;
 import com.delcyon.capo.resourcemanager.CapoDataManager;
 import com.delcyon.capo.resourcemanager.ResourceDescriptor;
+import com.delcyon.capo.resourcemanager.ResourceDescriptor.LifeCycle;
 import com.delcyon.capo.resourcemanager.ResourceParameter;
 import com.delcyon.capo.resourcemanager.ResourceDescriptor.Action;
 import com.delcyon.capo.resourcemanager.types.FileResourceType;
@@ -463,10 +464,10 @@ public class CapoClient extends CapoApplication
 		
 		// load the file
 		KeyStore keyStore = KeyStore.getInstance(KeyStore.getDefaultType());
-		ResourceDescriptor keystoreFile = getDataManager().getResourceDescriptor(null, getConfiguration().getValue(PREFERENCE.KEYSTORE));
-		keystoreFile.addResourceParameters(null,new ResourceParameter(FileResourceType.Parameters.PARENT_PROVIDED_DIRECTORY,PREFERENCE.CONFIG_DIR));
+		ResourceDescriptor keystoreResourceDescriptor = getDataManager().getResourceDescriptor(null, getConfiguration().getValue(PREFERENCE.KEYSTORE));
+		keystoreResourceDescriptor.addResourceParameters(null,new ResourceParameter(FileResourceType.Parameters.PARENT_PROVIDED_DIRECTORY,PREFERENCE.CONFIG_DIR));
 		char[] password = getConfiguration().getValue(PREFERENCE.KEYSTORE_PASSWORD).toCharArray();
-		InputStream keyStoreFileInputStream = keystoreFile.getInputStream(null);
+		InputStream keyStoreFileInputStream = keystoreResourceDescriptor.getInputStream(null);
 		keyStore.load(keyStoreFileInputStream, password);
 		keyStoreFileInputStream.close();
 		setKeyStore(keyStore);
