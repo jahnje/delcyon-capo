@@ -53,7 +53,7 @@ public class ImportElement extends AbstractControl implements XPathFunctionProce
 	
 	private enum Attributes
 	{
-		name,src,type,ref
+		name,src,type,ref,contentOnly
 	}
 	
 	
@@ -110,7 +110,7 @@ public class ImportElement extends AbstractControl implements XPathFunctionProce
 		String src = getAttributeValue(Attributes.src);		
 		String type = getAttributeValue(Attributes.type);		
 		String ref = getAttributeValue(Attributes.ref);		
-		
+		boolean contentOnly = getAttributeBooleanValue(Attributes.contentOnly);
 		
 		ResourceDescriptor resourceDescriptor = getParentGroup().getResourceDescriptor(this, src);
 		if (resourceDescriptor == null)
@@ -139,7 +139,7 @@ public class ImportElement extends AbstractControl implements XPathFunctionProce
 		        Element readElement = resourceDescriptor.readXML(getParentGroup(),resourceParameters);
 		        if(readElement instanceof ResourceElement)
 		        {
-		            readElement = ((ResourceElement) readElement).export();
+		            readElement = ((ResourceElement) readElement).export(contentOnly);
 		        }
 		        importedDocument.adoptNode(readElement);
 		        importedDocument.appendChild(readElement);

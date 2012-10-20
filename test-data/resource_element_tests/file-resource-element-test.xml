@@ -16,14 +16,14 @@
         </server:resource>
         
         
-        <server:import name="temp" src="resource:resolv"/>
+        <!--<server:import name="temp" src="resource:resolv"/>-->
         
         
-        <server:setAttribute name="clientID" destRef="${import.temp}/child::*[position() = 1]" value="${clientID}"  dumpRef=".." />    
+        <server:setAttribute name="clientID" destRef="${resource.resolv}/child::*[position() = 1]" value="${clientID}"  dumpRef=".." />    
         
         <server:resource name="baddns" uri="baddns.xml"/>        
         
-        <server:append srcRef="${import.temp}/child::*[position() = 1]" destRef="${resource.baddns}"/>
+        <!--<server:append srcRef="${import.temp}/child::*[position() = 1]" destRef="${resource.baddns}"/>-->
         
     </server:group>
     

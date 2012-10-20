@@ -125,6 +125,12 @@ public class ResourceAttr extends ResourceNode implements Attr
     }
 
     @Override
+    public ResourceDocument getOwnerResourceDocument()
+    {    	
+    	return parentElement.getOwnerResourceDocument();
+    }
+    
+    @Override
     public Node insertBefore(Node newChild, Node refChild) throws DOMException
     {
         throw new UnsupportedOperationException();

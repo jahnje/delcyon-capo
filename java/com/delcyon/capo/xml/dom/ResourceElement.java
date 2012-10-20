@@ -767,9 +767,9 @@ public class ResourceElement extends ResourceNode implements Element
         return ReflectionUtility.processToString(this);
     }
 
-    public Element export() throws Exception
-    {
-        return ResourceDocument.export(this).getDocumentElement();
+    public Element export(boolean contentOnly) throws Exception
+    {    	
+        return ResourceDocument.export(this,contentOnly).getDocumentElement();
     }
 
 	

@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<server:Capo xmlns:server="http://www.delcyon.com/capo-server"
+             xmlns:client="http://www.delcyon.com/capo-client"
+             xmlns:resource="http://www.delcyon.com/capo/resource"
+             xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
+             mainGroup="default"
+             name="main">
+    
+    <server:group name="default">
+     
+        <!-- Start with the resource that we want to search against -->
+        <server:var name="clientName" value="%"/>
+        
+        <resource:resource name="jdbcTestResource"  uri="jdbc:hsqldb:file:testdb/testdb?user=user" >
+            <resource:parameter name="password" value=""/>
+            <resource:include name="TABLE_NAME"/>
+            
+            <resource:child name="systems" path="SYSTEMS" >
+                <resource:join parent="@TABLE_NAME" this="'SYSTEMS'"/>
+                <resource:rule match="any">
+                    <resource:rule value="NAME like '%'"/>
+                    <resource:rule value="LAST_CONNECT &lt; now()"/>
+                </resource:rule>               
+                
+                <resource:include name="NAME"/>
+                <resource:include name="OS"/>
+                <resource:include name="ID"/>
+                <resource:child name="status" uri="clients:${clientName}/status.xml" clientName="@ID" dynamic="true"/>
+                <resource:child name="identity" uri="clients:${clientName}/identity.xml" clientName="@ID" dynamic="true"/>
+                <resource:child name="asc" path="system_service_asc" >                    
+                    <resource:join parent="@ID" this="@SYSTEM_ID" />
+                    
+                    <resource:child name="services" path="services" >                    
+                        <resource:join parent="@SERVICE_ID" this="@ID" />
+                    </resource:child>
+                    
+                    <resource:child name="services" path="services">                    
+                        <resource:join parent="@SERVICE_ID" this="'BOGUS'" />
+                    </resource:child>
+                    
+                </resource:child>
+                
+                <resource:child name="interfaces" path="INTERFACES" joinType="inner">                    
+                    <resource:join parent="@ID" this="@SYSTEM_ID"/>
+                    <resource:rule match="all">                        
+                        <resource:rule value="STATUS = 'ACTIVE'"/>
+                    </resource:rule>
+                
+                    <resource:include name="IP"/>
+                    <resource:include name="MAC"/>
+                    <resource:include name="SYSTEM_ID"/>
+                </resource:child>
+                
+                
+                
+            </resource:child>
+            
+        </resource:resource>
+        <outputHolder/>
+        <server:import name="jdbcTestImport" src="resource:jdbcTestResource" contentOnly="true" ref="../outputHolder"/>
+        <server:import name="jdbcTestImportFull" src="resource:jdbcTestResource" contentOnly="false" ref="../outputHolder"/>
+        <server:export dest="testImportOutput.xml" ref="../outputHolder" />
+        
+        
+    </server:group>
+    
+</server:Capo>

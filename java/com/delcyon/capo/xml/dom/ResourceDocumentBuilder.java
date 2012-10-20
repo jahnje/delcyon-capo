@@ -25,18 +25,10 @@ public class ResourceDocumentBuilder
     public ResourceDocument buildDocument(ResourceControlElement resourceControlElement) throws Exception
     {
         
-        
-        
         ResourceDeclarationElement resourceDeclarationElement = new ResourceDeclarationElement(resourceControlElement);
         ResourceElement rootResourceElement = resourceDeclarationElement.buildXML(resourceControlElement.getParentGroup(), ResourceParameterBuilder.getResourceParameters(resourceControlElement.getControlElementDeclaration()));
-        
-        //TODO this doesn't work at all
-        ResourceDocument resourceDocument = rootResourceElement.getOwnerResourceDocument();
-        resourceDocument.setContentOnly(true);
-        XPath.dumpNode(resourceDocument, System.out);
-        //resourceDocument.setContentOnly(false);
-        //XPath.dumpNode(resourceDocument, System.out);
-        return resourceDocument;
+        return rootResourceElement.getOwnerResourceDocument();
+
     }
     
     public ResourceDocument createDocument()

@@ -33,7 +33,7 @@ import com.delcyon.capo.tests.util.Util;
 import com.delcyon.capo.xml.XMLDiff;
 import com.delcyon.capo.xml.XPath;
 
-public class ResourceElementTest
+public class ImportElementTest
 {
    
     @After
@@ -45,18 +45,18 @@ public class ResourceElementTest
     
 
     @Test
-    public void dynamicQueryTest() throws Exception
+    public void importFromResourceDocument() throws Exception
     {
     	
     	Util.copyTree("test-data/capo", "capo", true, true);
     	Util.copyTree("test-data/testdb", "testdb", true, true);
         TestServer.start();
-        Document document = CapoApplication.getDocumentBuilder().parse(new FileInputStream("test-data/resource_element_tests/resource-element-test.xml"));
+        Document document = CapoApplication.getDocumentBuilder().parse(new FileInputStream("test-data/import_element_tests/import-element-test.xml"));
         LocalRequestProcessor localRequestProcessor = new LocalRequestProcessor();
         localRequestProcessor.process(document);
         
-        Document expectedDocument = CapoApplication.getDocumentBuilder().parse(new FileInputStream("test-data/resource_element_tests/resource_element_test_output.xml"));
-        Document resultDocument = CapoApplication.getDocumentBuilder().parse(new FileInputStream("capo/server/jdbcTestOutput.xml"));
+        Document expectedDocument = CapoApplication.getDocumentBuilder().parse(new FileInputStream("test-data/import_element_tests/import_element_test_output.xml"));
+        Document resultDocument = CapoApplication.getDocumentBuilder().parse(new FileInputStream("capo/server/testImportOutput.xml"));
         
         XMLDiff xmlDiff = new XMLDiff();
         Document xmlDiffDocument = xmlDiff.getDifferences(expectedDocument, resultDocument);
@@ -67,17 +67,6 @@ public class ResourceElementTest
         Assert.assertEquals(XMLDiff.EQUALITY, xmlDiffDocument.getDocumentElement().getAttribute(XMLDiff.XDIFF_PREFIX+":"+XMLDiff.XDIFF_ELEMENT_ATTRIBUTE_NAME));
     }
     
-    @Test
-    public void fileScanTest() throws Exception
-    {
-        Util.copyTree("test-data/capo", "capo", true, true);
-        Util.copyTree("test-data/resource_element_tests/file-resource-element-test.xml", "capo/server/controller/default.xml", false, true);
-        TestServer.start();
-        ExternalTestClient externalTestClient = new ExternalTestClient();
-        externalTestClient.startClient(ApplicationState.RUNNING);
-        
-        //Thread.sleep(10000);
-        externalTestClient.shutdown();
-    }
+   
     
 }

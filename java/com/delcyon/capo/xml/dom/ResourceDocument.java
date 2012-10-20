@@ -2,13 +2,11 @@ package com.delcyon.capo.xml.dom;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.transform.OutputKeys;
 import javax.xml.transform.Transformer;
 import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMResult;
 import javax.xml.transform.dom.DOMSource;
-import javax.xml.transform.stream.StreamResult;
 
 import org.w3c.dom.Attr;
 import org.w3c.dom.CDATASection;
@@ -31,7 +29,6 @@ import org.w3c.dom.UserDataHandler;
 import com.delcyon.capo.CapoApplication;
 import com.delcyon.capo.controller.elements.ResourceControlElement;
 import com.delcyon.capo.resourcemanager.ResourceDescriptor;
-import com.delcyon.capo.resourcemanager.ResourceURI;
 import com.delcyon.capo.resourcemanager.types.ContentMetaData;
 
 public class ResourceDocument extends ResourceNode implements Document
@@ -195,6 +192,12 @@ public class ResourceDocument extends ResourceNode implements Document
         return this;
     }
 
+    @Override
+    public ResourceDocument getOwnerResourceDocument()
+    {
+    	return this;
+    }
+    
     @Override
     public Node insertBefore(Node newChild, Node refChild) throws DOMException
     {
@@ -594,8 +597,10 @@ public class ResourceDocument extends ResourceNode implements Document
 		return new ResourceElement(this, localName, content, contentMetaData);
 	}
 
-    public static Document export(Node node) throws Exception
+    public static Document export(Node node, boolean contentOnly) throws Exception
     {
+    	ResourceNode resourceNode = (ResourceNode) node;
+    	resourceNode.getOwnerResourceDocument().setContentOnly(contentOnly);
         TransformerFactory tFactory = TransformerFactory.newInstance();
         DocumentBuilderFactory documentBuilderFactory = DocumentBuilderFactory.newInstance();
         documentBuilderFactory.setNamespaceAware(true);
@@ -606,6 +611,7 @@ public class ResourceDocument extends ResourceNode implements Document
         //transformer.setOutputProperty(SaxonOutputKeys.INDENT_SPACES,"4");
         DOMResult domResult = new DOMResult();
         transformer.transform(new DOMSource(node), domResult);
+        resourceNode.getOwnerResourceDocument().setContentOnly(false);
         return (Document) domResult.getNode();
     }
 

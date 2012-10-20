@@ -187,10 +187,16 @@ public class ResourceText extends ResourceNode implements Text
     @Override
     public Document getOwnerDocument()
     {
-        throw new UnsupportedOperationException();
+        return parentNode.getOwnerDocument();
         
     }
 
+    @Override
+    public ResourceDocument getOwnerResourceDocument()
+    {
+    	return parentNode.getOwnerResourceDocument();
+    }
+    
     @Override
     public Node insertBefore(Node newChild, Node refChild) throws DOMException
     {

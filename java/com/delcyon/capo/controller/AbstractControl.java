@@ -374,6 +374,11 @@ public abstract class AbstractControl implements ServerSideControl
 		}		
 	}
 	
+	/**
+	 *
+	 * @param name
+	 * @return true if and only if value equals 'true', case is ignored. All other values return false;
+	 */
 	public boolean getAttributeBooleanValue(Enum attributeEnum)
 	{	
 		if (getControlElementDeclaration() != null)
@@ -389,7 +394,11 @@ public abstract class AbstractControl implements ServerSideControl
 		return false;
 	}
 	
-	
+	/**
+	 *
+	 * @param name
+	 * @return true if and only if value equals 'true', case is ignored. All other values return false;
+	 */
 	public boolean getBooleanValue(Enum name)
 	{
 		if (getValue(name) != null)
