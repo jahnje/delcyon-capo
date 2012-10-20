@@ -165,7 +165,7 @@ public class ResourceDeclarationElement
 	
 
 	
-	public ResourceElement readXML(VariableContainer variableContainer, ResourceParameter... resourceParameters) throws Exception
+	public ResourceElement buildXML(VariableContainer variableContainer, ResourceParameter... resourceParameters) throws Exception
 	{
 		ResourceDocument resourceDocument = new ResourceDocument();
 		
@@ -175,7 +175,7 @@ public class ResourceDeclarationElement
 		Element testRootElement = testDocument.createElement(getLocalName());
 		testDocument.appendChild(testRootElement);
 		loadCacheVectors(true,rootResourceElement,testRootElement, variableContainer, resourceParameters);
-		readXML(rootResourceElement,testRootElement, variableContainer, resourceParameters);
+		buildXML(rootResourceElement,testRootElement, variableContainer, resourceParameters);
 		return rootResourceElement;
 	}
 	
@@ -258,7 +258,7 @@ public class ResourceDeclarationElement
 	 * @return true if children were added to parent element
 	 * @throws Exception
 	 */
-	private boolean readXML(ResourceElement parentResourceElement,Element parentElement, VariableContainer variableContainer, ResourceParameter... resourceParameters) throws Exception
+	private boolean buildXML(ResourceElement parentResourceElement,Element parentElement, VariableContainer variableContainer, ResourceParameter... resourceParameters) throws Exception
 	{
 		//System.err.println("======================================START==="+getLocalName()+"===============================");
 		//XPath.dumpNode(parentElement.getOwnerDocument(), System.err);
@@ -347,7 +347,7 @@ public class ResourceDeclarationElement
 
         				ResourceDeclarationElement childResourceDeclarationElement = childResourceDeclarationElementVector.get(index);
         				//first process the children, for joins, we work from the bottom up.
-        				if(childResourceDeclarationElement.readXML(resultElement,resultElement.getContent(), variableContainer, resourceParameters) == true)
+        				if(childResourceDeclarationElement.buildXML(resultElement,resultElement.getContent(), variableContainer, resourceParameters) == true)
         				{
         					hasChildrenAdded = true;
         					resultHadChildrenAdded = true;

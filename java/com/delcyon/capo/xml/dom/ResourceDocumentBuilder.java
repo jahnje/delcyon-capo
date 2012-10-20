@@ -28,7 +28,7 @@ public class ResourceDocumentBuilder
         
         
         ResourceDeclarationElement resourceDeclarationElement = new ResourceDeclarationElement(resourceControlElement);
-        ResourceElement rootResourceElement = resourceDeclarationElement.readXML(resourceControlElement.getParentGroup(), ResourceParameterBuilder.getResourceParameters(resourceControlElement.getControlElementDeclaration()));
+        ResourceElement rootResourceElement = resourceDeclarationElement.buildXML(resourceControlElement.getParentGroup(), ResourceParameterBuilder.getResourceParameters(resourceControlElement.getControlElementDeclaration()));
         
         //TODO this doesn't work at all
         ResourceDocument resourceDocument = rootResourceElement.getOwnerResourceDocument();
