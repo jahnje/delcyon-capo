@@ -59,7 +59,10 @@ public class ImportElementTest
         Document resultDocument = CapoApplication.getDocumentBuilder().parse(new FileInputStream("capo/server/testImportOutput.xml"));
         
         XMLDiff xmlDiff = new XMLDiff();
+        xmlDiff.setIgnoreNamespaceDeclarations(true);
+        xmlDiff.setIgnoreContentDifferences(true);
         Document xmlDiffDocument = xmlDiff.getDifferences(expectedDocument, resultDocument);
+        
         if(XMLDiff.EQUALITY.equals(xmlDiffDocument.getDocumentElement().getAttribute(XMLDiff.XDIFF_PREFIX+":"+XMLDiff.XDIFF_ELEMENT_ATTRIBUTE_NAME)) == false)
         {
             XPath.dumpNode(xmlDiffDocument.getDocumentElement(), System.err);

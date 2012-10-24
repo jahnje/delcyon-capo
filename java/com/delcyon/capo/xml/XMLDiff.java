@@ -42,6 +42,7 @@ import com.delcyon.capo.util.diff.WindowItemLink;
 import com.delcyon.capo.util.diff.XMLTextDiff;
 import com.delcyon.capo.util.diff.Diff.Side;
 import com.delcyon.capo.util.diff.InputStreamTokenizer.TokenList;
+import com.delcyon.capo.xml.cdom.CNode;
 
 /**
  * @author jeremiah
@@ -67,6 +68,7 @@ public class XMLDiff
 	
 	public static final String XDIFF_PREFIX = "xdiff";
 	public static final String XDIFF_NAMESPACE_URI = "http://www.delcyon.com/xdiff";
+	public static final String NAMESPACE_NAMESPACE_URI = "http://www.w3.org/2000/xmlns/";
 	
 	public static final int DEFAULT_USE_DIFF_TEXT_LENGTH = 5;
 
@@ -94,6 +96,8 @@ public class XMLDiff
 	private int useDiffTextLength = DEFAULT_USE_DIFF_TEXT_LENGTH;
 	private HashMap<String, String> ignoreableAttributeMap = new HashMap<String, String>();
     private boolean allowNamespaceMismatches = false;
+	private boolean ignoreContentDifferences = false;
+	private boolean ignoreNamespaceDeclarations = false;
 	
 	public XMLDiff() throws Exception
 	{
@@ -166,13 +170,42 @@ public class XMLDiff
     }
 	
 	/**
-	 * This defaults to false. This attempts to turn of namespace aware diffing for the document tress. 
+	 * This defaults to false. This attempts to turn off namespace aware diffing for the document tress. 
 	 * It's results can be fairly unpredictable. So don't use unless there is no other option. 
 	 * @param allowNamespaceMismatches
 	 */
 	public void setAllowNamespaceMismatches(boolean allowNamespaceMismatches)
     {
         this.allowNamespaceMismatches = allowNamespaceMismatches;
+    }
+	
+	/**
+	 * This defaults to false. This can be used to compare only the structure of two trees.
+	 * @param ignoreContentDifferences
+	 */
+	public void setIgnoreContentDifferences(boolean ignoreContentDifferences)
+    {
+        this.ignoreContentDifferences = ignoreContentDifferences;
+    }
+	
+	public boolean isIgnoreContentDifferences()
+    {
+        return ignoreContentDifferences;
+    }
+	
+	/**
+	 * defaults to false. This can be used to ignore xmlns attributes. 
+	 * Different implementations and versions of XML parsers can relocate these declarations all over the place. 
+	 * @param ignoreNamespaceDeclarations
+	 */
+	public void setIgnoreNamespaceDeclarations(boolean ignoreNamespaceDeclarations)
+    {
+        this.ignoreNamespaceDeclarations = ignoreNamespaceDeclarations;
+    }
+	
+	public boolean isIgnoreNamespaceDeclarations()
+    {
+        return ignoreNamespaceDeclarations;
     }
 	
 	public Element getDifferences(Element baseElement, Element otherElement) throws Exception
@@ -438,11 +471,18 @@ public class XMLDiff
 					}
 					else if (baseOutputNode instanceof Text)
 					{
-					
-						if (baseOutputNode.getNodeValue().equals(otherOutputNode.getNodeValue()) == true)
+					    String baseOutputNodeValue = baseOutputNode.getNodeValue();
+					    String otherOutputNodeValue = otherOutputNode.getNodeValue();
+					    if(isIgnoreContentDifferences())
+	                    {
+					        baseOutputNodeValue = "";
+	                        otherOutputNodeValue = "";
+	                    }
+					    
+						if (baseOutputNodeValue.equals(otherOutputNodeValue) == true)
 						{
-							//these are the same so just add it
-							differenceElement.appendChild(differenceDocument.importNode(otherOutputNode, true));									
+							//these are the same so just add it							
+							differenceElement.appendChild(differenceDocument.createTextNode(otherOutputNodeValue));
 						}
 						else
 						{
@@ -529,8 +569,13 @@ public class XMLDiff
 		{
 			Attr attribute = (Attr) baseElementAttributeNamedNodeMap.item(index);
 			String attributeLocalName = attribute.getLocalName();
-			
+			String attributePrefix = attribute.getPrefix();
 			String attributeNamesapceURI = attribute.getNamespaceURI();
+			
+			if(isIgnoreNamespaceDeclarations() && NAMESPACE_NAMESPACE_URI.equals(attributeNamesapceURI))
+			{
+			    continue;
+			}
 			
 			//see if we are supposed to ignore this
 			if (ignoreableAttributeMap.containsKey(attributeNamesapceURI+":"+attributeLocalName))
@@ -543,6 +588,10 @@ public class XMLDiff
 			{
 
 			    String attributeValue = attribute.getValue();
+			    if(isIgnoreContentDifferences())
+			    {
+			        attributeValue = "";
+			    }
 			    String attributeName = attribute.getName();
 			    if (otherElement.hasAttributeNS(attributeNamesapceURI, attributeLocalName) == false)
 			    {
@@ -558,9 +607,14 @@ public class XMLDiff
 			    {
 			        //compare values
 			        String otherValue = otherElement.getAttributeNS(attributeNamesapceURI, attributeLocalName);
+			        if(isIgnoreContentDifferences())
+	                {
+			            otherValue = "";
+			            
+	                }
 			        if(attributeValue.equals(otherValue))
-			        {
-			            differenceElement.setAttributeNodeNS((Attr) differenceDocument.importNode(attribute,true));
+			        {			            
+			            setAttribute(differenceElement, attributeNamesapceURI, attributePrefix, attributeLocalName,attributeValue);
 			        }
 			        //only compare values in one direction
 			        else if(direction == Side.BASE)
@@ -578,6 +632,10 @@ public class XMLDiff
 			{
 			    String attributeValue = attribute.getValue();
                 String attributeName = attribute.getName();
+                if(isIgnoreContentDifferences())
+                {
+                    attributeValue = "";
+                }
                 if (otherElement.hasAttribute(attributeName) == false)
                 {
                     Element xdiffAttributeElement = createElement(differenceDocument, XDIFF_NAMESPACE_URI, XDIFF_PREFIX, XDIFF_ATTRIBUTE_ELEMENT_NAME);             
@@ -592,9 +650,14 @@ public class XMLDiff
                 {
                     //compare values
                     String otherValue = otherElement.getAttribute( attributeName);
-                    if(attributeValue.equals(otherValue))
+                    if(isIgnoreContentDifferences())
                     {
-                        differenceElement.setAttributeNodeNS((Attr) differenceDocument.importNode(attribute,true));
+                        otherValue = "";
+                        
+                    }
+                    if(attributeValue.equals(otherValue))
+                    {                        
+                        setAttribute(differenceElement, attributeNamesapceURI, attributePrefix, attributeLocalName,attributeValue);
                     }
                     //only compare values in one direction
                     else if(direction == Side.BASE)
@@ -788,7 +851,13 @@ public class XMLDiff
 		}
 		else
 		{
+		    try
+		    {
 			element.setAttributeNS(namespaceURI, prefix+":"+name, value.toString());
+		    } catch (DOMException domException)
+		    {
+		        domException.printStackTrace();
+		    }
 		}
 	}
 	
