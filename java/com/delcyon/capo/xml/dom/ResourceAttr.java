@@ -14,18 +14,25 @@ import org.w3c.dom.UserDataHandler;
 
 import com.delcyon.capo.controller.elements.ResourceControlElement;
 import com.delcyon.capo.resourcemanager.ResourceDescriptor;
+import com.delcyon.capo.util.CloneControl;
+import com.delcyon.capo.util.CloneControl.Clone;
+import com.delcyon.capo.util.ControlledClone;
 import com.delcyon.capo.util.ReflectionUtility;
 import com.delcyon.capo.util.ToStringControl;
 import com.delcyon.capo.util.ToStringControl.Control;
 
 @ToStringControl(control=Control.exclude,modifiers=Modifier.FINAL+Modifier.STATIC)
-public class ResourceAttr extends ResourceNode implements Attr
+public class ResourceAttr extends ResourceNode implements Attr, ControlledClone
 {
 
     @ToStringControl(control=Control.exclude)
+    @CloneControl(filter=Clone.exclude)
     private ResourceElement parentElement = null;
     private String name = null;
     private ResourceText value = null;
+    
+    private ResourceAttr(){}//serialization
+    
     public ResourceAttr(ResourceElement parentElement, String name, String value)
     {
         this.parentElement = parentElement;
@@ -33,6 +40,18 @@ public class ResourceAttr extends ResourceNode implements Attr
         this.value = new ResourceText(this,value);
     }
 
+    @Override
+    public void preClone(Object parentObject, Object clonedObject) throws Exception
+    {
+       
+        
+    }
+    
+    public void postClone(Object parentObject, Object clonedObject)
+    {
+        ((ResourceAttr)clonedObject).parentElement = (ResourceElement) parentObject;
+    }
+    
     @Override
     public ResourceDescriptor getResourceDescriptor()
     {
@@ -195,7 +214,14 @@ public class ResourceAttr extends ResourceNode implements Attr
     @Override
     public String getPrefix()
     {
-        throw new UnsupportedOperationException();
+        if(getNodeName().contains(":"))
+        {
+            return getNodeName().split(":")[0];
+        }
+        else
+        {
+            return null;
+        }
         
     }
 

@@ -12,18 +12,36 @@ import org.w3c.dom.UserDataHandler;
 
 import com.delcyon.capo.controller.elements.ResourceControlElement;
 import com.delcyon.capo.resourcemanager.ResourceDescriptor;
+import com.delcyon.capo.util.CloneControl;
+import com.delcyon.capo.util.ControlledClone;
 import com.delcyon.capo.util.ReflectionUtility;
 import com.delcyon.capo.util.ToStringControl;
+import com.delcyon.capo.util.CloneControl.Clone;
 import com.delcyon.capo.util.ToStringControl.Control;
 
 @ToStringControl(control=Control.exclude,modifiers=Modifier.FINAL+Modifier.STATIC)
-public class ResourceText extends ResourceNode implements Text
+public class ResourceText extends ResourceNode implements Text, ControlledClone
 {
 
 	private String data;
 	@ToStringControl(control=Control.exclude)
+	@CloneControl(filter=Clone.exclude)
 	private ResourceNode parentNode;
 
+	private ResourceText(){}//serialization
+    
+	@Override
+	public void preClone(Object parentObject, Object clonedObject) throws Exception
+	{
+	    // TODO Auto-generated method stub
+	    
+	}
+	
+    public void postClone(Object parentObject, Object clonedObject)
+    {
+        ((ResourceText)clonedObject).parentNode = (ResourceNode) parentObject;
+    }
+	
 	public ResourceText(ResourceNode parentNode,String data)
 	{
 		this.data = data;

@@ -36,6 +36,10 @@ public abstract class EqualityProcessor {
 		else return object1.equals(object2);
 	}
 	
+	public static <T> T  clone(T cloneable) throws Exception
+    {
+	    return clone(null, cloneable);
+    }
 	/**
 	 * This is a utility method that can be used to clone anything, regardless of whether or not that object implements the clone interface.
 	 * @see CloneControl CloneControl for more information, on controlling what gets cloned.  
@@ -44,7 +48,7 @@ public abstract class EqualityProcessor {
 	 * @throws Exception
 	 */
 	@SuppressWarnings({ "unchecked", "rawtypes" })
-	public static <T> T  clone(T cloneable) throws Exception
+	public static <T> T  clone(Object clonedParent,T cloneable) throws Exception
 	{
 		if(cloneable == null)
 		{
@@ -58,8 +62,22 @@ public abstract class EqualityProcessor {
 			return  (T) ReflectionUtility.getPrimitiveInstance(cloneable.getClass(), ReflectionUtility.getSerializedString(cloneable));
 		}
 		
-		Constructor<T> constructor = ReflectionUtility.getDefaultConstructor(cloneable.getClass());
-		T clone = (T) constructor.newInstance();
+		T clone = null;
+		if (ReflectionUtility.hasDefaultContructor(cloneable.getClass()))
+		{
+		    Constructor<T> constructor = ReflectionUtility.getDefaultConstructor(cloneable.getClass());
+		    clone = (T) constructor.newInstance();
+		}
+		else
+		{
+		    clone = (T) ReflectionUtility.getComplexInstance(cloneable.getClass(),cloneable);
+		}
+
+		if (cloneable instanceof ControlledClone)
+		{
+		    ((ControlledClone) cloneable).preClone(clonedParent, clone);
+		}
+		
 		Vector<Field> fieldVector = ReflectionUtility.getFieldVector(cloneable);
 		
 		CloneControl classCloneControl = cloneable.getClass().getAnnotation(CloneControl.class);
@@ -130,76 +148,66 @@ public abstract class EqualityProcessor {
 							}
 						}
 						
-						if (cloneMethod != null)
-						{
-							field.set(clone,cloneMethod.invoke(cloneableFieldInstance));
+						//
+						//do a standard element clone, and don't trust any of these types cloning methods, as the don't call clone on their contained objects
+						if (Element.class.isAssignableFrom(field.getType()))
+						{								
+						    field.set(clone, ((Element)cloneableFieldInstance).cloneNode(true));
 						}
-						else //we have to do this the hard way
+						//implement a collection clone
+						else if (Collection.class.isAssignableFrom(field.getType()))
 						{
-							//do a standard element clone
-							if (Element.class.isAssignableFrom(field.getType()))
-							{								
-								field.set(clone, ((Element)cloneableFieldInstance).cloneNode(true));
-							}
-							//implement a collection clone
-							else if (Collection.class.isAssignableFrom(field.getType()))
-							{
-								Collection clonableCollection = (Collection) cloneableFieldInstance;
-								Collection clonedCollection = (Collection) field.getType().newInstance();
-								field.set(clone, clonedCollection);								
-								
-								for (Object object : clonableCollection)
-								{
-									clonedCollection.add(clone(object));
-								}
-								
-							}
-							//do an array clone
-							else if (field.getType().isArray() == true)
-							{
-								int length = Array.getLength(cloneableFieldInstance);
-								Object arrayObject = Array.newInstance(field.getType().getComponentType(), length);
-								field.set(clone, arrayObject);
-								for(int index = 0; index < length; index++)
-								{
-									Array.set(arrayObject, index, clone(Array.get(cloneableFieldInstance, index)));
-								}
-							}
-							else if (Map.class.isAssignableFrom(field.getType()))
-							{
-								Map clonableMap = (Map) cloneableFieldInstance;
-								Map clonedMap = (Map) field.getType().newInstance();
-								field.set(clone, clonedMap);
+						    Collection clonableCollection = (Collection) cloneableFieldInstance;
+						    Collection clonedCollection = (Collection) cloneableFieldInstance.getClass().newInstance();
+						    field.set(clone, clonedCollection);								
 
-								Set<Entry>  entrySet = clonableMap.entrySet();
-								for (Entry entry : entrySet)
-								{
-									clonedMap.put(clone(entry.getKey()), clone(entry.getValue()));
-								}
-							}
-							else
-							{
-								field.set(clone,clone(cloneableFieldInstance));
-							}
-							
+						    for (Object object : clonableCollection)
+						    {
+						        clonedCollection.add(clone(clone,object));
+						    }
+
+						}
+						//do an array clone
+						else if (field.getType().isArray() == true)
+						{
+						    int length = Array.getLength(cloneableFieldInstance);
+						    Object arrayObject = Array.newInstance(field.getType().getComponentType(), length);
+						    field.set(clone, arrayObject);
+						    for(int index = 0; index < length; index++)
+						    {
+						        Array.set(arrayObject, index, clone(clone,Array.get(cloneableFieldInstance, index)));
+						    }
+						}
+						else if (Map.class.isAssignableFrom(field.getType()))
+						{
+						    Map clonableMap = (Map) cloneableFieldInstance;
+						    Map clonedMap = (Map) cloneableFieldInstance.getClass().newInstance();
+						    field.set(clone, clonedMap);
+
+						    Set<Entry>  entrySet = clonableMap.entrySet();
+						    for (Entry entry : entrySet)
+						    {
+						        clonedMap.put(clone(clone,entry.getKey()), clone(clone,entry.getValue()));
+						    }
+						}
+						else if (cloneMethod != null)
+						{
+						    field.set(clone,cloneMethod.invoke(cloneableFieldInstance));
+						}
+						else
+						{
+						    field.set(clone,clone(clone,cloneableFieldInstance));
 						}
 					}
 				}
 			}
 		}
 		
-		//process any CloneControl methods
-		Vector<Method> methodVector = ReflectionUtility.getMethodVector(cloneable);
-		for (Method method : methodVector)
+		if (cloneable instanceof ControlledClone)
         {
-		   
-            CloneControl cloneControl = method.getAnnotation(CloneControl.class);
-            if (cloneControl != null && cloneControl.filter() == Clone.include)
-            {
-                method.setAccessible(true);
-                method.invoke(cloneable, clone);
-            }
+            ((ControlledClone) cloneable).postClone(clonedParent, clone);
         }
+		
 		return clone;
 	}
 	

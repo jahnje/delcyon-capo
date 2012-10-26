@@ -21,15 +21,16 @@ import com.delcyon.capo.resourcemanager.ResourceDescriptor;
 import com.delcyon.capo.resourcemanager.ResourceURI;
 import com.delcyon.capo.resourcemanager.types.ContentMetaData;
 import com.delcyon.capo.util.CloneControl;
+import com.delcyon.capo.util.CloneControl.Clone;
+import com.delcyon.capo.util.ControlledClone;
 import com.delcyon.capo.util.EqualityProcessor;
 import com.delcyon.capo.util.ReflectionUtility;
 import com.delcyon.capo.util.ToStringControl;
-import com.delcyon.capo.util.CloneControl.Clone;
 import com.delcyon.capo.util.ToStringControl.Control;
 
 @CloneControl(filter=CloneControl.Clone.exclude,modifiers=Modifier.STATIC+Modifier.FINAL)
 @ToStringControl(control=Control.exclude,modifiers=Modifier.STATIC+Modifier.FINAL)
-public class ResourceElement extends ResourceNode implements Element
+public class ResourceElement extends ResourceNode implements Element, ControlledClone
 {
 
     @CloneControl(filter=Clone.exclude)
@@ -246,14 +247,14 @@ public class ResourceElement extends ResourceNode implements Element
         		    ResourceNodeList tempNodeList = null;
         		    if(getOwnerResourceDocument().isContentOnly() == false)
         		    {
-        		        tempNodeList = EqualityProcessor.clone(nodeList);
+        		        tempNodeList = EqualityProcessor.clone(this).nodeList;
         		        tempNodeList.add(0,content);
         		    }
         		    else
         		    {
         		        tempNodeList = new ResourceNodeList();
-        		        tempNodeList.addAll(content.getChildNodes());
-        		        tempNodeList.addAll(EqualityProcessor.clone(nodeList));
+        		        tempNodeList.addAll(content.getChildNodes());        		        
+        		        tempNodeList.addAll(EqualityProcessor.clone(this).nodeList);
         		    }
         			
         			return tempNodeList;
@@ -439,13 +440,23 @@ public class ResourceElement extends ResourceNode implements Element
         return getChildNodes().getLength() > 0;
     }
 
-    @CloneControl(filter=Clone.include)
-    private void postClone(Object clonedObject)
+    @Override
+    public void preClone(Object clonedParentObject, Object clonedObject) throws Exception
+    {
+        if(clonedParentObject != null)
+        {
+            ((ResourceElement)clonedObject).parentNode = ((ResourceElement) clonedParentObject);
+        }
+        
+    }
+    
+    
+    public void postClone(Object parentObject, Object clonedObject)
     {
         ResourceElement clonedResourceElement = (ResourceElement) clonedObject;
         //we treat these differently, because we don't want them to recurse
         clonedResourceElement.ownerResourceDocument = ownerResourceDocument;
-        clonedResourceElement.parentNode = parentNode;
+        
         clonedResourceElement.resourceControlElement = resourceControlElement;
 
     }

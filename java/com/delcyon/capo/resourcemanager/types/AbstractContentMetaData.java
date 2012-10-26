@@ -39,6 +39,8 @@ import com.delcyon.capo.datastream.stream_attribute_filter.StreamAttributeFilter
 import com.delcyon.capo.resourcemanager.ContentFormatType;
 import com.delcyon.capo.resourcemanager.ResourceParameter;
 import com.delcyon.capo.resourcemanager.ResourceURI;
+import com.delcyon.capo.util.CloneControl;
+import com.delcyon.capo.util.CloneControl.Clone;
 import com.delcyon.capo.util.ReflectionUtility;
 import com.delcyon.capo.util.ToStringControl;
 import com.delcyon.capo.util.ToStringControl.Control;
@@ -124,6 +126,8 @@ public abstract class AbstractContentMetaData implements ContentMetaData
 	private boolean isInitialized = false;
 	private ResourceURI resourceURI = null;
 	private HashMap<String, String> attributeHashMap = new HashMap<String, String>();
+	
+	@CloneControl(filter=Clone.exclude)
 	private transient Vector<StreamAttributeFilter> streamAttributeFilterVector = new Vector<StreamAttributeFilter>();
 	private Vector<ContentMetaData> childContentMetaDataVector = new Vector<ContentMetaData>();
 	

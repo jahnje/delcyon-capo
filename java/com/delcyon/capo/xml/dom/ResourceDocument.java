@@ -611,7 +611,7 @@ public class ResourceDocument extends ResourceNode implements Document
         //transformer.setOutputProperty(SaxonOutputKeys.INDENT_SPACES,"4");
         DOMResult domResult = new DOMResult();
         transformer.transform(new DOMSource(node), domResult);
-        resourceNode.getOwnerResourceDocument().setContentOnly(false);
+        resourceNode.getOwnerResourceDocument().setContentOnly(false);        
         return (Document) domResult.getNode();
     }
 

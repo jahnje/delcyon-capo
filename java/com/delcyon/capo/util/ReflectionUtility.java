@@ -21,6 +21,7 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.lang.reflect.Type;
 import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
@@ -437,7 +438,7 @@ public class ReflectionUtility
 	}
 
 	@SuppressWarnings({ "unchecked", "rawtypes" })
-	public static Object getComplexInstance(Class type) throws IllegalArgumentException, InstantiationException, IllegalAccessException, InvocationTargetException
+	public static Object getComplexInstance(Class type,Object...cloneableFieldInstances) throws IllegalArgumentException, InstantiationException, IllegalAccessException, InvocationTargetException
 	{
 		Constructor[] constructors = type.getDeclaredConstructors();
 		
@@ -460,6 +461,22 @@ public class ReflectionUtility
 		    Object instanceObject =  ReflectionUtility.getMarshalWrapperInstance(type.getCanonicalName());
 		    if (instanceObject == null)
 		    {
+		        Method cloneMethod = null;
+                //check to see if this complex type implements clone
+                Vector<Method> childMethodVector = ReflectionUtility.getMethodVector(type);
+                
+                for (Method childMethod : childMethodVector)
+                {
+                    if(childMethod.getName().equals("clone") && childMethod.getParameterTypes().length == 0 && Modifier.isPublic(childMethod.getModifiers()) == true)
+                    {
+                        cloneMethod = childMethod;
+                        break;
+                    }
+                }
+                if(cloneMethod != null && cloneableFieldInstances.length > 0)
+                {
+                    return cloneMethod.invoke(cloneableFieldInstances[0]);
+                }
 		        throw new InstantiationException("Couldn't find a default contructor for "+type.getCanonicalName());
 		    }
 		    else

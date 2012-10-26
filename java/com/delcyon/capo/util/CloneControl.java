@@ -28,23 +28,21 @@ import java.lang.reflect.Modifier;
 /**
  * @author jeremiah
  * This is used to control automated clone call using the {@link EqualityProcessor} clone(clonable) method. 
+ * @see ControlledClone
  */
 @Retention(value=RUNTIME)
-@Target(value={FIELD,TYPE,METHOD})
+@Target(value={FIELD,TYPE})
 public @interface CloneControl
 {
     public enum Clone
     {
         /**
          * At the Class level this can be used to filter fields according to a modifier mask.
-         * At the Method level this will cause the a single parameter method to be invoked, it will pass in the currently cloned object instance,
-         * to finish up any custom cloning, it will always happen after all other fields have been copied.
          * At the Field level this will force an excluded field to be included.    
          */
         include,
         /**          
-         * At the Class level you can use the modifiers to automatically include or exclude any filed matching the modifier map.
-         * At the Method Level, this has no effect, as methods are not called by default. 
+         * At the Class level you can use the modifiers to automatically include or exclude any filed matching the modifier map.          
          * At the Field level this will force a field to no be printed.
          */
         exclude
