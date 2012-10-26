@@ -17,11 +17,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 package com.delcyon.capo.xml;
 
 import java.io.OutputStream;
-import java.util.HashMap;
-import java.util.Set;
 import java.util.logging.Level;
 
-import javax.xml.namespace.QName;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.transform.OutputKeys;
@@ -32,7 +29,6 @@ import javax.xml.transform.stream.StreamResult;
 import javax.xml.xpath.XPathConstants;
 import javax.xml.xpath.XPathExpression;
 import javax.xml.xpath.XPathFactory;
-import javax.xml.xpath.XPathFunction;
 import javax.xml.xpath.XPathFunctionResolver;
 
 import org.w3c.dom.Attr;
@@ -48,6 +44,7 @@ import com.delcyon.capo.datastream.NullOutputStream;
 import com.delcyon.capo.datastream.stream_attribute_filter.MD5FilterOutputStream;
 import com.delcyon.capo.server.CapoServer;
 import com.delcyon.capo.util.NamespaceContextMap;
+import com.delcyon.capo.xml.cdom.CDocument;
 
 /**
  * @author jeremiah
@@ -197,6 +194,7 @@ public class XPath
 			
 		} catch (Exception exception)
 		{
+		    exception.printStackTrace();
 			if (CapoServer.logger != null) //TODO this shouldn't have a dependency on CapoServer!
 			{
 				CapoServer.logger.log(Level.SEVERE, "Error evaluating xpath '"+path+"' on "+getPathToRoot(node));
@@ -226,11 +224,12 @@ public class XPath
 				namespaceContextMap.addNamespace(namespaceDecl[0], namespaceDecl[1]);
 			}
 			xPath.setNamespaceContext(namespaceContextMap);
-			XPathExpression xPathExpression = xPath.compile(path);
+			XPathExpression xPathExpression = xPath.compile(path);			
 			return  xPathExpression.evaluate(node);
 			
 		} catch (Exception exception)
 		{	
+		    exception.printStackTrace();
 			//keep this from looping out of control when things are weird
 			if (exception.getCause() == null || exception.getCause().getMessage() == null)
 			{
@@ -256,7 +255,13 @@ public class XPath
 	
 	private static String getPathToRoot(Node node) throws Exception
 	{
-		
+		if(node.getOwnerDocument() == null)
+		{
+
+		    Document tempDocument = new CDocument();
+		    node = tempDocument.adoptNode(node.cloneNode(true));
+
+		}
 		String name = node.getNodeName();
 		if (node instanceof Element)
 		{
@@ -267,7 +272,12 @@ public class XPath
 			{	
 				if (node.getParentNode() != null)
 				{
-					String position = selectSingleNodeValue((Element) node, "count(preceding-sibling::"+name+")+1");
+				    String[] nameSpace = new String[0];
+				    if(node.getNamespaceURI() != null)
+				    {
+				        nameSpace = new String[]{node.getPrefix()+"="+node.getNamespaceURI()};
+				    }
+					String position = selectSingleNodeValue((Element) node, "count(preceding-sibling::"+name+")+1",nameSpace);
 					name += "["+position+"]";
 				}
 				else //this node does not belong to a document. It must have just been created.
@@ -352,8 +362,16 @@ public class XPath
 		Transformer transformer = tFactory.newTransformer(new DOMSource(indentityTransforDocument));
 		transformer.setOutputProperty(OutputKeys.INDENT, "yes");
 		//transformer.setOutputProperty(SaxonOutputKeys.INDENT_SPACES,"4");
-		
-		transformer.transform(new DOMSource(node), new StreamResult(outputStream));		
+//		if(node.getOwnerDocument() == null)
+//		{
+//		    Document tempDocument = documentBuilder.newDocument();
+//		    node = tempDocument.adoptNode(node.cloneNode(true));
+//		}
+		transformer.transform(new DOMSource(node), new StreamResult(outputStream));
+		if(outputStream == System.out || outputStream == System.err)
+		{
+		    outputStream.write(new String("\n").getBytes());
+		}
 	}
 
 	/**
