@@ -232,8 +232,11 @@ public class XMLSerializer
 			exportMap(newElementName, rootElement, (Map) fieldValue, currentDepth);
 		}
 		else
-		{		    
-			rootElement.appendChild(newElement);
+		{	
+		    if(newElement.getParentNode() == null) //check and see if this has already been added someplace, and if so, don't try to add it again.
+		    {
+		        rootElement.appendChild(newElement);
+		    }
 			newElement.setAttributeNS(namespaceURI, prefix == null ? CLASS_ATTRIBUTE : prefix+":"+CLASS_ATTRIBUTE, fieldValue.getClass().getCanonicalName());
 			export(fieldValue, newElement, currentDepth);
 		}
