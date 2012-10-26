@@ -491,7 +491,7 @@ public class XMLDiff
 								//run a diff on the text nodes
 								XMLTextDiff xmlTextDiff = new XMLTextDiff();
 								Element diffTextElement = xmlTextDiff.getDifferenceElement((Text)baseOutputNode, (Text)otherOutputNode,tokenList,tokenLists);
-								differenceElement.appendChild(differenceDocument.adoptNode(diffTextElement));
+								differenceElement.appendChild(differenceDocument.adoptNode(diffTextElement));								
 							}
 							else
 							{
@@ -506,6 +506,12 @@ public class XMLDiff
 								setAttribute(differenceOtherTextElement, XDIFF_NAMESPACE_URI, XDIFF_PREFIX, XDIFF_TEXT_ATTRIBUTE_NAME, Side.MOD);
 								differenceOtherTextElement.appendChild(differenceDocument.importNode(otherOutputNode, true));
 								differenceElement.appendChild(differenceOtherTextElement);
+
+								//because we're creating a couple of sub child elements, we need to make sure the parent knows we've got an inequality  
+								if (parentDifferenceElement != null)
+                                {
+                                    setAttribute(parentDifferenceElement, XDIFF_NAMESPACE_URI, XDIFF_PREFIX, XDIFF_ELEMENT_ATTRIBUTE_NAME, INEQUALITY);
+                                }
 							}
 							setAttribute(differenceElement, XDIFF_NAMESPACE_URI, XDIFF_PREFIX, XDIFF_ELEMENT_ATTRIBUTE_NAME, INEQUALITY);								
 						}
@@ -532,6 +538,19 @@ public class XMLDiff
 		    else
 		    {
 		        setAttribute(parentDifferenceElement, XDIFF_NAMESPACE_URI, XDIFF_PREFIX, XDIFF_ELEMENT_ATTRIBUTE_NAME, EQUALITY);
+		    }
+		}
+		
+		//if all of our children where un-diffed, then we need to remove any notations from them
+		if( differenceElement.hasAttributeNS(XDIFF_NAMESPACE_URI, XDIFF_ELEMENT_ATTRIBUTE_NAME) && differenceElement.hasChildNodes() && differenceElement.getAttributeNS(XDIFF_NAMESPACE_URI, XDIFF_ELEMENT_ATTRIBUTE_NAME).equals(EQUALITY))
+		{
+		    NodeList nodeList = differenceElement.getChildNodes();
+		    for(int index = 0; index < nodeList.getLength(); index++)
+		    {
+		        if(nodeList.item(index) instanceof Element)
+		        {
+		            ((Element) nodeList.item(index)).removeAttribute(XDIFF_PREFIX+":"+XDIFF_ELEMENT_ATTRIBUTE_NAME);
+		        }
 		    }
 		}
 		return differenceElement;
@@ -571,6 +590,10 @@ public class XMLDiff
 			String attributeLocalName = attribute.getLocalName();
 			String attributePrefix = attribute.getPrefix();
 			String attributeNamesapceURI = attribute.getNamespaceURI();
+			if(attributeLocalName == null && attributeNamesapceURI == null)
+			{
+			    attributeLocalName = attribute.getName();
+			}
 			
 			if(isIgnoreNamespaceDeclarations() && NAMESPACE_NAMESPACE_URI.equals(attributeNamesapceURI))
 			{
@@ -712,8 +735,8 @@ public class XMLDiff
 	{
 		//check to see if this is already good to go
 		if (differenceElement.getAttributeNS(XDIFF_NAMESPACE_URI, XDIFF_ELEMENT_ATTRIBUTE_NAME).equals(Side.BASE + " = " +Side.MOD))
-		{			
-			differenceElement.removeAttribute(XDIFF_PREFIX+":"+XDIFF_ELEMENT_ATTRIBUTE_NAME);			
+		{
+			differenceElement.removeAttribute(XDIFF_PREFIX+":"+XDIFF_ELEMENT_ATTRIBUTE_NAME);
 			parentSideElement.appendChild(sideDocument.adoptNode(differenceElement));
 		}
 		//see if this element is declared only for this side,
