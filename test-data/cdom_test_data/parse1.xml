@@ -1,0 +1,231 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<server:group xmlns:client="http://www.delcyon.com/capo-client"
+    xmlns:server="http://www.delcyon.com/capo-server"
+    name="update">
+    <ControllerRequest type="update">
+        <var name="TERM" value="dumb"/>
+        <var name="IMSETTINGS_MODULE" value="none"/>
+        <var name="KDEDIRS" value="/usr"/>
+        <var name="SESSION_MANAGER"
+            value="local/unix:@/tmp/.ICE-unix/2146,unix/unix:/tmp/.ICE-unix/2146"/>
+        <var name="GNOME_DESKTOP_SESSION_ID" value="this-is-deprecated"/>
+        <var name="IMSETTINGS_INTEGRATE_DESKTOP" value="yes"/>
+        <var name="MOZ_PLUGIN_PATH" value="~/.plugins"/>
+        <var name="MAIL" value="/var/spool/mail/jeremiah"/>
+        <var name="GDMSESSION" value="gnome"/>
+        <var name="XDG_SESSION_COOKIE"
+            value="089b9fa58eec2d04692335cc00000082-1341332600.539045-854276670"/>
+        <var name="PWD" value="/home/jeremiah"/>
+        <var name="HOSTNAME" value="bluejay.goodinassociates.com"/>
+        <var name="CVS_RSH" value="ssh"/>
+        <var name="G_BROKEN_FILENAMES" value="1"/>
+        <var name="NLSPATH" value="/usr/dt/lib/nls/msg/%L/%N.cat"/>
+        <var name="GNOME_KEYRING_SOCKET" value="/tmp/keyring-J6ojtH/socket"/>
+        <var name="CVSROOT" value=":pserver:jeremiah@penguin:/cvs"/>
+        <var name="GDM_KEYBOARD_LAYOUT" value="us"/>
+        <var name="HISTSIZE" value="1000"/>
+        <var name="PATH"
+            value="/usr/lib64/qt-3.3/bin:/usr/local/bin:/usr/bin:/bin:/usr/local/sbin:/usr/sbin:/sbin:/home/jeremiah/bin"/>
+        <var name="QTLIB" value="/usr/lib64/qt-3.3/lib"/>
+        <var name="KDE_IS_PRELINKED" value="1"/>
+        <var name="XAUTHORITY" value="/var/run/gdm/auth-for-jeremiah-ct04jt/database"/>
+        <var name="GDM_LANG" value="en_US.utf8"/>
+        <var name="WINDOWPATH" value="1"/>
+        <var name="SSH_ASKPASS" value="/usr/libexec/openssh/gnome-ssh-askpass"/>
+        <var name="SHLVL" value="1"/>
+        <var name="MOZILLA_FIVE_HOME" value="/usr/lib/mozilla-1.7.6"/>
+        <var name="XFILESEARCHPATH" value="/usr/dt/app-defaults/%L/Dt"/>
+        <var name="QT_IM_MODULE" value="xim"/>
+        <var name="LOGNAME" value="jeremiah"/>
+        <var name="_" value="/usr/bin/gnome-session"/>
+        <var name="XMODIFIERS" value="@im=none"/>
+        <var name="QTDIR" value="/usr/lib64/qt-3.3"/>
+        <var name="SSH_AUTH_SOCK" value="/tmp/keyring-J6ojtH/socket.ssh"/>
+        <var name="LD_LIBRARY_PATH"
+            value="/usr/lib/jvm/java-1.6.0-openjdk-1.6.0.0.x86_64/jre/lib/amd64/server:/usr/lib/jvm/java-1.6.0-openjdk-1.6.0.0.x86_64/jre/lib/amd64:/usr/lib/jvm/java-1.6.0-openjdk-1.6.0.0.x86_64/jre/../lib/amd64:/usr/lib/mozilla-1.7.6"/>
+        <var name="DBUS_SESSION_BUS_ADDRESS"
+            value="unix:abstract=/tmp/dbus-IyLf4yf3zp,guid=1e9332a629a97f0e70e53e510000001d"/>
+        <var name="SHELL" value="/bin/bash"/>
+        <var name="GNOME_KEYRING_PID" value="2137"/>
+        <var name="GTK_RC_FILES" value="/etc/gtk/gtkrc:/home/jeremiah/.gtkrc-1.2-gnome2"/>
+        <var name="DESKTOP_SESSION" value="gnome"/>
+        <var name="QTINC" value="/usr/lib64/qt-3.3/include"/>
+        <var name="DISPLAY" value=":0.0"/>
+        <var name="USER" value="jeremiah"/>
+        <var name="HOME" value="/home/jeremiah"/>
+        <var name="HISTCONTROL" value="ignoredups"/>
+        <var name="LESSOPEN" value="|/usr/bin/lesspipe.sh %s"/>
+        <var name="ORBIT_SOCKETDIR" value="/tmp/orbit-jeremiah"/>
+        <var name="LANG" value="en_US.utf8"/>
+        <var name="java.runtime.name" value="OpenJDK Runtime Environment"/>
+        <var name="sun.boot.library.path"
+            value="/usr/lib/jvm/java-1.6.0-openjdk-1.6.0.0.x86_64/jre/lib/amd64"/>
+        <var name="java.vm.version" value="20.0-b12"/>
+        <var name="java.util.prefs.syncInterval" value="2000000"/>
+        <var name="java.vm.vendor" value="Sun Microsystems Inc."/>
+        <var name="java.vendor.url" value="http://java.sun.com/"/>
+        <var name="path.separator" value=":"/>
+        <var name="java.vm.name" value="OpenJDK 64-Bit Server VM"/>
+        <var name="file.encoding.pkg" value="sun.io"/>
+        <var name="sun.java.launcher" value="SUN_STANDARD"/>
+        <var name="user.country" value="US"/>
+        <var name="sun.os.patch.level" value="unknown"/>
+        <var name="java.vm.specification.name" value="Java Virtual Machine Specification"/>
+        <var name="user.dir" value="/home/jeremiah/java-work/delcyon-capo"/>
+        <var name="java.runtime.version" value="1.6.0_24-b24"/>
+        <var name="java.awt.graphicsenv" value="sun.awt.X11GraphicsEnvironment"/>
+        <var name="java.endorsed.dirs"
+            value="/usr/lib/jvm/java-1.6.0-openjdk-1.6.0.0.x86_64/jre/lib/endorsed"/>
+        <var name="os.arch" value="amd64"/>
+        <var name="java.io.tmpdir" value="/tmp"/>
+        <var name="line.separator" value="&#xA;"/>
+        <var name="java.vm.specification.vendor" value="Sun Microsystems Inc."/>
+        <var name="os.name" value="Linux"/>
+        <var name="javax.net.ssl.keyStorePassword" value="password"/>
+        <var name="sun.jnu.encoding" value="UTF-8"/>
+        <var name="java.library.path"
+            value="/usr/lib/jvm/java-1.6.0-openjdk-1.6.0.0.x86_64/jre/lib/amd64/server:/usr/lib/jvm/java-1.6.0-openjdk-1.6.0.0.x86_64/jre/lib/amd64:/usr/lib/jvm/java-1.6.0-openjdk-1.6.0.0.x86_64/jre/../lib/amd64:/usr/lib/mozilla-1.7.6:/usr/java/packages/lib/amd64:/usr/lib64:/lib64:/lib:/usr/lib"/>
+        <var name="java.specification.name" value="Java Platform API Specification"/>
+        <var name="java.class.version" value="50.0"/>
+        <var name="sun.management.compiler" value="HotSpot 64-Bit Tiered Compilers"/>
+        <var name="os.version" value="2.6.32-220.7.1.el6.x86_64"/>
+        <var name="javax.xml.xpath.XPathFactory" value="net.sf.saxon.xpath.XPathFactoryImpl"/>
+        <var name="user.home" value="/home/jeremiah"/>
+        <var name="user.timezone" value="America/Chicago"/>
+        <var name="java.awt.printerjob" value="sun.print.PSPrinterJob"/>
+        <var name="javax.xml.transform.TransformerFactory"
+            value="net.sf.saxon.TransformerFactoryImpl"/>
+        <var name="file.encoding" value="UTF-8"/>
+        <var name="java.specification.version" value="1.6"/>
+        <var name="java.class.path"
+            value="/home/jeremiah/java-work/delcyon-capo/build:/home/jeremiah/java-work/delcyon-capo/lib/commons-cli-1.2.jar:/home/jeremiah/java-work/delcyon-capo/lib/scannotation-1.0.2.jar:/home/jeremiah/java-work/delcyon-capo/lib/javassist-3.8.0.GA.jar:/home/jeremiah/java-work/delcyon-capo/lib/saxon.jar:/home/jeremiah/java-work/delcyon-capo/lib-other/postgresql-8.3-604.jdbc3.jar:/home/jeremiah/java-work/delcyon-capo/lib/bcprov-jdk16-146.jar:/home/jeremiah/java-work/delcyon-capo/lib/bcmail-jdk16-146.jar:/home/jeremiah/java-work/delcyon-capo/lib/wrapper.jar:/home/jeremiah/java-work/delcyon-capo/lib-other/hsqldb.jar:/opt/eclipse/plugins/org.junit_4.10.0.v4_10_0_v20120426-0900/junit.jar:/opt/eclipse/plugins/org.hamcrest.core_1.1.0.v20090501071000.jar:/opt/eclipse/configuration/org.eclipse.osgi/bundles/344/2/.cp/:/opt/eclipse/configuration/org.eclipse.osgi/bundles/343/2/.cp/"/>
+        <var name="user.name" value="jeremiah"/>
+        <var name="java.vm.specification.version" value="1.0"/>
+        <var name="sun.java.command"
+            value="org.eclipse.jdt.internal.junit.runner.RemoteTestRunner -version 3 -port 36708 -testLoaderClass org.eclipse.jdt.internal.junit4.runner.JUnit4TestLoader -loaderpluginname org.eclipse.jdt.junit4.runtime -test com.delcyon.capo.controller.elements.ResourceElementTest:fileScanTest"/>
+        <var name="java.home" value="/usr/lib/jvm/java-1.6.0-openjdk-1.6.0.0.x86_64/jre"/>
+        <var name="sun.arch.data.model" value="64"/>
+        <var name="user.language" value="en"/>
+        <var name="java.specification.vendor" value="Sun Microsystems Inc."/>
+        <var name="java.vm.info" value="mixed mode"/>
+        <var name="java.version" value="1.6.0_24"/>
+        <var name="java.ext.dirs"
+            value="/usr/lib/jvm/java-1.6.0-openjdk-1.6.0.0.x86_64/jre/lib/ext:/usr/java/packages/lib/ext"/>
+        <var name="sun.boot.class.path"
+            value="/usr/lib/jvm/java-1.6.0-openjdk-1.6.0.0.x86_64/jre/lib/resources.jar:/usr/lib/jvm/java-1.6.0-openjdk-1.6.0.0.x86_64/jre/lib/rt.jar:/usr/lib/jvm/java-1.6.0-openjdk-1.6.0.0.x86_64/jre/lib/jsse.jar:/usr/lib/jvm/java-1.6.0-openjdk-1.6.0.0.x86_64/jre/lib/jce.jar:/usr/lib/jvm/java-1.6.0-openjdk-1.6.0.0.x86_64/jre/lib/charsets.jar:/usr/lib/jvm/java-1.6.0-openjdk-1.6.0.0.x86_64/jre/lib/rhino.jar:/usr/lib/jvm/java-1.6.0-openjdk-1.6.0.0.x86_64/lib/tools.jar"/>
+        <var name="javax.xml.parsers.DocumentBuilderFactory"
+            value="com.delcyon.capo.xml.cdom.CDocumentBuilderFactory"/>
+        <var name="java.vendor" value="Sun Microsystems Inc."/>
+        <var name="file.separator" value="/"/>
+        <var name="java.vendor.url.bug" value="http://java.sun.com/cgi-bin/bugreport.cgi"/>
+        <var name="sun.io.unicode.encoding" value="UnicodeLittle"/>
+        <var name="sun.cpu.endian" value="little"/>
+        <var name="sun.desktop" value="gnome"/>
+        <var name="sun.cpu.isalist" value=""/>
+    </ControllerRequest>
+    <server:resourceMetaData attributes="MD5" depth="2" requiredAttributes="MD5" resource="file:lib"
+        useRelativePaths="true"/>
+    <server:resourceMetaData attributes="MD5" depth="2" requiredAttributes="MD5" resource="remote:file:lib"
+        useRelativePaths="true"/>
+    <server:diff base="ref:../server:resourceMetaData[@resource='file:lib']"
+        mod="ref:../server:resourceMetaData[@resource = 'remote:file:lib']"
+        name="diff.lib"/>
+    <server:transform name="sync_transform" ref="${diff.diff.lib}" stylesheet="ref:xsl:stylesheet">
+        <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
+            xmlns:xdiff="http://www.delcyon.com/xdiff"
+            xmlns:xs="http://www.w3.org/2001/XMLSchema"
+            exclude-result-prefixes="xs"
+            version="2.0">
+            <xsl:output indent="yes" method="xml"/>
+            <xsl:key match="server:sync[@src != 'MOD']" name="sync_src_good" use="@src"/>
+            <xsl:template match="server:resourceMetaData">
+                <xsl:variable name="localRootPath"
+                    select="xdiff:attribute[@xdiff:name = 'resource']/@xdiff:BASE"/>
+                <xsl:variable name="remoteRootPath"
+                    select="xdiff:attribute[@xdiff:name = 'resource']/@xdiff:MOD"/>
+                <xsl:variable name="sync_nodes">
+                    <xsl:apply-templates select="resource"/>
+                </xsl:variable>
+                <xsl:variable name="final_sync_nodes">
+                    <xsl:apply-templates mode="matchDestNodes" select="$sync_nodes"/>
+                </xsl:variable>
+                <server:group>
+                    <xsl:apply-templates mode="completeURIs" select="$final_sync_nodes">
+                        <xsl:with-param name="localRootPath" select="$localRootPath"/>
+                        <xsl:with-param name="remoteRootPath" select="$remoteRootPath"/>
+                    </xsl:apply-templates>
+                </server:group>
+            </xsl:template>
+            <xsl:template match="resource">
+                <xsl:if test="@xdiff:element = 'BASE != MOD'">
+                    <xsl:if test="xdiff:attribute[@xdiff:name = 'uri']">
+                        <server:sync>
+                            <xsl:attribute name="src" select="xdiff:attribute[@xdiff:name = 'uri']/@xdiff:BASE"/>
+                            <xsl:attribute name="dest" select="xdiff:attribute[@xdiff:name = 'uri']/@xdiff:BASE"/>
+                        </server:sync>
+                        <server:sync>
+                            <xsl:attribute name="src"/>
+                            <xsl:attribute name="dest" select="xdiff:attribute[@xdiff:name = 'uri']/@xdiff:MOD"/>
+                        </server:sync>
+                    </xsl:if>
+                    <xsl:if test="xdiff:attribute[@xdiff:name = 'MD5']">
+                        <server:sync>
+                            <xsl:attribute name="src" select="@uri"/>
+                            <xsl:attribute name="dest" select="@uri"/>
+                        </server:sync>
+                    </xsl:if>
+                </xsl:if>
+                <xsl:if test="@xdiff:element = 'BASE'">
+                    <server:sync>
+                        <xsl:attribute name="src" select="@uri"/>
+                        <xsl:attribute name="dest" select="@uri"/>
+                    </server:sync>
+                </xsl:if>
+                <xsl:if test="@xdiff:element = 'MOD'">
+                    <server:sync>
+                        <xsl:attribute name="src"/>
+                        <xsl:attribute name="dest" select="@uri"/>
+                    </server:sync>
+                </xsl:if>
+            </xsl:template>
+            <xsl:template match="server:sync" mode="matchDestNodes">
+                <xsl:choose>
+                    <xsl:when test="@src = 'MOD' and exists(key('sync_src_good',@dest)) = false()">
+                        <server:sync delete="true" dest="{@dest}"/>
+                    </xsl:when>
+                    <xsl:when test="@src = 'MOD' and exists(key('sync_src_good',@dest))"/>
+                    <xsl:otherwise>
+                        <xsl:copy-of select="."/>
+                    </xsl:otherwise>
+                </xsl:choose>
+            </xsl:template>
+            <xsl:template match="server:sync" mode="completeURIs">
+                <xsl:param name="localRootPath"/>
+                <xsl:param name="remoteRootPath"/>
+                <server:sync onCopy="$update:requiresRestart">
+                    <xsl:if test="exists(@delete)">
+                        <xsl:copy-of select="@delete"/>
+                    </xsl:if>
+                    <xsl:if test="exists(@src)">
+                        <xsl:attribute name="src" select="concat($localRootPath,@src)"/>
+                    </xsl:if>
+                    <xsl:if test="exists(@dest)">
+                        This is a test
+                        <xsl:attribute name="dest" select="concat($remoteRootPath,@dest)"/>
+                        this is also a test
+                    </xsl:if>
+                </server:sync>
+            </xsl:template>
+            as is this
+        </xsl:stylesheet>
+    </server:transform>
+    <server:repeat name="sync_repeat"
+        nodeset="${transform.sync_transform}/server:group/server:sync">
+        <server:call ref="${context}"/>
+    </server:repeat>
+    more stupid test text
+    <server:when test=".['${requiresRestart}' = 'true']">
+        nodes
+        <server:log message="skipping restart do to testing framework"/>
+    </server:when>
+</server:group>

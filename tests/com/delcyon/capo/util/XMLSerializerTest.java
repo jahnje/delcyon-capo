@@ -36,6 +36,7 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
 import com.delcyon.capo.xml.XPath;
+import com.delcyon.capo.xml.cdom.CDocumentBuilder;
 
 /**
  * @author jeremiah
@@ -51,6 +52,8 @@ public class XMLSerializerTest
 	@BeforeClass
 	public static void setUpBeforeClass() throws Exception
 	{
+	    System.setProperty("javax.xml.parsers.DocumentBuilderFactory", "com.delcyon.capo.xml.cdom.CDocumentBuilderFactory");
+	    //System.clearProperty("javax.xml.parsers.DocumentBuilderFactory");
 	}
 
 	/**
@@ -146,7 +149,7 @@ public class XMLSerializerTest
 			XMLSerializerTestData[] xmlSerializerTestDataArray = new XMLSerializerTestData[]{new XMLSerializerTestData(null),new XMLSerializerTestData(null),new XMLSerializerTestData(null)};
 			xmlSerializerTestData.setXmlSerializerTestDatasArray(xmlSerializerTestDataArray);
 			Element serializedRootElement = getSerializedRootElement(xmlSerializerTestData); 
-			XPath.dumpNode(serializedRootElement, System.out);
+			//XPath.dumpNode(serializedRootElement, System.out);
 			serializer.marshall(serializedRootElement, xmlSerializerTestDataMarshalled);
 			Assert.assertEquals("not equals:", xmlSerializerTestData.toString(), xmlSerializerTestDataMarshalled.toString());
 			

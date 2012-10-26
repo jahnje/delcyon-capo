@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xdiff:root xmlns:xdiff="http://www.delcyon.com/xdiff" xdiff:element="BASE != MOD">
+    <server:group xmlns:server="http://www.delcyon.com/capo-server" name="update"
+        xdiff:element="BASE != MOD">
+        <xdiff:attribute xdiff:attribute="BASE" xdiff:name="xmlns:client"
+            xdiff:value="http://www.delcyon.com/capo-client"/>
+        <xdiff:attribute xdiff:attribute="BASE" xdiff:name="xmlns:server"
+            xdiff:value="http://www.delcyon.com/capo-server"/>
+        <xdiff:attribute xdiff:attribute="MOD" xdiff:name="xmlns:client"
+            xdiff:value="http://www.delcyon.com/capo-client"/>
+        <xdiff:attribute xdiff:attribute="MOD" xdiff:name="xmlns:server"
+            xdiff:value="http://www.delcyon.com/capo-server"/>
+        
+        
+        <server:transform name="sync_transform" ref="${diff.diff.lib}" stylesheet="ref:xsl:stylesheet"
+            xdiff:element="BASE != MOD">
+            <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" exclude-result-prefixes="xs"
+                version="2.0"
+                xdiff:element="BASE != MOD">
+                <xdiff:attribute xdiff:attribute="BASE" xdiff:name="xmlns:xdiff"
+                    xdiff:value="http://www.delcyon.com/xdiff"/>
+                <xdiff:attribute xdiff:attribute="BASE" xdiff:name="xmlns:xs"
+                    xdiff:value="http://www.w3.org/2001/XMLSchema"/>
+                <xdiff:attribute xdiff:attribute="BASE" xdiff:name="xmlns:xsl"
+                    xdiff:value="http://www.w3.org/1999/XSL/Transform"/>
+                <xdiff:attribute xdiff:attribute="MOD" xdiff:name="xmlns:xsl"
+                    xdiff:value="http://www.w3.org/1999/XSL/Transform"/>
+                <xdiff:attribute xdiff:attribute="MOD" xdiff:name="xmlns:xdiff"
+                    xdiff:value="http://www.delcyon.com/xdiff"/>
+                <xdiff:attribute xdiff:attribute="MOD" xdiff:name="xmlns:xs"
+                    xdiff:value="http://www.w3.org/2001/XMLSchema"/>
+                
+                
+                as is this
+            </xsl:stylesheet>
+        </server:transform>
+        
+    </server:group>
+</xdiff:root>

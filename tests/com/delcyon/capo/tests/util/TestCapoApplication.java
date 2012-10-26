@@ -7,7 +7,8 @@ public class TestCapoApplication extends CapoApplication
     
     public TestCapoApplication() throws Exception
     {
-        
+        System.setProperty("javax.xml.parsers.DocumentBuilderFactory", "com.delcyon.capo.xml.cdom.CDocumentBuilderFactory");
+        //System.clearProperty("javax.xml.parsers.DocumentBuilderFactory");
     }
     
     @Override

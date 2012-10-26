@@ -33,6 +33,7 @@ import com.delcyon.capo.util.diff.Diff.Side;
 import com.delcyon.capo.util.diff.InputStreamTokenizer.TokenList;
 import com.delcyon.capo.xml.XMLDiff;
 import com.delcyon.capo.xml.XPath;
+import com.delcyon.capo.xml.cdom.CDocumentBuilder;
 
 /**
  * @author jeremiah
@@ -59,7 +60,8 @@ public class XMLDiffTest
 	@Before
 	public void setUp() throws Exception
 	{
-		
+	    System.setProperty("javax.xml.parsers.DocumentBuilderFactory", "com.delcyon.capo.xml.cdom.CDocumentBuilderFactory");
+	    //System.clearProperty("javax.xml.parsers.DocumentBuilderFactory");
 		DocumentBuilderFactory documentBuilderFactory = DocumentBuilderFactory.newInstance();
 		documentBuilderFactory.setNamespaceAware(true);
 		documentBuilder = documentBuilderFactory.newDocumentBuilder();
@@ -67,6 +69,8 @@ public class XMLDiffTest
 		
 		
 		baseDocument = documentBuilder.parse("test-data/diff-testdata/baseDocument.xml");
+		//XPath.dumpNode(baseDocument, System.out);
+		System.out.println();
 		changeDocument = documentBuilder.parse("test-data/diff-testdata/changeDocument.xml");
 		ByteArrayOutputStream baseDocumentByteArrayOutputStream = new ByteArrayOutputStream();
 		ByteArrayOutputStream changeDocumentByteArrayOutputStream = new ByteArrayOutputStream();
@@ -74,16 +78,21 @@ public class XMLDiffTest
 		XPath.dumpNode(changeDocument, changeDocumentByteArrayOutputStream);
 		baseOutputString = baseDocumentByteArrayOutputStream.toString();
 		changeOutputString = changeDocumentByteArrayOutputStream.toString();
+		System.out.println("============================================================");
 		
+//		documentBuilder = new CDocumentBuilder();
+//		baseDocument = documentBuilder.parse("test-data/diff-testdata/baseDocument.xml");
+//		XPath.dumpNode(baseDocument, System.out);
+//		System.out.println();
 		
-		baseDiffOnlyDocument = documentBuilder.parse("test-data/diff-testdata/baseDiffOnlyDocument.xml");
-		changeDiffOnlyDocument = documentBuilder.parse("test-data/diff-testdata/changeDiffOnlyDocument.xml");
-		ByteArrayOutputStream baseDocumentDiffOnlyByteArrayOutputStream = new ByteArrayOutputStream();
-		ByteArrayOutputStream changeDocumentDiffOnlyByteArrayOutputStream = new ByteArrayOutputStream();
-		XPath.dumpNode(baseDiffOnlyDocument, baseDocumentDiffOnlyByteArrayOutputStream);
-		XPath.dumpNode(changeDiffOnlyDocument, changeDocumentDiffOnlyByteArrayOutputStream);
-		baseDiffOnlyOutputString = baseDocumentDiffOnlyByteArrayOutputStream.toString();
-		changeDiffOnlyOutputString = changeDocumentDiffOnlyByteArrayOutputStream.toString();
+		//baseDiffOnlyDocument = documentBuilder.parse("test-data/diff-testdata/baseDiffOnlyDocument.xml");
+		//changeDiffOnlyDocument = documentBuilder.parse("test-data/diff-testdata/changeDiffOnlyDocument.xml");
+//		ByteArrayOutputStream baseDocumentDiffOnlyByteArrayOutputStream = new ByteArrayOutputStream();
+//		ByteArrayOutputStream changeDocumentDiffOnlyByteArrayOutputStream = new ByteArrayOutputStream();
+//		XPath.dumpNode(baseDiffOnlyDocument, baseDocumentDiffOnlyByteArrayOutputStream);
+//		XPath.dumpNode(changeDiffOnlyDocument, changeDocumentDiffOnlyByteArrayOutputStream);
+		//baseDiffOnlyOutputString = baseDocumentDiffOnlyByteArrayOutputStream.toString();
+		//changeDiffOnlyOutputString = changeDocumentDiffOnlyByteArrayOutputStream.toString();
 		
 	}
 
@@ -101,21 +110,35 @@ public class XMLDiffTest
 	{
 		XMLDiff xmlDiff = new XMLDiff();
 		Element differenceElement = xmlDiff.getDifferences(baseDocument.getDocumentElement(), changeDocument.getDocumentElement());
+		System.err.println("DIFFERENCE ELEMENT");
 		XPath.dumpNode(differenceElement, System.err);
-		Element sideElement = xmlDiff.getElementForSide((Element) differenceElement.cloneNode(true), Side.BASE);
-//		XPath.dumpNode(sideElement, System.err);
+		System.out.println("BASE SIDE ELEMENT EXPECTED");
+        System.out.println(baseOutputString);
+        Element diffElementClone = (Element) differenceElement.cloneNode(true);
+        
+		Element baseSideElement = xmlDiff.getElementForSide(diffElementClone, Side.BASE);
+		System.out.println("BASE SIDE ELEMENT");
+		XPath.dumpNode(baseSideElement, System.err);
 		ByteArrayOutputStream xmlDiffByteArrayOutputStream = new ByteArrayOutputStream();
-		Document sideDocument = documentBuilder.newDocument();
-		sideDocument.appendChild(sideDocument.adoptNode(sideElement));
-		XPath.dumpNode(sideDocument, xmlDiffByteArrayOutputStream);
+		Document baseSideDocument = documentBuilder.newDocument();
+		baseSideDocument.appendChild(baseSideDocument.adoptNode(baseSideElement));
+		System.out.println("BASE SIDE DOCUMENT");
+		XPath.dumpNode(baseSideDocument, System.err);		
+		XPath.dumpNode(baseSideDocument, xmlDiffByteArrayOutputStream);		
 		Assert.assertEquals(baseOutputString, xmlDiffByteArrayOutputStream.toString());
-		System.out.println("===============================================================");
-		sideElement = xmlDiff.getElementForSide((Element) differenceElement.cloneNode(true), Side.MOD);
+		
+		System.out.println("MOD SIDE ELEMENT EXPECTED");
+		System.out.println(changeOutputString);
+		System.out.println("MOD SIDE ELEMENT");		
+		Element modSideElement = xmlDiff.getElementForSide((Element) differenceElement.cloneNode(true), Side.MOD);
+		XPath.dumpNode(modSideElement, System.err);
+		System.out.println("MOD SIDE ELEMENT AFTER ADOPTION");
 		xmlDiffByteArrayOutputStream.reset();
-		sideDocument = documentBuilder.newDocument();
-		sideDocument.appendChild(sideDocument.adoptNode(sideElement));
-		XPath.dumpNode(sideElement, System.err);
-		XPath.dumpNode(sideDocument, xmlDiffByteArrayOutputStream);
+		Document modSideDocument = documentBuilder.newDocument();
+		modSideDocument.appendChild(modSideDocument.adoptNode(modSideElement));
+		XPath.dumpNode(modSideElement, System.err);
+		System.out.println("===============================================================");
+		XPath.dumpNode(modSideDocument, xmlDiffByteArrayOutputStream);
 		Assert.assertEquals(changeOutputString, xmlDiffByteArrayOutputStream.toString());
 	}
 	

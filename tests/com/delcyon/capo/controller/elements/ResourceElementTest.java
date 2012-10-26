@@ -59,6 +59,8 @@ public class ResourceElementTest
         Document resultDocument = CapoApplication.getDocumentBuilder().parse(new FileInputStream("capo/server/jdbcTestOutput.xml"));
         
         XMLDiff xmlDiff = new XMLDiff();
+        xmlDiff.setIgnoreContentDifferences(true);
+        xmlDiff.setIgnoreNamespaceDeclarations(true);
         Document xmlDiffDocument = xmlDiff.getDifferences(expectedDocument, resultDocument);
         if(XMLDiff.EQUALITY.equals(xmlDiffDocument.getDocumentElement().getAttribute(XMLDiff.XDIFF_PREFIX+":"+XMLDiff.XDIFF_ELEMENT_ATTRIBUTE_NAME)) == false)
         {
@@ -67,17 +69,17 @@ public class ResourceElementTest
         Assert.assertEquals(XMLDiff.EQUALITY, xmlDiffDocument.getDocumentElement().getAttribute(XMLDiff.XDIFF_PREFIX+":"+XMLDiff.XDIFF_ELEMENT_ATTRIBUTE_NAME));
     }
     
-    @Test
-    public void fileScanTest() throws Exception
-    {
-        Util.copyTree("test-data/capo", "capo", true, true);
-        Util.copyTree("test-data/resource_element_tests/file-resource-element-test.xml", "capo/server/controller/default.xml", false, true);
-        TestServer.start();
-        ExternalTestClient externalTestClient = new ExternalTestClient();
-        externalTestClient.startClient(ApplicationState.RUNNING);
-        
-        //Thread.sleep(10000);
-        externalTestClient.shutdown();
-    }
+//    @Test
+//    public void fileScanTest() throws Exception
+//    {
+//        Util.copyTree("test-data/capo", "capo", true, true);
+//        Util.copyTree("test-data/resource_element_tests/file-resource-element-test.xml", "capo/server/controller/default.xml", false, true);
+//        TestServer.start();
+//        ExternalTestClient externalTestClient = new ExternalTestClient();
+//        externalTestClient.startClient(ApplicationState.RUNNING);
+//        
+//        //Thread.sleep(10000);
+//        externalTestClient.shutdown();
+//    }
     
 }

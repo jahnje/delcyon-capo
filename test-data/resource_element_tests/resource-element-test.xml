@@ -9,7 +9,7 @@
     <server:group name="default">
      
         <!-- Start with the resource that we want to search against -->
-        <server:var name="clientName" value="%"/>
+       
         
         <resource:resource name="jdbcTestResource"  uri="jdbc:hsqldb:file:testdb/testdb?user=user" >
             <resource:parameter name="password" value=""/>
@@ -57,7 +57,7 @@
             
         </resource:resource>
         
-        <server:import name="jdbcTestImport" src="resource:jdbcTestResource"  dumpVars="true" sleep="1000" dumpRef=".."/>
+        <server:import name="jdbcTestImport" src="resource:jdbcTestResource"  dumpVars="true" sleep="1000" dumpRef=".." contentOnly="true"/>
         <server:export dest="jdbcTestOutput.xml" ref="${import.jdbcTestImport}/resource:testdb" />
     </server:group>
     

@@ -120,6 +120,9 @@ public abstract class CapoApplication extends ContextThread implements WrapperLi
 		System.setProperty("java.util.prefs.syncInterval", "2000000");
 		System.setProperty("javax.xml.xpath.XPathFactory", "net.sf.saxon.xpath.XPathFactoryImpl");
 		System.setProperty("javax.xml.transform.TransformerFactory", "net.sf.saxon.TransformerFactoryImpl");
+		System.setProperty("javax.xml.parsers.DocumentBuilderFactory", "com.delcyon.capo.xml.cdom.CDocumentBuilderFactory");
+		
+		
 		//System.setProperty("javax.net.debug", "ssl");
 		if (logger == null)
 		{
