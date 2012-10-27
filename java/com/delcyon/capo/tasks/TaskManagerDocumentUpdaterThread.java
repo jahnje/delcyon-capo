@@ -66,7 +66,7 @@ public class TaskManagerDocumentUpdaterThread extends Thread
 	    synchronized (this)
         {
 	    	//only set us to stopping if we're running or something earlier, this can happen when we don't run the client as a service
-			if (this.state.order < ApplicationState.STOPPING.order)
+			if (this.state.ordinal() < ApplicationState.STOPPING.ordinal())
 			{
 				this.state = ApplicationState.STOPPING;
 			}
@@ -80,7 +80,7 @@ public class TaskManagerDocumentUpdaterThread extends Thread
 	public void run()
 	{
 		this.state = ApplicationState.RUNNING;
-		while(getUpdaterState().order < ApplicationState.STOPPING.order || documentUpdateQueue.isEmpty() == false)
+		while(getUpdaterState().ordinal() < ApplicationState.STOPPING.ordinal() || documentUpdateQueue.isEmpty() == false)
 		{
 			try
 			{
@@ -129,7 +129,7 @@ public class TaskManagerDocumentUpdaterThread extends Thread
 			    }
 			}
 
-			if (runAsService == true && getUpdaterState().order < ApplicationState.STOPPING.order)
+			if (runAsService == true && getUpdaterState().ordinal() < ApplicationState.STOPPING.ordinal())
 			{
 				try
 				{

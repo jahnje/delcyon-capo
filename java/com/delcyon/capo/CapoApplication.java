@@ -60,20 +60,21 @@ import eu.medsea.mimeutil.MimeUtil;
 public abstract class CapoApplication extends ContextThread implements WrapperListener
 {
     
+	/**
+	 * The order of this enum is important, as we use the ordinal value of this list internally.
+	 * @author jeremiah
+	 *
+	 */
     public enum ApplicationState
     {
-        NONE(0),
-        INITIALIZING(1),
-        INITIALIZED(2),
-        STARTING(3),
-        RUNNING(4),
-        STOPPING(5),
-        STOPPED(6);
-        public int order;
-        private ApplicationState(int order)
-        {
-            this.order = order;
-        }
+        NONE,
+        INITIALIZING,
+        INITIALIZED,
+        STARTING,
+        RUNNING,
+        STOPPING,
+        STOPPED
+        
     }
     
 	public enum DefaultDocument

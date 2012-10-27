@@ -220,7 +220,7 @@ public class CapoClient extends CapoApplication
 	{
 		start();
 		//keep this thread running until the client thread is ready. 
-		while(getApplicationState().order <= ApplicationState.RUNNING.order)
+		while(getApplicationState().ordinal() <= ApplicationState.RUNNING.ordinal())
 		{
 			Thread.sleep(500);			
 		}		
@@ -583,7 +583,7 @@ public class CapoClient extends CapoApplication
 	public void shutdown() throws Exception
 	{
 	    CapoApplication.logger.log(Level.INFO,"Waiting for processing to finish.");
-        while(getApplicationState().order < ApplicationState.RUNNING.order)
+        while(getApplicationState().ordinal() < ApplicationState.RUNNING.ordinal())
         {
             Thread.sleep(500);
         }

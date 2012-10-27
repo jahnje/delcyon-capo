@@ -254,7 +254,7 @@ public class TaskManagerThread extends ContextThread
 		synchronized (this)
 		{
 			//only set us to stopping if we're running or something earlier, this can happen when we don't run the client as a service
-			if (this.taskManagerState.order < ApplicationState.STOPPING.order)
+			if (this.taskManagerState.ordinal() < ApplicationState.STOPPING.ordinal())
 			{
 				this.taskManagerState = ApplicationState.STOPPING;
 			}
@@ -294,14 +294,14 @@ public class TaskManagerThread extends ContextThread
 	public void run()
 	{
 		taskManagerState = ApplicationState.RUNNING;
-		while(taskManagerState.order < ApplicationState.STOPPING.order)
+		while(taskManagerState.ordinal() < ApplicationState.STOPPING.ordinal())
 		{
 			try
 			{
 				//Lock everything down until we finish running
 			    lock.lock();
 			    //if we got asked to stop while waiting for the lock, bail out
-			    if (taskManagerState.order >= ApplicationState.STOPPING.order)
+			    if (taskManagerState.ordinal() >= ApplicationState.STOPPING.ordinal())
 			    {
 			        break;    
 			    }
@@ -607,7 +607,7 @@ public class TaskManagerThread extends ContextThread
 			}
 			
 			//check to see if we need to sleep then loop because we're a service, or bail out because we've been interrupted.
-			if (runAsService == true && taskManagerState.order < ApplicationState.STOPPING.order)
+			if (runAsService == true && taskManagerState.ordinal() < ApplicationState.STOPPING.ordinal())
 			{
 				try
 				{

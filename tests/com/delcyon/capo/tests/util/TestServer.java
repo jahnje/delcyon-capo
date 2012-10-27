@@ -67,7 +67,7 @@ public class TestServer
 			}
 		};
 		serverThread.start();
-		while(CapoApplication.getApplication() == null || CapoApplication.getApplication().getApplicationState().order < ApplicationState.RUNNING.order)
+		while(CapoApplication.getApplication() == null || CapoApplication.getApplication().getApplicationState().ordinal() < ApplicationState.RUNNING.ordinal())
 		{            
 			Thread.sleep(1000);
 		}

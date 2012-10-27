@@ -291,7 +291,7 @@ public class CapoServer extends CapoApplication
 		long maxWaitTime = 30000;
 		long totalWaitTime = 0;
 		logger.log(Level.INFO, "Shuting Down Server");
-		while(getApplicationState().order < ApplicationState.RUNNING.order)
+		while(getApplicationState().ordinal() < ApplicationState.RUNNING.ordinal())
         {
             logger.log(Level.INFO, "Waiting for final shutdown...");
             Thread.sleep(incrementalWaitTime);
@@ -401,7 +401,7 @@ public class CapoServer extends CapoApplication
 	                socket = serverSocket.accept();
 	            } catch (SocketException socketException)
 	            {
-	                if (getApplicationState().order > ApplicationState.RUNNING.order && serverSocket.isClosed())
+	                if (getApplicationState().ordinal() > ApplicationState.RUNNING.ordinal() && serverSocket.isClosed())
 	                {
 	                    logger.log(Level.INFO, "Shutting down server");
 	                    //isReady = false;

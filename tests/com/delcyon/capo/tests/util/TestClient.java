@@ -74,7 +74,7 @@ public class TestClient
 		clientThread.start();
 		
         
-		while(CapoApplication.getApplication() == null || CapoApplication.getApplication().getApplicationState().order < waitForApplicationState.order)
+		while(CapoApplication.getApplication() == null || CapoApplication.getApplication().getApplicationState().ordinal() < waitForApplicationState.ordinal())
 		{            
 			Thread.sleep(1000);
 		}
