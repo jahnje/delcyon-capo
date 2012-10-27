@@ -17,12 +17,10 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 package com.delcyon.capo.xml.cdom;
 
 import java.util.ArrayList;
-import java.util.Iterator;
 
 import org.w3c.dom.DOMException;
 import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.Node;
-import org.xml.sax.Attributes;
 
 import com.delcyon.capo.util.EqualityProcessor;
 
@@ -39,8 +37,6 @@ public class CNamedNodeMap extends ArrayList<Node> implements NamedNodeMap
      
     }
     
-    
-
     @Override
     public Node getNamedItem(String name)
     {

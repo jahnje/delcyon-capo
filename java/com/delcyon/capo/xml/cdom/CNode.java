@@ -17,8 +17,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 package com.delcyon.capo.xml.cdom;
 
 import java.lang.reflect.Modifier;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.logging.Level;
 
 import org.w3c.dom.DOMException;
@@ -29,15 +27,13 @@ import org.w3c.dom.NodeList;
 import org.w3c.dom.Text;
 import org.w3c.dom.UserDataHandler;
 
-import sun.tools.tree.LengthExpression;
-
 import com.delcyon.capo.CapoApplication;
 import com.delcyon.capo.util.CloneControl;
-import com.delcyon.capo.util.CloneControl.Clone;
 import com.delcyon.capo.util.ControlledClone;
 import com.delcyon.capo.util.EqualityProcessor;
 import com.delcyon.capo.util.ReflectionUtility;
 import com.delcyon.capo.util.ToStringControl;
+import com.delcyon.capo.util.CloneControl.Clone;
 import com.delcyon.capo.util.ToStringControl.Control;
 
 /**
@@ -91,11 +87,7 @@ public abstract class CNode implements Node, ControlledClone
      */
     @Override
     public String getNodeValue() throws DOMException
-    {
-        if(nodeValue != null && nodeValue.contains("libwrapper-linux-x86-32"))
-        {
-            System.out.println("got here");
-        }
+    {        
         return this.nodeValue;
     }
 
@@ -252,6 +244,7 @@ public abstract class CNode implements Node, ControlledClone
         if (refChild == null)
         {
             children.add(newChild);
+            ((CNode) newChild).setParent(this);
             return newChild;
         }
         
@@ -264,6 +257,7 @@ public abstract class CNode implements Node, ControlledClone
             }
         }
         children.add(index, newChild);
+        ((CNode) newChild).setParent(this);
         return newChild;
     }
 
@@ -800,7 +794,7 @@ public abstract class CNode implements Node, ControlledClone
     @Override
     public String toString()
     {
-        return ReflectionUtility.processToString(this);
+        return getNodeName()+" @"+ReflectionUtility.processToString(attributeList);
     }
     
     /**

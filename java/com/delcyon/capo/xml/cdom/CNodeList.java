@@ -16,7 +16,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 package com.delcyon.capo.xml.cdom;
 
-import java.util.Vector;
+import java.util.ArrayList;
 
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
@@ -27,14 +27,8 @@ import com.delcyon.capo.xml.dom.ResourceNodeList;
  * @author jeremiah
  *
  */
-public class CNodeList extends Vector<Node> implements NodeList
+public class CNodeList extends ArrayList<Node> implements NodeList
 {
-
-    private String name = null;
-    public CNodeList()
-    {
-        this.name = super.toString();
-    }
     
     @Override
     public Node item(int index)
