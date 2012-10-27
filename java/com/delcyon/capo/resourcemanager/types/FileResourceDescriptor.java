@@ -31,7 +31,6 @@ import com.delcyon.capo.Configuration.PREFERENCE;
 import com.delcyon.capo.controller.VariableContainer;
 import com.delcyon.capo.datastream.NullOutputStream;
 import com.delcyon.capo.datastream.StreamUtil;
-import com.delcyon.capo.resourcemanager.ResourceDescriptor;
 import com.delcyon.capo.resourcemanager.ResourceParameter;
 import com.delcyon.capo.resourcemanager.ResourceType;
 import com.delcyon.capo.resourcemanager.ResourceURI;
@@ -53,9 +52,9 @@ public class FileResourceDescriptor extends AbstractResourceDescriptor
 	private Element containerElement = null;
 	
 	@Override
-	protected FileResourceContentMetaData buildResourceMetaData() throws Exception
+	protected FileResourceContentMetaData buildResourceMetaData(VariableContainer variableContainer,ResourceParameter... resourceParameters) throws Exception
 	{		
-		FileResourceContentMetaData contentMetaData = new FileResourceContentMetaData(getResourceURI().getBaseURI());		
+		FileResourceContentMetaData contentMetaData = new FileResourceContentMetaData(getResourceURI().getBaseURI(),resourceParameters);		
 		return contentMetaData;
 	}
 	
@@ -363,7 +362,7 @@ public class FileResourceDescriptor extends AbstractResourceDescriptor
 	    
 		if (success == true)
 		{
-			refreshResourceMetaData();
+			refreshResourceMetaData(variableContainer,resourceParameters);
 		}
 		return success;
 	}

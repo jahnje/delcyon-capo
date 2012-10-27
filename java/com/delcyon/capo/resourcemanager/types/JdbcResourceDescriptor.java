@@ -37,7 +37,6 @@ import com.delcyon.capo.resourcemanager.ResourceDescriptor;
 import com.delcyon.capo.resourcemanager.ResourceParameter;
 import com.delcyon.capo.resourcemanager.ResourceParameterBuilder;
 import com.delcyon.capo.resourcemanager.ResourceURI;
-import com.delcyon.capo.resourcemanager.ResourceDescriptor.State;
 import com.delcyon.capo.resourcemanager.types.ContentMetaData.Attributes;
 import com.delcyon.capo.xml.XPath;
 import com.delcyon.capo.xml.dom.ResourceDeclarationElement;
@@ -69,7 +68,7 @@ public class JdbcResourceDescriptor extends AbstractResourceDescriptor
 	private Document document = null;
 	
 	@Override
-	protected SimpleContentMetaData buildResourceMetaData()
+	protected SimpleContentMetaData buildResourceMetaData(VariableContainer variableContainer,ResourceParameter... resourceParameters)
 	{
 		SimpleContentMetaData simpleContentMetaData  = new SimpleContentMetaData(getResourceURI());
 		simpleContentMetaData.addSupportedAttribute(Attributes.exists,Attributes.readable,Attributes.writeable,Attributes.container);		
@@ -217,7 +216,7 @@ public class JdbcResourceDescriptor extends AbstractResourceDescriptor
 	        return false;
         }
 	    
-	    contentMetaData = buildResourceMetaData();
+	    contentMetaData = buildResourceMetaData(variableContainer,resourceParameters);
 	    
 	    //if we're open then we're going to be running a new query
 	    if (getResourceState() == State.OPEN)
@@ -362,7 +361,7 @@ public class JdbcResourceDescriptor extends AbstractResourceDescriptor
 	public void processOutput(VariableContainer variableContainer,ResourceParameter... resourceParameters) throws Exception
 	{
 	    advanceState(State.OPEN, variableContainer, resourceParameters);
-		outputMetaData = buildResourceMetaData();
+		outputMetaData = buildResourceMetaData(variableContainer,resourceParameters);
 		outputMetaData.addSupportedAttribute(LocalAttributes.values());
 		try
 			{

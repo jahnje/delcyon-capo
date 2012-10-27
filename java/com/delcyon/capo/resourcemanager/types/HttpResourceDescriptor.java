@@ -40,7 +40,7 @@ public class HttpResourceDescriptor extends AbstractResourceDescriptor
 	}
 	
 	@Override
-	protected ContentMetaData buildResourceMetaData() throws Exception
+	protected ContentMetaData buildResourceMetaData(VariableContainer variableContainer,ResourceParameter... resourceParameters) throws Exception
 	{
 	    SimpleContentMetaData resourceMetaData  = new SimpleContentMetaData(getResourceURI());
 	    resourceMetaData.addSupportedAttribute(Attributes.exists,Attributes.readable);

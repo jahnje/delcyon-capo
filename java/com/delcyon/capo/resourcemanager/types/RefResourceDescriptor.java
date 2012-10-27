@@ -23,7 +23,6 @@ import com.delcyon.capo.controller.ControlElement;
 import com.delcyon.capo.controller.VariableContainer;
 import com.delcyon.capo.resourcemanager.ContentFormatType;
 import com.delcyon.capo.resourcemanager.ResourceParameter;
-import com.delcyon.capo.resourcemanager.ResourceURI;
 import com.delcyon.capo.resourcemanager.types.ContentMetaData.Attributes;
 import com.delcyon.capo.resourcemanager.types.RefResourceType.Parameters;
 import com.delcyon.capo.xml.XPath;
@@ -41,7 +40,7 @@ public class RefResourceDescriptor extends AbstractResourceDescriptor
 	private Element refElement = null;
 
 	@Override
-	protected SimpleContentMetaData buildResourceMetaData()
+	protected SimpleContentMetaData buildResourceMetaData(VariableContainer variableContainer,ResourceParameter... resourceParameters)
 	{
 		SimpleContentMetaData simpleContentMetaData  = new SimpleContentMetaData(getResourceURI());
 		simpleContentMetaData.addSupportedAttribute(Attributes.exists,Attributes.readable,Attributes.writeable,Attributes.container);		
@@ -80,7 +79,7 @@ public class RefResourceDescriptor extends AbstractResourceDescriptor
 	@Override
 	public ContentMetaData getContentMetaData(VariableContainer variableContainer, ResourceParameter... resourceParameters) throws Exception
 	{
-		return buildResourceMetaData();
+		return buildResourceMetaData(variableContainer,resourceParameters);
 	}
 
 	@Override

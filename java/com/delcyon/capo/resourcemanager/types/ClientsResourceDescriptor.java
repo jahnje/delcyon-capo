@@ -22,7 +22,6 @@ import com.delcyon.capo.CapoApplication;
 import com.delcyon.capo.controller.VariableContainer;
 import com.delcyon.capo.resourcemanager.ResourceDescriptor;
 import com.delcyon.capo.resourcemanager.ResourceParameter;
-import com.delcyon.capo.resourcemanager.ResourceDescriptor.State;
 import com.delcyon.capo.server.CapoServer.Preferences;
 import com.delcyon.capo.xml.dom.ResourceDeclarationElement;
 
@@ -94,9 +93,9 @@ public class ClientsResourceDescriptor extends AbstractResourceDescriptor
     }
 
     @Override
-    protected ContentMetaData buildResourceMetaData() throws Exception
+    protected ContentMetaData buildResourceMetaData(VariableContainer variableContainer, ResourceParameter... resourceParameters) throws Exception
     {
-        return ((AbstractResourceDescriptor)clientResourceDescriptor).buildResourceMetaData();
+        return ((AbstractResourceDescriptor)clientResourceDescriptor).buildResourceMetaData(variableContainer, resourceParameters);
     }
 	
     @Override

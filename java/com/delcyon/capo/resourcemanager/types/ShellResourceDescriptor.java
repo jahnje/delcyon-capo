@@ -75,7 +75,7 @@ public class ShellResourceDescriptor extends AbstractResourceDescriptor
 	
 	
 	@Override
-	protected SimpleContentMetaData buildResourceMetaData()
+	protected SimpleContentMetaData buildResourceMetaData(VariableContainer variableContainer,ResourceParameter... resourceParameters)
 	{
 		SimpleContentMetaData simpleContentMetaData  = new SimpleContentMetaData(getResourceURI());
 		simpleContentMetaData.addSupportedAttribute(Attributes.exists,Attributes.readable,Attributes.writeable);
@@ -307,7 +307,7 @@ public class ShellResourceDescriptor extends AbstractResourceDescriptor
  	private void buildIterationMetatData(byte[] data) throws NoSuchAlgorithmException
  	{
  	  iterationContentMetaData = null;
- 	  iterationContentMetaData = buildResourceMetaData();          
+ 	  iterationContentMetaData = buildResourceMetaData(null);          
       iterationContentMetaData.setValue("MD5",StreamUtil.getMD5(data));         
       iterationContentMetaData.setValue("size",data.length);
  	}
