@@ -2,11 +2,19 @@ package com.delcyon.capo.tests.util;
 import java.net.URLClassLoader;
 import java.util.concurrent.CopyOnWriteArrayList;
 
+import org.junit.Assert;
 import org.junit.Test;
+import org.w3c.dom.Document;
 
+import com.delcyon.capo.CapoApplication;
 import com.delcyon.capo.CapoApplication.ApplicationState;
-import com.delcyon.capo.client.CapoClient;
+import com.delcyon.capo.resourcemanager.ResourceDescriptor;
+import com.delcyon.capo.resourcemanager.types.ContentMetaData;
+import com.delcyon.capo.resourcemanager.types.FileResourceType;
 import com.delcyon.capo.tests.util.external.Util;
+import com.delcyon.capo.xml.XMLDiff;
+import com.delcyon.capo.xml.XPath;
+import com.delcyon.capo.xml.dom.ResourceDocument;
 
 /**
 Copyright (c) 2012 Delcyon, Inc.
@@ -87,6 +95,36 @@ public class ExternalTestServer
 		{
 			throw exceptionList.get(0);
 		}
+		
+		//verify that client got it's updates
+		com.delcyon.capo.tests.util.Util.startMinimalCapoApplication();
+		String src = "server/lib";
+        String dest = "client/lib";
+		
+		ResourceDescriptor sourceResourceDescriptor = new FileResourceType().getResourceDescriptor(src);
+        ResourceDescriptor destinationResourceDescriptor = new FileResourceType().getResourceDescriptor(dest);
+        
+        //use resource document to get results from both sides
+        ResourceDocument baseDocument = new ResourceDocument(sourceResourceDescriptor);
+        //XPath.dumpNode(baseDocument, System.out);
+        ResourceDocument modDocument = new ResourceDocument(destinationResourceDescriptor);
+        
+        
+        //use xml diff to generate diff between both side
+        XMLDiff xmlDiff = new XMLDiff();
+        xmlDiff.addIgnoreableAttribute(CapoApplication.RESOURCE_NAMESPACE_URI,ContentMetaData.Attributes.path.toString());
+        xmlDiff.addIgnoreableAttribute(CapoApplication.RESOURCE_NAMESPACE_URI,ContentMetaData.Attributes.uri.toString());
+        xmlDiff.addIgnoreableAttribute(CapoApplication.RESOURCE_NAMESPACE_URI,ContentMetaData.Attributes.lastModified.toString());
+        Document diffDocument = xmlDiff.getDifferences(baseDocument, modDocument);
+        //XPath.dumpNode(diffDocument, System.out);
+        //verify that root element of xml diff contains mod = base
+        
+        if (diffDocument.getDocumentElement().getAttributeNS(XMLDiff.XDIFF_NAMESPACE_URI, XMLDiff.XDIFF_ELEMENT_ATTRIBUTE_NAME).equals(XMLDiff.EQUALITY) == false)
+        {
+        	XPath.dumpNode(diffDocument, System.out);
+        }
+        Assert.assertEquals("There is a difference between "+src+" and "+dest+" Client did not update correctly",XMLDiff.EQUALITY,diffDocument.getDocumentElement().getAttributeNS(XMLDiff.XDIFF_NAMESPACE_URI, XMLDiff.XDIFF_ELEMENT_ATTRIBUTE_NAME));
+        
 	}
 }
  
