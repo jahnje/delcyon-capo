@@ -64,14 +64,16 @@ public class SyncElementTest
         
         //use resource document to get results from both sides
         ResourceDocument baseDocument = new ResourceDocument(sourceResourceDescriptor);
-       // XPath.dumpNode(baseDocument, System.out);
+        XPath.dumpNode(baseDocument, System.out);
+        Assert.assertNotNull(XPath.selectSingleNodeValue(baseDocument.getDocumentElement(), "//resource:keystore"));
         ResourceDocument modDocument = new ResourceDocument(destinationResourceDescriptor);
-        
+        Assert.assertNotNull(XPath.selectSingleNodeValue(modDocument.getDocumentElement(), "//resource:keystore"));
+        //XPath.dumpNode(modDocument, System.err);
         
         //use xml diff to generate diff between both side
         XMLDiff xmlDiff = new XMLDiff();
-        xmlDiff.addIgnoreableAttribute(CapoApplication.RESOURCE_NAMESPACE_URI,ContentMetaData.Attributes.path.toString());
-        xmlDiff.addIgnoreableAttribute(CapoApplication.RESOURCE_NAMESPACE_URI,ContentMetaData.Attributes.uri.toString());
+        xmlDiff.addIgnoreableAttribute(null,ContentMetaData.Attributes.path.toString());
+        xmlDiff.addIgnoreableAttribute(null,ContentMetaData.Attributes.uri.toString());
         Document diffDocument = xmlDiff.getDifferences(baseDocument, modDocument);
         
         //verify that root element of xml diff contains mod = base
@@ -143,14 +145,16 @@ public class SyncElementTest
          
          //use resource document to get results from both sides
           baseDocument = new ResourceDocument(sourceResourceDescriptor);
+          Assert.assertTrue(baseDocument.getDocumentElement().getAttribute("exists").equals("true"));
          //XPath.dumpNode(baseDocument, System.out);
           modDocument = new ResourceDocument(destinationResourceDescriptor);
+          Assert.assertTrue(modDocument.getDocumentElement().getAttribute("exists").equals("true"));
          //XPath.dumpNode(modDocument, System.out);
          
          //use xml diff to generate diff between both side
           xmlDiff = new XMLDiff();
-         xmlDiff.addIgnoreableAttribute(CapoApplication.RESOURCE_NAMESPACE_URI,ContentMetaData.Attributes.path.toString());
-         xmlDiff.addIgnoreableAttribute(CapoApplication.RESOURCE_NAMESPACE_URI,ContentMetaData.Attributes.uri.toString());
+         xmlDiff.addIgnoreableAttribute(null,ContentMetaData.Attributes.path.toString());
+         xmlDiff.addIgnoreableAttribute(null,ContentMetaData.Attributes.uri.toString());
           diffDocument = xmlDiff.getDifferences(baseDocument, modDocument);
          
          //verify that root element of xml diff contains mod != base

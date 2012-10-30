@@ -88,18 +88,23 @@ public class Util
     {
         startMinimalCapoApplication();
         ResourceDescriptor sourceResourceDescriptor = new FileResourceType().getResourceDescriptor(src);
+        sourceResourceDescriptor.getResourceMetaData(null,new ResourceParameter(FileResourceType.Parameters.ROOT_DIR, new File(".").getCanonicalPath()));
         ResourceDescriptor destinationResourceDescriptor = new FileResourceType().getResourceDescriptor(dest);
-        
+        destinationResourceDescriptor.getResourceMetaData(null,new ResourceParameter(FileResourceType.Parameters.ROOT_DIR, new File(".").getCanonicalPath()));
+//        Assert.assertTrue(sourceResourceDescriptor.getContentMetaData(null).exists());
+//        Assert.assertTrue(destinationResourceDescriptor.getContentMetaData(null).exists());
         //use resource document to get results from both sides
         ResourceDocument baseDocument = new ResourceDocument(sourceResourceDescriptor);
-       // XPath.dumpNode(baseDocument, System.out);
+        //Assert.assertTrue(baseDocument.getDocumentElement().getAttribute("exists").equals("true"));
+        //XPath.dumpNode(baseDocument, System.out);
         ResourceDocument modDocument = new ResourceDocument(destinationResourceDescriptor);
-        
-        
+        //XPath.dumpNode(modDocument, System.out);
+        //Assert.assertTrue(modDocument.getDocumentElement().getAttribute("exists").equals("true"));
         //use xml diff to generate diff between both side
         XMLDiff xmlDiff = new XMLDiff();
-        xmlDiff.addIgnoreableAttribute(CapoApplication.RESOURCE_NAMESPACE_URI,ContentMetaData.Attributes.path.toString());
-        xmlDiff.addIgnoreableAttribute(CapoApplication.RESOURCE_NAMESPACE_URI,ContentMetaData.Attributes.uri.toString());
+        xmlDiff.addIgnoreableAttribute(null,ContentMetaData.Attributes.path.toString());
+        xmlDiff.addIgnoreableAttribute(null,ContentMetaData.Attributes.uri.toString());
+        xmlDiff.addIgnoreableAttribute(null,ContentMetaData.Attributes.lastModified.toString());
         Document diffDocument = xmlDiff.getDifferences(baseDocument, modDocument);
         
         //verify that root element of xml diff contains mod = base

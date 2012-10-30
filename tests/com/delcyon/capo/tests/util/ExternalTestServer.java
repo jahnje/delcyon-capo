@@ -1,4 +1,5 @@
 package com.delcyon.capo.tests.util;
+import java.io.File;
 import java.net.URLClassLoader;
 import java.util.concurrent.CopyOnWriteArrayList;
 
@@ -11,6 +12,7 @@ import com.delcyon.capo.CapoApplication.ApplicationState;
 import com.delcyon.capo.resourcemanager.ResourceDescriptor;
 import com.delcyon.capo.resourcemanager.types.ContentMetaData;
 import com.delcyon.capo.resourcemanager.types.FileResourceType;
+import com.delcyon.capo.resourcemanager.types.ShellResourceDescriptor.Parameter;
 import com.delcyon.capo.tests.util.external.Util;
 import com.delcyon.capo.xml.XMLDiff;
 import com.delcyon.capo.xml.XPath;
@@ -97,12 +99,15 @@ public class ExternalTestServer
 		}
 		
 		//verify that client got it's updates
-		com.delcyon.capo.tests.util.Util.startMinimalCapoApplication();
-		String src = "server/lib";
-        String dest = "client/lib";
 		
+		//CapoApplication.setVariable(FileResourceType.Parameters.ROOT_DIR.toString(), new File(".").getCanonicalPath());
+		String src = "capo/server/lib";
+        String dest = "capo/client/lib";
+        Assert.assertTrue(com.delcyon.capo.tests.util.Util.areSame(src, dest));
 		ResourceDescriptor sourceResourceDescriptor = new FileResourceType().getResourceDescriptor(src);
+		//Assert.assertTrue(sourceResourceDescriptor.getContentMetaData(null).exists());
         ResourceDescriptor destinationResourceDescriptor = new FileResourceType().getResourceDescriptor(dest);
+        //Assert.assertTrue(destinationResourceDescriptor.getContentMetaData(null).exists());
         
         //use resource document to get results from both sides
         ResourceDocument baseDocument = new ResourceDocument(sourceResourceDescriptor);
@@ -112,9 +117,9 @@ public class ExternalTestServer
         
         //use xml diff to generate diff between both side
         XMLDiff xmlDiff = new XMLDiff();
-        xmlDiff.addIgnoreableAttribute(CapoApplication.RESOURCE_NAMESPACE_URI,ContentMetaData.Attributes.path.toString());
-        xmlDiff.addIgnoreableAttribute(CapoApplication.RESOURCE_NAMESPACE_URI,ContentMetaData.Attributes.uri.toString());
-        xmlDiff.addIgnoreableAttribute(CapoApplication.RESOURCE_NAMESPACE_URI,ContentMetaData.Attributes.lastModified.toString());
+        xmlDiff.addIgnoreableAttribute(null,ContentMetaData.Attributes.path.toString());
+        xmlDiff.addIgnoreableAttribute(null,ContentMetaData.Attributes.uri.toString());
+        xmlDiff.addIgnoreableAttribute(null,ContentMetaData.Attributes.lastModified.toString());
         Document diffDocument = xmlDiff.getDifferences(baseDocument, modDocument);
         //XPath.dumpNode(diffDocument, System.out);
         //verify that root element of xml diff contains mod = base
