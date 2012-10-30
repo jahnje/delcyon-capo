@@ -16,9 +16,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 package com.delcyon.capo.controller.elements;
 
-import net.sf.saxon.Configuration;
-import net.sf.saxon.dom.DocumentWrapper;
-
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 
@@ -36,7 +33,6 @@ import com.delcyon.capo.xml.XPathFunctionProvider;
 import com.delcyon.capo.xml.XPathFunctionUtility;
 import com.delcyon.capo.xml.dom.ResourceDocument;
 import com.delcyon.capo.xml.dom.ResourceDocumentBuilder;
-import com.delcyon.capo.xml.dom.ResourceElement;
 
 /**
  * @author jeremiah
@@ -131,7 +127,8 @@ public class ResourceControlElement extends AbstractControl implements XPathFunc
 	{
 		ResourceDocumentBuilder resourceDocumentBuilder = new ResourceDocumentBuilder();
 		resourceDocument = resourceDocumentBuilder.buildDocument(this);        
-		getParentGroup().putResourceElement(this);		
+		getParentGroup().putResourceElement(this);
+		getControlElementDeclaration().getParentNode().replaceChild(getControlElementDeclaration().getOwnerDocument().adoptNode(resourceDocument.getDocumentElement()),getControlElementDeclaration());
 		return null;
 	}
 	
