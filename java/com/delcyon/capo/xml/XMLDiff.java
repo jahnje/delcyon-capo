@@ -42,7 +42,6 @@ import com.delcyon.capo.util.diff.WindowItemLink;
 import com.delcyon.capo.util.diff.XMLTextDiff;
 import com.delcyon.capo.util.diff.Diff.Side;
 import com.delcyon.capo.util.diff.InputStreamTokenizer.TokenList;
-import com.delcyon.capo.xml.cdom.CNode;
 
 /**
  * @author jeremiah
