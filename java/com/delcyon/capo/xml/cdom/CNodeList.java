@@ -21,8 +21,6 @@ import java.util.ArrayList;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
-import com.delcyon.capo.xml.dom.ResourceNodeList;
-
 /**
  * @author jeremiah
  *
@@ -51,14 +49,7 @@ public class CNodeList extends ArrayList<Node> implements NodeList
         
     }
     
-    public void addAll(ResourceNodeList childNodes)
-    {        
-        for(int index = 0; index < childNodes.getLength(); index++)
-        {
-            add(childNodes.item(index));
-        }
-        
-    }
+    
     
     
 }

@@ -31,7 +31,6 @@ import com.delcyon.capo.CapoApplication;
 import com.delcyon.capo.util.CloneControl;
 import com.delcyon.capo.util.ControlledClone;
 import com.delcyon.capo.util.EqualityProcessor;
-import com.delcyon.capo.util.ReflectionUtility;
 import com.delcyon.capo.util.ToStringControl;
 import com.delcyon.capo.util.CloneControl.Clone;
 import com.delcyon.capo.util.ToStringControl.Control;
@@ -479,8 +478,19 @@ public abstract class CNode implements Node, ControlledClone
     @Override
     public void setPrefix(String prefix) throws DOMException
     {
-        Thread.dumpStack();
-        throw new UnsupportedOperationException();
+    	if(getNamespaceURI() == null)
+    	{
+    		throw new DOMException(DOMException.NAMESPACE_ERR, "Can't set prefix on an element w/o a namespaceURI");
+    	}
+    	
+        if (getNodeName().contains(":"))
+        {
+        	nodeName = prefix+":"+nodeName.split(":")[1];
+        }
+       else
+       {
+    	   nodeName = prefix+":"+nodeName;
+       }
     }
 
     /* (non-Javadoc)
@@ -794,7 +804,7 @@ public abstract class CNode implements Node, ControlledClone
     @Override
     public String toString()
     {
-        return getNodeName()+" @"+ReflectionUtility.processToString(attributeList);
+        return getNodeName()+" @"+attributeList.toString();
     }
     
     /**

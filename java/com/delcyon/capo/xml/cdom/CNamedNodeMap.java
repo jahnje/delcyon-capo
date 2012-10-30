@@ -17,6 +17,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 package com.delcyon.capo.xml.cdom;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 
 import org.w3c.dom.DOMException;
 import org.w3c.dom.NamedNodeMap;
@@ -165,4 +166,9 @@ public class CNamedNodeMap extends ArrayList<Node> implements NamedNodeMap
         
     }
     
+    @Override
+    public String toString()
+    {
+    	return Arrays.toString(toArray());
+    }
 }

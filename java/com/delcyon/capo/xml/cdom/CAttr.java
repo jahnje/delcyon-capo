@@ -24,7 +24,6 @@ import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.TypeInfo;
 
-import com.delcyon.capo.util.ReflectionUtility;
 import com.delcyon.capo.util.ToStringControl;
 import com.delcyon.capo.util.ToStringControl.Control;
 
@@ -37,7 +36,13 @@ public class CAttr extends CNode implements Attr
 {
     
     @SuppressWarnings("unused")
-    private CAttr(){}//reflection
+    protected CAttr(){}//reflection
+    
+    public CAttr(CElement parentNode, String localName, String value)
+    {
+    	this(parentNode,null,localName,value);
+    	
+    }
     
     public CAttr(CElement parentNode, String uri, String qName, String value)
     {
@@ -53,6 +58,7 @@ public class CAttr extends CNode implements Attr
         {
             setNamespaceURI(uri);
         }
+       
         setNodeValue(value);
     }
 
@@ -139,6 +145,12 @@ public class CAttr extends CNode implements Attr
     {
         Thread.dumpStack();
         throw new UnsupportedOperationException();
+    }
+    
+    @Override
+    public String toString()
+    {    	
+    	return getNodeName()+"="+getNodeValue();
     }
     
 }

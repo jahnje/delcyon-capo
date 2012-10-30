@@ -19,8 +19,6 @@ package com.delcyon.capo.xml.cdom;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 
-import javax.xml.transform.dom.DOMSource;
-
 import org.w3c.dom.Attr;
 import org.w3c.dom.CDATASection;
 import org.w3c.dom.Comment;
@@ -38,7 +36,6 @@ import org.w3c.dom.ProcessingInstruction;
 import org.w3c.dom.Text;
 import org.xml.sax.InputSource;
 
-import com.delcyon.capo.util.EqualityProcessor;
 import com.delcyon.capo.xml.XPath;
 
 /**

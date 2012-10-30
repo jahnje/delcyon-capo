@@ -17,12 +17,10 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 package com.delcyon.capo.xml.cdom;
 
 import java.lang.reflect.Modifier;
-import java.util.ArrayList;
 
 import org.w3c.dom.Attr;
 import org.w3c.dom.DOMException;
 import org.w3c.dom.Element;
-import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.w3c.dom.TypeInfo;
@@ -42,13 +40,25 @@ public class CElement extends CNode implements Element
     
    
     @SuppressWarnings("unused")
-    private CElement(){}; //reflection
+    protected CElement(){}; //reflection
     
     public CElement(String localName)
     {
         setNodeName(localName);
     }
 
+    public CElement(String namespaceURI,String qName)
+    {
+    	setNamespaceURI(namespaceURI);
+        setNodeName(qName);
+    }
+    
+    public CElement(String namespaceURI,String prefix,String localName)
+    {
+    	setNamespaceURI(namespaceURI);
+        setNodeName(prefix+":"+localName);
+    }
+    
     @Override
     public short getNodeType()
     {
