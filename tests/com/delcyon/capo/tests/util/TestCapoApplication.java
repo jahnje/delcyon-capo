@@ -1,6 +1,9 @@
 package com.delcyon.capo.tests.util;
 
+import java.io.File;
+
 import com.delcyon.capo.CapoApplication;
+import com.delcyon.capo.resourcemanager.types.FileResourceType.Parameters;
 
 public class TestCapoApplication extends CapoApplication
 {
@@ -9,6 +12,7 @@ public class TestCapoApplication extends CapoApplication
     {
         System.setProperty("javax.xml.parsers.DocumentBuilderFactory", "com.delcyon.capo.xml.cdom.CDocumentBuilderFactory");
         //System.clearProperty("javax.xml.parsers.DocumentBuilderFactory");
+        setVariable(Parameters.ROOT_DIR.toString(), new File(".").getCanonicalPath());
     }
     
     @Override
