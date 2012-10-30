@@ -15,20 +15,44 @@ import com.delcyon.capo.server.CapoServer;
 public class Util
 {
 
+	private static URLClassLoader independentClassLoader = null;
+	private static final ClassLoader parentClassLoader = Util.class.getClassLoader(); 
     @SuppressWarnings("deprecation")
     public static URLClassLoader getIndependentClassLoader() throws Exception
     {
-        Vector<URL> classPathURLVector = new Vector<URL>();
-        classPathURLVector.add(new File("build").toURL());
-        File libFile = new File("lib");
-        File[] libFiles = libFile.listFiles();
-        for (File file : libFiles)
-        {
-            classPathURLVector.add(file.toURL());
-        }
-        URL[] classpathURLs = classPathURLVector.toArray(new URL[]{});
+    	if(independentClassLoader == null)
+    	{
+    		
+    		Vector<URL> classPathURLVector = new Vector<URL>();
+    		classPathURLVector.add(new File("build").toURL());
+    		File libFile = new File("lib");
+    		File[] libFiles = libFile.listFiles();
+    		for (File file : libFiles)
+    		{
+    			classPathURLVector.add(file.toURL());
+    		}
+    		URL[] classpathURLs = classPathURLVector.toArray(new URL[]{});
 
-        return new URLClassLoader(classpathURLs,null);
+    		independentClassLoader =  new URLClassLoader(classpathURLs,null){
+    			@Override
+    			protected Class<?> findClass(String name) throws ClassNotFoundException
+    			{
+    				
+    				if(name.startsWith("com.delcyon.capo.xml.cdom."))
+    				{
+    					System.out.println("looking for class '"+name+"'");
+    					return parentClassLoader.loadClass(name);
+    				}
+    				if(name.startsWith("com.delcyon.capo.util.CloneControl"))
+    				{
+    					System.out.println("looking for class '"+name+"'");
+    					return parentClassLoader.loadClass(name);
+    				}
+    				return super.findClass(name);
+    			}
+    		};
+    	}
+    	return independentClassLoader;
     }
     
     @SuppressWarnings({ "unchecked", "rawtypes" })
