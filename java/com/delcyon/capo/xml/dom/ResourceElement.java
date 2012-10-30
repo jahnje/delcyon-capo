@@ -4,15 +4,10 @@ import java.lang.reflect.Modifier;
 import java.util.List;
 import java.util.logging.Level;
 
-import org.w3c.dom.Attr;
-import org.w3c.dom.DOMException;
-import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
-import org.w3c.dom.TypeInfo;
-import org.w3c.dom.UserDataHandler;
 
 import com.delcyon.capo.CapoApplication;
 import com.delcyon.capo.controller.elements.ResourceControlElement;
@@ -21,21 +16,20 @@ import com.delcyon.capo.resourcemanager.ResourceDescriptor;
 import com.delcyon.capo.resourcemanager.ResourceURI;
 import com.delcyon.capo.resourcemanager.types.ContentMetaData;
 import com.delcyon.capo.util.CloneControl;
-import com.delcyon.capo.util.CloneControl.Clone;
 import com.delcyon.capo.util.ControlledClone;
 import com.delcyon.capo.util.EqualityProcessor;
-import com.delcyon.capo.util.ReflectionUtility;
 import com.delcyon.capo.util.ToStringControl;
+import com.delcyon.capo.util.CloneControl.Clone;
 import com.delcyon.capo.util.ToStringControl.Control;
+import com.delcyon.capo.xml.cdom.CElement;
+import com.delcyon.capo.xml.cdom.CNodeList;
 
 @CloneControl(filter=CloneControl.Clone.exclude,modifiers=Modifier.STATIC+Modifier.FINAL)
 @ToStringControl(control=Control.exclude,modifiers=Modifier.STATIC+Modifier.FINAL)
-public class ResourceElement extends ResourceNode implements Element, ControlledClone
+public class ResourceElement extends CElement implements ControlledClone,ResourceNode
 {
 
-    @CloneControl(filter=Clone.exclude)
-    @ToStringControl(control=Control.exclude)
-    private ResourceNode parentNode;
+    
     
     @CloneControl(filter=Clone.exclude)
     @ToStringControl(control=Control.exclude)
@@ -46,41 +40,41 @@ public class ResourceElement extends ResourceNode implements Element, Controlled
     private ResourceDocument ownerResourceDocument;
     
     private ResourceDescriptor resourceDescriptor;    
-    private String namespaceURI = null;
-    private String localName = null;
+    
     private List<ContentMetaData> childResourceContentMetaData;
     private ContentMetaData contentMetaData;
-    private ResourceNodeList nodeList = new ResourceNodeList();
-    private ResourceNamedNodeMap attributeList = new ResourceNamedNodeMap();
-	private String prefix;	
+   
 	private boolean dynamic = true;
 	private ResourceURI resourceURI;
 	private Element content;
 	
 	
-	private ResourceElement(){}
+	@SuppressWarnings("unused")
+	private ResourceElement(){} //serialization only
 	
 	public ResourceElement(ResourceDocument ownerResourceDocument, String localName, Element content,ContentMetaData contentMetaData)
 	{
+		super(CapoApplication.RESOURCE_NAMESPACE_URI,"resource",localName);		
 		this.ownerResourceDocument = ownerResourceDocument;		
-		this.content = content;
-		this.namespaceURI = ownerResourceDocument.getNamespaceURI();
-		this.prefix = ownerResourceDocument.getPrefix();
-		this.localName = localName;
+		this.content = content;		
 		this.dynamic = false;
 		setContentMetatData(contentMetaData);
 		
 	}
     
+	/**
+	 * This will pull the localName from the resourceDescriptor to use as it's localName
+	 * @param ownerResourceDocument
+	 * @param parentNode
+	 * @param resourceDescriptor
+	 * @throws Exception
+	 */
     public ResourceElement(ResourceDocument ownerResourceDocument,ResourceNode parentNode,ResourceDescriptor resourceDescriptor) throws Exception
     {
+    	super(CapoApplication.RESOURCE_NAMESPACE_URI,"resource",resourceDescriptor.getLocalName());	
     	this.ownerResourceDocument = ownerResourceDocument;
-        this.resourceDescriptor = resourceDescriptor;
-        this.parentNode = parentNode;
+        this.resourceDescriptor = resourceDescriptor;        
         this.dynamic = true;
-        namespaceURI = ownerResourceDocument.getNamespaceURI();
-        prefix = ownerResourceDocument.getPrefix();
-        localName = resourceDescriptor.getLocalName();        
         setContentMetatData(resourceDescriptor.getResourceMetaData(null));
     }
 
@@ -88,14 +82,15 @@ public class ResourceElement extends ResourceNode implements Element, Controlled
     {
     	this.contentMetaData = contentMetaData;
     	this.resourceURI = contentMetaData.getResourceURI();
-    	attributeList.add(new ResourceAttr(this,"uri", contentMetaData.getResourceURI().getResourceURIString()));
+    	setAttribute("uri", contentMetaData.getResourceURI().getResourceURIString());
+    	
         List<String> supportedAttributeList = contentMetaData.getSupportedAttributes();
         for (String attributeName : supportedAttributeList)
         {
             if (contentMetaData.getValue(attributeName) != null)
             {                
                 ResourceAttr resourceAttr = new ResourceAttr(this,attributeName, contentMetaData.getValue(attributeName));
-                attributeList.add(resourceAttr);
+                setAttributeNode(resourceAttr);
             }
         }
     }
@@ -171,11 +166,7 @@ public class ResourceElement extends ResourceNode implements Element, Controlled
 		return content;
 	}
     
-    public void setParentNode(ResourceNode parentNode)
-    {
-    	this.parentNode = parentNode;
-    }
-
+    
     @Override
     public ResourceDescriptor getResourceDescriptor()
     {
@@ -204,35 +195,14 @@ public class ResourceElement extends ResourceNode implements Element, Controlled
         }
         else
         {
-            return prefix+":"+getLocalName();
+            return super.getNodeName();
         }
     }
 
-    @Override
-    public String getNodeValue() throws DOMException
-    {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
-    }
+   
 
-    @Override
-    public void setNodeValue(String nodeValue) throws DOMException
-    {
-        // TODO Auto-generated method stub
-    	throw new UnsupportedOperationException();
-    }
+   
 
-    @Override
-    public short getNodeType()
-    {
-        return ELEMENT_NODE;
-    }
-
-    @Override
-    public Node getParentNode()
-    {
-        return this.parentNode;
-    }
 
     @Override
     public NodeList getChildNodes()
@@ -244,17 +214,17 @@ public class ResourceElement extends ResourceNode implements Element, Controlled
         	{        		
         		if( content != null)
         		{
-        		    ResourceNodeList tempNodeList = null;
+        		    CNodeList tempNodeList = null;
         		    if(getOwnerResourceDocument().isContentOnly() == false)
         		    {
-        		        tempNodeList = EqualityProcessor.clone(this).nodeList;
+        		        tempNodeList = (CNodeList) EqualityProcessor.clone(super.getChildNodes());
         		        tempNodeList.add(0,content);
         		    }
         		    else
         		    {
-        		        tempNodeList = new ResourceNodeList();
+        		        tempNodeList = new CNodeList();
         		        tempNodeList.addAll(content.getChildNodes());        		        
-        		        tempNodeList.addAll(EqualityProcessor.clone(this).nodeList);
+        		        tempNodeList.addAll(EqualityProcessor.clone(super.getChildNodes()));
         		    }
         			
         			return tempNodeList;
@@ -266,7 +236,7 @@ public class ResourceElement extends ResourceNode implements Element, Controlled
         	}
 
         	
-            return nodeList;
+            return super.getChildNodes();
         }
         
         if (childResourceContentMetaData == null)
@@ -277,7 +247,7 @@ public class ResourceElement extends ResourceNode implements Element, Controlled
                 
                 try
                 {
-                    nodeList.add(new ResourceElement(ownerResourceDocument,this,CapoApplication.getDataManager().getResourceDescriptor(null, childContentMetaData.getResourceURI().getBaseURI())));
+                    appendChild(new ResourceElement(ownerResourceDocument,this,CapoApplication.getDataManager().getResourceDescriptor(null, childContentMetaData.getResourceURI().getBaseURI())));
                 }
                 catch (Exception e)
                 {
@@ -293,7 +263,7 @@ public class ResourceElement extends ResourceNode implements Element, Controlled
                     {
                         Element xmlElement = resourceDescriptor.readXML(null);
                         
-                        nodeList.add(xmlElement);
+                        appendChild(xmlElement);
                     }
                     catch (Exception e)
                     {
@@ -306,7 +276,7 @@ public class ResourceElement extends ResourceNode implements Element, Controlled
                 }
             }
         }
-        return nodeList;
+        return super.getChildNodes();
     }
 
     @Override
@@ -324,25 +294,13 @@ public class ResourceElement extends ResourceNode implements Element, Controlled
         
     }
 
-    @Override
-    public Node getLastChild()
-    {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public Node getPreviousSibling()
-    {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
-    }
+   
 
     @Override
     public Node getNextSibling()
     {
     
-       NodeList siblingList = parentNode.getChildNodes();
+       NodeList siblingList = getParentNode().getChildNodes();
        int myPosition = 0;
        for(int index = 0; index < siblingList.getLength(); index++)
        {
@@ -379,60 +337,17 @@ public class ResourceElement extends ResourceNode implements Element, Controlled
         }
         else
         {
-            return attributeList;
+            return super.getAttributes();
         }
     }
 
-    @Override
-    public Document getOwnerDocument()
-    {
-        return ownerResourceDocument;
-    }
-
+    
     public ResourceDocument getOwnerResourceDocument()
 	{
 		return ownerResourceDocument;
 	}
     
-    @Override
-    public Node insertBefore(Node newChild, Node refChild) throws DOMException
-    {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public Node replaceChild(Node newChild, Node oldChild) throws DOMException
-    {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public Node removeChild(Node oldChild) throws DOMException
-    {
-        if(nodeList.remove(oldChild) == true)
-        {
-        	return oldChild;
-        }
-        else
-        {
-        	return null;
-        }
-    }
-
-    @Override
-    public Node appendChild(Node newChild) throws DOMException
-    {
-        if(nodeList.add(newChild) == true)
-        {
-        	return newChild;
-        }
-        else
-        {
-        	return null;
-        }
-    }
+    
 
     @Override
     public boolean hasChildNodes()
@@ -443,11 +358,11 @@ public class ResourceElement extends ResourceNode implements Element, Controlled
     @Override
     public void preClone(Object clonedParentObject, Object clonedObject) throws Exception
     {
-        if(clonedParentObject != null)
-        {
-            ((ResourceElement)clonedObject).parentNode = ((ResourceElement) clonedParentObject);
-        }
-        
+//        if(clonedParentObject != null)
+//        {
+//            ((ResourceElement)clonedObject).parentNode = ((ResourceElement) clonedParentObject);
+//        }
+//        
     }
     
     
@@ -460,35 +375,22 @@ public class ResourceElement extends ResourceNode implements Element, Controlled
         clonedResourceElement.resourceControlElement = resourceControlElement;
 
     }
-    
-    @Override
-    public Node cloneNode(boolean deep)
-    {
-    	ResourceElement clonedResourceElement = null;
-    	try
-    	{
-    		clonedResourceElement = EqualityProcessor.clone(this);
-    	}
-    	catch (Exception exception)
-    	{
-    		CapoApplication.logger.log(Level.SEVERE, "Couldn't clone "+this, exception);
-    	}
-    	return clonedResourceElement;
-    }
 
-    @Override
-    public void normalize()
-    {
-        // TODO Auto-generated method stub
-    	throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public boolean isSupported(String feature, String version)
-    {
-        // TODO Auto-generated method stub
-        return false;
-    }
+//    @Override
+//    public Node cloneNode(boolean deep)
+//    {
+//    	ResourceElement clonedResourceElement = null;
+//    	try
+//    	{
+//    		clonedResourceElement = EqualityProcessor.clone(this);
+//    	}
+//    	catch (Exception exception)
+//    	{
+//    		exception.printStackTrace();
+//    		CapoApplication.logger.log(Level.SEVERE, "Couldn't clone "+this, exception);
+//    	}
+//    	return clonedResourceElement;
+//    }
 
     @Override
     public String getNamespaceURI()
@@ -499,22 +401,11 @@ public class ResourceElement extends ResourceNode implements Element, Controlled
         }
         else
         {
-            return namespaceURI;
+            return super.getNamespaceURI();
         }
     }
 
-    @Override
-    public String getPrefix()
-    {
-       return prefix;
-    }
-
-    @Override
-    public void setPrefix(String prefix) throws DOMException
-    {
-        this.prefix = prefix;
-
-    }
+   
 
     @Override
     public String getLocalName()
@@ -525,103 +416,13 @@ public class ResourceElement extends ResourceNode implements Element, Controlled
         }
         else
         {
-            return this.localName;
+            return super.getLocalName();
         }
     }
 
-    @Override
-    public boolean hasAttributes()
-    {
-        //all resources have attributes, be cause they have content data, even if it's just to say they don't exist.
-        return true;
-    }
+    
 
-    @Override
-    public String getBaseURI()
-    {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public short compareDocumentPosition(Node other) throws DOMException
-    {
-    	throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public String getTextContent() throws DOMException
-    {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public void setTextContent(String textContent) throws DOMException
-    {
-        // TODO Auto-generated method stub
-    	throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public boolean isSameNode(Node other)
-    {    	
-    	return this.equals(other);
-    }
-
-    @Override
-    public String lookupPrefix(String namespaceURI)
-    {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public boolean isDefaultNamespace(String namespaceURI)
-    {
-    	throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public String lookupNamespaceURI(String prefix)
-    {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public boolean isEqualNode(Node arg)
-    {
-    	throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public Object getFeature(String feature, String version)
-    {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public Object setUserData(String key, Object data, UserDataHandler handler)
-    {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public Object getUserData(String key)
-    {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public String getTagName()
-    {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
-    }
+    
 
     @Override
     public String getAttribute(String name)
@@ -636,147 +437,37 @@ public class ResourceElement extends ResourceNode implements Element, Controlled
     	}
     }
 
-    @Override
-    public void setAttribute(String name, String value) throws DOMException
-    {
-       attributeList.setNamedItem(new ResourceAttr(this, name, value));
-    }
+   
 
-    @Override
-    public void removeAttribute(String name) throws DOMException
-    {
-        // TODO Auto-generated method stub
-    	throw new UnsupportedOperationException();
-    }
+//    @Override
+//    public String getAttributeNS(String namespaceURI, String localName) throws DOMException
+//    {
+//    	if (this.namespaceURI.equalsIgnoreCase(namespaceURI))
+//    	{
+//    		return contentMetaData.getValue(localName);
+//    	}
+//    	else
+//    	{
+//    		return "";
+//    	}
+//    }
+//
+//   
+//
+//    @Override
+//    public boolean hasAttributeNS(String namespaceURI, String localName) throws DOMException
+//    {
+//    	if (this.namespaceURI.equalsIgnoreCase(namespaceURI))
+//    	{
+//    		return (contentMetaData.getValue(localName) != null);
+//    	}
+//    	else
+//    	{
+//    		return false;
+//    	}
+//    }
 
-    @Override
-    public Attr getAttributeNode(String name)
-    {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public Attr setAttributeNode(Attr newAttr) throws DOMException
-    {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public Attr removeAttributeNode(Attr oldAttr) throws DOMException
-    {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public NodeList getElementsByTagName(String name)
-    {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public String getAttributeNS(String namespaceURI, String localName) throws DOMException
-    {
-    	if (this.namespaceURI.equalsIgnoreCase(namespaceURI))
-    	{
-    		return contentMetaData.getValue(localName);
-    	}
-    	else
-    	{
-    		return "";
-    	}
-    }
-
-    @Override
-    public void setAttributeNS(String namespaceURI, String qualifiedName, String value) throws DOMException
-    {
-        // TODO Auto-generated method stub
-    	throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public void removeAttributeNS(String namespaceURI, String localName) throws DOMException
-    {
-        // TODO Auto-generated method stub
-    	throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public Attr getAttributeNodeNS(String namespaceURI, String localName) throws DOMException
-    {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public Attr setAttributeNodeNS(Attr newAttr) throws DOMException
-    {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public NodeList getElementsByTagNameNS(String namespaceURI, String localName) throws DOMException
-    {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public boolean hasAttribute(String name)
-    {
-    	return getAttributes().getNamedItem(name) != null;
-    }
-
-    @Override
-    public boolean hasAttributeNS(String namespaceURI, String localName) throws DOMException
-    {
-    	if (this.namespaceURI.equalsIgnoreCase(namespaceURI))
-    	{
-    		return (contentMetaData.getValue(localName) != null);
-    	}
-    	else
-    	{
-    		return false;
-    	}
-    }
-
-    @Override
-    public TypeInfo getSchemaTypeInfo()
-    {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public void setIdAttribute(String name, boolean isId) throws DOMException
-    {
-        // TODO Auto-generated method stub
-    	throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public void setIdAttributeNS(String namespaceURI, String localName, boolean isId) throws DOMException
-    {
-        // TODO Auto-generated method stub
-    	throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public void setIdAttributeNode(Attr idAttr, boolean isId) throws DOMException
-    {
-        // TODO Auto-generated method stub
-    	throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public String toString()
-    {
-        return ReflectionUtility.processToString(this);
-    }
+   
 
     public Element export(boolean contentOnly) throws Exception
     {    	

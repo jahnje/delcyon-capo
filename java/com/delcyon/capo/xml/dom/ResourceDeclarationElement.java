@@ -218,7 +218,7 @@ public class ResourceDeclarationElement
                 //get the result xml from the actual resource descriptor
                 Element readXMLElement = (Element) parentElement.getOwnerDocument().importNode(resourceDescriptor.readXML(variableContainer, resourceParameters),true);                
                 ResourceDocument resourceDocument = parentResourceElement.getOwnerResourceDocument();
-                ResourceElement readResourceElement = resourceDocument.createResourceElement("resource",readXMLElement,resourceDescriptor.getContentMetaData(variableContainer, resourceParameters));
+                ResourceElement readResourceElement = resourceDocument.createResourceElement(getLocalName(),readXMLElement,resourceDescriptor.getContentMetaData(variableContainer, resourceParameters));
                 readResourceElement.setAttribute("name", getLocalName());
                 //TODO convert to ResourceElement
                 cacheVector.add(readResourceElement);
