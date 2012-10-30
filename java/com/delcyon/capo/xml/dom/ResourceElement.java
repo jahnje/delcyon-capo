@@ -217,8 +217,9 @@ public class ResourceElement extends CElement implements ControlledClone,Resourc
         		    CNodeList tempNodeList = null;
         		    if(getOwnerResourceDocument().isContentOnly() == false)
         		    {
-        		        tempNodeList = (CNodeList) EqualityProcessor.clone(super.getChildNodes());
+        		        tempNodeList = new CNodeList();
         		        tempNodeList.add(0,content);
+        		        tempNodeList.addAll(super.getChildNodes());
         		    }
         		    else
         		    {
@@ -376,21 +377,7 @@ public class ResourceElement extends CElement implements ControlledClone,Resourc
 
     }
 
-//    @Override
-//    public Node cloneNode(boolean deep)
-//    {
-//    	ResourceElement clonedResourceElement = null;
-//    	try
-//    	{
-//    		clonedResourceElement = EqualityProcessor.clone(this);
-//    	}
-//    	catch (Exception exception)
-//    	{
-//    		exception.printStackTrace();
-//    		CapoApplication.logger.log(Level.SEVERE, "Couldn't clone "+this, exception);
-//    	}
-//    	return clonedResourceElement;
-//    }
+
 
     @Override
     public String getNamespaceURI()
@@ -437,35 +424,6 @@ public class ResourceElement extends CElement implements ControlledClone,Resourc
     	}
     }
 
-   
-
-//    @Override
-//    public String getAttributeNS(String namespaceURI, String localName) throws DOMException
-//    {
-//    	if (this.namespaceURI.equalsIgnoreCase(namespaceURI))
-//    	{
-//    		return contentMetaData.getValue(localName);
-//    	}
-//    	else
-//    	{
-//    		return "";
-//    	}
-//    }
-//
-//   
-//
-//    @Override
-//    public boolean hasAttributeNS(String namespaceURI, String localName) throws DOMException
-//    {
-//    	if (this.namespaceURI.equalsIgnoreCase(namespaceURI))
-//    	{
-//    		return (contentMetaData.getValue(localName) != null);
-//    	}
-//    	else
-//    	{
-//    		return false;
-//    	}
-//    }
 
    
 
