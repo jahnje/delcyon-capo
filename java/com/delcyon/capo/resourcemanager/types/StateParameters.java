@@ -30,6 +30,8 @@ public class StateParameters
 	private ResourceParameter[] resourceParameters = null;
 	private VariableContainer variableContainer = null;
 	
+	private StateParameters(){}//serialization only
+	
 	public StateParameters(ResourceParameter[] resourceParameters, VariableContainer variableContainer)
 	{
 		this.resourceParameters = resourceParameters;
