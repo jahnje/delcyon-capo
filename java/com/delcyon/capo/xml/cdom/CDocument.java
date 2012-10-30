@@ -36,6 +36,8 @@ import org.w3c.dom.ProcessingInstruction;
 import org.w3c.dom.Text;
 import org.xml.sax.InputSource;
 
+import com.delcyon.capo.util.CloneControl;
+import com.delcyon.capo.util.CloneControl.Clone;
 import com.delcyon.capo.xml.XPath;
 
 /**
@@ -44,11 +46,19 @@ import com.delcyon.capo.xml.XPath;
  */
 public class CDocument extends CNode implements Document
 {
-
+	private static int documentIDCounter = 0;
+	private static int incrementDocumentID()
+	{
+		documentIDCounter++;
+		return documentIDCounter;
+	}
     private CElement documentElement = null;
     private String documentURI = null;
     private DocumentType doctype;
     private String defaultNamespace;
+    
+    @CloneControl(filter=Clone.exclude)
+    private long documentID = incrementDocumentID();
     
     public CDocument()
     {
@@ -475,4 +485,11 @@ public class CDocument extends CNode implements Document
         this.defaultNamespace = defaultNamespace;
     }
 
+    @Override
+    public String toString()
+    {
+    	// TODO Auto-generated method stub
+    	return documentID+" "+super.toString();
+    }
+    
 }
