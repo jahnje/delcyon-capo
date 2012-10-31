@@ -21,7 +21,6 @@ import java.util.HashMap;
 import java.util.Vector;
 
 import org.w3c.dom.Attr;
-import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.NodeList;
@@ -36,6 +35,8 @@ import com.delcyon.capo.resourcemanager.ResourceDescriptor.LifeCycle;
 import com.delcyon.capo.resourcemanager.ResourceDescriptor.State;
 import com.delcyon.capo.util.VariableContainerWrapper;
 import com.delcyon.capo.xml.XPath;
+import com.delcyon.capo.xml.cdom.CDocument;
+import com.delcyon.capo.xml.cdom.CElement;
 
 /**
  * @author jeremiah
@@ -171,7 +172,8 @@ public class ResourceDeclarationElement
 		
 		ResourceElement rootResourceElement = new ResourceElement(resourceDocument,resourceDocument,resourceDescriptor);
 		resourceDocument.setDocumentElement(rootResourceElement);
-		Document testDocument = CapoApplication.getDocumentBuilder().newDocument();
+		CDocument testDocument = (CDocument) CapoApplication.getDocumentBuilder().newDocument();
+		testDocument.setSilenceEvents(true);
 		Element testRootElement = testDocument.createElement(getLocalName());
 		testDocument.appendChild(testRootElement);
 		loadCacheVectors(true,rootResourceElement,testRootElement, variableContainer, resourceParameters);
@@ -216,7 +218,7 @@ public class ResourceDeclarationElement
             while(resourceDescriptor.next(variableContainer, resourceParameters))
             {
                 //get the result xml from the actual resource descriptor
-                Element readXMLElement = (Element) parentElement.getOwnerDocument().importNode(resourceDescriptor.readXML(variableContainer, resourceParameters),true);                
+            	CElement readXMLElement = (CElement) parentElement.getOwnerDocument().adoptNode(resourceDescriptor.readXML(variableContainer, resourceParameters));                
                 ResourceDocument resourceDocument = parentResourceElement.getOwnerResourceDocument();
                 ResourceElement readResourceElement = resourceDocument.createResourceElement(getLocalName(),readXMLElement,resourceDescriptor.getContentMetaData(variableContainer, resourceParameters));
                 readResourceElement.setAttribute("name", getLocalName());

@@ -25,7 +25,6 @@ import java.sql.Statement;
 import java.util.HashMap;
 import java.util.logging.Level;
 
-import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 
@@ -39,6 +38,8 @@ import com.delcyon.capo.resourcemanager.ResourceParameterBuilder;
 import com.delcyon.capo.resourcemanager.ResourceURI;
 import com.delcyon.capo.resourcemanager.types.ContentMetaData.Attributes;
 import com.delcyon.capo.xml.XPath;
+import com.delcyon.capo.xml.cdom.CDocument;
+import com.delcyon.capo.xml.cdom.CElement;
 import com.delcyon.capo.xml.dom.ResourceDeclarationElement;
 
 /**
@@ -64,8 +65,8 @@ public class JdbcResourceDescriptor extends AbstractResourceDescriptor
 	private Statement statement;
 	private boolean table = false;
 	private String rule = null;
-	private Element rowElement = null;
-	private Document document = null;
+	private CElement rowElement = null;
+	private CDocument document = null;
 	
 	@Override
 	protected SimpleContentMetaData buildResourceMetaData(VariableContainer variableContainer,ResourceParameter... resourceParameters)
@@ -87,7 +88,8 @@ public class JdbcResourceDescriptor extends AbstractResourceDescriptor
 	public void init(ResourceDeclarationElement declaringResourceElement,VariableContainer variableContainer, LifeCycle lifeCycle, boolean iterate, ResourceParameter... resourceParameters) throws Exception
 	{
 
-	    document = CapoApplication.getDocumentBuilder().newDocument();
+	    document = (CDocument) CapoApplication.getDocumentBuilder().newDocument();
+	    document.setSilenceEvents(true);
 	    super.init(declaringResourceElement,variableContainer, lifeCycle, iterate, resourceParameters);
 	    
 		if (getResourceURI().getChildResourceURI() != null)
@@ -295,7 +297,7 @@ public class JdbcResourceDescriptor extends AbstractResourceDescriptor
 	}
 	
 	@Override
-	public Element readXML(VariableContainer variableContainer,ResourceParameter... resourceParameters) throws Exception
+	public CElement readXML(VariableContainer variableContainer,ResourceParameter... resourceParameters) throws Exception
 	{
 	    advanceState(State.STEPPING, variableContainer, resourceParameters);
 		return rowElement;		
@@ -304,10 +306,11 @@ public class JdbcResourceDescriptor extends AbstractResourceDescriptor
 	
 
 
-	private Element buildElementFromResultSet(ResultSet resultSet) throws Exception
+	private CElement buildElementFromResultSet(ResultSet resultSet) throws Exception
 	{
 	    ResultSetMetaData resultSetMetaData = resultSet.getMetaData();
-		Element rowElement = document.createElement(getLocalName());
+	    CElement rowElement = (CElement) document.createElement(getLocalName());
+		
 		//rowElement.setAttribute("number", resultSet.getRow()+"");
 		
 		int columnCount = resultSetMetaData.getColumnCount();

@@ -17,6 +17,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 package com.delcyon.capo.xml.cdom;
 
 import java.lang.reflect.Modifier;
+import java.util.Vector;
 import java.util.logging.Level;
 
 import org.w3c.dom.DOMException;
@@ -34,6 +35,7 @@ import com.delcyon.capo.util.EqualityProcessor;
 import com.delcyon.capo.util.ToStringControl;
 import com.delcyon.capo.util.CloneControl.Clone;
 import com.delcyon.capo.util.ToStringControl.Control;
+import com.delcyon.capo.xml.cdom.CDOMEvent.EventType;
 
 /**
  * @author jeremiah
@@ -52,12 +54,16 @@ public abstract class CNode implements Node, ControlledClone
     @ToStringControl(control=Control.exclude)
     private CDocument ownerDocument = null;
     
+    @CloneControl(filter=Clone.exclude)
+    private Vector<CDOMEventListener> cdomEventListenerVector = new Vector<CDOMEventListener>();
+    
     private CNodeList nodeList = new CNodeList();
     private CNamedNodeMap attributeList = new CNamedNodeMap();
     private String nodeName = null;
     private String nodeValue = null;
     private String namespaceURI = null;
-
+    
+    private transient CDOMEvent preparedEvent = null;
     
     
     
@@ -67,10 +73,90 @@ public abstract class CNode implements Node, ControlledClone
         
     }
     
+    public boolean hasEventListeners()
+    {
+    	if(cdomEventListenerVector.size() > 0)
+    	{
+    		return true;
+    	}
+    	if(parentNode != null)
+    	{
+    		return parentNode.hasEventListeners();
+    	}
+    	return false;
+    }
+    
+    /**
+     * We only want one event to happen per change, so this method should act as a singleton for event creation.
+     * @param eventType
+     * @param sourceNode
+     * @return
+     */
+    protected CDOMEvent prepareEvent(EventType eventType, CNode sourceNode)
+    {
+    	if(ownerDocument != null && ownerDocument.isSilenceEvents() == true)
+    	{
+    		return null;
+    	}
+    	if(hasEventListeners() == false)
+    	{
+    		return null;
+    	}
+    	
+    	if (preparedEvent == null)
+    	{
+    		preparedEvent = new CDOMEvent(eventType, sourceNode);
+    		return preparedEvent;
+    	}
+    	else
+    	{
+    		return null;
+    	}
+    }
+    
+   
+    public void cascadeDOMEvent(CDOMEvent cdomEvent)
+    {
+    	if(cdomEvent == null)
+    	{
+    		return;
+    	}
+    	//remove prepared event
+    	preparedEvent = null;
+    	//walk local list of event listeners
+    	for (CDOMEventListener cdomEventListener : cdomEventListenerVector)
+		{
+			cdomEventListener.processEvent(cdomEvent);
+			if(cdomEvent.isHandled())
+			{
+				break;
+			}
+		}
+    	if(cdomEvent.isHandled() == false && parentNode instanceof CDOMEventListener && this instanceof CDocument == false)
+    	{
+    		if(parentNode.hasEventListeners())
+    		{
+    			parentNode.cascadeDOMEvent(cdomEvent);
+    		}
+    	}
+    	
+    }
+    
+    public void addCDOMEventListener(CDOMEventListener eventListener)
+    {
+    	cdomEventListenerVector.add(eventListener);
+    }
+    
+    public void removeCDOMEventListener(CDOMEventListener eventListener)
+    {
+    	cdomEventListenerVector.remove(eventListener);
+    }
+    
     
     public void setNodeName(String nodeName)
     {
         this.nodeName = nodeName;
+        cascadeDOMEvent(prepareEvent(EventType.UPDATE, this));
     }
     /* (non-Javadoc)
      * @see org.w3c.dom.Node#getNodeName()
@@ -97,7 +183,7 @@ public abstract class CNode implements Node, ControlledClone
     public void setNodeValue(String nodeValue) throws DOMException
     {
        this.nodeValue = nodeValue;
-
+       cascadeDOMEvent(prepareEvent(EventType.UPDATE, this));
     }
 
     
@@ -215,7 +301,8 @@ public abstract class CNode implements Node, ControlledClone
 
     public void setAttributes(CNamedNodeMap attributes)
     {
-        this.attributeList = attributes;        
+        this.attributeList = attributes;
+        cascadeDOMEvent(prepareEvent(EventType.UPDATE, this));
     }
     
     /* (non-Javadoc)
@@ -230,20 +317,23 @@ public abstract class CNode implements Node, ControlledClone
     public void setOwnerDocument(Document ownerDocument)
     {
         this.ownerDocument = (CDocument) ownerDocument;
+        cascadeDOMEvent(prepareEvent(EventType.UPDATE, this));
     }
     
     /* (non-Javadoc)
      * @see org.w3c.dom.Node#insertBefore(org.w3c.dom.Node, org.w3c.dom.Node)
      */
-    //XXX Incomplete implementation!
+   
     @Override
     public Node insertBefore(Node newChild, Node refChild) throws DOMException
     {
+    	CDOMEvent cdomEvent = prepareEvent(EventType.INSERT, this);
         CNodeList children = (CNodeList) getChildNodes();
         if (refChild == null)
         {
             children.add(newChild);
             ((CNode) newChild).setParent(this);
+            cascadeDOMEvent(cdomEvent);
             return newChild;
         }
         
@@ -257,6 +347,7 @@ public abstract class CNode implements Node, ControlledClone
         }
         children.add(index, newChild);
         ((CNode) newChild).setParent(this);
+        cascadeDOMEvent(cdomEvent);
         return newChild;
     }
 
@@ -266,6 +357,7 @@ public abstract class CNode implements Node, ControlledClone
     @Override
     public Node replaceChild(Node newChild, Node oldChild) throws DOMException
     {
+    	CDOMEvent cdomEvent = prepareEvent(EventType.UPDATE, this);
         CNodeList children = (CNodeList) getChildNodes();
         int index = 0;
         for (Node node : children)
@@ -287,10 +379,12 @@ public abstract class CNode implements Node, ControlledClone
                 
                 //remove old child's parent, as it's now lightly detached
                 ((CNode) oldChild).setParent(null);
+                cascadeDOMEvent(cdomEvent);
                 return oldChild;
             }
             index++;
         }
+        preparedEvent = null;
         return null;
     }
 
@@ -302,6 +396,7 @@ public abstract class CNode implements Node, ControlledClone
     {        
        if(nodeList.remove(oldChild) == true)
        {
+    	   cascadeDOMEvent(prepareEvent(EventType.DELETE, this));
            return oldChild;    
        }
        else
@@ -314,7 +409,9 @@ public abstract class CNode implements Node, ControlledClone
 
     protected void removeChildrenAll()
     {
-        nodeList.clear();        
+    	
+        nodeList.clear();
+        cascadeDOMEvent(prepareEvent(EventType.DELETE, this));
     }
     
     /* (non-Javadoc)
@@ -323,20 +420,22 @@ public abstract class CNode implements Node, ControlledClone
     @Override
     public Node appendChild(Node newChild) throws DOMException
     {
+    	CDOMEvent cdomEvent = prepareEvent(EventType.INSERT, this);
         if(newChild instanceof CNode)
         {
             if(newChild.getParentNode() != null)
-            {
-                System.out.println("removing parent !!!");
-                newChild.getParentNode().removeChild(newChild);
+            {                
+                newChild.getParentNode().removeChild(newChild);               
             }
             nodeList.add(newChild);
             ((CNode) newChild).setParent(this);
             ((CNode) newChild).setOwnerDocument(getOwnerDocument());
+            cascadeDOMEvent(cdomEvent);
             return newChild;
         }
         else
         {
+        	preparedEvent = null;
             Thread.dumpStack();
             throw new UnsupportedOperationException();
         }
@@ -367,6 +466,7 @@ public abstract class CNode implements Node, ControlledClone
         try
         {
             clonedNode = EqualityProcessor.clone(this);
+            final CDOMEvent cdomEvent = new CDOMEvent(EventType.INSERT,this);
             NodeProcessor nodeProcessor = new NodeProcessor()
             {
                 //Set all of the correct parent nodes
@@ -374,7 +474,9 @@ public abstract class CNode implements Node, ControlledClone
                 public void process(Node parentNode,Node node) throws Exception
                 {
                     CNode cNode = (CNode) node;
+                    cNode.preparedEvent = cdomEvent;
                     cNode.setParent((CNode) parentNode);
+                    cNode.preparedEvent = null;
                 }
             };
             walkTree(null,clonedNode, nodeProcessor, false);
@@ -407,6 +509,7 @@ public abstract class CNode implements Node, ControlledClone
     @Override
     public void normalize()
     {
+    	
         Text textNode = null;
         for(int index = 0; index < nodeList.size(); index++)
         {
@@ -491,6 +594,7 @@ public abstract class CNode implements Node, ControlledClone
        {
     	   nodeName = prefix+":"+nodeName;
        }
+        cascadeDOMEvent(prepareEvent(EventType.UPDATE, this));
     }
 
     /* (non-Javadoc)
@@ -695,6 +799,7 @@ public abstract class CNode implements Node, ControlledClone
     @Override
     public void setTextContent(String textContent) throws DOMException
     {
+    	 
         CText text = new CText();
         text.setData(textContent);
         removeChildrenAll();
@@ -842,6 +947,7 @@ public abstract class CNode implements Node, ControlledClone
        }
        ownerDocument = null;
        parentNode = null;
+       cascadeDOMEvent(prepareEvent(EventType.UPDATE, this));
     }
 
 }

@@ -21,12 +21,15 @@ import com.delcyon.capo.util.EqualityProcessor;
 import com.delcyon.capo.util.ToStringControl;
 import com.delcyon.capo.util.CloneControl.Clone;
 import com.delcyon.capo.util.ToStringControl.Control;
+import com.delcyon.capo.xml.cdom.CDOMEvent;
+import com.delcyon.capo.xml.cdom.CDOMEventListener;
 import com.delcyon.capo.xml.cdom.CElement;
+import com.delcyon.capo.xml.cdom.CNode;
 import com.delcyon.capo.xml.cdom.CNodeList;
 
 @CloneControl(filter=CloneControl.Clone.exclude,modifiers=Modifier.STATIC+Modifier.FINAL)
 @ToStringControl(control=Control.exclude,modifiers=Modifier.STATIC+Modifier.FINAL)
-public class ResourceElement extends CElement implements ControlledClone,ResourceNode
+public class ResourceElement extends CElement implements ControlledClone,ResourceNode, CDOMEventListener
 {
 
     
@@ -46,20 +49,20 @@ public class ResourceElement extends CElement implements ControlledClone,Resourc
    
 	private boolean dynamic = true;
 	private ResourceURI resourceURI;
-	private Element content;
+	private CElement content;
 	
 	
 	@SuppressWarnings("unused")
 	private ResourceElement(){} //serialization only
 	
-	public ResourceElement(ResourceDocument ownerResourceDocument, String localName, Element content,ContentMetaData contentMetaData)
+	public ResourceElement(ResourceDocument ownerResourceDocument, String localName, CElement content,ContentMetaData contentMetaData)
 	{
 		super(CapoApplication.RESOURCE_NAMESPACE_URI,"resource",localName);		
 		this.ownerResourceDocument = ownerResourceDocument;		
 		this.content = content;		
 		this.dynamic = false;
 		setContentMetatData(contentMetaData);
-		
+		((CNode) content).addCDOMEventListener(this);
 	}
     
 	/**
@@ -95,6 +98,12 @@ public class ResourceElement extends CElement implements ControlledClone,Resourc
         }
     }
     
+    @Override
+    public void processEvent(CDOMEvent cdomEvent)
+    {
+    	System.out.println(cdomEvent);
+    	
+    }
     
 //    public ResourceElement(ResourceNode parentNode, ResourceControlElement resourceControlElement) throws Exception
 //    {
@@ -156,9 +165,10 @@ public class ResourceElement extends CElement implements ControlledClone,Resourc
 //        }
 //    }
     
-    public void setContent(Element content)
+    public void setContent(CElement content)
 	{
 		this.content = content;
+		this.content.addCDOMEventListener(this);
 	}
     
     public Element getContent()
@@ -356,16 +366,7 @@ public class ResourceElement extends CElement implements ControlledClone,Resourc
         return getChildNodes().getLength() > 0;
     }
 
-    @Override
-    public void preClone(Object clonedParentObject, Object clonedObject) throws Exception
-    {
-//        if(clonedParentObject != null)
-//        {
-//            ((ResourceElement)clonedObject).parentNode = ((ResourceElement) clonedParentObject);
-//        }
-//        
-    }
-    
+ 
     
     public void postClone(Object parentObject, Object clonedObject)
     {
@@ -374,7 +375,11 @@ public class ResourceElement extends CElement implements ControlledClone,Resourc
         clonedResourceElement.ownerResourceDocument = ownerResourceDocument;
         
         clonedResourceElement.resourceControlElement = resourceControlElement;
-
+        super.postClone(parentObject, clonedObject);
+        if (clonedResourceElement.content != null)
+        {
+        	clonedResourceElement.content.addCDOMEventListener(clonedResourceElement);
+        }
     }
 
 

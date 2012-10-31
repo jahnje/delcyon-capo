@@ -24,8 +24,6 @@ import java.io.OutputStream;
 import java.net.URI;
 import java.util.logging.Level;
 
-import org.w3c.dom.Element;
-
 import com.delcyon.capo.CapoApplication;
 import com.delcyon.capo.Configuration.PREFERENCE;
 import com.delcyon.capo.controller.VariableContainer;
@@ -37,6 +35,7 @@ import com.delcyon.capo.resourcemanager.ResourceURI;
 import com.delcyon.capo.resourcemanager.types.ContentMetaData.Attributes;
 import com.delcyon.capo.resourcemanager.types.FileResourceType.Parameters;
 import com.delcyon.capo.util.XMLSerializer;
+import com.delcyon.capo.xml.cdom.CElement;
 import com.delcyon.capo.xml.dom.ResourceDeclarationElement;
 
 /**
@@ -49,7 +48,7 @@ public class FileResourceDescriptor extends AbstractResourceDescriptor
 	private FileResourceContentMetaData actionMetaData = null;
 	private FileResourceContentMetaData outputMetaData = null;
 	private InputStream contentInputStream = null;
-	private Element containerElement = null;
+	private CElement containerElement = null;
 	
 	@Override
 	protected FileResourceContentMetaData buildResourceMetaData(VariableContainer variableContainer,ResourceParameter... resourceParameters) throws Exception
@@ -157,7 +156,7 @@ public class FileResourceDescriptor extends AbstractResourceDescriptor
 	        if(getResourceMetaData(variableContainer, resourceParameters).isContainer())
 	        {
 	            contentMetaData = new FileResourceContentMetaData(getResourceURI().getBaseURI());
-	            containerElement = XMLSerializer.export(CapoApplication.getDocumentBuilder().newDocument(), getResourceMetaData(variableContainer, resourceParameters));
+	            containerElement = (CElement) XMLSerializer.export(CapoApplication.getDocumentBuilder().newDocument(), getResourceMetaData(variableContainer, resourceParameters));
 	        }
 	        else
 	        {
@@ -182,7 +181,7 @@ public class FileResourceDescriptor extends AbstractResourceDescriptor
 	
 	//This is over written only to handle the special case of a directory, everything else actually goes through getInputStream() 
 	@Override
-	public Element readXML(VariableContainer variableContainer, ResourceParameter... resourceParameters) throws Exception
+	public CElement readXML(VariableContainer variableContainer, ResourceParameter... resourceParameters) throws Exception
 	{	    
 	    if(getResourceMetaData(variableContainer, resourceParameters).isContainer())
 	    {

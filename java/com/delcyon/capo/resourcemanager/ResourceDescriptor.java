@@ -24,6 +24,7 @@ import org.w3c.dom.Element;
 import com.delcyon.capo.controller.ControlElement;
 import com.delcyon.capo.controller.VariableContainer;
 import com.delcyon.capo.resourcemanager.types.ContentMetaData;
+import com.delcyon.capo.xml.cdom.CElement;
 import com.delcyon.capo.xml.dom.ResourceDeclarationElement;
 
 /**
@@ -135,9 +136,9 @@ public interface ResourceDescriptor
 	
 	
 	/**Returns an XML node, and requires that the stream support the XML_BLOCK format */
-	public Element readXML(VariableContainer variableContainer,ResourceParameter... resourceParameters) throws Exception;
+	public CElement readXML(VariableContainer variableContainer,ResourceParameter... resourceParameters) throws Exception;
 	/** write an XML node, and requires that the output stream support the XML_BLOCk format */
-	public void writeXML(VariableContainer variableContainer,Element element,ResourceParameter... resourceParameters) throws Exception;
+	public void writeXML(VariableContainer variableContainer,CElement element,ResourceParameter... resourceParameters) throws Exception;
 	
 	
 	/**Returns an byte[] node, and requires that the stream support the BLOCK format */

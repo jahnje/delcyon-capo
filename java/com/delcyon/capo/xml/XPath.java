@@ -290,6 +290,10 @@ public class XPath
 				name += "[@name = '"+nameAttributeValue+"']";
 			}
 		}
+		if(node instanceof Attr)
+		{
+			name = "@"+name;
+		}
 		if (node.getParentNode() != null && node.getParentNode().getNodeName() != null && node.getParentNode() instanceof Element)
 		{
 			

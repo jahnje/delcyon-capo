@@ -8,29 +8,14 @@ import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMResult;
 import javax.xml.transform.dom.DOMSource;
 
-import org.w3c.dom.Attr;
-import org.w3c.dom.CDATASection;
-import org.w3c.dom.Comment;
-import org.w3c.dom.DOMConfiguration;
-import org.w3c.dom.DOMException;
-import org.w3c.dom.DOMImplementation;
 import org.w3c.dom.Document;
-import org.w3c.dom.DocumentFragment;
-import org.w3c.dom.DocumentType;
-import org.w3c.dom.Element;
-import org.w3c.dom.EntityReference;
-import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.Node;
-import org.w3c.dom.NodeList;
-import org.w3c.dom.ProcessingInstruction;
-import org.w3c.dom.Text;
-import org.w3c.dom.UserDataHandler;
 
-import com.delcyon.capo.CapoApplication;
 import com.delcyon.capo.controller.elements.ResourceControlElement;
 import com.delcyon.capo.resourcemanager.ResourceDescriptor;
 import com.delcyon.capo.resourcemanager.types.ContentMetaData;
 import com.delcyon.capo.xml.cdom.CDocument;
+import com.delcyon.capo.xml.cdom.CElement;
 
 public class ResourceDocument extends CDocument implements ResourceNode
 {
@@ -127,7 +112,7 @@ public class ResourceDocument extends CDocument implements ResourceNode
     
    
 
-	public ResourceElement createResourceElement(String localName, Element content,ContentMetaData contentMetaData)
+	public ResourceElement createResourceElement(String localName, CElement content,ContentMetaData contentMetaData)
 	{
 		return new ResourceElement(this, localName, content, contentMetaData);
 	}

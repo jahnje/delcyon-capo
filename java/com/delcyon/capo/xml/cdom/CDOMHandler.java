@@ -18,9 +18,9 @@ package com.delcyon.capo.xml.cdom;
 
 import java.io.IOException;
 import java.util.HashMap;
-import java.util.Map.Entry;
 import java.util.Set;
 import java.util.Stack;
+import java.util.Map.Entry;
 
 import org.w3c.dom.Document;
 import org.xml.sax.Attributes;
@@ -31,7 +31,6 @@ import org.xml.sax.SAXException;
 import org.xml.sax.SAXParseException;
 import org.xml.sax.helpers.DefaultHandler;
 
-import com.delcyon.capo.util.ReflectionUtility;
 import com.delcyon.capo.xml.XPath;
 
 /**
@@ -56,7 +55,8 @@ public class CDOMHandler extends DefaultHandler
 
     public Document getDocument()
     {
-        this.document.normalizeDocument();       
+        this.document.normalizeDocument();
+        this.document.setSilenceEvents(false);
         return this.document;
     }
     
@@ -64,6 +64,7 @@ public class CDOMHandler extends DefaultHandler
     public void startDocument() throws SAXException
     {
         document = new CDocument();
+        document.setSilenceEvents(true);
         nodeStack.push(document);
     }
     
@@ -80,6 +81,7 @@ public class CDOMHandler extends DefaultHandler
     {
         //System.out.println(uri+"-->"+localName+"-->"+qName+"-->"+ReflectionUtility.processToString(attributes));        
         CElement element = new CElement(qName);
+        element.setOwnerDocument(document);
         if(uri.isEmpty() == false)
         {
             element.setNamespaceURI(uri);
@@ -90,7 +92,7 @@ public class CDOMHandler extends DefaultHandler
 
         for(int index = 0; index < attributes.getLength(); index++)
         {
-           // System.out.println("Attr==>"+attributes.getURI(index)+"==>"+attributes.getQName(index)+"==>"+attributes.getValue(index));
+           //System.out.println("Attr==>"+attributes.getURI(index)+"==>"+attributes.getQName(index)+"==>"+attributes.getValue(index));
             CAttr attr = new CAttr(element,attributes.getURI(index),attributes.getQName(index),attributes.getValue(index));
             element.setAttributeNode(attr);
         }

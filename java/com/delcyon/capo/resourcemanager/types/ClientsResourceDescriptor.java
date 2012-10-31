@@ -16,13 +16,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 package com.delcyon.capo.resourcemanager.types;
 
-import org.w3c.dom.Element;
-
 import com.delcyon.capo.CapoApplication;
 import com.delcyon.capo.controller.VariableContainer;
 import com.delcyon.capo.resourcemanager.ResourceDescriptor;
 import com.delcyon.capo.resourcemanager.ResourceParameter;
 import com.delcyon.capo.server.CapoServer.Preferences;
+import com.delcyon.capo.xml.cdom.CElement;
 import com.delcyon.capo.xml.dom.ResourceDeclarationElement;
 
 /**
@@ -72,7 +71,7 @@ public class ClientsResourceDescriptor extends AbstractResourceDescriptor
 	}
 
 	@Override
-	public Element readXML(VariableContainer variableContainer, ResourceParameter... resourceParameters) throws Exception
+	public CElement readXML(VariableContainer variableContainer, ResourceParameter... resourceParameters) throws Exception
 	{	
 	    advanceState(State.STEPPING, variableContainer, resourceParameters);
 		return clientResourceDescriptor.readXML(variableContainer, resourceParameters);

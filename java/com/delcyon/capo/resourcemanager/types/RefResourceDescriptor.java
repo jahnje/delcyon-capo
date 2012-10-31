@@ -16,8 +16,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 package com.delcyon.capo.resourcemanager.types;
 
-import org.w3c.dom.Element;
-
 import com.delcyon.capo.ContextThread;
 import com.delcyon.capo.controller.ControlElement;
 import com.delcyon.capo.controller.VariableContainer;
@@ -26,6 +24,7 @@ import com.delcyon.capo.resourcemanager.ResourceParameter;
 import com.delcyon.capo.resourcemanager.types.ContentMetaData.Attributes;
 import com.delcyon.capo.resourcemanager.types.RefResourceType.Parameters;
 import com.delcyon.capo.xml.XPath;
+import com.delcyon.capo.xml.cdom.CElement;
 import com.delcyon.capo.xml.dom.ResourceDeclarationElement;
 
 /**
@@ -37,7 +36,7 @@ public class RefResourceDescriptor extends AbstractResourceDescriptor
 
 	
 	private ControlElement contextControlElement = null;
-	private Element refElement = null;
+	private CElement refElement = null;
 
 	@Override
 	protected SimpleContentMetaData buildResourceMetaData(VariableContainer variableContainer,ResourceParameter... resourceParameters)
@@ -123,12 +122,12 @@ public class RefResourceDescriptor extends AbstractResourceDescriptor
             setResourceState(State.STEPPING);
             if (getVarValue(variableContainer, Parameters.XMLNS) != null)
             {
-                refElement =  (Element) XPath.selectNSNode(contextControlElement.getControlElementDeclaration(), getResourceURI().getSchemeSpecificPart(),getVarValue(variableContainer, Parameters.XMLNS).split(","));
+                refElement =  (CElement) XPath.selectNSNode(contextControlElement.getControlElementDeclaration(), getResourceURI().getSchemeSpecificPart(),getVarValue(variableContainer, Parameters.XMLNS).split(","));
                 return true;
             }
             else
             { 
-                refElement =  (Element) XPath.selectSingleNode(contextControlElement.getControlElementDeclaration(), getResourceURI().getSchemeSpecificPart());
+                refElement =  (CElement) XPath.selectSingleNode(contextControlElement.getControlElementDeclaration(), getResourceURI().getSchemeSpecificPart());
                 return true;
             }
         }
@@ -141,7 +140,7 @@ public class RefResourceDescriptor extends AbstractResourceDescriptor
 	}
 	
 	@Override
-	public Element readXML(VariableContainer variableContainer, ResourceParameter... resourceParameters) throws Exception
+	public CElement readXML(VariableContainer variableContainer, ResourceParameter... resourceParameters) throws Exception
 	{	
 	    advanceState(State.STEPPING, variableContainer, resourceParameters);
 		return refElement;

@@ -52,6 +52,7 @@ import com.delcyon.capo.preferences.Preference;
 import com.delcyon.capo.preferences.PreferenceProvider;
 import com.delcyon.capo.server.CapoServer;
 import com.delcyon.capo.xml.XPath;
+import com.delcyon.capo.xml.cdom.CDocument;
 
 /**
  * @author jeremiah
@@ -336,7 +337,10 @@ public class Configuration
 		{
 			configDocument = CapoApplication.getDefaultDocument("config.xml");
 		}
-		
+		if(configDocument instanceof CDocument)
+		{
+			((CDocument) configDocument).setSilenceEvents(true);
+		}
 		loadPreferences();
 		preferenceValueHashMap.put(PREFERENCE.CAPO_DIR.longOption, capoDirString);
 		//print out preferences
@@ -457,6 +461,7 @@ public class Configuration
 		{
 		synchronized (configDocument)
 		{
+			
 			Element entryElement = (Element) XPath.selectSingleNode(configDocument, "//entry[@key = '"+key+"']");
 			if (entryElement != null)
 			{

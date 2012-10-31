@@ -59,6 +59,7 @@ public class CDocument extends CNode implements Document
     
     @CloneControl(filter=Clone.exclude)
     private long documentID = incrementDocumentID();
+	private boolean silenceEvents = false;
     
     public CDocument()
     {
@@ -264,7 +265,8 @@ public class CDocument extends CNode implements Document
 
         
         final CDocument ownerDocument = this;
-        
+        boolean originalSilenceValue = ownerDocument.isSilenceEvents();
+        ownerDocument.setSilenceEvents(true);
         NodeProcessor nodeProcessor = new NodeProcessor()
         {
             
@@ -288,7 +290,10 @@ public class CDocument extends CNode implements Document
             e.printStackTrace();
             return null;
         }
-        
+        finally
+        {
+        	ownerDocument.setSilenceEvents(originalSilenceValue);
+        }
         
         
        
@@ -484,12 +489,22 @@ public class CDocument extends CNode implements Document
     {
         this.defaultNamespace = defaultNamespace;
     }
-
+    
     @Override
     public String toString()
     {
     	// TODO Auto-generated method stub
     	return documentID+" "+super.toString();
     }
+
+	public boolean isSilenceEvents()
+	{
+		return silenceEvents ;
+	}
     
+	public void setSilenceEvents(boolean silenceEvents)
+	{
+		this.silenceEvents = silenceEvents;
+	}
+	
 }

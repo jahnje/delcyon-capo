@@ -41,13 +41,15 @@ import com.delcyon.capo.datastream.StreamUtil;
 import com.delcyon.capo.resourcemanager.ContentFormatType;
 import com.delcyon.capo.resourcemanager.ResourceDescriptor;
 import com.delcyon.capo.resourcemanager.ResourceParameter;
-import com.delcyon.capo.resourcemanager.ResourceParameter.EvaluationContext;
-import com.delcyon.capo.resourcemanager.ResourceParameter.Source;
 import com.delcyon.capo.resourcemanager.ResourceType;
 import com.delcyon.capo.resourcemanager.ResourceURI;
+import com.delcyon.capo.resourcemanager.ResourceParameter.EvaluationContext;
+import com.delcyon.capo.resourcemanager.ResourceParameter.Source;
 import com.delcyon.capo.server.CapoServer;
 import com.delcyon.capo.util.ReflectionUtility;
 import com.delcyon.capo.xml.XPath;
+import com.delcyon.capo.xml.cdom.CDocument;
+import com.delcyon.capo.xml.cdom.CElement;
 import com.delcyon.capo.xml.dom.ResourceDeclarationElement;
 
 /**
@@ -693,11 +695,11 @@ public abstract class AbstractResourceDescriptor implements ResourceDescriptor
 	}
 
 	@Override
-	public Element readXML(VariableContainer variableContainer, ResourceParameter... resourceParameters) throws Exception
+	public CElement readXML(VariableContainer variableContainer, ResourceParameter... resourceParameters) throws Exception
 	{
 	    advanceState(State.STEPPING, variableContainer, resourceParameters);
-		Document document = CapoApplication.getDocumentBuilder().newDocument();
-		Element dataElement = document.createElement("Data");
+		CDocument document = (CDocument) CapoApplication.getDocumentBuilder().newDocument();
+		CElement dataElement = (CElement) document.createElement("Data");
 		document.appendChild(dataElement);
 		StreamFormat streamFormat = getSupportedStreamFormats(StreamType.INPUT)[0];
 		if(streamFormat == StreamFormat.BLOCK)
@@ -714,7 +716,7 @@ public abstract class AbstractResourceDescriptor implements ResourceDescriptor
 			StreamUtil.readInputStreamIntoOutputStream(getInputStream(variableContainer, resourceParameters), byteArrayOutputStream) ;
 			if (getContentMetaData(variableContainer, resourceParameters).getContentFormatType() == ContentFormatType.XML)
 			{
-			    dataElement = CapoApplication.getDocumentBuilder().parse(new ByteArrayInputStream(byteArrayOutputStream.toByteArray())).getDocumentElement();
+			    dataElement = (CElement) CapoApplication.getDocumentBuilder().parse(new ByteArrayInputStream(byteArrayOutputStream.toByteArray())).getDocumentElement();
 			}
 			else
 			{
@@ -729,7 +731,7 @@ public abstract class AbstractResourceDescriptor implements ResourceDescriptor
 	}
 	
 	@Override
-	public void writeXML(VariableContainer variableContainer, Element element, ResourceParameter... resourceParameters) throws Exception
+	public void writeXML(VariableContainer variableContainer, CElement element, ResourceParameter... resourceParameters) throws Exception
 	{
 	    advanceState(State.OPEN, variableContainer, resourceParameters);
 		StreamFormat streamFormat = getSupportedStreamFormats(StreamType.OUTPUT)[0];
@@ -791,7 +793,7 @@ public abstract class AbstractResourceDescriptor implements ResourceDescriptor
 		if(streamFormat == StreamFormat.XML_BLOCK)
 		{
 			Document document = CapoApplication.getDocumentBuilder().newDocument();
-			Element dataElement = document.createElement("Data");
+			CElement dataElement = (CElement) document.createElement("Data");
 			document.appendChild(dataElement);					
 			dataElement.setTextContent(new String(block));			
 			writeXML(variableContainer, dataElement, resourceParameters);
@@ -849,7 +851,7 @@ public abstract class AbstractResourceDescriptor implements ResourceDescriptor
 		if(streamFormat == StreamFormat.XML_BLOCK)
 		{
 			Document document = CapoApplication.getDocumentBuilder().newDocument();
-			Element dataElement = document.createElement("Data");
+			CElement dataElement = (CElement) document.createElement("Data");
 			writeXML(variableContainer, dataElement, resourceParameters);
 			
 		}
@@ -944,7 +946,7 @@ public abstract class AbstractResourceDescriptor implements ResourceDescriptor
 					if (streamFormat == StreamFormat.XML_BLOCK)
 					{
 						Document document = CapoApplication.getDocumentBuilder().parse(new ByteArrayInputStream(byteArrayOutputStream.toByteArray()));
-						resourceDescriptor.writeXML(variableContainer,document.getDocumentElement(),resourceParameters);
+						resourceDescriptor.writeXML(variableContainer,(CElement) document.getDocumentElement(),resourceParameters);
 					}
 					else if (streamFormat == StreamFormat.BLOCK)
 					{

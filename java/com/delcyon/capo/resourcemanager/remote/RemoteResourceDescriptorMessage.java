@@ -20,17 +20,18 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
 import com.delcyon.capo.protocol.server.AbstractResponse;
+import com.delcyon.capo.resourcemanager.ResourceParameter;
+import com.delcyon.capo.resourcemanager.ResourceType;
+import com.delcyon.capo.resourcemanager.ResourceURI;
 import com.delcyon.capo.resourcemanager.ResourceDescriptor.Action;
 import com.delcyon.capo.resourcemanager.ResourceDescriptor.LifeCycle;
 import com.delcyon.capo.resourcemanager.ResourceDescriptor.State;
 import com.delcyon.capo.resourcemanager.ResourceDescriptor.StreamFormat;
 import com.delcyon.capo.resourcemanager.ResourceDescriptor.StreamType;
-import com.delcyon.capo.resourcemanager.ResourceParameter;
-import com.delcyon.capo.resourcemanager.ResourceType;
-import com.delcyon.capo.resourcemanager.ResourceURI;
 import com.delcyon.capo.resourcemanager.types.ContentMetaData;
 import com.delcyon.capo.server.CapoServer;
 import com.delcyon.capo.util.XMLSerializer;
+import com.delcyon.capo.xml.cdom.CElement;
 
 /**
  * @author jeremiah
@@ -97,7 +98,7 @@ public class RemoteResourceDescriptorMessage extends AbstractResponse
 	private Boolean isStreamSupportedFormat;
 	private ContentMetaData iterationMetaData;
 	private Boolean stepSuccess;
-	private Element xmlElement;
+	private CElement xmlElement;
 	private byte[] block;
 	private Action action;
 	private Boolean actionResult;
@@ -257,12 +258,12 @@ public class RemoteResourceDescriptorMessage extends AbstractResponse
 		return stepSuccess;
 	}
 
-	public Element getXMLElement()
+	public CElement getXMLElement()
 	{
 		return this.xmlElement;
 	}
 	
-	public void setXMLElement(Element xmlElement)
+	public void setXMLElement(CElement xmlElement)
 	{
 		this.xmlElement = xmlElement;
 	}

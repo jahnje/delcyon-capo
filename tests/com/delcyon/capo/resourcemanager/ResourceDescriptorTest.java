@@ -29,6 +29,7 @@ import com.delcyon.capo.tests.util.TestServer;
 import com.delcyon.capo.tests.util.Util;
 import com.delcyon.capo.xml.XMLDiff;
 import com.delcyon.capo.xml.XPath;
+import com.delcyon.capo.xml.cdom.CElement;
 
 public abstract class ResourceDescriptorTest
 {
@@ -233,7 +234,7 @@ public abstract class ResourceDescriptorTest
         if (resourceDescriptor.isSupportedStreamFormat(StreamType.OUTPUT,StreamFormat.XML_BLOCK))
         {
         	Document document = CapoApplication.getDocumentBuilder().newDocument();
-        	Element rootElement = document.createElementNS("BSNS","ns:testRootElement");
+        	CElement rootElement = (CElement) document.createElementNS("BSNS","ns:testRootElement");
         	rootElement.setAttributeNS("http://www.w3.org/2000/xmlns/","xmlns:ns","BSNS");
         	rootElement.setTextContent("This is a test");
         	resourceDescriptor.writeXML(null, rootElement);

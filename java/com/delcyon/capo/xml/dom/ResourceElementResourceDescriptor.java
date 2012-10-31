@@ -18,29 +18,17 @@ package com.delcyon.capo.xml.dom;
 
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.util.HashMap;
-import java.util.Vector;
 
-import org.w3c.dom.Attr;
-import org.w3c.dom.DOMException;
-import org.w3c.dom.Document;
 import org.w3c.dom.Element;
-import org.w3c.dom.NamedNodeMap;
-import org.w3c.dom.NodeList;
 
-import com.delcyon.capo.CapoApplication;
 import com.delcyon.capo.controller.ControlElement;
 import com.delcyon.capo.controller.VariableContainer;
 import com.delcyon.capo.resourcemanager.ResourceDescriptor;
 import com.delcyon.capo.resourcemanager.ResourceParameter;
-import com.delcyon.capo.resourcemanager.ResourceParameterBuilder;
 import com.delcyon.capo.resourcemanager.ResourceType;
 import com.delcyon.capo.resourcemanager.ResourceURI;
-import com.delcyon.capo.resourcemanager.ResourceDescriptor.LifeCycle;
 import com.delcyon.capo.resourcemanager.types.ContentMetaData;
-import com.delcyon.capo.util.EqualityProcessor;
-import com.delcyon.capo.util.VariableContainerWrapper;
-import com.delcyon.capo.xml.XPath;
+import com.delcyon.capo.xml.cdom.CElement;
 
 /**
  * @author jeremiah
@@ -160,13 +148,13 @@ public class ResourceElementResourceDescriptor implements ResourceDescriptor
 	
 	
 	@Override
-	public Element readXML(VariableContainer variableContainer, ResourceParameter... resourceParameters) throws Exception
+	public CElement readXML(VariableContainer variableContainer, ResourceParameter... resourceParameters) throws Exception
 	{
 		return resourceElement;
 	}
 	
 	@Override
-	public void writeXML(VariableContainer variableContainer, Element element, ResourceParameter... resourceParameters) throws Exception
+	public void writeXML(VariableContainer variableContainer, CElement element, ResourceParameter... resourceParameters) throws Exception
 	{
 		proxyedResourceDescriptor.writeXML(variableContainer, element, resourceParameters);
 	}

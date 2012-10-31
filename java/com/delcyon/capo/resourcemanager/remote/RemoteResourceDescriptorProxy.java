@@ -38,6 +38,7 @@ import com.delcyon.capo.resourcemanager.ResourceType;
 import com.delcyon.capo.resourcemanager.ResourceURI;
 import com.delcyon.capo.resourcemanager.remote.RemoteResourceDescriptorMessage.MessageType;
 import com.delcyon.capo.resourcemanager.types.ContentMetaData;
+import com.delcyon.capo.xml.cdom.CElement;
 import com.delcyon.capo.xml.dom.ResourceDeclarationElement;
 
 /**
@@ -267,7 +268,7 @@ public class RemoteResourceDescriptorProxy  implements ResourceDescriptor,Client
 	}
 	
 	@Override
-	public Element readXML(VariableContainer variableContainer, ResourceParameter... resourceParameters) throws Exception
+	public CElement readXML(VariableContainer variableContainer, ResourceParameter... resourceParameters) throws Exception
 	{
 		this.variableContainer = variableContainer;
 		RemoteResourceDescriptorMessage message = new RemoteResourceDescriptorMessage();
@@ -277,7 +278,7 @@ public class RemoteResourceDescriptorProxy  implements ResourceDescriptor,Client
 	}
 	
 	@Override
-	public void writeXML(VariableContainer variableContainer, Element element, ResourceParameter... resourceParameters) throws Exception
+	public void writeXML(VariableContainer variableContainer, CElement element, ResourceParameter... resourceParameters) throws Exception
 	{
 		this.variableContainer = variableContainer;
 		RemoteResourceDescriptorMessage message = new RemoteResourceDescriptorMessage();

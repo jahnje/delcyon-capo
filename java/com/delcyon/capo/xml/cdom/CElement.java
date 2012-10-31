@@ -28,6 +28,7 @@ import org.w3c.dom.TypeInfo;
 import com.delcyon.capo.util.EqualityProcessor;
 import com.delcyon.capo.util.ToStringControl;
 import com.delcyon.capo.util.ToStringControl.Control;
+import com.delcyon.capo.xml.cdom.CDOMEvent.EventType;
 
 /**
  * @author jeremiah
@@ -98,6 +99,7 @@ public class CElement extends CNode implements Element
     public void setAttribute(String name, String value) throws DOMException
     {
         ((CNamedNodeMap) getAttributes()).setNamedItemNS(new CAttr(this, null, name, value));
+        cascadeDOMEvent(prepareEvent(EventType.UPDATE, this));
     }
 
     /* (non-Javadoc)
@@ -107,6 +109,7 @@ public class CElement extends CNode implements Element
     public void removeAttribute(String name) throws DOMException
     {
         getAttributes().removeNamedItem(name);
+        cascadeDOMEvent(prepareEvent(EventType.UPDATE, this));
     }
 
     /* (non-Javadoc)
@@ -125,6 +128,7 @@ public class CElement extends CNode implements Element
     public Attr setAttributeNode(Attr newAttr) throws DOMException
     {
         getAttributes().setNamedItem(newAttr);
+        cascadeDOMEvent(prepareEvent(EventType.UPDATE, this));
         return newAttr;
     }
 
@@ -139,6 +143,7 @@ public class CElement extends CNode implements Element
         {            
             if(namedNodeMap.get(index).equals(oldAttr))
             {
+            	cascadeDOMEvent(prepareEvent(EventType.UPDATE, this));
                 return (Attr) namedNodeMap.remove(index);
             }
         }
@@ -209,6 +214,7 @@ public class CElement extends CNode implements Element
     public void setAttributeNS(String namespaceURI, String qualifiedName, String value) throws DOMException
     {
         ((CNamedNodeMap) getAttributes()).setNamedItemNS(new CAttr(this, namespaceURI, qualifiedName, value));
+        cascadeDOMEvent(prepareEvent(EventType.UPDATE, this));
     }
     
     /* (non-Javadoc)
@@ -224,6 +230,7 @@ public class CElement extends CNode implements Element
             if(EqualityProcessor.areSame(attr.getNamespaceURI(), namespaceURI) && localName.equals(attr.getLocalName()))
             {
                 namedNodeMap.remove(index);
+                cascadeDOMEvent(prepareEvent(EventType.UPDATE, this));
                 return;
             }
         }
@@ -253,7 +260,10 @@ public class CElement extends CNode implements Element
     @Override
     public Attr setAttributeNodeNS(Attr newAttr) throws DOMException
     {
-        return (Attr) getAttributes().setNamedItemNS(newAttr);
+    	Attr attr = (Attr) getAttributes().setNamedItemNS(newAttr); 
+    	cascadeDOMEvent(prepareEvent(EventType.UPDATE, this));
+        return attr;
+        
     }
 
     /* (non-Javadoc)
