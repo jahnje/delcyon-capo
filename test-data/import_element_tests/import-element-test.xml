@@ -60,8 +60,8 @@
         <server:setAttribute name="lastConnectTime" destRef="//resource:testdb/resource:jdbcTestResource/resource:systems/resource:status/status" value="00000000"/>
         <server:import name="jdbcTestImport" src="resource:jdbcTestResource" contentOnly="true" ref="../outputHolder"/>
         <server:import name="jdbcTestImportFull" src="resource:jdbcTestResource" contentOnly="false" ref="../outputHolder"/>
-        <server:export dest="testImportOutput.xml" ref="../outputHolder" />
-        
+        <server:export dest="testImportOutput.xml" ref="../outputHolder" dumpRef=".."/>
+        <server:update resourceRef="//resource:testdb" dumpRef=".."/>
         
     </server:group>
     

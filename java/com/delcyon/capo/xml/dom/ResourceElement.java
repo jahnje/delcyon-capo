@@ -10,9 +10,12 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
 import com.delcyon.capo.CapoApplication;
+import com.delcyon.capo.controller.ControlElement;
+import com.delcyon.capo.controller.VariableContainer;
 import com.delcyon.capo.controller.elements.ResourceControlElement;
 import com.delcyon.capo.resourcemanager.ContentFormatType;
 import com.delcyon.capo.resourcemanager.ResourceDescriptor;
+import com.delcyon.capo.resourcemanager.ResourceParameter;
 import com.delcyon.capo.resourcemanager.ResourceURI;
 import com.delcyon.capo.resourcemanager.types.ContentMetaData;
 import com.delcyon.capo.util.CloneControl;
@@ -86,7 +89,8 @@ public class ResourceElement extends CElement implements ControlledClone,Resourc
     	this.contentMetaData = contentMetaData;
     	this.resourceURI = contentMetaData.getResourceURI();
     	setAttribute("uri", contentMetaData.getResourceURI().getResourceURIString());
-    	
+    	setAttribute("new",false+"");
+    	setAttribute("modified",false+"");
         List<String> supportedAttributeList = contentMetaData.getSupportedAttributes();
         for (String attributeName : supportedAttributeList)
         {
@@ -102,8 +106,56 @@ public class ResourceElement extends CElement implements ControlledClone,Resourc
     public void processEvent(CDOMEvent cdomEvent)
     {
     	System.out.println(cdomEvent);
-    	
+    	setAttribute("modified",true+"");
     }
+    
+    public void update(VariableContainer variableContainer, ControlElement callingControlElement, ResourceParameter... resourceParameters) throws Exception
+    {
+    	if( isNew() || isModified())
+    	{
+    		if(resourceDescriptor == null)
+    		{
+    			resourceDescriptor = CapoApplication.getDataManager().getResourceDescriptor( callingControlElement, resourceURI.getResourceURIString());
+    			resourceDescriptor.open(variableContainer,resourceParameters);
+    		}
+    		resourceDescriptor.writeXML(variableContainer, content,resourceParameters);
+    		setAttribute("new",false+"");
+        	setAttribute("modified",false+"");
+    	}
+    	CNodeList children = (CNodeList) getChildNodes();
+    	for (Node node : children)
+		{
+			if(node instanceof ResourceElement)
+			{
+				((ResourceElement) node).update(variableContainer,callingControlElement,resourceParameters);
+			}
+		}
+    }
+    
+    public boolean isNew()
+    {
+    	return getAttribute("new").equals("true");
+    }
+    
+    public void setNew(boolean isNew)
+    {
+    	setAttribute("new",isNew+"");
+    }
+    
+    public boolean isModified()
+    {
+    	return getAttribute("modified").equals("true");
+    }
+    
+    public void setModified(boolean modified)
+    {
+    	setAttribute("modified",modified+"");
+    }
+    
+    public void setResourceDescriptor(ResourceDescriptor resourceDescriptor)
+	{
+		this.resourceDescriptor = resourceDescriptor;
+	}
     
 //    public ResourceElement(ResourceNode parentNode, ResourceControlElement resourceControlElement) throws Exception
 //    {
@@ -436,6 +488,8 @@ public class ResourceElement extends CElement implements ControlledClone,Resourc
     {    	
         return ResourceDocument.export(this,contentOnly).getDocumentElement();
     }
+
+	
 
 	
 
