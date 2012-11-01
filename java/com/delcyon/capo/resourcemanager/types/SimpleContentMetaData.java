@@ -32,7 +32,7 @@ public class SimpleContentMetaData extends AbstractContentMetaData
 	
 	@SuppressWarnings("unchecked")
 	private transient List<Enum> supportedAttributeList = new Vector<Enum>();
-	private ResourceURI resourceURI = null;
+	
 	
 	@SuppressWarnings("unused")
 	private SimpleContentMetaData()
@@ -42,7 +42,7 @@ public class SimpleContentMetaData extends AbstractContentMetaData
 	
 	public SimpleContentMetaData(ResourceURI resourceURI, ResourceParameter... resourceParameters)
 	{
-		this.resourceURI = resourceURI;
+		setResourceURI(resourceURI);
 	}
 	
 	public void refresh()
@@ -124,12 +124,6 @@ public class SimpleContentMetaData extends AbstractContentMetaData
 	public void addSupportedAttribute(Enum... name)
 	{
 		supportedAttributeList.addAll(Arrays.asList(name));
-	}
-
-	@Override
-	public ResourceURI getResourceURI()
-	{		
-		return resourceURI;
 	}
 
 	
