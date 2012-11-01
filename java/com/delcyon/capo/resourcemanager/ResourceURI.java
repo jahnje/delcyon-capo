@@ -65,10 +65,10 @@ public class ResourceURI
 		this.path = getPath(resourceURI);
 		this.fragment = getFragment(resourceURI);
 		
-		if(resourceURI.length() > baseURI.length() && resourceURI.substring(baseURI.length()+1).length() > 0)
+		if(getChildURI(resourceURI) != null)
 		{
 			
-			childResourceURI = new ResourceURI(resourceURI.substring(baseURI.length()+2));
+			childResourceURI = new ResourceURI(getChildURI(resourceURI));
 		}
 		
 		if (this.query != null)
@@ -182,7 +182,7 @@ public class ResourceURI
 	@Override
 	public String toString()
 	{
-		return ReflectionUtility.processToString(this);
+		return resourceURIString;
 	}
 	
 //================================start static methods==============================================
@@ -314,6 +314,23 @@ public class ResourceURI
 		//remove any escape chars that were used in the URL
 		return baseURI.replaceAll("\\\\(?=!)", "");
 	}
+	
+	public static String getChildURI(String resourceURI)
+    {
+	    
+        //split on the '!' char
+	    String[] splitURI = resourceURI.split("!(?<!\\\\!)");
+	    if(splitURI.length == 1)
+	    {
+	        return null;
+	    }
+	    String childURI = "";
+        for(int index = 1; index < splitURI.length;index++)
+        {
+            childURI+= splitURI[index]+"!";
+        }
+        return childURI.substring(0,childURI.length()-1);
+    }
 	
 	public static boolean hasHierarchy(String resourceURI)
 	{
