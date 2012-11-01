@@ -11,8 +11,8 @@
         <!-- Start with the resource that we want to search against -->
         <server:var name="clientName" value="%"/>
         
-        <resource:resource name="jdbcTestResource"  uri="jdbc:hsqldb:file:testdb/testdb?user=user" >
-            <resource:parameter name="password" value=""/>
+        <resource:resource name="jdbcTestResource"  uri="jdbc:hsqldb:file:testdb/testdb?user=user;password=" >
+            
             <resource:include name="TABLE_NAME"/>
             
             <resource:child name="systems" path="SYSTEMS" >

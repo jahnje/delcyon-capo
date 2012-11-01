@@ -19,6 +19,7 @@ package com.delcyon.capo.resourcemanager.types;
 import java.io.IOException;
 import java.sql.Connection;
 import java.sql.DriverManager;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.Statement;
@@ -26,6 +27,7 @@ import java.util.HashMap;
 import java.util.logging.Level;
 
 import org.w3c.dom.Element;
+import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
 import com.delcyon.capo.CapoApplication;
@@ -40,6 +42,7 @@ import com.delcyon.capo.resourcemanager.types.ContentMetaData.Attributes;
 import com.delcyon.capo.xml.XPath;
 import com.delcyon.capo.xml.cdom.CDocument;
 import com.delcyon.capo.xml.cdom.CElement;
+import com.delcyon.capo.xml.cdom.CNamedNodeMap;
 import com.delcyon.capo.xml.dom.ResourceDeclarationElement;
 
 /**
@@ -56,6 +59,7 @@ public class JdbcResourceDescriptor extends AbstractResourceDescriptor
 	
 	private Connection connection = null;
 	private HashMap<String, Boolean> keyMap = new HashMap<String, Boolean>();
+	private HashMap<String, String> columnMap = new HashMap<String, String>();
 	private HashMap<String, Boolean> includeMap = new HashMap<String, Boolean>();
 	private HashMap<String, Boolean> excludeMap = new HashMap<String, Boolean>();
 	
@@ -179,6 +183,7 @@ public class JdbcResourceDescriptor extends AbstractResourceDescriptor
 	@Override
 	public void open(VariableContainer variableContainer,ResourceParameter... resourceParameters) throws Exception
 	{
+	    advanceState(State.INITIALIZED, variableContainer, resourceParameters);
 	    if (getResourceState().ordinal() < State.OPEN.ordinal())
 	    {
 	        connection = DriverManager.getConnection(getResourceURI().getBaseURI(), getVarValue(getDeclaringVariableContainer(),"user"), getVarValue(getDeclaringVariableContainer(),"password"));
@@ -190,11 +195,21 @@ public class JdbcResourceDescriptor extends AbstractResourceDescriptor
 	    }
 	    if (table == true)
 	    {
+	        if(getResourceURI().getChildResourceURI() != null)
+	        {
+	            setLocalName(getResourceURI().getChildResourceURI().getPath());
+	        }
 	        ResultSet tableResultSet = connection.getMetaData().getPrimaryKeys(null, null, getLocalName());	        
 	        while(tableResultSet.next())
 	        {
 	            keyMap.put(tableResultSet.getString("COLUMN_NAME"), true);	            	            
-	        }	        
+	        }
+	        tableResultSet = connection.getMetaData().getColumns(null, null, getLocalName(),null);          
+            while(tableResultSet.next())
+            {
+                ResultSetMetaData resultSetMetaData = tableResultSet.getMetaData();
+                columnMap.put(tableResultSet.getString("COLUMN_NAME"), tableResultSet.getString("DATA_TYPE"));                              
+            }
 	    }
 	}
 	
@@ -360,28 +375,62 @@ public class JdbcResourceDescriptor extends AbstractResourceDescriptor
 		return rowElement;
 	}
 	
-//	@Override
-//	public void processOutput(VariableContainer variableContainer,ResourceParameter... resourceParameters) throws Exception
-//	{
-//	    advanceState(State.OPEN, variableContainer, resourceParameters);
-//		outputMetaData = buildResourceMetaData(variableContainer,resourceParameters);
-//		outputMetaData.addSupportedAttribute(LocalAttributes.values());
-//		try
-//			{
-//				Statement statement = connection.createStatement();
-//				int rowCount = statement.executeUpdate(getVarValue(variableContainer,"update"));
-//				outputMetaData.setValue(LocalAttributes.rowCount, rowCount); 				
-//			} 
-//			catch (Exception exception)
-//			{
-//				throw new IOException(exception);
-//			} 
-//	}
+	@Override
+	public void processOutput(VariableContainer variableContainer,ResourceParameter... resourceParameters) throws Exception
+	{
+	    advanceState(State.OPEN, variableContainer, resourceParameters);
+		outputMetaData = buildResourceMetaData(variableContainer,resourceParameters);
+		outputMetaData.addSupportedAttribute(LocalAttributes.values());
+		try
+			{
+				Statement statement = connection.createStatement();
+				int rowCount = statement.executeUpdate(getVarValue(variableContainer,"update"));
+				outputMetaData.setValue(LocalAttributes.rowCount, rowCount); 				
+			} 
+			catch (Exception exception)
+			{
+				throw new IOException(exception);
+			} 
+	}
 	
 	@Override
 	public void writeXML(VariableContainer variableContainer, CElement element, ResourceParameter... resourceParameters) throws Exception
 	{
 		advanceState(State.OPEN, variableContainer, resourceParameters);
+		CNamedNodeMap cNamedNodeMap = (CNamedNodeMap) element.getAttributes();
+		String whereClause = "";
+		if (keyMap.size() > 0)
+		{
+		    whereClause += " where ";
+		}
+		String sql = "update "+getLocalName()+" set ";
+		for (Node node : cNamedNodeMap)
+        {
+            sql += node.getNodeName()+" = ?,";
+            if(keyMap.containsKey(node.getNodeName()))
+            {
+                whereClause += node.getNodeName()+" = ? and";
+            }
+        }
+		sql = sql.substring(0, sql.length()-1)+whereClause.substring(0, whereClause.length()-3);
+		PreparedStatement preparedStatement = connection.prepareStatement(sql);
+		int index = 1;
+		for (Node node : cNamedNodeMap)
+        {
+		    
+		    preparedStatement.setObject(index, node.getNodeValue(),Integer.parseInt(columnMap.get(node.getNodeName())));
+		    index++;
+        }
+		for (Node node : cNamedNodeMap)
+        {            
+		    if(keyMap.containsKey(node.getNodeName()))
+            {
+		        preparedStatement.setObject(index, node.getNodeValue(),Integer.parseInt(columnMap.get(node.getNodeName())));
+	            index++;
+            }            
+        }
+		System.out.println(preparedStatement);
+		preparedStatement.executeUpdate();
 	}
  	
 
@@ -404,7 +453,7 @@ public class JdbcResourceDescriptor extends AbstractResourceDescriptor
 		}
 		else if(streamType == StreamType.OUTPUT)
 		{
-			return new StreamFormat[]{StreamFormat.XML_BLOCK};
+			return new StreamFormat[]{StreamFormat.XML_BLOCK,StreamFormat.PROCESS};
 		}
 		else
 		{
@@ -429,7 +478,7 @@ public class JdbcResourceDescriptor extends AbstractResourceDescriptor
 	{
 		if (connection != null)
 		{
-			CapoApplication.logger.log(Level.INFO, "Closeing DB Connection");
+			CapoApplication.logger.log(Level.INFO, "Closing DB Connection");
 			connection.close();
 		}
 		super.release(variableContainer, resourceParameters);
@@ -438,7 +487,7 @@ public class JdbcResourceDescriptor extends AbstractResourceDescriptor
 	@Override
 	public ResourceDescriptor getChildResourceDescriptor(ControlElement callingControlElement, String relativeURI) throws Exception
 	{
-	    advanceState(State.OPEN,null);
+	    advanceState(State.OPEN,null);	    
 	    JdbcResourceDescriptor jdbcResourceDescriptor = new JdbcResourceDescriptor();
 	    jdbcResourceDescriptor.connection = this.connection;
 	    jdbcResourceDescriptor.setResourceType(getResourceType());

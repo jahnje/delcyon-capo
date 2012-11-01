@@ -66,7 +66,7 @@ public class JdbcResourceDescriptorTest extends ResourceDescriptorTest
     public void testGetSupportedStreamFormats() throws Exception
     {
         Assert.assertArrayEquals("Expected Stream formats are not correct for "+StreamType.INPUT+" streamType actual:"+Arrays.toString(this.resourceDescriptor.getSupportedStreamFormats(StreamType.INPUT)),new ResourceDescriptor.StreamFormat[]{StreamFormat.XML_BLOCK},this.resourceDescriptor.getSupportedStreamFormats(StreamType.INPUT));
-        Assert.assertArrayEquals("Expected Stream formats are not correct for "+StreamType.OUTPUT+" streamType actual:"+Arrays.toString(this.resourceDescriptor.getSupportedStreamFormats(StreamType.OUTPUT)),new ResourceDescriptor.StreamFormat[]{StreamFormat.PROCESS},this.resourceDescriptor.getSupportedStreamFormats(StreamType.OUTPUT));
+        Assert.assertArrayEquals("Expected Stream formats are not correct for "+StreamType.OUTPUT+" streamType actual:"+Arrays.toString(this.resourceDescriptor.getSupportedStreamFormats(StreamType.OUTPUT)),new ResourceDescriptor.StreamFormat[]{StreamFormat.XML_BLOCK,StreamFormat.PROCESS},this.resourceDescriptor.getSupportedStreamFormats(StreamType.OUTPUT));
         Assert.assertArrayEquals("Expected Stream formats are not correct for "+StreamType.ERROR+" streamType actual:"+Arrays.toString(this.resourceDescriptor.getSupportedStreamFormats(StreamType.ERROR)),null,this.resourceDescriptor.getSupportedStreamFormats(StreamType.ERROR));
     }
 
@@ -81,7 +81,7 @@ public class JdbcResourceDescriptorTest extends ResourceDescriptorTest
         Assert.assertTrue(this.resourceDescriptor.isSupportedStreamFormat(StreamType.OUTPUT, StreamFormat.BLOCK) == false);
         Assert.assertTrue(this.resourceDescriptor.isSupportedStreamFormat(StreamType.OUTPUT, StreamFormat.PROCESS) == true);
         Assert.assertTrue(this.resourceDescriptor.isSupportedStreamFormat(StreamType.OUTPUT, StreamFormat.STREAM) == false);
-        Assert.assertTrue(this.resourceDescriptor.isSupportedStreamFormat(StreamType.OUTPUT, StreamFormat.XML_BLOCK) == false);
+        Assert.assertTrue(this.resourceDescriptor.isSupportedStreamFormat(StreamType.OUTPUT, StreamFormat.XML_BLOCK) == true);
         
         Assert.assertTrue(this.resourceDescriptor.isSupportedStreamFormat(StreamType.ERROR, StreamFormat.BLOCK) == false);
         Assert.assertTrue(this.resourceDescriptor.isSupportedStreamFormat(StreamType.ERROR, StreamFormat.PROCESS) == false);
@@ -140,6 +140,13 @@ public class JdbcResourceDescriptorTest extends ResourceDescriptorTest
         }
         Assert.assertEquals(XMLDiff.EQUALITY, diffElement.getAttribute(XMLDiff.XDIFF_PREFIX+":"+XMLDiff.XDIFF_ELEMENT_ATTRIBUTE_NAME));
         
+    }
+    
+    @Override
+    @Test
+    public void testWriteXML() throws Exception
+    {
+       //TODO write XML BLOCK TEST
     }
     
     @Override
