@@ -221,7 +221,7 @@ public class ResourceDeclarationElement
             	CElement readXMLElement = (CElement) parentElement.getOwnerDocument().adoptNode(resourceDescriptor.readXML(variableContainer, resourceParameters));                
                 ResourceDocument resourceDocument = parentResourceElement.getOwnerResourceDocument();
                 ResourceElement readResourceElement = resourceDocument.createResourceElement(getLocalName(),readXMLElement,resourceDescriptor.getContentMetaData(variableContainer, resourceParameters));
-                //readResourceElement.setResourceDescriptor(resourceDescriptor); //this will get cloned later
+                //readResourceElement.setResourceDescriptor(resourceDescriptor); //don't do this, will fail on cloning
                 readResourceElement.setAttribute("name", getLocalName());
                 //TODO convert to ResourceElement
                 cacheVector.add(readResourceElement);

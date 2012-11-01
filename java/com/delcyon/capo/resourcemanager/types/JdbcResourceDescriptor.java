@@ -360,25 +360,29 @@ public class JdbcResourceDescriptor extends AbstractResourceDescriptor
 		return rowElement;
 	}
 	
+//	@Override
+//	public void processOutput(VariableContainer variableContainer,ResourceParameter... resourceParameters) throws Exception
+//	{
+//	    advanceState(State.OPEN, variableContainer, resourceParameters);
+//		outputMetaData = buildResourceMetaData(variableContainer,resourceParameters);
+//		outputMetaData.addSupportedAttribute(LocalAttributes.values());
+//		try
+//			{
+//				Statement statement = connection.createStatement();
+//				int rowCount = statement.executeUpdate(getVarValue(variableContainer,"update"));
+//				outputMetaData.setValue(LocalAttributes.rowCount, rowCount); 				
+//			} 
+//			catch (Exception exception)
+//			{
+//				throw new IOException(exception);
+//			} 
+//	}
+	
 	@Override
-	public void processOutput(VariableContainer variableContainer,ResourceParameter... resourceParameters) throws Exception
+	public void writeXML(VariableContainer variableContainer, CElement element, ResourceParameter... resourceParameters) throws Exception
 	{
-	    advanceState(State.OPEN, variableContainer, resourceParameters);
-		outputMetaData = buildResourceMetaData(variableContainer,resourceParameters);
-		outputMetaData.addSupportedAttribute(LocalAttributes.values());
-		try
-			{
-				Statement statement = connection.createStatement();
-				int rowCount = statement.executeUpdate(getVarValue(variableContainer,"update"));
-				outputMetaData.setValue(LocalAttributes.rowCount, rowCount); 				
-			} 
-			catch (Exception exception)
-			{
-				throw new IOException(exception);
-			} 
+		advanceState(State.OPEN, variableContainer, resourceParameters);
 	}
-	
-	
  	
 
 	@Override
@@ -400,7 +404,7 @@ public class JdbcResourceDescriptor extends AbstractResourceDescriptor
 		}
 		else if(streamType == StreamType.OUTPUT)
 		{
-			return new StreamFormat[]{StreamFormat.PROCESS};
+			return new StreamFormat[]{StreamFormat.XML_BLOCK};
 		}
 		else
 		{
