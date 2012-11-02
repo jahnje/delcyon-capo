@@ -7,12 +7,12 @@
             <server:id name="MAC" value="00:e0:81:b0:14:7f"/>
             <server:id name="hostname" value="bluejay.goodinassociates.com"/>
          </server:identity>
-         <system_service_asc SERVICE_ID="1" SYSTEM_ID="capo.client.1">
-            <services ID="1" NAME="ssh"/>
-         </system_service_asc>
-         <system_service_asc SERVICE_ID="2" SYSTEM_ID="capo.client.1">
-            <services ID="2" NAME="syslog"/>
-         </system_service_asc>
+         <SYSTEM_SERVICE_ASC SERVICE_ID="1" SYSTEM_ID="capo.client.1">
+            <SERVICES ID="1" NAME="ssh"/>
+         </SYSTEM_SERVICE_ASC>
+         <SYSTEM_SERVICE_ASC SERVICE_ID="2" SYSTEM_ID="capo.client.1">
+            <SERVICES ID="2" NAME="syslog"/>
+         </SYSTEM_SERVICE_ASC>
          <INTERFACES IP="10.10.4.242" MAC="00:e0:81:b0:14:7f" SYSTEM_ID="capo.client.1"/>
       </SYSTEMS>
    </testdb>

@@ -19,6 +19,7 @@ import com.delcyon.capo.resourcemanager.ResourceDescriptor;
 import com.delcyon.capo.resourcemanager.ResourceParameter;
 import com.delcyon.capo.resourcemanager.ResourceParameterBuilder;
 import com.delcyon.capo.resourcemanager.ResourceURI;
+import com.delcyon.capo.resourcemanager.ResourceDescriptor.Action;
 import com.delcyon.capo.resourcemanager.ResourceDescriptor.DefaultParameters;
 import com.delcyon.capo.resourcemanager.types.ContentMetaData;
 import com.delcyon.capo.resourcemanager.types.SimpleContentMetaData;
@@ -65,8 +66,8 @@ public class ResourceElement extends CElement implements ControlledClone,Resourc
 	public ResourceElement(ResourceDocument ownerResourceDocument, String localName, CElement content,ContentMetaData contentMetaData)
 	{
 		super(CapoApplication.RESOURCE_NAMESPACE_URI,"resource",localName);		
-		this.ownerResourceDocument = ownerResourceDocument;		
-		this.content = content;		
+		this.ownerResourceDocument = ownerResourceDocument;				
+		setContent(content);
 		this.dynamic = false;
 		setContentMetatData(contentMetaData);
 		((CNode) content).addCDOMEventListener(this);
@@ -122,15 +123,25 @@ public class ResourceElement extends CElement implements ControlledClone,Resourc
     			resourceDescriptor = CapoApplication.getDataManager().getResourceDescriptor( callingControlElement, resourceURI.getResourceURIString());
     			resourceDescriptor.open(variableContainer,resourceParameters);
     		}
-    		DefaultParameters updateStyle = DefaultParameters.MODIFY_REPLACE;
-    		if(isNew())
+    		if(content == null && isModified())
     		{
-    		    updateStyle = DefaultParameters.NEW;
+    		    if (resourceDescriptor.getResourceMetaData(null).exists() == true)
+                {
+                    resourceDescriptor.performAction(null, Action.DELETE);              
+                }                
     		}
-    		ResourceParameterBuilder parameterBuilder = new ResourceParameterBuilder();
-    		parameterBuilder.addAll(resourceParameters);
-    		parameterBuilder.addParameter(updateStyle, "true");
-    		resourceDescriptor.writeXML(variableContainer, content,parameterBuilder.getParameters());
+    		else
+    		{
+    		    DefaultParameters updateStyle = DefaultParameters.MODIFY_REPLACE;
+    		    if(isNew())
+    		    {
+    		        updateStyle = DefaultParameters.NEW;
+    		    }
+    		    ResourceParameterBuilder parameterBuilder = new ResourceParameterBuilder();
+    		    parameterBuilder.addAll(resourceParameters);
+    		    parameterBuilder.addParameter(updateStyle, "true");
+    		    resourceDescriptor.writeXML(variableContainer, content,parameterBuilder.getParameters());
+    		}
     		setAttribute("new",false+"");
         	setAttribute("modified",false+"");
         	setContentMetatData(resourceDescriptor.getResourceMetaData(null));
@@ -234,6 +245,7 @@ public class ResourceElement extends CElement implements ControlledClone,Resourc
 	{
 		this.content = content;
 		this.content.addCDOMEventListener(this);
+		content.setParent(this);
 	}
     
     public Element getContent()
@@ -491,7 +503,17 @@ public class ResourceElement extends CElement implements ControlledClone,Resourc
         return super.appendChild(newChild);
     }
 
-    
+    @Override
+    public Node removeChild(Node oldChild) throws DOMException
+    {
+        if(oldChild instanceof ResourceElement == false)
+        {
+            content = null;
+            setModified(true);
+            return oldChild;
+        }
+        return super.removeChild(oldChild);
+    }
 
     @Override
     public String getAttribute(String name)

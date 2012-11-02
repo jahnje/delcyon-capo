@@ -14,6 +14,9 @@ import com.delcyon.capo.CapoApplication;
 import com.delcyon.capo.resourcemanager.ResourceDescriptor;
 import com.delcyon.capo.resourcemanager.ResourceDescriptorTest;
 import com.delcyon.capo.resourcemanager.ResourceParameter;
+import com.delcyon.capo.resourcemanager.ResourceDescriptor.Action;
+import com.delcyon.capo.resourcemanager.ResourceDescriptor.LifeCycle;
+import com.delcyon.capo.resourcemanager.ResourceDescriptor.State;
 import com.delcyon.capo.resourcemanager.ResourceDescriptor.StreamFormat;
 import com.delcyon.capo.resourcemanager.ResourceDescriptor.StreamType;
 import com.delcyon.capo.tests.util.TestServer;
@@ -139,6 +142,20 @@ public class JdbcResourceDescriptorTest extends ResourceDescriptorTest
             XPath.dumpNode(diffElement, System.err);
         }
         Assert.assertEquals(XMLDiff.EQUALITY, diffElement.getAttribute(XMLDiff.XDIFF_PREFIX+":"+XMLDiff.XDIFF_ELEMENT_ATTRIBUTE_NAME));
+        
+    }
+    
+    @Test 
+    @Override
+    public void testPerformAction() throws Exception
+    {
+        resourceDescriptor.reset(State.NONE);
+        resourceDescriptor.init(null, null, LifeCycle.EXPLICIT, false);
+        if (resourceDescriptor.isSupportedAction(Action.DELETE))
+        {
+            Assert.assertTrue(resourceDescriptor.getResourceMetaData(null).exists());
+            Assert.assertFalse(resourceDescriptor.performAction(null, Action.DELETE));                    
+        }
         
     }
     

@@ -24,6 +24,8 @@ import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.Statement;
 import java.util.HashMap;
+import java.util.Map.Entry;
+import java.util.Set;
 import java.util.logging.Level;
 
 import org.w3c.dom.Element;
@@ -71,13 +73,14 @@ public class JdbcResourceDescriptor extends AbstractResourceDescriptor
 	private String rule = null;
 	private CElement rowElement = null;
 	private CDocument document = null;
+	private boolean exists = true;
 	
 	@Override
 	protected SimpleContentMetaData buildResourceMetaData(VariableContainer variableContainer,ResourceParameter... resourceParameters)
 	{
 		SimpleContentMetaData simpleContentMetaData  = new SimpleContentMetaData(getResourceURI());
 		simpleContentMetaData.addSupportedAttribute(Attributes.exists,Attributes.readable,Attributes.writeable,Attributes.container);		
-		simpleContentMetaData.setValue(Attributes.exists,true);
+		simpleContentMetaData.setValue(Attributes.exists,exists);
 		simpleContentMetaData.setValue(Attributes.readable,true);
 		simpleContentMetaData.setValue(Attributes.writeable,true);
 		simpleContentMetaData.setValue(Attributes.container,true);
@@ -201,15 +204,25 @@ public class JdbcResourceDescriptor extends AbstractResourceDescriptor
 	        }
 	        ResultSet tableResultSet = connection.getMetaData().getPrimaryKeys(null, null, getLocalName());	        
 	        while(tableResultSet.next())
-	        {
+	        {	            
 	            keyMap.put(tableResultSet.getString("COLUMN_NAME"), true);	            	            
 	        }
+	        tableResultSet.close();
 	        tableResultSet = connection.getMetaData().getColumns(null, null, getLocalName(),null);          
             while(tableResultSet.next())
-            {
-                ResultSetMetaData resultSetMetaData = tableResultSet.getMetaData();
+            {                                
                 columnMap.put(tableResultSet.getString("COLUMN_NAME"), tableResultSet.getString("DATA_TYPE"));                              
             }
+            if(columnMap.size() == 0)
+            {
+                exists = false;
+                throw new Exception("table '"+getLocalName()+"' not found. Check your case");
+            }
+	    }
+	    else
+	    {
+	        //got a connection so assume all is good
+	        exists = true;
 	    }
 	}
 	
@@ -226,6 +239,7 @@ public class JdbcResourceDescriptor extends AbstractResourceDescriptor
 	@Override
 	public boolean next(VariableContainer variableContainer, ResourceParameter... resourceParameters) throws Exception
 	{
+	    
 	    advanceState(State.OPEN, variableContainer, resourceParameters);
 	    if (connection == null && connection.isClosed() == true)
         {
@@ -275,7 +289,7 @@ public class JdbcResourceDescriptor extends AbstractResourceDescriptor
 	        
 	        //call next to verify if we got any reults
 	        if(resultSet.next())
-	        {
+	        {	            
 	            rowElement = buildElementFromResultSet(resultSet);
 	            setResourceState(State.STEPPING);
 	            return true;
@@ -293,7 +307,7 @@ public class JdbcResourceDescriptor extends AbstractResourceDescriptor
 	    else if (getResourceState() == State.STEPPING && resultSet != null)
 		{
 			if(resultSet.next())
-			{
+			{			    
 			    rowElement = buildElementFromResultSet(resultSet);
 				return true;
 			}
@@ -305,7 +319,7 @@ public class JdbcResourceDescriptor extends AbstractResourceDescriptor
 			}
 		}
 	    else //this just isn't valid, so make sure we don't give there user anything useful if they don't follow the rules.
-	    {
+	    {	        
 	        contentMetaData = null;
 	    }
 		return false;
@@ -465,6 +479,7 @@ public class JdbcResourceDescriptor extends AbstractResourceDescriptor
 		}
 		System.out.println(preparedStatement);
 		preparedStatement.executeUpdate();
+		preparedStatement.close();		
 		if(getResourceURI().getChildResourceURI() != null && getResourceURI().getChildResourceURI().getParameterMap().size() == 0)
 		{
 		    setResourceURI(new ResourceURI(getResourceURI().getResourceURIString()+"?"+keyString));
@@ -509,10 +524,49 @@ public class JdbcResourceDescriptor extends AbstractResourceDescriptor
 	@Override
 	public Action[] getSupportedActions()
 	{		
-		return new Action[]{};
+		return new Action[]{Action.DELETE};
 	}
 	
 	@Override
+	public boolean performAction(VariableContainer variableContainer, Action action, ResourceParameter... resourceParameters) throws Exception
+	{
+	    if(action == Action.DELETE)
+	    {
+	        advanceState(State.OPEN, variableContainer, resourceParameters);
+	        return delete(variableContainer, resourceParameters);
+	    }
+	    return false;
+	}
+	
+	private boolean delete(VariableContainer variableContainer, ResourceParameter... resourceParameters) throws Exception
+    {
+       String sql = "delete from "+getLocalName()+" where ";
+       if(getResourceURI().getChildResourceURI() != null && getResourceURI().getChildResourceURI().getParameterMap().size() != 0)
+       {
+           HashMap<String, String> parameterMap = getResourceURI().getChildResourceURI().getParameterMap();
+           Set<Entry<String, String>> parameterEntrySet = parameterMap.entrySet();
+           for (Entry<String, String> entry : parameterEntrySet)
+           {
+               sql += " "+entry.getKey()+" = ? and";
+           }
+           sql = sql.substring(0, sql.length()-3);
+           PreparedStatement preparedStatement = connection.prepareStatement(sql);
+           int index = 1;
+           for (Entry<String, String> entry : parameterEntrySet)
+           {
+               preparedStatement.setObject(index, entry.getValue(),Integer.parseInt(columnMap.get(entry.getKey())));
+               index++;
+           }
+           preparedStatement.executeUpdate();
+           preparedStatement.close();
+           exists = false;
+           refreshResourceMetaData(variableContainer, resourceParameters);
+           return true;
+       }
+       return false;
+    }
+
+    @Override
 	public void release(VariableContainer variableContainer, ResourceParameter... resourceParameters) throws Exception
 	{
 		if (connection != null)

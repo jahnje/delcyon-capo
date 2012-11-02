@@ -5,18 +5,18 @@
       xmlns:client="http://www.delcyon.com/capo-client"
       xmlns:server="http://www.delcyon.com/capo-server">
       <testdb TABLE_NAME="SYSTEMS">
-         <SYSTEMS ID="capo.client.1" NAME="host1.local" OS="OSX">
+         <SYSTEMS ID="capo.client.1" NAME="NEW_NAME" OS="OSX">
             <status lastConnectTime="00000000"/>
             <server:identity>
                <server:id name="MAC" value="00:e0:81:b0:14:7f"/>
                <server:id name="hostname" value="bluejay.goodinassociates.com"/>
             </server:identity>
-            <system_service_asc SERVICE_ID="1" SYSTEM_ID="capo.client.1">
-               <services ID="1" NAME="ssh"/>
-            </system_service_asc>
-            <system_service_asc SERVICE_ID="2" SYSTEM_ID="capo.client.1">
-               <services ID="2" NAME="syslog"/>
-            </system_service_asc>
+            <SYSTEM_SERVICE_ASC SERVICE_ID="1" SYSTEM_ID="capo.client.1">
+               <SERVICES ID="1" NAME="ssh"/>
+            </SYSTEM_SERVICE_ASC>
+            <SYSTEM_SERVICE_ASC SERVICE_ID="2" SYSTEM_ID="capo.client.1">
+               <SERVICES ID="2" NAME="syslog"/>
+            </SYSTEM_SERVICE_ASC>
             <INTERFACES IP="10.10.4.242" MAC="00:e0:81:b0:14:7f" SYSTEM_ID="capo.client.1"/>
          </SYSTEMS>
       </testdb>
@@ -31,34 +31,34 @@
       new="false"
       path="testdb/testdb"
       readable="true"
-      uri="jdbc:hsqldb:file:testdb/testdb?user=user"
+      uri="jdbc:hsqldb:file:testdb/testdb?user=user;password="
       writeable="true">
       <resource:jdbcTestResource container="true" exists="true" modified="false" name="jdbcTestResource"
          new="false"
          path="testdb/testdb"
          readable="true"
-         uri="jdbc:hsqldb:file:testdb/testdb?user=user"
+         uri="jdbc:hsqldb:file:testdb/testdb?user=user;password=!SYSTEMS"
          writeable="true">
          <testdb TABLE_NAME="SYSTEMS"/>
-         <resource:systems container="true" exists="true" modified="false" name="systems" new="false"
+         <resource:systems container="true" exists="true" modified="true" name="systems" new="false"
             path="testdb/testdb"
             readable="true"
-            uri="jdbc:hsqldb:file:testdb/testdb?user=user!SYSTEMS"
+            uri="jdbc:hsqldb:file:testdb/testdb?user=user;password=!SYSTEMS?ID=capo.client.1;"
             writeable="true">
-            <SYSTEMS ID="capo.client.1" NAME="host1.local" OS="OSX"/>
+            <SYSTEMS ID="capo.client.1" NAME="NEW_NAME" OS="OSX"/>
             <resource:status MD5="b7c9a648e0070fa021a7cf18d843d6df" container="false"
                contentFormatType="XML"
                executable="false"
                exists="true"
-               lastModified="1351705485000"
+               lastModified="1351889214000"
                mimeType="text/xml"
                modified="true"
                name="status"
                new="false"
-               path="/Users/jeremiah/java-work/delcyon-capo/capo/server/clients/capo.client.1/status.xml"
+               path="/home/jeremiah/java-work/delcyon-capo/capo/server/clients/capo.client.1/status.xml"
                readable="true"
                size="80"
-               uri="file:/Users/jeremiah/java-work/delcyon-capo/capo/server/clients/capo.client.1/status.xml"
+               uri="file:/home/jeremiah/java-work/delcyon-capo/capo/server/clients/capo.client.1/status.xml"
                writeable="true">
                <status lastConnectTime="00000000"/>
             </resource:status>
@@ -66,15 +66,15 @@
                contentFormatType="XML"
                executable="false"
                exists="true"
-               lastModified="1351705485000"
+               lastModified="1351886453000"
                mimeType="text/xml"
                modified="false"
                name="identity"
                new="false"
-               path="/Users/jeremiah/java-work/delcyon-capo/capo/server/clients/capo.client.1/identity.xml"
+               path="/home/jeremiah/java-work/delcyon-capo/capo/server/clients/capo.client.1/identity.xml"
                readable="true"
                size="247"
-               uri="file:/Users/jeremiah/java-work/delcyon-capo/capo/server/clients/capo.client.1/identity.xml"
+               uri="file:/home/jeremiah/java-work/delcyon-capo/capo/server/clients/capo.client.1/identity.xml"
                writeable="true">
                <server:identity>
                   <server:id name="MAC" value="00:e0:81:b0:14:7f"/>
@@ -84,35 +84,35 @@
             <resource:asc container="true" exists="true" modified="false" name="asc" new="false"
                path="testdb/testdb"
                readable="true"
-               uri="jdbc:hsqldb:file:testdb/testdb?user=user!system_service_asc"
+               uri="jdbc:hsqldb:file:testdb/testdb?user=user;password=!SYSTEM_SERVICE_ASC?SYSTEM_ID=capo.client.1;SERVICE_ID=1;"
                writeable="true">
-               <system_service_asc SERVICE_ID="1" SYSTEM_ID="capo.client.1"/>
+               <SYSTEM_SERVICE_ASC SERVICE_ID="1" SYSTEM_ID="capo.client.1"/>
                <resource:services container="true" exists="true" modified="false" name="services" new="false"
                   path="testdb/testdb"
                   readable="true"
-                  uri="jdbc:hsqldb:file:testdb/testdb?user=user!services"
+                  uri="jdbc:hsqldb:file:testdb/testdb?user=user;password=!SERVICES?ID=1;"
                   writeable="true">
-                  <services ID="1" NAME="ssh"/>
+                  <SERVICES ID="1" NAME="ssh"/>
                </resource:services>
             </resource:asc>
             <resource:asc container="true" exists="true" modified="false" name="asc" new="false"
                path="testdb/testdb"
                readable="true"
-               uri="jdbc:hsqldb:file:testdb/testdb?user=user!system_service_asc"
+               uri="jdbc:hsqldb:file:testdb/testdb?user=user;password=!SYSTEM_SERVICE_ASC?SYSTEM_ID=capo.client.1;SERVICE_ID=2;"
                writeable="true">
-               <system_service_asc SERVICE_ID="2" SYSTEM_ID="capo.client.1"/>
+               <SYSTEM_SERVICE_ASC SERVICE_ID="2" SYSTEM_ID="capo.client.1"/>
                <resource:services container="true" exists="true" modified="false" name="services" new="false"
                   path="testdb/testdb"
                   readable="true"
-                  uri="jdbc:hsqldb:file:testdb/testdb?user=user!services"
+                  uri="jdbc:hsqldb:file:testdb/testdb?user=user;password=!SERVICES?ID=2;"
                   writeable="true">
-                  <services ID="2" NAME="syslog"/>
+                  <SERVICES ID="2" NAME="syslog"/>
                </resource:services>
             </resource:asc>
             <resource:interfaces container="true" exists="true" modified="false" name="interfaces" new="false"
                path="testdb/testdb"
                readable="true"
-               uri="jdbc:hsqldb:file:testdb/testdb?user=user!INTERFACES"
+               uri="jdbc:hsqldb:file:testdb/testdb?user=user;password=!INTERFACES?SYSTEM_ID=capo.client.1;NAME=eth0;"
                writeable="true">
                <INTERFACES IP="10.10.4.242" MAC="00:e0:81:b0:14:7f" SYSTEM_ID="capo.client.1"/>
             </resource:interfaces>

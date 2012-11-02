@@ -77,7 +77,8 @@ public class RemoveElement extends AbstractControl
 		    Node selectedNode = XPath.selectSingleNode(getControlElementDeclaration(), ref);
 		    if (selectedNode != null)
 		    {
-		        if (selectedNode.getParentNode() != null)
+		        Node parentNode = selectedNode.getParentNode(); 
+		        if (parentNode != null)
 		        {
 		            selectedNode.getParentNode().removeChild(selectedNode);
 		        }

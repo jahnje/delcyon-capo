@@ -27,14 +27,14 @@
                 <resource:include name="ID"/>
                 <resource:child name="status" uri="clients:${clientName}/status.xml" clientName="@ID" dynamic="true"/>
                 <resource:child name="identity" uri="clients:${clientName}/identity.xml" clientName="@ID" dynamic="true"/>
-                <resource:child name="asc" path="system_service_asc" >                    
+                <resource:child name="asc" path="SYSTEM_SERVICE_ASC" >                    
                     <resource:join parent="@ID" this="@SYSTEM_ID" />
                     
-                    <resource:child name="services" path="services" >                    
+                    <resource:child name="services" path="SERVICES" >                    
                         <resource:join parent="@SERVICE_ID" this="@ID" />
                     </resource:child>
                     
-                    <resource:child name="services" path="services">                    
+                    <resource:child name="services" path="SERVICES">                    
                         <resource:join parent="@SERVICE_ID" this="'BOGUS'" />
                     </resource:child>
                     
@@ -58,13 +58,15 @@
         </resource:resource>
         <outputHolder/>
         <server:setAttribute name="lastConnectTime" destRef="//resource:testdb/resource:jdbcTestResource/resource:systems/resource:status/status" value="00000000"/>
-        <server:setAttribute name="NAME" destRef="//resource:testdb/resource:jdbcTestResource/resource:systems/SYSTEMS" value="BSNAME"/>
+        <server:setAttribute name="NAME" destRef="//resource:testdb/resource:jdbcTestResource/resource:systems/SYSTEMS" value="NEW_NAME"/>
         <server:import name="jdbcTestImport" src="resource:jdbcTestResource" contentOnly="true" ref="../outputHolder"/>
         <server:import name="jdbcTestImportFull" src="resource:jdbcTestResource" contentOnly="false" ref="../outputHolder"/>
         <server:export dest="testImportOutput.xml" ref="../outputHolder"/>
         
         <SYSTEMS ID="BS-ID" LAST_CONNECT="2012-06-22 10:33:11.840000" NAME="BS-NAME" OS="BS-OS"/>
         <server:append srcRef="../SYSTEMS" destRef="../resource:testdb/resource:jdbcTestResource"/>
+        <server:update resourceRef="../resource:testdb" dumpRef="../resource:testdb"/>
+        <server:remove ref="../resource:testdb/resource:jdbcTestResource/resource:SYSTEMS/SYSTEMS"/>
         <server:update resourceRef="../resource:testdb" dumpRef=".."/>
         
     </server:group>

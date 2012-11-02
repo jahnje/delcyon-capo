@@ -27,14 +27,14 @@
                 <resource:include name="ID"/>
                 <resource:child name="status" uri="clients:${clientName}/status.xml" clientName="@ID" dynamic="true"/>
                 <resource:child name="identity" uri="clients:${clientName}/identity.xml" clientName="@ID" dynamic="true"/>
-                <resource:child name="asc" path="system_service_asc" >                    
+                <resource:child name="asc" path="SYSTEM_SERVICE_ASC" >                    
                     <resource:join parent="@ID" this="@SYSTEM_ID" />
                     
-                    <resource:child name="services" path="services" >                    
+                    <resource:child name="services" path="SERVICES" >                    
                         <resource:join parent="@SERVICE_ID" this="@ID" />
                     </resource:child>
                     
-                    <resource:child name="services" path="services">                    
+                    <resource:child name="services" path="SERVICES">                    
                         <resource:join parent="@SERVICE_ID" this="'BOGUS'" />
                     </resource:child>
                     
