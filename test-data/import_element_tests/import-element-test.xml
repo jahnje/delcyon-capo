@@ -61,8 +61,11 @@
         <server:setAttribute name="NAME" destRef="//resource:testdb/resource:jdbcTestResource/resource:systems/SYSTEMS" value="BSNAME"/>
         <server:import name="jdbcTestImport" src="resource:jdbcTestResource" contentOnly="true" ref="../outputHolder"/>
         <server:import name="jdbcTestImportFull" src="resource:jdbcTestResource" contentOnly="false" ref="../outputHolder"/>
-        <server:export dest="testImportOutput.xml" ref="../outputHolder" dumpRef=".."/>
-        <server:update resourceRef="//resource:testdb" dumpRef=".."/>
+        <server:export dest="testImportOutput.xml" ref="../outputHolder"/>
+        
+        <SYSTEMS ID="BS-ID" LAST_CONNECT="2012-06-22 10:33:11.840000" NAME="BS-NAME" OS="BS-OS"/>
+        <server:append srcRef="../SYSTEMS" destRef="../resource:testdb/resource:jdbcTestResource"/>
+        <server:update resourceRef="../resource:testdb" dumpRef=".."/>
         
     </server:group>
     

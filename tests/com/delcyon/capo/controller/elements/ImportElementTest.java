@@ -49,6 +49,7 @@ public class ImportElementTest
     {
     	
     	Util.copyTree("test-data/capo", "capo", true, true);
+    	Util.deleteTree("testdb");
     	Util.copyTree("test-data/testdb", "testdb", true, true);
         TestServer.start();
         Document document = CapoApplication.getDocumentBuilder().parse(new FileInputStream("test-data/import_element_tests/import-element-test.xml"));

@@ -117,7 +117,7 @@ public class JdbcResourceDescriptorTest extends ResourceDescriptorTest
     @Test
     public void testProcessOutput() throws Exception
     {
-        resourceDescriptor.addResourceParameters(null, new ResourceParameter("update","INSERT INTO SYSTEMS VALUES('BS-ID','BS-NAME','2012-06-22 10:33:11.840000','BS-OS')"));
+        resourceDescriptor.addResourceParameters(null, new ResourceParameter("update","INSERT INTO SYSTEMS VALUES('BS-ID2','BS-NAME','2012-06-22 10:33:11.840000','BS-OS')"));
         super.testProcessOutput();
         resourceDescriptor.addResourceParameters(null, new ResourceParameter("query","select * from systems"));
         Document modDocument = CapoApplication.getDocumentBuilder().newDocument();

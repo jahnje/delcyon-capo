@@ -16,6 +16,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 package com.delcyon.capo.controller.elements;
 
+import org.w3c.dom.Node;
+
 import com.delcyon.capo.CapoApplication;
 import com.delcyon.capo.controller.AbstractControl;
 import com.delcyon.capo.controller.ControlElementProvider;
@@ -68,7 +70,19 @@ public class AppendElement extends AbstractControl
 		
 		String srcRef = getAttributeValue(Attributes.srcRef);
 		String dstRef = getAttributeValue(Attributes.destRef);
-		XPath.selectSingleNode(getControlElementDeclaration(), dstRef).appendChild(XPath.selectSingleNode(getControlElementDeclaration(), srcRef));		
+		Node srcNode = XPath.selectSingleNode(getControlElementDeclaration(), srcRef);
+		if(srcNode == null)
+		{
+		    throw new Exception("no node found at: "+srcRef);
+		}
+		
+		Node destNode = XPath.selectSingleNode(getControlElementDeclaration(), dstRef);
+		if(destNode == null)
+        {
+            throw new Exception("no node found at: "+dstRef);
+        }
+		
+		destNode.appendChild(srcNode);		
 		return null;
 	}
 

@@ -4,6 +4,7 @@ import java.lang.reflect.Modifier;
 import java.util.List;
 import java.util.logging.Level;
 
+import org.w3c.dom.DOMException;
 import org.w3c.dom.Element;
 import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.Node;
@@ -16,8 +17,11 @@ import com.delcyon.capo.controller.elements.ResourceControlElement;
 import com.delcyon.capo.resourcemanager.ContentFormatType;
 import com.delcyon.capo.resourcemanager.ResourceDescriptor;
 import com.delcyon.capo.resourcemanager.ResourceParameter;
+import com.delcyon.capo.resourcemanager.ResourceParameterBuilder;
 import com.delcyon.capo.resourcemanager.ResourceURI;
+import com.delcyon.capo.resourcemanager.ResourceDescriptor.DefaultParameters;
 import com.delcyon.capo.resourcemanager.types.ContentMetaData;
+import com.delcyon.capo.resourcemanager.types.SimpleContentMetaData;
 import com.delcyon.capo.util.CloneControl;
 import com.delcyon.capo.util.ControlledClone;
 import com.delcyon.capo.util.EqualityProcessor;
@@ -118,9 +122,18 @@ public class ResourceElement extends CElement implements ControlledClone,Resourc
     			resourceDescriptor = CapoApplication.getDataManager().getResourceDescriptor( callingControlElement, resourceURI.getResourceURIString());
     			resourceDescriptor.open(variableContainer,resourceParameters);
     		}
-    		resourceDescriptor.writeXML(variableContainer, content,resourceParameters);
+    		DefaultParameters updateStyle = DefaultParameters.MODIFY_REPLACE;
+    		if(isNew())
+    		{
+    		    updateStyle = DefaultParameters.NEW;
+    		}
+    		ResourceParameterBuilder parameterBuilder = new ResourceParameterBuilder();
+    		parameterBuilder.addAll(resourceParameters);
+    		parameterBuilder.addParameter(updateStyle, "true");
+    		resourceDescriptor.writeXML(variableContainer, content,parameterBuilder.getParameters());
     		setAttribute("new",false+"");
         	setAttribute("modified",false+"");
+        	setContentMetatData(resourceDescriptor.getResourceMetaData(null));
     	}
     	CNodeList children = (CNodeList) getChildNodes();
     	for (Node node : children)
@@ -464,7 +477,19 @@ public class ResourceElement extends CElement implements ControlledClone,Resourc
         }
     }
 
-    
+    @Override
+    public Node appendChild(Node newChild) throws DOMException
+    {
+        if(newChild instanceof ResourceElement == false)
+        {
+            SimpleContentMetaData metaData = new SimpleContentMetaData(contentMetaData.getResourceURI());
+            ResourceElement childResourceElement = new ResourceElement(getOwnerResourceDocument(), newChild.getLocalName(), (CElement) newChild, metaData);
+            childResourceElement.setNew(true);
+            childResourceElement.setModified(true);
+            return super.appendChild(childResourceElement);
+        }
+        return super.appendChild(newChild);
+    }
 
     
 

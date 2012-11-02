@@ -19,8 +19,6 @@ package com.delcyon.capo.resourcemanager;
 import java.io.InputStream;
 import java.io.OutputStream;
 
-import org.w3c.dom.Element;
-
 import com.delcyon.capo.controller.ControlElement;
 import com.delcyon.capo.controller.VariableContainer;
 import com.delcyon.capo.resourcemanager.types.ContentMetaData;
@@ -90,10 +88,20 @@ public interface ResourceDescriptor
 		
 	}
 
+	/**
+	 * This is just an enum of standard parameters to resources, they should be considered as hints to the RD, as none of them are guaranteed to produce the desired results. 	 
+	 */
     public enum DefaultParameters 
     {
         /** indicates that we are dealing with a container of some sort (true|false)*/
-        CONTAINER
+        CONTAINER,
+        /** indicates that we want to append this write data to the original resource, and the RD should take whatever steps are needed **/
+        MODIFY_APPEND,
+        /** indicates that we want to completely replace the original resource, and the RD should take whatever steps are needed **/
+        MODIFY_REPLACE,
+        /** indicates that we are dealing with a new resource, and the RD should take whatever steps are needed **/
+        NEW
+        
         
     }
 	

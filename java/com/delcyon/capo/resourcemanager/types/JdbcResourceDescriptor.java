@@ -398,21 +398,51 @@ public class JdbcResourceDescriptor extends AbstractResourceDescriptor
 	{
 		advanceState(State.OPEN, variableContainer, resourceParameters);
 		CNamedNodeMap cNamedNodeMap = (CNamedNodeMap) element.getAttributes();
+		boolean isInsert = ResourceParameterBuilder.getBoolean(DefaultParameters.NEW, resourceParameters);
+		String keyString = "";
 		String whereClause = "";
 		if (keyMap.size() > 0)
 		{
 		    whereClause += " where ";
 		}
-		String sql = "update "+getLocalName()+" set ";
+		
+		String sql = null;
+		String insertClause = " values(";
+		if (isInsert == false)
+		{
+		    sql = "update "+getLocalName()+" set ";
+		}
+		else
+		{
+		    sql = "insert into "+getLocalName()+" (";
+		}
+		
 		for (Node node : cNamedNodeMap)
         {
-            sql += node.getNodeName()+" = ?,";
+		    if(isInsert == false)
+		    {
+		        sql += node.getNodeName()+" = ?,";
+		    }
+		    else
+		    {
+		        sql += node.getNodeName()+",";
+		        insertClause += "?,";
+		    }
+		    
             if(keyMap.containsKey(node.getNodeName()))
             {
                 whereClause += node.getNodeName()+" = ? and";
+                keyString += node.getNodeName()+"="+node.getNodeValue()+";";
             }
         }
-		sql = sql.substring(0, sql.length()-1)+whereClause.substring(0, whereClause.length()-3);
+		if(isInsert == false)
+		{
+		    sql = sql.substring(0, sql.length()-1)+whereClause.substring(0, whereClause.length()-3);
+		}
+		else
+		{
+		    sql = sql.substring(0, sql.length()-1)+")"+insertClause.substring(0,insertClause.length()-1)+")";
+		}
 		PreparedStatement preparedStatement = connection.prepareStatement(sql);
 		int index = 1;
 		for (Node node : cNamedNodeMap)
@@ -421,16 +451,25 @@ public class JdbcResourceDescriptor extends AbstractResourceDescriptor
 		    preparedStatement.setObject(index, node.getNodeValue(),Integer.parseInt(columnMap.get(node.getNodeName())));
 		    index++;
         }
-		for (Node node : cNamedNodeMap)
-        {            
-		    if(keyMap.containsKey(node.getNodeName()))
-            {
-		        preparedStatement.setObject(index, node.getNodeValue(),Integer.parseInt(columnMap.get(node.getNodeName())));
-	            index++;
-            }            
-        }
+		
+		if(isInsert == false)
+		{
+		    for (Node node : cNamedNodeMap)
+		    {            
+		        if(keyMap.containsKey(node.getNodeName()))
+		        {
+		            preparedStatement.setObject(index, node.getNodeValue(),Integer.parseInt(columnMap.get(node.getNodeName())));
+		            index++;
+		        }            
+		    }
+		}
 		System.out.println(preparedStatement);
 		preparedStatement.executeUpdate();
+		if(getResourceURI().getChildResourceURI() != null && getResourceURI().getChildResourceURI().getParameterMap().size() == 0)
+		{
+		    setResourceURI(new ResourceURI(getResourceURI().getResourceURIString()+"?"+keyString));
+		    refreshResourceMetaData(variableContainer, resourceParameters);		    
+		}
 	}
  	
 
