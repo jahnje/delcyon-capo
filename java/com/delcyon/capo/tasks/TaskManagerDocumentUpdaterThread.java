@@ -96,6 +96,12 @@ public class TaskManagerDocumentUpdaterThread extends Thread
 				    }
 				    Document taskManagerDocument = documentUpdate.getDocument();
 				    ResourceDescriptor taskManagerDocumentFileDescriptor = documentUpdate.getDocumentResourceDescriptor();
+				    //if we're reprocessing the document, it'll be released from below, so we need to reset it.
+				    if(taskManagerDocumentFileDescriptor.getResourceState() == com.delcyon.capo.resourcemanager.ResourceDescriptor.State.RELEASED)
+				    {
+				    	taskManagerDocumentFileDescriptor.reset(com.delcyon.capo.resourcemanager.ResourceDescriptor.State.OPEN);
+				    }
+				    
 				    if (taskManagerDocumentFileDescriptor.getResourceMetaData(null).exists() == false)
 			        {
 				    	taskManagerDocumentFileDescriptor.performAction(null, Action.CREATE);

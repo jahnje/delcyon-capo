@@ -40,15 +40,18 @@ import com.delcyon.capo.Configuration.PREFERENCE;
 import com.delcyon.capo.annotations.DefaultDocumentProvider;
 import com.delcyon.capo.annotations.DirectoyProvider;
 import com.delcyon.capo.controller.ControlElement;
+import com.delcyon.capo.controller.Group;
 import com.delcyon.capo.controller.elements.ResourceControlElement;
 import com.delcyon.capo.preferences.Preference;
 import com.delcyon.capo.preferences.PreferenceInfo;
 import com.delcyon.capo.preferences.PreferenceInfoHelper;
 import com.delcyon.capo.preferences.PreferenceProvider;
 import com.delcyon.capo.resourcemanager.ResourceDescriptor.Action;
+import com.delcyon.capo.resourcemanager.ResourceDescriptor.LifeCycle;
 import com.delcyon.capo.resourcemanager.remote.RemoteResourceType;
 import com.delcyon.capo.resourcemanager.types.ContentMetaData;
 import com.delcyon.capo.resourcemanager.types.FileResourceType;
+import com.delcyon.capo.xml.cdom.CElement;
 
 /**
  * @author jeremiah
@@ -110,6 +113,14 @@ public class ResourceManager extends CapoDataManager
 	private transient Transformer transformer;	
 	private HashMap<String, ResourceDescriptor> directoryHashMap = new HashMap<String, ResourceDescriptor>();	
 	private HashMap<String,ResourceType> schemeResourceTypeHashMap = new HashMap<String, ResourceType>();
+
+
+
+	private ResourceControlElement resourceManagerControlElement;
+
+
+
+	
 	
 	
 	public ResourceManager() throws Exception
@@ -120,6 +131,12 @@ public class ResourceManager extends CapoDataManager
 		TransformerFactory tFactory = TransformerFactory.newInstance();
 		transformer = tFactory.newTransformer();
 		transformer.setOutputProperty(OutputKeys.INDENT, "yes");
+		
+		Group group = new Group("resourceManager", null, null, null);
+		CElement resourceManagerControlElementDeclaration = new CElement(CapoApplication.SERVER_NAMESPACE_URI, "server:resource");
+    	resourceManagerControlElementDeclaration.setAttribute(ResourceControlElement.Attributes.lifeCycle, LifeCycle.EXPLICIT);
+    	resourceManagerControlElement = new ResourceControlElement();
+    	resourceManagerControlElement.init(resourceManagerControlElementDeclaration, null, group, null);
 		
 		//Build and load directories		
 		//no place should use append resource URI's like this except here where the resource manager hasn't been loaded yet, so auto resolution can't happen.
@@ -142,6 +159,12 @@ public class ResourceManager extends CapoDataManager
 	}
 	
 	@Override
+	public void release() throws Exception
+	{
+		resourceManagerControlElement.destroy();		
+	}
+	
+	@Override
 	public void init() throws Exception
 	{
 	    
@@ -150,7 +173,7 @@ public class ResourceManager extends CapoDataManager
         for (Preference preference : directoryPreferences)
         {
             
-            ResourceDescriptor dynamicDir = dataDir.getChildResourceDescriptor(null,CapoApplication.getConfiguration().getValue(preference));
+            ResourceDescriptor dynamicDir = dataDir.getChildResourceDescriptor(resourceManagerControlElement,CapoApplication.getConfiguration().getValue(preference));
             
             ContentMetaData dynamicDirContentMetaData = dynamicDir.getResourceMetaData(null);
             if (dynamicDirContentMetaData.exists() == false)
@@ -233,6 +256,10 @@ public class ResourceManager extends CapoDataManager
 	@Override
 	public ResourceDescriptor getResourceDescriptor(ControlElement callingControlElement,String resourceURI) throws Exception
 	{
+		if(callingControlElement == null)
+		{
+			callingControlElement = resourceManagerControlElement;
+		}
 		
 		String scheme = ResourceURI.getScheme(resourceURI);
 		
@@ -322,7 +349,7 @@ public class ResourceManager extends CapoDataManager
             //see if we have a child filesystem
             if (clientResourceDescriptor.getResourceMetaData(null).exists() == true)
             {
-                ResourceDescriptor relaventChildResourceDescriptor = clientResourceDescriptor.getChildResourceDescriptor(null,CapoApplication.getConfiguration().getValue(directoryPreference));
+                ResourceDescriptor relaventChildResourceDescriptor = clientResourceDescriptor.getChildResourceDescriptor(resourceManagerControlElement,CapoApplication.getConfiguration().getValue(directoryPreference));
                 if (relaventChildResourceDescriptor != null && relaventChildResourceDescriptor.getResourceMetaData(null).exists() == true)
                 {
                     //search the client filesystem

@@ -481,18 +481,19 @@ public class Group implements VariableContainer
 
 			if (resourceElementEntry.getValue().getResourceDescriptor().getResourceState() != State.RELEASED)
 			{
-				resourceElementEntry.getValue().getResourceDescriptor().release(this);
+				resourceElementEntry.getValue().getResourceDescriptor().release(this);				
 			}
-
+			resourceElementHashMap.remove(resourceElementEntry.getKey());
 		}
-		for (ResourceDescriptor resourceDescriptor : openResourceDescriptorVector)
+		for(int index = 0; index < openResourceDescriptorVector.size(); index++)		
 		{
-
+			ResourceDescriptor resourceDescriptor = openResourceDescriptorVector.get(index);
 			if (resourceDescriptor.getResourceState() != State.RELEASED)
 			{
 				resourceDescriptor.release(this);
 			}
-
+			openResourceDescriptorVector.remove(index);
+			index--;
 		}
 		
 		//drop all of our pointers

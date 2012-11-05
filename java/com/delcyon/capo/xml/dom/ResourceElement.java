@@ -2,6 +2,7 @@ package com.delcyon.capo.xml.dom;
 
 import java.lang.reflect.Modifier;
 import java.util.List;
+import java.util.Vector;
 import java.util.logging.Level;
 
 import org.w3c.dom.DOMException;
@@ -25,13 +26,14 @@ import com.delcyon.capo.resourcemanager.types.ContentMetaData;
 import com.delcyon.capo.resourcemanager.types.SimpleContentMetaData;
 import com.delcyon.capo.util.CloneControl;
 import com.delcyon.capo.util.ControlledClone;
-import com.delcyon.capo.util.EqualityProcessor;
 import com.delcyon.capo.util.ToStringControl;
 import com.delcyon.capo.util.CloneControl.Clone;
 import com.delcyon.capo.util.ToStringControl.Control;
+import com.delcyon.capo.xml.cdom.CAttr;
 import com.delcyon.capo.xml.cdom.CDOMEvent;
 import com.delcyon.capo.xml.cdom.CDOMEventListener;
 import com.delcyon.capo.xml.cdom.CElement;
+import com.delcyon.capo.xml.cdom.CNamedNodeMap;
 import com.delcyon.capo.xml.cdom.CNode;
 import com.delcyon.capo.xml.cdom.CNodeList;
 
@@ -40,11 +42,7 @@ import com.delcyon.capo.xml.cdom.CNodeList;
 public class ResourceElement extends CElement implements ControlledClone,ResourceNode, CDOMEventListener
 {
 
-    
-    
-    @CloneControl(filter=Clone.exclude)
-    @ToStringControl(control=Control.exclude)
-    private ResourceControlElement resourceControlElement;
+   
     
     @CloneControl(filter=Clone.exclude)
     @ToStringControl(control=Control.exclude)
@@ -69,8 +67,7 @@ public class ResourceElement extends CElement implements ControlledClone,Resourc
 		this.ownerResourceDocument = ownerResourceDocument;				
 		setContent(content);
 		this.dynamic = false;
-		setContentMetatData(contentMetaData);
-		((CNode) content).addCDOMEventListener(this);
+		setContentMetatData(contentMetaData);		
 	}
     
 	/**
@@ -93,34 +90,95 @@ public class ResourceElement extends CElement implements ControlledClone,Resourc
     {
     	this.contentMetaData = contentMetaData;
     	this.resourceURI = contentMetaData.getResourceURI();
-    	setAttribute("uri", contentMetaData.getResourceURI().getResourceURIString());
-    	setAttribute("new",false+"");
-    	setAttribute("modified",false+"");
-        List<String> supportedAttributeList = contentMetaData.getSupportedAttributes();
-        for (String attributeName : supportedAttributeList)
-        {
-            if (contentMetaData.getValue(attributeName) != null)
-            {                
-                ResourceAttr resourceAttr = new ResourceAttr(this,attributeName, contentMetaData.getValue(attributeName));
-                setAttributeNode(resourceAttr);
-            }
-        }
+
+    	setResourceAttribute("uri", contentMetaData.getResourceURI().getResourceURIString());
+    	setResourceAttribute("new",false+"");
+    	setResourceAttribute("modified",false+"");
+    	List<String> supportedAttributeList = contentMetaData.getSupportedAttributes();
+    	for (String attributeName : supportedAttributeList)
+    	{
+    		if (contentMetaData.getValue(attributeName) != null)
+    		{                
+    			ResourceAttr resourceAttr = new ResourceAttr(this,attributeName, contentMetaData.getValue(attributeName));
+    			setResourceAttributeNode(resourceAttr);
+    		}
+    	}
+
+    }
+    
+    @Override
+    public void cascadeDOMEvent(CDOMEvent cdomEvent)
+    {
+    	if (content == null || ownerResourceDocument.isFullDocument() == true)
+    	{
+    		super.cascadeDOMEvent(cdomEvent);
+    	}
+    	else if (cdomEvent != null)
+    	{
+    		processEvent(cdomEvent);
+    		if(getParentNode() != null && getParentNode() instanceof CNode)
+    		{
+    			((CNode) getParentNode()).cascadeDOMEvent(cdomEvent);
+    		}
+    	}
+    }
+    
+    @Override
+    public Vector<CDOMEventListener> getCDOMEventListeners()
+    {
+    	if(content == null || ownerResourceDocument.isFullDocument() == true)
+    	{
+    		return super.getCDOMEventListeners();
+    	}
+    	else
+    	{
+    		return content.getCDOMEventListeners();
+    	}
+    }
+    
+    @Override
+    public boolean hasEventListeners()
+    {
+    	if(content == null || ownerResourceDocument.isFullDocument() == true)
+    	{
+    		return super.hasEventListeners();
+    	}
+    	else
+    	{
+    		return content.hasEventListeners();
+    	}
+    	
+    }
+    
+   
+    
+    public boolean isContainter()
+    {
+    	if(contentMetaData != null)
+    	{
+    		return contentMetaData.isContainer();
+    	}
+    	return false;
     }
     
     @Override
     public void processEvent(CDOMEvent cdomEvent)
     {
     	System.out.println(cdomEvent);
-    	setAttribute("modified",true+"");
+    	if(cdomEvent.getSourceNode().equals(this))
+    	{
+    		cdomEvent.setHandled(true);
+    	}
+    	setResourceAttribute("modified",true+"");    	
     }
     
     public void update(VariableContainer variableContainer, ControlElement callingControlElement, ResourceParameter... resourceParameters) throws Exception
     {
-    	if( isNew() || isModified())
+    	if( (isNew() || isModified()) && isContainter() == false)
     	{
     		if(resourceDescriptor == null)
     		{
-    			resourceDescriptor = CapoApplication.getDataManager().getResourceDescriptor( callingControlElement, resourceURI.getResourceURIString());
+    			resourceDescriptor = getResourceControlElement().getParentGroup().getResourceDescriptor( callingControlElement, resourceURI.getResourceURIString());
     			resourceDescriptor.open(variableContainer,resourceParameters);
     		}
     		if(content == null && isModified())
@@ -142,10 +200,11 @@ public class ResourceElement extends CElement implements ControlledClone,Resourc
     		    parameterBuilder.addParameter(updateStyle, "true");
     		    resourceDescriptor.writeXML(variableContainer, content,parameterBuilder.getParameters());
     		}
-    		setAttribute("new",false+"");
-        	setAttribute("modified",false+"");
+    		
         	setContentMetatData(resourceDescriptor.getResourceMetaData(null));
     	}
+    	setResourceAttribute("new",false+"");
+		setResourceAttribute("modified",false+"");
     	CNodeList children = (CNodeList) getChildNodes();
     	for (Node node : children)
 		{
@@ -158,22 +217,22 @@ public class ResourceElement extends CElement implements ControlledClone,Resourc
     
     public boolean isNew()
     {
-    	return getAttribute("new").equals("true");
+    	return getResourceAttribute("new").equals("true");
     }
     
     public void setNew(boolean isNew)
     {
-    	setAttribute("new",isNew+"");
+    	setResourceAttribute("new",isNew+"");
     }
     
     public boolean isModified()
     {
-    	return getAttribute("modified").equals("true");
+    	return getResourceAttribute("modified").equals("true");
     }
     
     public void setModified(boolean modified)
     {
-    	setAttribute("modified",modified+"");
+    	setResourceAttribute("modified",modified+"");
     }
     
     public void setResourceDescriptor(ResourceDescriptor resourceDescriptor)
@@ -243,9 +302,13 @@ public class ResourceElement extends CElement implements ControlledClone,Resourc
     
     public void setContent(CElement content)
 	{
-		this.content = content;
-		this.content.addCDOMEventListener(this);
-		content.setParent(this);
+    	
+    	this.content = content;
+    	if(content != null)
+    	{
+    		this.content.addCDOMEventListener(this);        		
+    		content.setParent(this);
+    	}
 	}
     
     public Element getContent()
@@ -269,14 +332,14 @@ public class ResourceElement extends CElement implements ControlledClone,Resourc
    @Override
    public ResourceControlElement getResourceControlElement()
    {
-       return this.resourceControlElement;
+       return this.ownerResourceDocument.getResourceControlElement();
    }
 
     
     @Override
     public String getNodeName()
     {
-        if(getOwnerResourceDocument().isContentOnly() && content != null)
+        if(isContainter() == false && content != null && ownerResourceDocument.isFullDocument() == false)
         {
             return content.getNodeName();
         }
@@ -297,34 +360,21 @@ public class ResourceElement extends CElement implements ControlledClone,Resourc
         //depending on how we're created, we either know the list, or we want to figure it out.
         if (dynamic == false)
         {
-        	try
-        	{        		
-        		if( content != null)
-        		{
-        		    CNodeList tempNodeList = null;
-        		    if(getOwnerResourceDocument().isContentOnly() == false)
-        		    {
-        		        tempNodeList = new CNodeList();
-        		        tempNodeList.add(0,content);
-        		        tempNodeList.addAll(super.getChildNodes());
-        		    }
-        		    else
-        		    {
-        		        tempNodeList = new CNodeList();
-        		        tempNodeList.addAll(content.getChildNodes());        		        
-        		        tempNodeList.addAll(EqualityProcessor.clone(super.getChildNodes()));
-        		    }
-        			
-        			return tempNodeList;
-        		}
-        	} catch (Exception e)
+        	if(isContainter() == true)
         	{
-        		// TODO Auto-generated catch block
-        		e.printStackTrace();
+        		return super.getChildNodes();
         	}
-
-        	
-            return super.getChildNodes();
+        	else //were a leaf, and we should return our content, and we should pretend that our content's root element is us, and we don't have any children
+        	{
+        		CNodeList tempNodeList = new CNodeList();
+        		tempNodeList.addAll(content.getChildNodes());
+//        		if(ownerResourceDocument.isFullDocument())
+//        		{
+        			tempNodeList.addAll(super.getChildNodes());
+        		//}
+		        return tempNodeList;
+        	}
+        
         }
         
         if (childResourceContentMetaData == null)
@@ -412,21 +462,23 @@ public class ResourceElement extends CElement implements ControlledClone,Resourc
     @Override
     public NamedNodeMap getAttributes()
     {
-        if(getOwnerResourceDocument().isContentOnly())
+    	if(ownerResourceDocument.isFullDocument())
+    	{
+    		return super.getAttributes();
+    	}
+        else if(isContainter() == true )
+        {        	
+        	return  new CNamedNodeMap();
+        }
+        else if (content != null)
         {
-            if(content != null)
-            {
-                return content.getAttributes();
-            }
-            else
-            {
-                return null;
-            }
+        	return content.getAttributes();
         }
         else
         {
-            return super.getAttributes();
+        	return  new CNamedNodeMap();
         }
+        
     }
 
     
@@ -450,8 +502,7 @@ public class ResourceElement extends CElement implements ControlledClone,Resourc
         ResourceElement clonedResourceElement = (ResourceElement) clonedObject;
         //we treat these differently, because we don't want them to recurse
         clonedResourceElement.ownerResourceDocument = ownerResourceDocument;
-        
-        clonedResourceElement.resourceControlElement = resourceControlElement;
+       
         super.postClone(parentObject, clonedObject);
         if (clonedResourceElement.content != null)
         {
@@ -464,7 +515,7 @@ public class ResourceElement extends CElement implements ControlledClone,Resourc
     @Override
     public String getNamespaceURI()
     {        
-        if(getOwnerResourceDocument().isContentOnly() == true && content != null)
+        if(isContainter() == false && content != null && ownerResourceDocument.isFullDocument() == false)
         {
             return content.getNamespaceURI();
         }
@@ -479,7 +530,7 @@ public class ResourceElement extends CElement implements ControlledClone,Resourc
     @Override
     public String getLocalName()
     {
-        if(getOwnerResourceDocument().isContentOnly() == true && content != null)
+        if(isContainter() == false  && content != null && ownerResourceDocument.isFullDocument() == false)
         {
             return content.getLocalName();
         }
@@ -536,7 +587,34 @@ public class ResourceElement extends CElement implements ControlledClone,Resourc
         return ResourceDocument.export(this,contentOnly).getDocumentElement();
     }
 
-	
+    /**
+     * Will always set a ResourceElements real attributes, as opposed to it's content's
+     * @param name
+     * @param value
+     */
+	public void setResourceAttribute(String name, String value)
+	{
+		
+		attributeList.setNamedItemNS(new CAttr(this, null, name, value));
+	}
+
+	public String getResourceAttribute(String name)
+	{
+		if (attributeList.getNamedItem(name) == null)
+        {
+            return "";
+        }
+        else
+        {
+            return attributeList.getNamedItem(name).getNodeValue();
+        }
+	}
+
+	public CAttr setResourceAttributeNode(CAttr attr)
+	{
+		 attributeList.setNamedItem(attr);	        
+		 return attr;
+	}
 
 	
 

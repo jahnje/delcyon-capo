@@ -5,7 +5,6 @@ import org.w3c.dom.Document;
 import com.delcyon.capo.controller.elements.ResourceControlElement;
 import com.delcyon.capo.resourcemanager.ResourceDescriptor;
 import com.delcyon.capo.resourcemanager.ResourceParameterBuilder;
-import com.delcyon.capo.xml.XPath;
 
 public class ResourceDocumentBuilder
 {
@@ -31,9 +30,9 @@ public class ResourceDocumentBuilder
 
     }
     
-    public ResourceDocument createDocument()
+    public ResourceDocument createDocument(ResourceControlElement resourceControlElement)
     {
-    	return  new ResourceDocument();
+    	return  new ResourceDocument(resourceControlElement);
     	
     }
     

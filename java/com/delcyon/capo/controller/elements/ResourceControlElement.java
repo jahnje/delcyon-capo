@@ -129,6 +129,7 @@ public class ResourceControlElement extends AbstractControl implements XPathFunc
 		resourceDocument = resourceDocumentBuilder.buildDocument(this);        
 		getParentGroup().putResourceElement(this);
 		getControlElementDeclaration().getParentNode().replaceChild(getControlElementDeclaration().getOwnerDocument().adoptNode(resourceDocument.getDocumentElement()),getControlElementDeclaration());
+		resourceDocument.setFullDocument(false);
 		return null;
 	}
 	

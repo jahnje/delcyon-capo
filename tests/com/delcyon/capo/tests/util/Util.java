@@ -13,6 +13,7 @@ import com.delcyon.capo.controller.Group;
 import com.delcyon.capo.controller.elements.SyncElement;
 import com.delcyon.capo.resourcemanager.ResourceDescriptor;
 import com.delcyon.capo.resourcemanager.ResourceDescriptor.Action;
+import com.delcyon.capo.resourcemanager.ResourceDescriptor.LifeCycle;
 import com.delcyon.capo.resourcemanager.ResourceManager;
 import com.delcyon.capo.resourcemanager.ResourceParameter;
 import com.delcyon.capo.resourcemanager.types.ContentMetaData;
@@ -108,7 +109,8 @@ public class Util
         Document diffDocument = xmlDiff.getDifferences(baseDocument, modDocument);
         
         //verify that root element of xml diff contains mod = base
-        
+        baseDocument.close(LifeCycle.EXPLICIT);
+        modDocument.close(LifeCycle.EXPLICIT);
         if (diffDocument.getDocumentElement().getAttributeNS(XMLDiff.XDIFF_NAMESPACE_URI, XMLDiff.XDIFF_ELEMENT_ATTRIBUTE_NAME).equals(XMLDiff.EQUALITY) == false)
         {
             XPath.dumpNode(diffDocument, System.out);

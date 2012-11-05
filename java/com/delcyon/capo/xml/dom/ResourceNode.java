@@ -7,7 +7,7 @@ public interface ResourceNode
 {
     public abstract ResourceDescriptor getResourceDescriptor();
     public abstract ResourceDescriptor getProxyedResourceDescriptor();
-    public abstract ResourceControlElement getResourceControlElement();
+    public abstract ResourceControlElement getResourceControlElement();   
     public abstract ResourceDocument getOwnerResourceDocument();
 
 }

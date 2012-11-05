@@ -249,6 +249,11 @@ public class JdbcResourceDescriptor extends AbstractResourceDescriptor
 	    
 	    contentMetaData = buildResourceMetaData(variableContainer,resourceParameters);
 	    
+	    if(table == true)
+        {                            
+            contentMetaData.setValue(Attributes.container,false);
+        }
+	    
 	    //if we're open then we're going to be running a new query
 	    if (getResourceState() == State.OPEN)
 	    {	
@@ -279,7 +284,7 @@ public class JdbcResourceDescriptor extends AbstractResourceDescriptor
 	        //see if we are running some sql against a table, or a DB
 	        if(table == true)
             {                
-                resultSet = statement.executeQuery(sql);
+                resultSet = statement.executeQuery(sql);                
             }
             //we're working with a DB, so give them the description
             else
@@ -457,6 +462,7 @@ public class JdbcResourceDescriptor extends AbstractResourceDescriptor
 		{
 		    sql = sql.substring(0, sql.length()-1)+")"+insertClause.substring(0,insertClause.length()-1)+")";
 		}
+		System.out.println(sql);
 		PreparedStatement preparedStatement = connection.prepareStatement(sql);
 		int index = 1;
 		for (Node node : cNamedNodeMap)
@@ -580,11 +586,10 @@ public class JdbcResourceDescriptor extends AbstractResourceDescriptor
 	@Override
 	public ResourceDescriptor getChildResourceDescriptor(ControlElement callingControlElement, String relativeURI) throws Exception
 	{
-	    advanceState(State.OPEN,null);	    
-	    JdbcResourceDescriptor jdbcResourceDescriptor = new JdbcResourceDescriptor();
-	    jdbcResourceDescriptor.connection = this.connection;
-	    jdbcResourceDescriptor.setResourceType(getResourceType());
-	    jdbcResourceDescriptor.setResourceURI(new ResourceURI(getResourceURI().getBaseURI()+"!"+relativeURI));
+	    advanceState(State.OPEN,null);
+	    ResourceURI childResourceURI = new ResourceURI(getResourceURI().getBaseURI()+"!"+relativeURI);
+	    JdbcResourceDescriptor jdbcResourceDescriptor = (JdbcResourceDescriptor) callingControlElement.getParentGroup().getResourceDescriptor(callingControlElement, childResourceURI.getResourceURIString());
+	    jdbcResourceDescriptor.connection = this.connection;	    
 	    jdbcResourceDescriptor.init(null, getDeclaringVariableContainer(), getLifeCycle(),isIterating(), ResourceParameterBuilder.getResourceParameters(callingControlElement.getControlElementDeclaration()));
 	    jdbcResourceDescriptor.setLocalName(relativeURI);
 	    jdbcResourceDescriptor.setResourceState(State.OPEN);

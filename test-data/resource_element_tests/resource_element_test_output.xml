@@ -1,19 +1,32 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<resource:testdb xmlns:resource="http://www.delcyon.com/capo/resource">
-   <testdb TABLE_NAME="SYSTEMS">
-      <SYSTEMS ID="capo.client.1" NAME="host1.local" OS="OSX">
-         <status lastConnectTime="1335193042006"/>
-         <server:identity xmlns:server="http://www.delcyon.com/capo-server">
-            <server:id name="MAC" value="00:e0:81:b0:14:7f"/>
-            <server:id name="hostname" value="bluejay.goodinassociates.com"/>
-         </server:identity>
-         <SYSTEM_SERVICE_ASC SERVICE_ID="1" SYSTEM_ID="capo.client.1">
-            <SERVICES ID="1" NAME="ssh"/>
-         </SYSTEM_SERVICE_ASC>
-         <SYSTEM_SERVICE_ASC SERVICE_ID="2" SYSTEM_ID="capo.client.1">
-            <SERVICES ID="2" NAME="syslog"/>
-         </SYSTEM_SERVICE_ASC>
-         <INTERFACES IP="10.10.4.242" MAC="00:e0:81:b0:14:7f" SYSTEM_ID="capo.client.1"/>
-      </SYSTEMS>
-   </testdb>
+<resource:testdb xmlns:resource="http://www.delcyon.com/capo/resource"
+   xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
+   xmlns:client="http://www.delcyon.com/capo-client"
+   xmlns:server="http://www.delcyon.com/capo-server">
+   <resource:jdbcTestResource>
+      <resource:systems>
+         <SYSTEMS ID="capo.client.1" NAME="host1.local" OS="OSX">
+            <status lastConnectTime="1335193042006"/>
+            <server:identity>
+               <server:id name="MAC" value="00:e0:81:b0:14:7f"/>
+               <server:id name="hostname" value="bluejay.goodinassociates.com"/>
+            </server:identity>
+            <resource:asc>
+               <SYSTEM_SERVICE_ASC SERVICE_ID="1" SYSTEM_ID="capo.client.1">
+                  <resource:services>
+                     <SERVICES ID="1" NAME="ssh"/>
+                  </resource:services>
+               </SYSTEM_SERVICE_ASC>
+               <SYSTEM_SERVICE_ASC SERVICE_ID="2" SYSTEM_ID="capo.client.1">
+                  <resource:services>
+                     <SERVICES ID="2" NAME="syslog"/>
+                  </resource:services>
+               </SYSTEM_SERVICE_ASC>
+            </resource:asc>
+            <resource:interfaces>
+               <INTERFACES IP="10.10.4.242" MAC="00:e0:81:b0:14:7f" SYSTEM_ID="capo.client.1"/>
+            </resource:interfaces>
+         </SYSTEMS>
+      </resource:systems>
+   </resource:jdbcTestResource>
 </resource:testdb>

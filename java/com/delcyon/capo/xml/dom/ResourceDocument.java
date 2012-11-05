@@ -11,8 +11,11 @@ import javax.xml.transform.dom.DOMSource;
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
 
+import com.delcyon.capo.CapoApplication;
+import com.delcyon.capo.controller.Group;
 import com.delcyon.capo.controller.elements.ResourceControlElement;
 import com.delcyon.capo.resourcemanager.ResourceDescriptor;
+import com.delcyon.capo.resourcemanager.ResourceDescriptor.LifeCycle;
 import com.delcyon.capo.resourcemanager.types.ContentMetaData;
 import com.delcyon.capo.xml.cdom.CDocument;
 import com.delcyon.capo.xml.cdom.CElement;
@@ -23,31 +26,52 @@ public class ResourceDocument extends CDocument implements ResourceNode
     private ResourceDescriptor resourceDescriptor;   
     private ResourceControlElement resourceControlElement = null;
     private boolean exportContentOnly = false;
+    private boolean fullDocument = true;
     
-    
-    public ResourceDocument()
+    private ResourceDocument() //serialization
     {
     	
     }
+    
+    public ResourceDocument(ResourceControlElement resourceControlElement)
+	{
+		this.resourceControlElement = resourceControlElement;
+	}
     
     public void setDocumentElement(ResourceElement documentElement)
     {
-    	
+  
     	this.resourceDescriptor = documentElement.getProxyedResourceDescriptor();
+    	if(getDocumentElement() != null)
+    	{
+    		removeChild(getDocumentElement());
+    	}
     	appendChild(documentElement);
     }
     
+    /** this is only used in testing as a convience method **/
     public ResourceDocument(ResourceDescriptor resourceDescriptor) throws Exception
     {
-       this.resourceDescriptor = resourceDescriptor;
-       appendChild( new ResourceElement(this,this,resourceDescriptor));
+    	Group group = new Group("resourceDocumentInternal", null, null, null);
+    	CElement resourceControlElementDeclaration = new CElement(CapoApplication.SERVER_NAMESPACE_URI, "server:resource");
+    	resourceControlElementDeclaration.setAttribute(ResourceControlElement.Attributes.lifeCycle, LifeCycle.EXPLICIT);
+    	ResourceControlElement resourceControlElement = new ResourceControlElement();
+    	resourceControlElement.init(resourceControlElementDeclaration, null, group, null);
+    	this.resourceControlElement = resourceControlElement;
+    	this.resourceDescriptor = resourceDescriptor;
+    	appendChild( new ResourceElement(this,this,resourceDescriptor));
        
     }
 
-    public ResourceDocument(ResourceElement documentResourceElement) throws Exception
-    {       
-       appendChild(documentResourceElement);
+    public void close(LifeCycle lifeCycle) throws Exception
+    {
+    	resourceControlElement.getParentGroup().closeResourceDescriptors(lifeCycle);
     }
+    
+//    public ResourceDocument(ResourceElement documentResourceElement) throws Exception
+//    {       
+//       appendChild(documentResourceElement);
+//    }
     
 //    public ResourceDocument(ResourceControlElement resourceControlElement) throws Exception
 //    {
@@ -64,7 +88,9 @@ public class ResourceDocument extends CDocument implements ResourceNode
 //    	resourceNodeList.add(documentElement);
 //    }
     
-    public void setContentOnly(boolean exportContentOnly)
+    
+
+	public void setContentOnly(boolean exportContentOnly)
     {
         this.exportContentOnly = exportContentOnly;        
     }
@@ -73,6 +99,16 @@ public class ResourceDocument extends CDocument implements ResourceNode
     {
         return exportContentOnly;
     }
+    
+    public void setFullDocument(boolean fullDocument)
+	{
+		this.fullDocument = fullDocument;
+	}
+    
+    public boolean isFullDocument()
+	{
+		return fullDocument;
+	}
     
     @Override
     public ResourceDescriptor getResourceDescriptor()
@@ -93,6 +129,11 @@ public class ResourceDocument extends CDocument implements ResourceNode
     }
     
     
+    public void setResourceControlElement(ResourceControlElement resourceControlElement)
+    {
+    	this.resourceControlElement = resourceControlElement;
+    	
+    }
     
    
 

@@ -344,6 +344,8 @@ public class CapoServer extends CapoApplication
 			}
 		}
 		
+		logger.log(Level.INFO, "Releaseing Resource Manager");
+		getDataManager().release();
 		logger.log(Level.INFO, "Removing Resource Manager");
         setDataManager(null);
 		

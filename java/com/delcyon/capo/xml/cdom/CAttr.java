@@ -26,6 +26,7 @@ import org.w3c.dom.TypeInfo;
 
 import com.delcyon.capo.util.ToStringControl;
 import com.delcyon.capo.util.ToStringControl.Control;
+import com.delcyon.capo.xml.cdom.CDOMEvent.EventType;
 
 /**
  * @author jeremiah
@@ -35,7 +36,9 @@ import com.delcyon.capo.util.ToStringControl.Control;
 public class CAttr extends CNode implements Attr
 {
     
-    @SuppressWarnings("unused")
+    private boolean isConstructing = true;
+
+	@SuppressWarnings("unused")
     protected CAttr(){}//reflection
     
     public CAttr(CElement parentNode, String localName, String value)
@@ -60,8 +63,22 @@ public class CAttr extends CNode implements Attr
         }
        
         setNodeValue(value);
+        isConstructing = false;
     }
 
+    @Override
+    protected CDOMEvent prepareEvent(EventType eventType, CNode sourceNode)
+    {
+    	if (isConstructing  == false)
+    	{
+    	return super.prepareEvent(eventType, sourceNode);
+    	}
+    	else
+    	{
+    		return null;
+    	}
+    }
+    
 //    @Override
 //    public String getNamespaceURI()
 //    {

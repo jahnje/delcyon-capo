@@ -610,6 +610,9 @@ public class CapoClient extends CapoApplication
 			CapoApplication.logger.log(Level.INFO,"Done Stopping Task Manager");			
 		}
 		
+		CapoApplication.logger.log(Level.INFO,"Releaseing Data Manager");	
+		getDataManager().release();
+		setDataManager(null);
 		
 		CapoApplication.logger.log(Level.INFO,"Done.");
 	}

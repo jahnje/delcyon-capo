@@ -10,6 +10,7 @@ import org.w3c.dom.Document;
 import com.delcyon.capo.CapoApplication;
 import com.delcyon.capo.CapoApplication.ApplicationState;
 import com.delcyon.capo.resourcemanager.ResourceDescriptor;
+import com.delcyon.capo.resourcemanager.ResourceDescriptor.LifeCycle;
 import com.delcyon.capo.resourcemanager.types.ContentMetaData;
 import com.delcyon.capo.resourcemanager.types.FileResourceType;
 import com.delcyon.capo.resourcemanager.types.ShellResourceDescriptor.Parameter;
@@ -123,7 +124,8 @@ public class ExternalTestServer
         Document diffDocument = xmlDiff.getDifferences(baseDocument, modDocument);
         //XPath.dumpNode(diffDocument, System.out);
         //verify that root element of xml diff contains mod = base
-        
+        baseDocument.close(LifeCycle.EXPLICIT);
+        modDocument.close(LifeCycle.EXPLICIT);
         if (diffDocument.getDocumentElement().getAttributeNS(XMLDiff.XDIFF_NAMESPACE_URI, XMLDiff.XDIFF_ELEMENT_ATTRIBUTE_NAME).equals(XMLDiff.EQUALITY) == false)
         {
         	XPath.dumpNode(diffDocument, System.out);

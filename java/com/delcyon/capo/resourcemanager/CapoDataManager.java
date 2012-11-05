@@ -54,4 +54,5 @@ public abstract class CapoDataManager
 
     public abstract ResourceDescriptor findDocumentResourceDescriptor(String documentName, String clientID, Preference directoryPreference) throws Exception;
     
+    public abstract void release() throws Exception;
 }

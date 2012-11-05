@@ -14,6 +14,7 @@ import com.delcyon.capo.CapoApplication;
 import com.delcyon.capo.controller.Group;
 import com.delcyon.capo.resourcemanager.ResourceDescriptor;
 import com.delcyon.capo.resourcemanager.ResourceParameter;
+import com.delcyon.capo.resourcemanager.ResourceDescriptor.LifeCycle;
 import com.delcyon.capo.resourcemanager.types.ContentMetaData;
 import com.delcyon.capo.resourcemanager.types.FileResourceType;
 import com.delcyon.capo.tests.util.TestCapoApplication;
@@ -77,7 +78,8 @@ public class SyncElementTest
         Document diffDocument = xmlDiff.getDifferences(baseDocument, modDocument);
         
         //verify that root element of xml diff contains mod = base
-        
+        baseDocument.close(LifeCycle.EXPLICIT);
+        modDocument.close(LifeCycle.EXPLICIT);
         if (diffDocument.getDocumentElement().getAttributeNS(XMLDiff.XDIFF_NAMESPACE_URI, XMLDiff.XDIFF_ELEMENT_ATTRIBUTE_NAME).equals(XMLDiff.EQUALITY) == false)
         {
         	XPath.dumpNode(diffDocument, System.out);
@@ -126,7 +128,8 @@ public class SyncElementTest
          xmlDiff.addIgnoreableAttribute(CapoApplication.RESOURCE_NAMESPACE_URI,ContentMetaData.Attributes.path.toString());
          xmlDiff.addIgnoreableAttribute(CapoApplication.RESOURCE_NAMESPACE_URI,ContentMetaData.Attributes.uri.toString());
          Document diffDocument = xmlDiff.getDifferences(baseDocument, modDocument);
-         
+         baseDocument.close(LifeCycle.EXPLICIT);
+         modDocument.close(LifeCycle.EXPLICIT);
          //verify that root element of xml diff contains mod != base
          //make sure things are differrent before we prune 
          if (diffDocument.getDocumentElement().getAttributeNS(XMLDiff.XDIFF_NAMESPACE_URI, XMLDiff.XDIFF_ELEMENT_ATTRIBUTE_NAME).equals(XMLDiff.INEQUALITY) == false)
@@ -156,7 +159,8 @@ public class SyncElementTest
          xmlDiff.addIgnoreableAttribute(null,ContentMetaData.Attributes.path.toString());
          xmlDiff.addIgnoreableAttribute(null,ContentMetaData.Attributes.uri.toString());
           diffDocument = xmlDiff.getDifferences(baseDocument, modDocument);
-         
+          baseDocument.close(LifeCycle.EXPLICIT);
+          modDocument.close(LifeCycle.EXPLICIT);
          //verify that root element of xml diff contains mod != base
          //make sure things are differrent before we prune 
          if (diffDocument.getDocumentElement().getAttributeNS(XMLDiff.XDIFF_NAMESPACE_URI, XMLDiff.XDIFF_ELEMENT_ATTRIBUTE_NAME).equals(XMLDiff.EQUALITY) == false)

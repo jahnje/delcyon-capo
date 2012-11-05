@@ -73,6 +73,16 @@ public class CDocument extends CNode implements Document
     }
 
     @Override
+    public Node removeChild(Node oldChild) throws DOMException
+    {
+    	if(oldChild.equals(documentElement))
+    	{
+    		documentElement = null;
+    	}
+    	return super.removeChild(oldChild);
+    }
+    
+    @Override
     public Node appendChild(Node newChild) throws DOMException
     {
         if(newChild instanceof CElement && documentElement == null)

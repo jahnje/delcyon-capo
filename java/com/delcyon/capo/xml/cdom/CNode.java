@@ -48,21 +48,22 @@ public abstract class CNode implements Node, ControlledClone
 
     @CloneControl(filter=Clone.exclude)
     @ToStringControl(control=Control.exclude)
-    private CNode parentNode;
+    protected CNode parentNode;
     
     @CloneControl(filter=Clone.exclude)
     @ToStringControl(control=Control.exclude)
-    private CDocument ownerDocument = null;
+    protected CDocument ownerDocument = null;
     
     @CloneControl(filter=Clone.exclude)
-    private Vector<CDOMEventListener> cdomEventListenerVector = new Vector<CDOMEventListener>();
+    protected Vector<CDOMEventListener> cdomEventListenerVector = new Vector<CDOMEventListener>();
     
-    private CNodeList nodeList = new CNodeList();
-    private CNamedNodeMap attributeList = new CNamedNodeMap();
-    private String nodeName = null;
-    private String nodeValue = null;
-    private String namespaceURI = null;
+    protected CNodeList nodeList = new CNodeList();
+    protected CNamedNodeMap attributeList = new CNamedNodeMap();
+    protected String nodeName = null;
+    protected String nodeValue = null;
+    protected String namespaceURI = null;
     
+    @CloneControl(filter=Clone.exclude)
     private transient CDOMEvent preparedEvent = null;
     
     
@@ -124,7 +125,7 @@ public abstract class CNode implements Node, ControlledClone
     	//remove prepared event
     	preparedEvent = null;
     	//walk local list of event listeners
-    	for (CDOMEventListener cdomEventListener : cdomEventListenerVector)
+    	for (CDOMEventListener cdomEventListener : getCDOMEventListeners())
 		{
 			cdomEventListener.processEvent(cdomEvent);
 			if(cdomEvent.isHandled())
@@ -142,7 +143,12 @@ public abstract class CNode implements Node, ControlledClone
     	
     }
     
-    public void addCDOMEventListener(CDOMEventListener eventListener)
+    public Vector<CDOMEventListener> getCDOMEventListeners()
+	{
+		return cdomEventListenerVector;
+	}
+
+	public void addCDOMEventListener(CDOMEventListener eventListener)
     {
     	cdomEventListenerVector.add(eventListener);
     }
@@ -396,6 +402,10 @@ public abstract class CNode implements Node, ControlledClone
     {        
        if(nodeList.remove(oldChild) == true)
        {
+    	   if(oldChild instanceof CNode)
+    	   {
+    		   ((CNode) oldChild).setParent(null);
+    	   }
     	   cascadeDOMEvent(prepareEvent(EventType.DELETE, this));
            return oldChild;    
        }

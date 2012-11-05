@@ -16,16 +16,17 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 package com.delcyon.capo.xml.dom;
 
-import java.net.URISyntaxException;
 import java.util.HashMap;
 import java.util.Vector;
 
 import org.w3c.dom.Attr;
 import org.w3c.dom.Element;
 import org.w3c.dom.NamedNodeMap;
+import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
 import com.delcyon.capo.CapoApplication;
+import com.delcyon.capo.controller.Group;
 import com.delcyon.capo.controller.VariableContainer;
 import com.delcyon.capo.controller.elements.ResourceControlElement;
 import com.delcyon.capo.resourcemanager.ResourceDescriptor;
@@ -51,7 +52,7 @@ public class ResourceDeclarationElement
 		child
 	}
 	
-	
+	public static final String DECLARATION_PATH_ATTRIBUTE_NAME = "declarationPath";
 	private Element declaringElement = null;
 	private ResourceDescriptor resourceDescriptor;
 	private String localName = null;
@@ -59,12 +60,14 @@ public class ResourceDeclarationElement
 	private Vector<ResourceDeclarationElement> childResourceDeclarationElementVector = new Vector<ResourceDeclarationElement>();
 	private Vector<ResourceElement> cacheVector = null;
 	private HashMap<String, Vector<ResourceElement>> joinHashMap = null;
-	private ResourceDeclarationElement parent; 
-	
+	private ResourceDeclarationElement parent;
+	private ResourceElement containerResourceElement; 
+	private String declarationPath = null;
+	private Group parentGroup = null;
 	
 	public ResourceDeclarationElement(ResourceControlElement resourceControlElement) throws Exception
 	{
-		
+		this.parentGroup = resourceControlElement.getParentGroup();
 		this.resourceControlElement = resourceControlElement;
 		this.declaringElement = resourceControlElement.getControlElementDeclaration();
 		if(declaringElement.hasAttribute("name"))
@@ -81,10 +84,11 @@ public class ResourceDeclarationElement
 		{
 			childResourceDeclarationElementVector.add(new ResourceDeclarationElement(this,(Element)childNodeList.item(index)));
 		}
+		this.declarationPath = XPath.getXPath(declaringElement).hashCode()+"";
 	}
 
 	
-	public ResourceDeclarationElement(ResourceDeclarationElement parent,Element resourceDeclarationElement) throws Exception
+	private ResourceDeclarationElement(ResourceDeclarationElement parent,Element resourceDeclarationElement) throws Exception
 	{
 		this.parent = parent;
 		this.resourceControlElement = parent.resourceControlElement;
@@ -103,8 +107,25 @@ public class ResourceDeclarationElement
 		{
 			childResourceDeclarationElementVector.add(new ResourceDeclarationElement(this,(Element)childNodeList.item(index)));
 		}
+		this.declarationPath = XPath.getXPath(declaringElement).hashCode()+"";
 	}
 
+	
+	private Group getParentGroup() throws Exception
+	{
+		if(this.parentGroup == null && parent != null)
+		{
+			return parent.getParentGroup();
+		}
+		else if (parentGroup != null)
+		{
+			return parentGroup;
+		}
+		else
+		{
+			throw new Exception("ResourceDeclaration has now parent or parent group");
+		}
+	}
 	
 	private void loadResourceDescriptor() throws Exception
 	{
@@ -113,7 +134,7 @@ public class ResourceDeclarationElement
 		//if we have a URI, then we can go ahead a load a resourceDescriptor for this element 
         if(attributeList.getNamedItem("uri") != null)
         {
-            this.resourceDescriptor = CapoApplication.getDataManager().getResourceDescriptor(resourceControlElement, attributeList.getNamedItem("uri").getNodeValue());
+            this.resourceDescriptor = resourceControlElement.getParentGroup().getResourceDescriptor(resourceControlElement, attributeList.getNamedItem("uri").getNodeValue());
             
             this.resourceControlElement.setResourceDescriptor(resourceDescriptor);
         }
@@ -130,28 +151,14 @@ public class ResourceDeclarationElement
       //sometimes we may have variables that need to be filled out later, so we can't init or open this yet.  
         if(declaringElement.getAttribute("dynamic").equalsIgnoreCase("true") == false)
         {
-            try
-            {
-        	resourceDescriptor.init(this,resourceControlElement.getParentGroup(), LifeCycle.EXPLICIT,true,ResourceParameterBuilder.getResourceParameters(resourceControlElement.getControlElementDeclaration()));
+        	resourceDescriptor.init(this,resourceControlElement.getParentGroup(), LifeCycle.GROUP,true,ResourceParameterBuilder.getResourceParameters(resourceControlElement.getControlElementDeclaration()));
         	resourceDescriptor.open(resourceControlElement.getParentGroup(), ResourceParameterBuilder.getResourceParameters(resourceControlElement.getControlElementDeclaration()));
-            } catch (URISyntaxException syntaxException)
-            {
-                System.out.println(syntaxException);
-            }
+
         }        
-//        else // this is a dynamic request
-//        {
-//            NodeList childResourceElementDeclarationNodeList =  XPath.selectNSNodes(resourceControlElement.getControlElementDeclaration(), "resource:child", "resource="+CapoApplication.RESOURCE_NAMESPACE_URI);
-//            for(int index = 0; index < childResourceElementDeclarationNodeList.getLength(); index++)
-//            {
-//                ResourceControlElement childResourceControlElement = new ResourceControlElement();
-//                //XXX This is a hack! we are setting the parent group to null, so that it won't process any of the attributes that might have vars.
-//                childResourceControlElement.init((Element) childResourceElementDeclarationNodeList.item(index), resourceControlElement, null, resourceControlElement.getControllerClientRequestProcessor());
-//                //XXX then we set it back here, so the we still have the full var stack. This would all be fine until we change the init method in the AbstractControl class. 
-//                childResourceControlElement.setParentGroup(resourceControlElement.getParentGroup());
-//                nodeList.add(new ResourceElement(this, childResourceControlElement));
-//            }
-//        }
+        else // this is a dynamic request
+        {
+        	//so just ignore it, as it will get loaded later.
+        }
 	}
 	
 	public ResourceDescriptor getResourceDescriptor()
@@ -164,27 +171,79 @@ public class ResourceDeclarationElement
 		return declaringElement;
 	}
 	
-
+	private String getLocalName()
+	{
+		return this.localName ;
+	}
 	
 	public ResourceElement buildXML(VariableContainer variableContainer, ResourceParameter... resourceParameters) throws Exception
 	{
-		ResourceDocument resourceDocument = new ResourceDocument();
-		
+		ResourceDocument resourceDocument = new ResourceDocument(resourceControlElement);
+		resourceDocument.setFullDocument(true);
+		resourceDocument.setSilenceEvents(true);		
 		ResourceElement rootResourceElement = new ResourceElement(resourceDocument,resourceDocument,resourceDescriptor);
+		rootResourceElement.setResourceAttribute(DECLARATION_PATH_ATTRIBUTE_NAME, declarationPath);
 		resourceDocument.setDocumentElement(rootResourceElement);
 		CDocument testDocument = (CDocument) CapoApplication.getDocumentBuilder().newDocument();
 		testDocument.setSilenceEvents(true);
 		Element testRootElement = testDocument.createElement(getLocalName());
 		testDocument.appendChild(testRootElement);
-		loadCacheVectors(true,rootResourceElement,testRootElement, variableContainer, resourceParameters);
+		loadCacheVectors(true,rootResourceElement,testDocument, variableContainer, resourceParameters);
 		buildXML(rootResourceElement,testRootElement, variableContainer, resourceParameters);
+		
+		
+		applyResourceContainerGrouping(resourceDocument);
+		
+		
+		resourceDocument.setSilenceEvents(false);
 		return rootResourceElement;
 	}
 	
-	private String getLocalName()
+	private void applyResourceContainerGrouping(ResourceDocument document) throws Exception
 	{
-		return this.localName ;
+		if (containerResourceElement != null)
+		{			
+			NodeList nodeList = XPath.selectNodes(document, "//*[@"+DECLARATION_PATH_ATTRIBUTE_NAME+"="+declarationPath+" and @container = 'false' and not(../@"+DECLARATION_PATH_ATTRIBUTE_NAME+"="+declarationPath+")]");
+			HashMap<Node, Node> parentNodeHashMap = new HashMap<Node, Node>();
+			for(int index = 0; index < nodeList.getLength(); index++)
+			{
+				ResourceElement resourceElement = (ResourceElement) nodeList.item(index);
+				Node parentNode = resourceElement.getParentNode();
+				ResourceElement localContainerElement = null;
+				if(parentNodeHashMap.containsKey(parentNode) == false)
+				{
+					localContainerElement = (ResourceElement) containerResourceElement.cloneNode(true);
+					parentNodeHashMap.put(parentNode, localContainerElement);
+					if(parentNode instanceof ResourceDocument)
+					{
+						((ResourceDocument) parentNode).setDocumentElement(localContainerElement);
+					}
+					else
+					{
+						parentNode.appendChild(localContainerElement);
+					}
+				}
+				else
+				{
+					localContainerElement = (ResourceElement) parentNodeHashMap.get(parentNode);
+				}
+				localContainerElement.appendChild(resourceElement);
+			}
+			
+		}
+		for (ResourceDeclarationElement childResourceDeclarationElement : childResourceDeclarationElementVector)
+		{
+			childResourceDeclarationElement.applyResourceContainerGrouping(document);
+		}
+		
+		
+
+		
+		
 	}
+
+
+	
 		
 	
 	/**
@@ -194,7 +253,7 @@ public class ResourceDeclarationElement
 	 * @param resourceParameters
 	 * @throws Exception
 	 */
-	private void loadCacheVectors(boolean recurse,ResourceElement parentResourceElement,Element parentElement,VariableContainer variableContainer, ResourceParameter... resourceParameters) throws Exception
+	private void loadCacheVectors(boolean recurse,ResourceElement parentResourceElement,CDocument testDocument,VariableContainer variableContainer, ResourceParameter... resourceParameters) throws Exception
 	{
 		//implement some caching, since we'll always run the same query, with the same rules for each resourceDescriptor.
         //this isn't everything that can be, done but will hold us for a while
@@ -212,18 +271,25 @@ public class ResourceDeclarationElement
         }
         else if (cacheVector == null)
         {
+        	ResourceDocument resourceDocument = parentResourceElement.getOwnerResourceDocument();
             cacheVector = new Vector<ResourceElement>();
             HashMap<String, Vector<ResourceElement>> joinHashMap = new HashMap<String, Vector<ResourceElement>>();
+            if (resourceDescriptor.getResourceMetaData(null).isContainer())
+            {
+            	//we need to keep this around as a parent, for any content
+            	this.containerResourceElement = new ResourceElement(resourceDocument, localName, null, resourceDescriptor.getResourceMetaData(null));
+            	this.containerResourceElement.setResourceAttribute(DECLARATION_PATH_ATTRIBUTE_NAME,declarationPath);
+            }
             //iterate through all of the iterable children
             while(resourceDescriptor.next(variableContainer, resourceParameters))
             {
                 //get the result xml from the actual resource descriptor
-            	CElement readXMLElement = (CElement) parentElement.getOwnerDocument().adoptNode(resourceDescriptor.readXML(variableContainer, resourceParameters));                
-                ResourceDocument resourceDocument = parentResourceElement.getOwnerResourceDocument();
+            	CElement readXMLElement = (CElement) testDocument.adoptNode(resourceDescriptor.readXML(variableContainer, resourceParameters));                
+               
                 ResourceElement readResourceElement = resourceDocument.createResourceElement(getLocalName(),readXMLElement,resourceDescriptor.getContentMetaData(variableContainer, resourceParameters));
                 //readResourceElement.setResourceDescriptor(resourceDescriptor); //don't do this, will fail on cloning
                 readResourceElement.setAttribute("name", getLocalName());
-                //TODO convert to ResourceElement
+                readResourceElement.setResourceAttribute(DECLARATION_PATH_ATTRIBUTE_NAME,declarationPath);
                 cacheVector.add(readResourceElement);
                
                 String key = getHashJoinKey(KeyType.child,readXMLElement, declaringElement);
@@ -248,30 +314,27 @@ public class ResourceDeclarationElement
         	//childResourceDeclarationElementVector
         	for (ResourceDeclarationElement childResourceDeclarationElement : childResourceDeclarationElementVector)
 			{
-				childResourceDeclarationElement.loadCacheVectors(true,parentResourceElement,parentElement, variableContainer, resourceParameters);
+				childResourceDeclarationElement.loadCacheVectors(true,parentResourceElement,testDocument, variableContainer, resourceParameters);
 			}        	
         }
 	}
 	
 	/**
 	 * This build our xml document by running the results of the loadCacheVectors method, against the resource element document.
-	 * @param parentElement - element to append to
+	 * @param parentTestElement - element to append to
 	 * @param variableContainer
 	 * @param resourceParameters
 	 * @return true if children were added to parent element
 	 * @throws Exception
 	 */
-	private boolean buildXML(ResourceElement parentResourceElement,Element parentElement, VariableContainer variableContainer, ResourceParameter... resourceParameters) throws Exception
+	private boolean buildXML(ResourceElement parentResourceElement,Element parentTestElement, VariableContainer variableContainer, ResourceParameter... resourceParameters) throws Exception
 	{
 		//System.err.println("======================================START==="+getLocalName()+"===============================");
 		//XPath.dumpNode(parentElement.getOwnerDocument(), System.err);
 		
-		
-		//get the declared resourceElement children. This is used to define our structure of what we are looking for
-        //NodeList declaringResourceElementChildrenNodeList = declaringElement.getChildNodes();
-	        
         
         boolean isDynamic = false;
+        //=====================START DYNAMIC CACHE VECTOR=======================================================
         if(getJoinHashMap() == null && declaringElement.getAttribute("dynamic").equalsIgnoreCase("true"))
         {
         	isDynamic = true;
@@ -283,7 +346,7 @@ public class ResourceDeclarationElement
         		Attr attribute = (Attr) attributeNamedNodeMap.item(index);
         		if(attribute.getLocalName().matches("(dynamic)|(uri)|(name)|(path)|(joinType)") == false)
         		{
-        			variableContainerWrapper.setVar(attribute.getLocalName(), XPath.selectSingleNodeValue(parentElement, attribute.getValue()));
+        			variableContainerWrapper.setVar(attribute.getLocalName(), XPath.selectSingleNodeValue(parentTestElement, attribute.getValue()));
         		}
         		else if(attribute.getLocalName().matches("uri") == true)
         		{
@@ -297,23 +360,22 @@ public class ResourceDeclarationElement
         		uri = variableContainerWrapper.processVars(uri);
         		//replace our current resource descriptor with new resource descriptor
         		resourceDescriptor = CapoApplication.getDataManager().getResourceDescriptor(resourceControlElement, uri); //WE may want this to be ResouceDeclarationElement, and not parent
-               
-        		//declaringResourceElement.getResourceControlElement().setResourceDescriptor(resourceDescriptor);
             }
         	
         	resourceDescriptor.init(this,variableContainerWrapper, LifeCycle.EXPLICIT,true,ResourceParameterBuilder.getResourceParameters(declaringElement));
         	resourceDescriptor.open(variableContainerWrapper, ResourceParameterBuilder.getResourceParameters(declaringElement));
         	
-        	loadCacheVectors(false,parentResourceElement,parentElement, variableContainerWrapper, resourceParameters);
+        	loadCacheVectors(false,parentResourceElement,(CDocument) parentTestElement.getOwnerDocument(), variableContainerWrapper, resourceParameters);
         	//done, so reset everything
         	resourceDescriptor = originalResourceDescriptor;
-        	//declaringResourceElement.getResourceControlElement().setResourceDescriptor(originalResourceDescriptor);
+        	
         }
+        //=====================END DYNAMIC CACHE VECTOR=======================================================
         
         boolean hasChildrenAdded = false;
 
         //get the expected key for this element's parents, now that we have them 
-        String parentJoinResultClause = getHashJoinKey(KeyType.parent,parentElement, declaringElement);
+        String parentJoinResultClause = getHashJoinKey(KeyType.parent,parentTestElement, declaringElement);
         if(getJoinHashMap() != null)
         {
         	Vector<ResourceElement> matchingResultVector = getJoinHashMap().get(parentJoinResultClause);
@@ -321,7 +383,7 @@ public class ResourceDeclarationElement
 
 
         	//The first element in the tree is always bad, so process against everything
-        	if(parentElement.equals(parentElement.getOwnerDocument().getDocumentElement()))
+        	if(parentTestElement.equals(parentTestElement.getOwnerDocument().getDocumentElement()))
         	{
         		matchingResultVector = getCacheVector();
         	}

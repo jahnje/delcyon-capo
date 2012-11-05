@@ -25,6 +25,8 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.w3c.dom.TypeInfo;
 
+import com.delcyon.capo.controller.elements.ResourceControlElement.Attributes;
+import com.delcyon.capo.resourcemanager.ResourceDescriptor.LifeCycle;
 import com.delcyon.capo.util.EqualityProcessor;
 import com.delcyon.capo.util.ToStringControl;
 import com.delcyon.capo.util.ToStringControl.Control;
@@ -336,5 +338,10 @@ public class CElement extends CNode implements Element
         Thread.dumpStack();
         throw new UnsupportedOperationException();
     }
+
+	public void setAttribute(Enum name, Enum value)
+	{
+		setAttribute(name.toString(), value.toString());		
+	}
 
 }

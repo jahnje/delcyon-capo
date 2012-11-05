@@ -26,6 +26,7 @@ import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 
 import com.delcyon.capo.resourcemanager.ResourceDescriptor;
+import com.delcyon.capo.resourcemanager.ResourceDescriptor.LifeCycle;
 import com.delcyon.capo.resourcemanager.types.FileResourceType;
 import com.delcyon.capo.tests.util.TestServer;
 import com.delcyon.capo.tests.util.Util;
@@ -59,7 +60,8 @@ public class ResourceDocumentTest
         ResourceDescriptor resourceDescriptor = fileResourceType.getResourceDescriptor("server");
         
         ResourceDocumentBuilder documentBuilder = new ResourceDocumentBuilder();
-        Document document = documentBuilder.buildDocument(resourceDescriptor);
+        ResourceDocument document = (ResourceDocument) documentBuilder.buildDocument(resourceDescriptor);
+        document.close(LifeCycle.EXPLICIT);        
        XPath.dumpNode(document, System.out);
        String xpath ="/file:server/file:clients/*[matches(local-name(),'cli')]/file:identity.xml/server:identity/*"; 
         NodeList nodeList = XPath.selectNSNodes(document, xpath,"file=http://www.delcyon.com/capo/resource/file","server=http://www.delcyon.com/capo-server");///file:capo/file:server/file:clients/*/*/server:id[@name = 'hostname']/@value");
