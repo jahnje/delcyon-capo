@@ -82,7 +82,7 @@ public class CapoClient extends CapoApplication
 	public enum Preferences implements Preference
 	{
 		
-		@PreferenceInfo(arguments={"boolean"}, defaultValue="false", description="Run The Capo Client as a service [true|false] default is false", longOption="CLIENT_AS_SERVICE", option="CLIENT_AS_SERVICE")
+		@PreferenceInfo(arguments={"boolean"}, defaultValue="true", description="Run The Capo Client as a service [true|false] default is true", longOption="CLIENT_AS_SERVICE", option="CLIENT_AS_SERVICE")
 		CLIENT_AS_SERVICE,
 		@PreferenceInfo(arguments={"clientID"}, defaultValue="capo.client.0", description="ID that this server will use when communicating with servers", longOption="CLIENT_ID", option="CLIENT_ID")
 		CLIENT_ID,
@@ -220,8 +220,8 @@ public class CapoClient extends CapoApplication
 	{
 		start();
 		//keep this thread running until the client thread is ready. 
-		while(getApplicationState().ordinal() <= ApplicationState.RUNNING.ordinal())
-		{
+		while(getApplicationState().ordinal() < ApplicationState.RUNNING.ordinal())
+		{		   
 			Thread.sleep(500);			
 		}		
 	}
@@ -614,7 +614,7 @@ public class CapoClient extends CapoApplication
 		getDataManager().release();
 		setDataManager(null);
 		
-		CapoApplication.logger.log(Level.INFO,"Done.");
+		CapoApplication.logger.log(Level.INFO,"Done.");		
 	}
 	
 	
