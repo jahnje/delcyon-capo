@@ -185,7 +185,8 @@ public abstract class CapoApplication extends ContextThread implements WrapperLi
     }
 	
 	protected void setApplicationState(ApplicationState applicationState)
-	{
+	{	    
+	    logger.log(Level.INFO, applicationState.toString());
 	    this.applicationState = applicationState;
 	}
 	

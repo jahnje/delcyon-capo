@@ -85,8 +85,10 @@ public class TaskManagerThread extends ContextThread
         DEFAULT_CLIENT_SYNC_INTERVAL,
         @PreferenceInfo(arguments={"action"}, defaultValue="DELETE", description="What to do when a task is considered orphaned (DELETE|IGNORE)", longOption="TASK_DEFAULT_ORPHAN_ACTION", option="TASK_DEFAULT_ORPHAN_ACTION")
         TASK_DEFAULT_ORPHAN_ACTION,
+        @PreferenceInfo(arguments={"boolean"}, defaultValue="true", description="When shutting down the client. Controls if we want a hard exit, or controlled. Testing wants a hard exit. [true|false] default is false", longOption="QUICK_SHUTDOWN", option="QUICK_SHUTDOWN",location=Location.CLIENT)
+		QUICK_SHUTDOWN,
 		@PreferenceInfo(arguments={"ms"}, defaultValue="10000", description="Interval at witch overall task manager thread runs", longOption="TASK_INTERVAL", option="TASK_INTERVAL")
-		TASK_INTERVAL;
+        TASK_INTERVAL;
 		
 		@Override
 		public String[] getArguments()
@@ -167,12 +169,12 @@ public class TaskManagerThread extends ContextThread
 				
 				if (clientAsServiceValue != null && clientAsServiceValue.equalsIgnoreCase("true"))
 				{
-				    CapoApplication.logger.log(Level.INFO, "Running CapoClient as a service");
+				    CapoApplication.logger.log(Level.INFO, "Running CapoClient as a service");				    
 					runAsService = true;
 				}
 				else
 				{
-				    CapoApplication.logger.log(Level.INFO, "Running CapoClient once");
+				    CapoApplication.logger.log(Level.INFO, "Running CapoClient in Once NON-SERIVCE mode. See "+CapoClient.Preferences.CLIENT_AS_SERVICE+" preference.");
 					runAsService = false;
 				}
 			}
@@ -625,7 +627,17 @@ public class TaskManagerThread extends ContextThread
 			}
 			
 		}
+		
 		this.taskManagerState = ApplicationState.STOPPED;
+		//we're the last man standing, if we're not a service, so let the wrapper manager know to shutdown. 
+		//This is a little cleaner than just exiting.
+		//We DON'T want to do this if we are testing, as it will kill the JVM
+		if(runAsService == false && CapoApplication.getConfiguration().getBooleanValue(Preferences.QUICK_SHUTDOWN) == false)
+		{
+		    //execute controlled shutdown
+		    WrapperManager.stopAndReturn(0);
+		}
+        
 	}
 	
 	private NodeList loadModule(NodeList tasksNodeList, Document taskManagerDocument) throws Exception
