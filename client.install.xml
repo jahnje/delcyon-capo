@@ -38,5 +38,6 @@
     <copy if="fn:matches('${os.name}','(?i)Linux') and '${os.arch}' = 'amd64'" src="lib/libwrapper-linux-x86-64.so" dest="${install.dir}/lib/libwrapper-linux-x86-64.so" chmod="+x"/>
     <copy if="fn:matches('${os.name}','(?i)Linux') and '${os.arch}' = 'amd64'" src="bin/wrapper-linux-x86-64" dest="${install.dir}/bin/wrapper-linux-x86-64" chmod="+x"/>
     <CopyOtherFiles  dest="concat('${install.dir}/',@dest)"/>          
-    <shellcommand name="test.cmd" exec="uptime" if="test.cmd.prop"/>
+    <shellcommand name="startup.cmd" exec="ln -s ${install.dir}/bin/capo-client.sh /etc/rc.d/init.d/capo-client" if="fn:matches('${os.name}','(?i)Linux')"/>
+    <shellcommand name="logdir.cmd" exec="mkdir ${install.dir}/logs" if="fn:matches('${os.name}','(?i)Linux')"/>
 </install>
