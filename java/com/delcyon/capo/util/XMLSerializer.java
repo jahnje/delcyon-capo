@@ -22,7 +22,6 @@ import java.lang.reflect.Modifier;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -34,11 +33,6 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
-
-import com.delcyon.capo.CapoApplication;
-import com.delcyon.capo.annotations.DefaultDocumentProvider;
-
-import sun.management.StackTraceElementCompositeData;
 
 /**
  * @author jeremiah
