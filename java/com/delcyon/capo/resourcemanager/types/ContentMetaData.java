@@ -38,7 +38,8 @@ public interface ContentMetaData
 		container,
 		lastModified,
 		path, 
-		uri
+		uri,
+		MD5
 	}
 
 	public enum Parameters {

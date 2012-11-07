@@ -52,7 +52,7 @@ public class FileResourceContentMetaData extends AbstractContentMetaData
 	@Override
 	public Attributes[] getAdditionalSupportedAttributes()
 	{
-		return new Attributes[]{Attributes.exists,Attributes.executable,Attributes.readable,Attributes.writeable,Attributes.container,Attributes.lastModified};
+		return new Attributes[]{Attributes.exists,Attributes.executable,Attributes.readable,Attributes.writeable,Attributes.container,Attributes.lastModified,Attributes.MD5};
 	}
 
 	
