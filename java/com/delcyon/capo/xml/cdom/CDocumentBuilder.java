@@ -36,10 +36,10 @@ import org.xml.sax.SAXException;
  */
 public class CDocumentBuilder extends DocumentBuilder  
 {
-
+   
     private EntityResolver entityResolver;
     private ErrorHandler errorHandler;
-
+    private static final SAXParserFactory saxParserFactory = SAXParserFactory.newInstance();
     /* (non-Javadoc)
      * @see javax.xml.parsers.DocumentBuilder#parse(org.xml.sax.InputSource)
      */
@@ -47,9 +47,9 @@ public class CDocumentBuilder extends DocumentBuilder
     public Document parse(InputSource is) throws SAXException, IOException
     {
         //System.setProperty("javax.xml.parsers.SAXParserFactory", "com.delcyon.capo.xml.cdom.CSAXParserFactory");
-        String systemSAXParserFactoryName = System.getProperty("javax.xml.parsers.SAXParserFactory");
-        System.clearProperty("javax.xml.parsers.SAXParserFactory");
-        SAXParserFactory saxParserFactory = SAXParserFactory.newInstance();
+//        String systemSAXParserFactoryName = System.getProperty("javax.xml.parsers.SAXParserFactory");
+//        System.clearProperty("javax.xml.parsers.SAXParserFactory");
+        //SAXParserFactory saxParserFactory = SAXParserFactory.newInstance();
         saxParserFactory.setNamespaceAware(true);
         
         CDOMHandler cdomHandler = new CDOMHandler(entityResolver,errorHandler);
