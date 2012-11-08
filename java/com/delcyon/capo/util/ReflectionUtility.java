@@ -28,6 +28,7 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Set;
 import java.util.Vector;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -39,7 +40,7 @@ import com.delcyon.capo.util.ToStringControl.Control;
  */
 public class ReflectionUtility
 {
-
+    private static volatile ConcurrentHashMap<Class, Method[]> systemClassDeclaredMethodsHashMap = new ConcurrentHashMap<Class, Method[]>();
 	public static final String DEFAULT_DATE_FORMAT = "MM/dd/yyyy";
 	public static final String DEFAULT_DATE_TIME_FORMAT = "MM/dd/yyyy HH:mm";
 
@@ -229,7 +230,16 @@ public class ReflectionUtility
 
         for (Class clazz : classVector)
         {
-            Method[] methods = clazz.getDeclaredMethods();
+            Method[] methods = null;
+            if(systemClassDeclaredMethodsHashMap.containsKey(clazz))
+            {
+                methods = systemClassDeclaredMethodsHashMap.get(clazz);
+            }
+            else
+            {
+                methods = clazz.getDeclaredMethods();
+                systemClassDeclaredMethodsHashMap.put(clazz,methods);
+            }
             for (Method method : methods)
             {
                 methodVector.add(method);

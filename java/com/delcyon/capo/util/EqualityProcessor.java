@@ -10,6 +10,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.Vector;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.w3c.dom.Element;
 
@@ -20,6 +21,7 @@ import com.delcyon.capo.util.CloneControl.Clone;
 
 public abstract class EqualityProcessor {
 
+    private static volatile ConcurrentHashMap<Integer, Object> systemFieldCloneControlHashMap = new ConcurrentHashMap<Integer, Object>();
 	/**
 	 * Compares to objects to see if they are equal. It also does null comparisons
 	 * @param object1
@@ -102,12 +104,33 @@ public abstract class EqualityProcessor {
 				if (Modifier.isStatic(field.getModifiers()) == false)
 				{
 					field.setAccessible(true);
-
-					CloneControl fieldToStringControl = field.getAnnotation(CloneControl.class);
-					boolean forceInclude = false;
-					if(fieldToStringControl != null)
+					
+					CloneControl fieldCloneControl = null;
+					Integer fieldID = field.hashCode();
+					if(systemFieldCloneControlHashMap.containsKey(fieldID))
 					{
-						if(fieldToStringControl.filter() == Clone.exclude)
+					    if(systemFieldCloneControlHashMap.get(fieldID) instanceof CloneControl)
+					    {
+					        fieldCloneControl = (CloneControl) systemFieldCloneControlHashMap.get(fieldID);
+					    }
+					}
+					else
+					{
+					    fieldCloneControl = field.getAnnotation(CloneControl.class);
+					    if(fieldCloneControl != null)
+					    {
+					        systemFieldCloneControlHashMap.put(fieldID, fieldCloneControl);
+					    }
+					    else
+					    {
+					        systemFieldCloneControlHashMap.put(fieldID, fieldID);
+					    }
+					}
+					
+					boolean forceInclude = false;
+					if(fieldCloneControl != null)
+					{
+						if(fieldCloneControl.filter() == Clone.exclude)
 						{
 							continue;    
 						}
