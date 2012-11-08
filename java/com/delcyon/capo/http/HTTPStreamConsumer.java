@@ -18,12 +18,18 @@ package com.delcyon.capo.http;
 
 import java.io.BufferedInputStream;
 import java.io.File;
+import java.io.IOException;
 import java.io.OutputStream;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.logging.Level;
 
 import com.delcyon.capo.CapoApplication;
+import com.delcyon.capo.Configuration;
+import com.delcyon.capo.CapoApplication.Location;
 import com.delcyon.capo.Configuration.PREFERENCE;
+import com.delcyon.capo.annotations.DirectoyProvider;
 import com.delcyon.capo.datastream.StreamProcessor;
 import com.delcyon.capo.datastream.StreamProcessorProvider;
 import com.delcyon.capo.datastream.StreamUtil;
@@ -37,8 +43,11 @@ import com.delcyon.capo.server.CapoServer;
  * @author jeremiah
  */
 @StreamProcessorProvider(streamIdentifierPatterns = { "GET .*","POST .*","PUT .*" })
+@DirectoyProvider(preferenceName="WEB_DIR",preferences=Configuration.PREFERENCE.class,location=Location.SERVER)
 public class HTTPStreamConsumer implements StreamProcessor
 {
+    private static final byte[] messageBoundryPattern = new String("\r\n\r\n").getBytes();
+    
 	@Override
 	public void init(HashMap<String, String> sessionHashMap) throws Exception
 	{
@@ -49,38 +58,68 @@ public class HTTPStreamConsumer implements StreamProcessor
 	@Override
 	public void processStream(BufferedInputStream bufferedInputStream, OutputStream outputStream) throws Exception
 	{
-		byte[] buffer = new byte[CapoApplication.getConfiguration().getIntValue(PREFERENCE.BUFFER_SIZE)];
-        int bytesRead = 0;
-        while (bytesRead >= 0)
-        {
-            bytesRead = bufferedInputStream.read(buffer);
-        }
-		
-        
-		SimpleHttpRequest request = new SimpleHttpRequest(new String(buffer));
+	    byte[] buffer = new byte[CapoApplication.getConfiguration().getIntValue(PREFERENCE.BUFFER_SIZE)];
 
-		SimpleHttpResponse response = new SimpleHttpResponse();
-		
-		String relativePath = CapoApplication.getConfiguration().getValue(PREFERENCE.CAPO_DIR)+File.separator+CapoApplication.getConfiguration().getValue(PREFERENCE.UPDATES_DIR)+File.separator+request.getPath();
-		ResourceDescriptor fileResourceDescriptor = CapoApplication.getDataManager().getResourceDescriptor(null, relativePath);
-		fileResourceDescriptor.addResourceParameters(null, new ResourceParameter(FileResourceType.Parameters.PARENT_PROVIDED_DIRECTORY,PREFERENCE.UPDATES_DIR,Source.CALL));
-		
-		
-		if (fileResourceDescriptor.getResourceMetaData(null).exists() == true && fileResourceDescriptor.getResourceMetaData(null).isReadable() == true)
-		{
-			response.setHeader("Content-Length", fileResourceDescriptor.getResourceMetaData(null).getLength()+"");
-			response.setHeader("Content-Type", "application/octet-stream");
-			outputStream.write(response.getBytes());			
-			StreamUtil.readInputStreamIntoOutputStream(fileResourceDescriptor.getInputStream(null), outputStream);
-		}
-		else
-		{
-			response.setResponseCode(404,"NOT FOUND");
-			CapoServer.logger.log(Level.FINE, "Sent response:\n"+new String(response.getBytes()));
-			CapoServer.logger.log(Level.WARNING, "File Not Found: '"+relativePath+"'");
-			outputStream.write(response.getBytes());
-		}
-		outputStream.close();
-		
+	    int bytesRead = 0;
+	    while (bytesRead >= 0)
+	    {
+	        bytesRead = bufferedInputStream.read(buffer);
+	        List<Integer> matchList = StreamUtil.searchForBytePattern(messageBoundryPattern, buffer, 0, bytesRead);
+	        if(matchList.size() > 0)
+	        {   
+	            //we only care about headers here, so trim, and jump out
+	            bytesRead = matchList.get(0)+messageBoundryPattern.length;
+	            break;
+	        }
+	    }
+
+
+	    SimpleHttpRequest request = new SimpleHttpRequest(new String(buffer,0,bytesRead));
+
+	    SimpleHttpResponse response = new SimpleHttpResponse();
+	    ResourceDescriptor updatesResourceDescriptor = CapoApplication.getDataManager().getResourceDirectory(PREFERENCE.WEB_DIR.toString());	    
+	    ResourceDescriptor fileResourceDescriptor = updatesResourceDescriptor.getChildResourceDescriptor(null, request.getPath());
+	    //verify we're not trying to jump out of our directory tree here
+	    String trimmedURIString = fileResourceDescriptor.getResourceURI().getResourceURIString().substring(updatesResourceDescriptor.getResourceURI().getResourceURIString().length());
+	    if (trimmedURIString.equals(request.getPath()) == false)
+	    {
+	        CapoServer.logger.log(Level.WARNING, "HTTP Security Issue: '"+request.getPath()+"'");
+	        outputStream.close();
+            bufferedInputStream.close();	        
+	    }
+	    try
+	    {
+	        fileResourceDescriptor.addResourceParameters(null, new ResourceParameter(FileResourceType.Parameters.PARENT_PROVIDED_DIRECTORY,PREFERENCE.WEB_DIR,Source.CALL));
+	        fileResourceDescriptor.open(null);
+	        
+
+	        if (fileResourceDescriptor.getResourceMetaData(null).exists() == true && fileResourceDescriptor.getResourceMetaData(null).isReadable() == true && fileResourceDescriptor.getResourceMetaData(null).isContainer() == false)
+	        {
+	            response.setHeader("Content-Length", fileResourceDescriptor.getResourceMetaData(null).getLength()+"");
+	            response.setHeader("Content-Type", "application/octet-stream");
+	            outputStream.write(response.getBytes());			
+	            StreamUtil.readInputStreamIntoOutputStream(fileResourceDescriptor.getInputStream(null), outputStream);
+	        }
+	        else
+	        {
+	            response.setResponseCode(404,"NOT FOUND");
+	            CapoServer.logger.log(Level.FINE, "Sent response:\n"+new String(response.getBytes()));
+	            CapoServer.logger.log(Level.WARNING, "File Not Found: '"+request.getPath()+"'");
+	            outputStream.write(response.getBytes());
+	        }
+	        outputStream.close();
+	        bufferedInputStream.close();
+	    }
+	    catch (IOException ioException)
+	    {
+	        ioException.printStackTrace();
+	    }
+	    finally
+	    {
+	        if(fileResourceDescriptor != null)
+	        {
+	            fileResourceDescriptor.release(null);
+	        }
+	    }
 	}
 }

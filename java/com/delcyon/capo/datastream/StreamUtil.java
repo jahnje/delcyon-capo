@@ -21,6 +21,9 @@ import java.io.OutputStream;
 import java.math.BigInteger;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Vector;
 
 import com.delcyon.capo.CapoApplication;
 import com.delcyon.capo.Configuration.PREFERENCE;
@@ -72,6 +75,43 @@ public class StreamUtil
         messageDigest.reset();
         messageDigest.update(data);
         return new BigInteger(1, messageDigest.digest()).toString(16);
+	}
+	
+	/**
+	 * Quickly search a byte array for a pattern of bytes.
+	 * @param pattern to search for
+	 * @param bytes byte array to search for pattern
+	 * @param start starting position in bytes to start searching array.
+	 * @param length how far passed that start to conclude the search
+	 * @return List<Integer> of position in bytes array that are the start of said pattern.
+	 */
+	public static List<Integer> searchForBytePattern(byte[] pattern, byte[] bytes, int start, int length)
+	{
+	    
+	    int endIndex = (start + length - 1);
+	    if (endIndex > bytes.length -1)
+	    {
+	        throw new IndexOutOfBoundsException("Final index of array can't be greater than "+(bytes.length-1));
+	    }
+	    Vector<Integer> matchPositions = new Vector<Integer>();
+	    for(int index = start; index <= endIndex; index++)
+	    {
+	        //as we walk along the whole thing look for a match on the first byte of our pattern
+	        if (pattern[0] == bytes[index] && endIndex - index + 1>= pattern.length)
+            {
+                byte[] match = new byte[pattern.length];
+                //copy over enough of the array to do an array comparison against our pattern. 
+                System.arraycopy(bytes, index, match, 0, pattern.length);
+                if (Arrays.equals(match, pattern))
+                {
+                    //add the index to our list
+                    matchPositions.add(index);
+                    //then skip ahead
+                    index += pattern.length - 1;
+                }
+            }
+	    }
+	    return matchPositions;
 	}
 	
 }

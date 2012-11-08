@@ -78,7 +78,7 @@ public class Configuration
 		CAPO_DIR("CAPO_DIR", "CAPO_DIR", "main capo directory on local machine", "capo", new String[] { "dir" }),
 		CONFIG_DIR("CONFIG_DIR", "CONFIG_DIR", "directory where main config is stored, relative to root data dir", "config", new String[] { "dir" }),
 		STATUS_DIR("STATUS_DIR", "STATUS_DIR", "directory where status information is stored, relative to root data dir", "status", new String[] { "dir" }),
-		UPDATES_DIR("UPDATES_DIR", "UPDATES_DIR", "directory where updates are stored, relative to root data dir", "updates", new String[] { "dir" }),
+		WEB_DIR("WEB_DIR", "WEB_DIR", "directory where public web accessable are stored, relative to root data dir", "public", new String[] { "dir" }),
 		MODULE_DIR("MODULE_DIR", "MODULE_DIR", "directory where modules are stored, relative to root data dir", "modules", new String[] { "dir" }),
 		RESOURCE_DIR("RESOURCE_DIR", "RESOURCE_DIR", "directory where misc resources are stored, relative to root data dir", "resources", new String[] { "dir" }),
 		CONTROLLER_DIR("CONTROLLER_DIR", "CONTROLLER_DIR", "directory where controller scripts are stored, relative to root data dir", "controller", new String[] { "dir" }),		

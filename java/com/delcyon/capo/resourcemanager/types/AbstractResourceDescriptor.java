@@ -897,11 +897,11 @@ public abstract class AbstractResourceDescriptor implements ResourceDescriptor
             //return CapoApplication.getDataManager().getResourceDescriptor(callingControlElement, getResourceURI()+(relativeURI.startsWith("/") ? relativeURI : "/"+relativeURI));
             if(callingControlElement == null)
             {
-            	return CapoApplication.getDataManager().getResourceDescriptor(callingControlElement, getResourceURI().getBaseURI()+"/"+relativeURI);
+            	return CapoApplication.getDataManager().getResourceDescriptor(callingControlElement, getResourceURI().getBaseURI()+ (relativeURI.startsWith("/") ? relativeURI : "/"+ relativeURI) );
             }
             else
             {
-            	return callingControlElement.getParentGroup().getResourceDescriptor(callingControlElement, getResourceURI().getBaseURI()+"/"+relativeURI);
+            	return callingControlElement.getParentGroup().getResourceDescriptor(callingControlElement, getResourceURI().getBaseURI()+(relativeURI.startsWith("/") ? relativeURI : "/"+ relativeURI));
             }
         }
         else

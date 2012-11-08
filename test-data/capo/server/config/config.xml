@@ -10,7 +10,7 @@
    <entry key="CAPO_DIR" value="capo"/>
    <entry key="CONFIG_DIR" value="config"/>
    <entry key="STATUS_DIR" value="status"/>
-   <entry key="UPDATES_DIR" value="updates"/>
+   <entry key="WEB_DIR" value="public"/>
    <entry key="MODULE_DIR" value="modules"/>
    <entry key="RESOURCE_DIR" value="resources"/>
    <entry key="CONTROLLER_DIR" value="controller"/>
