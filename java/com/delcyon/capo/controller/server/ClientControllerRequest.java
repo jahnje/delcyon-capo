@@ -34,7 +34,7 @@ public class ClientControllerRequest
 	public ClientControllerRequest(ClientRequest clientRequest) throws Exception
 	{
 		this.clientRequest = clientRequest;
-		this.controllerRequestDocument = XPath.unwrapDocument(clientRequest.getRequestDocument());
+		this.controllerRequestDocument = XPath.unwrapDocument(clientRequest.getRequestDocument(),false);
 	}
 	
 	public ClientRequest getClientRequest()

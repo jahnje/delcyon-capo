@@ -102,11 +102,11 @@ private static HashMap<String, Class<? extends XMLServerResponseProcessor>> xmlS
 	@Override
 	public void process() throws Exception
 	{
-		String localName = XPath.unwrapDocument(document).getDocumentElement().getLocalName();
+		String localName = XPath.unwrapDocument(document,false).getDocumentElement().getLocalName();
 		XMLServerResponseProcessor xmlServerResponseProcessor = getXMLServerResponseProcessor(localName);
 		if (xmlServerResponseProcessor != null)
 		{
-			xmlServerResponseProcessor.init(XPath.unwrapDocument(document),this,sessionHashMap);
+			xmlServerResponseProcessor.init(XPath.unwrapDocument(document,false),this,sessionHashMap);
 			xmlServerResponseProcessor.process();
 		}
 		else

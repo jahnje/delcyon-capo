@@ -309,7 +309,7 @@ public class ControllerClientRequestProcessor implements ClientRequestProcessor
 	@Override
 	public Document readNextDocument() throws Exception
 	{		
-	    return XPath.unwrapDocument(clientRequestXMLProcessor.readNextDocument());
+	    return XPath.unwrapDocument(clientRequestXMLProcessor.readNextDocument(),true);
 	}
 	
 	

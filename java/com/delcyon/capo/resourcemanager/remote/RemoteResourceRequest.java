@@ -60,7 +60,7 @@ private Element controllerRequestElement = null;
 	
 	public static MessageType getType(Document clientRequestDocument) throws Exception
     {
-        Document requestDocument = XPath.unwrapDocument(clientRequestDocument);
+        Document requestDocument = XPath.unwrapDocument(clientRequestDocument,false);
         return MessageType.valueOf(requestDocument.getDocumentElement().getAttribute(ControllerClientRequestProcessor.REQUEST_TYPE_ATTRIBUTE));
     }
 
@@ -76,7 +76,7 @@ private Element controllerRequestElement = null;
 
 	public static String getVarName(Document clientRequestDocument) throws Exception
     {
-        Document requestDocument = XPath.unwrapDocument(clientRequestDocument);
+        Document requestDocument = XPath.unwrapDocument(clientRequestDocument,false);
         return requestDocument.getDocumentElement().getAttribute(MessageType.GET_VAR_VALUE.toString());
     }
 	

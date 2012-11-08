@@ -164,7 +164,7 @@ public class RemoteResourceResponseProcessor implements XMLServerResponseProcess
 	public void process() throws Exception
 	{
 		
-		RemoteResourceDescriptorMessage message = new RemoteResourceDescriptorMessage(XPath.unwrapDocument(responseDocument));
+		RemoteResourceDescriptorMessage message = new RemoteResourceDescriptorMessage(XPath.unwrapDocument(responseDocument,false));
 
 		RemoteResourceDescriptorMessage reply = new RemoteResourceDescriptorMessage();
 		reply.setMessageType(MessageType.SUCCESS);

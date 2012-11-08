@@ -400,7 +400,14 @@ public class XPath
 		return nodeList;
 	}
 
-	public static Document unwrapDocument(Document wrappedDocument) throws Exception
+	/**
+	 * 
+	 * @param wrappedDocument
+	 * @param adopt - controls whether or not we can use the quicker adoption method, as opposed to making a copy of the document first.
+	 * @return document with first root elements child as document element of new document.
+	 * @throws Exception
+	 */
+	public static Document unwrapDocument(Document wrappedDocument,boolean adopt) throws Exception
 	{
 		//unwrap document
 		
@@ -409,7 +416,14 @@ public class XPath
 		NodeList nodeList = wrappedDocument.getDocumentElement().getElementsByTagName("*");
 		if (nodeList.getLength() != 0)
 		{
-			unwrappedDocument.appendChild(unwrappedDocument.importNode(nodeList.item(0),true));	
+		    if(adopt == false)
+		    {
+		        unwrappedDocument.appendChild(unwrappedDocument.importNode(nodeList.item(0),true));
+		    }
+		    else
+		    {
+		        unwrappedDocument.appendChild(unwrappedDocument.adoptNode(nodeList.item(0)));
+		    }
 		}
 		else
 		{

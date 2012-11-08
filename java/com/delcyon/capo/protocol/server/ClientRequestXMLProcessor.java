@@ -142,7 +142,7 @@ public class ClientRequestXMLProcessor implements XMLProcessor
 		}
 		else
 		{
-			Element documentElement = XPath.unwrapDocument(requestDocument).getDocumentElement();
+			Element documentElement = XPath.unwrapDocument(requestDocument,false).getDocumentElement();
 			String requestName = null;
 			if (documentElement.hasAttribute("type"))
 			{
