@@ -138,15 +138,30 @@ public abstract class AbstractContentMetaData implements ContentMetaData
 	 * @param inputStream
 	 * @throws Exception 
 	 */
-	protected byte[] readInputStream(InputStream inputStream) throws Exception
+	protected byte[] readInputStream(InputStream inputStream, boolean returnContent) throws Exception
 	{
 	    this.includeStreamAttributes = true;
-	    ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+	    OutputStream outputStream = null;
+	    if(returnContent == true)
+	    {
+	        outputStream = new ByteArrayOutputStream();
+	    }
+	    else
+	    {
+	        outputStream = new NullOutputStream();
+	    }
 		inputStream =  wrapInputStream(inputStream);
-		StreamUtil.readInputStreamIntoOutputStream(inputStream, byteArrayOutputStream);
+		StreamUtil.readInputStreamIntoOutputStream(inputStream, outputStream);
 		getAttributeMap(); //once we've read the file, load up he attribute map with any stream attributes.
-		this.isInitialized = true;		
-		return byteArrayOutputStream.toByteArray();
+		this.isInitialized = true;
+		if (returnContent == true)
+		{
+		    return ((ByteArrayOutputStream) outputStream).toByteArray();
+		}
+		else
+		{
+		    return null;
+		}
 	}
 	
 	/**

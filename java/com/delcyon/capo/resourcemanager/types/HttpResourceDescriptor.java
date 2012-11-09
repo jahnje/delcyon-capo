@@ -66,7 +66,7 @@ public class HttpResourceDescriptor extends AbstractResourceDescriptor
 	        contentMetaData = new SimpleContentMetaData(getResourceURI());
 	        URL url = new URL(getResourceURI().getBaseURI());   
 	        InputStream inputStream = contentMetaData.wrapInputStream(url.openConnection().getInputStream());
-	        content = contentMetaData.readInputStream(inputStream);
+	        content = contentMetaData.readInputStream(inputStream,true);
 	        setResourceState(State.STEPPING);
 	        return true;
 	    }
