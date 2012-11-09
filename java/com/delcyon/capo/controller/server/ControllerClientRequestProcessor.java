@@ -257,7 +257,7 @@ public class ControllerClientRequestProcessor implements ClientRequestProcessor
             Element ideElement = (Element) idElementNodeList.item(index);
             sessionHashMap.put(ideElement.getAttribute("name"), ideElement.getAttribute("value"));
         }
-        
+        clientResourceDescriptor.release(null);
     }
 
     private void loadClientRequestVariables(ClientControllerRequest clientControllerRequest)

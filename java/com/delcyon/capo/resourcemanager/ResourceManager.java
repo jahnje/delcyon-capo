@@ -390,6 +390,7 @@ public class ResourceManager extends CapoDataManager
 	    {
 	    	Document document = CapoApplication.getDocumentBuilder().parse(documentResourceDescriptor.getInputStream(null));
 	    	document.setDocumentURI(documentResourceDescriptor.getResourceURI().getBaseURI());
+	    	documentResourceDescriptor.release(null);
 	        return document;
 	    }
 	    else

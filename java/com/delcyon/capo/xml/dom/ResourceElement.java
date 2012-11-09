@@ -399,8 +399,9 @@ public class ResourceElement extends CElement implements ControlledClone,Resourc
                 {
                     try
                     {
+                        resourceDescriptor.open(null);
                         Element xmlElement = resourceDescriptor.readXML(null);
-                        
+                        resourceDescriptor.close(null);
                         appendChild(xmlElement);
                     }
                     catch (Exception e)

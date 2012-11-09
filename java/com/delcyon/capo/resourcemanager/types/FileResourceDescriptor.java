@@ -19,6 +19,7 @@ package com.delcyon.capo.resourcemanager.types;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URI;
@@ -185,11 +186,11 @@ public class FileResourceDescriptor extends AbstractResourceDescriptor
 	{	    
 	    if(getResourceMetaData(variableContainer, resourceParameters).isContainer())
 	    {
-	        advanceState(State.STEPPING, variableContainer, resourceParameters);
+	        advanceState(State.STEPPING, variableContainer, resourceParameters);	        
 	        return containerElement;
 	    }
 	    else
-	    {
+	    {	        
 	        return super.readXML(variableContainer, resourceParameters);
 	    }
 	}
@@ -226,6 +227,17 @@ public class FileResourceDescriptor extends AbstractResourceDescriptor
 		if (contentMetaData != null)
 		{
 			contentMetaData.refresh(getResourceURI().getBaseURI());
+		}
+		if(contentInputStream != null)
+		{
+		    try
+		    {
+		        contentInputStream.close();
+		    }
+		    catch (IOException ioException)
+		    {
+		        CapoApplication.logger.log(Level.WARNING, "Error closing stream", ioException);
+		    }
 		}
 	}
 	
