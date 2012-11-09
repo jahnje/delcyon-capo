@@ -19,9 +19,14 @@ package com.delcyon.capo;
 import java.io.PrintStream;
 import java.net.URL;
 import java.security.KeyStore;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.Vector;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.logging.FileHandler;
@@ -41,6 +46,7 @@ import org.tanukisoftware.wrapper.WrapperListener;
 import org.tanukisoftware.wrapper.WrapperManager;
 import org.w3c.dom.Document;
 
+import com.delcyon.capo.client.CapoClient;
 import com.delcyon.capo.resourcemanager.CapoDataManager;
 import com.delcyon.capo.server.CapoServer;
 import com.delcyon.capo.tasks.TaskManagerThread;
@@ -114,7 +120,58 @@ public abstract class CapoApplication extends ContextThread implements WrapperLi
 	private Configuration configuration = null;
     private DocumentBuilderFactory documentBuilderFactory;
     private volatile ApplicationState applicationState = ApplicationState.NONE;
-	
+
+    public static void main(String[] args)
+    {
+        String clientAsServiceArgument = "--"+CapoClient.Preferences.CLIENT_AS_SERVICE;
+        try
+        {
+            boolean clientAsServiceAlreadySet = false;
+            for (String arg : args)
+            {
+                if(arg.equals(clientAsServiceArgument))
+                {
+                    clientAsServiceAlreadySet = true;
+                    break;
+                }
+            }
+
+            List<String> argsVector = new Vector<String>();
+            Collections.addAll(argsVector, args);
+
+            if(args.length == 0 || args[0].matches("(-server|-client)") == false)
+            {
+                System.out.println("defaulting to client. You may specify (-server|-client) as the first argument, to control this.");
+
+                if(clientAsServiceAlreadySet == false)
+                {
+                    Collections.addAll(argsVector, new String[]{clientAsServiceArgument,"false"});
+                }
+                CapoClient.main(argsVector.toArray(args));
+            }
+            else 
+            {
+                argsVector = argsVector.subList(1, argsVector.size());
+                if(args[0].equals("-server"))
+                {
+                    CapoServer.main(argsVector.toArray(args));    
+                }
+                else
+                {
+                    if(clientAsServiceAlreadySet == false)
+                    {
+                        Collections.addAll(argsVector, new String[]{clientAsServiceArgument,"false"});
+                    }
+                    CapoClient capoClient = new CapoClient();                
+                    capoClient.start(argsVector.toArray(args));
+                }
+            }
+        } catch (Exception exception)
+        {
+            exception.printStackTrace();
+        }
+    }
+    
 	public CapoApplication() throws Exception
 	{
 	    setApplication(this);		
