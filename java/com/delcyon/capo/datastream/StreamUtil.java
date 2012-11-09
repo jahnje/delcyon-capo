@@ -53,9 +53,10 @@ public class StreamUtil
 		long totalBytesRead = 0l;
 		
 		int bytesRead = 0;
+		byte[] buffer = new byte[bufferSize];
 		while (bytesRead != -1)
 		{
-			byte[] buffer = new byte[bufferSize];			
+						
 			bytesRead = inputStream.read(buffer);			
 			if (bytesRead > 0)
 			{				
