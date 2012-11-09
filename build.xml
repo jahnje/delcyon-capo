@@ -1,6 +1,11 @@
 <project name="Capo Server Build File" default="all" basedir=".">
 
 	<!-- Load project specific properties from file-->
+	<condition property="app" value="server">
+		<not>
+			<isset property="app"/>
+		</not>
+	</condition>
 	<property file="${app}.build.properties" />
 
 	<!--START STANDARD BUILD PROPERTIES-->
@@ -127,8 +132,8 @@
 
 		<!-- register all of the libraries needed to run the application-->
 		<RequiredLibrariesBuildTask propertyname="required.libraries" verbose="true">
-			<fileset dir=".">
-				<include name="lib/*.jar" />
+			<fileset dir="lib">
+				<include name="*.jar" />
 			</fileset>
 		</RequiredLibrariesBuildTask>
 
@@ -331,9 +336,31 @@
 	<!--END REAL TARGETS-->
 	<!--END VERSIONING TARGETS-->
 
+	<target name="build.client" if="run.clientbuild" depends="client.check">
+		<ant antfile="build.xml" inheritAll="false">
+			<property name="app" value="client"/>
+		</ant>
+		<path id="client.distribution.name"> 
+			<fileset dir="client.distribution"> 
+				<include name="*-dist.jar"/> 
+			</fileset> 
+		</path>
+		<property name="client.distribution.file" refid="client.distribution.name"/> 
+		<copy file="${client.distribution.file}" tofile="${distribution.dir}/client/client-dist.jar"/>		
+	</target>
+
+	<target name="client.check">
+		<condition property="run.clientbuild">
+			<equals arg1="server" arg2="${app}"/>
+		</condition>
+	</target>
+
+	
+
+
 	<!--START MAIN BUILD TARGET-->
 	<!-- this compiles everything, pretty standard. Compile everything, and move anything in the resources directory into the build directory so it can be accessed by the application -->
-	<target name="compile" depends="prepare">
+	<target name="compile" depends="prepare">		
 		<javac debug="on" srcdir="${src.dir}" destdir="${build.dir}">
 			<classpath refid="compile.classpath" />
 		</javac>
@@ -350,6 +377,7 @@
 	 	then create an execuetable jar file that will install the application 
 	-->
 	<target name="dist" depends="compile">
+		<antcall target="build.client"/>
 		<echo>Building ${distribution.dir}/${product.name}-${version}.${build.number}.${patch.number}.${jarFileExtension}</echo>
 		<copy todir="${distribution.dir}/lib">
 			<fileset dir="${lib.dir}" />			
@@ -361,15 +389,16 @@
 			<fileset dir="${config.dir}" />			
 		</copy>
 		<antcall target="jar" />
-		<copy file="${distribution.dir}/${product.name}-${version}.${build.number}.${patch.number}.${jarFileExtension}" tofile="${distribution.dir}/${product.name}.${jarFileExtension}" />
+		<!--<copy file="${distribution.dir}/${product.name}-${version}.${build.number}.${patch.number}.${jarFileExtension}" tofile="${distribution.dir}/${product.name}.${jarFileExtension}" />-->
 		<checksum file="${distribution.dir}/${product.name}-${version}.${build.number}.${patch.number}.${jarFileExtension}" property="md5" />
+		<copy file="${distribution.dir}/${product.name}-${version}.${build.number}.${patch.number}.${jarFileExtension}" tofile="${distribution.dir}/lib/capo.${jarFileExtension}"></copy>
 		<antcall target="makeInstaller" />
 	</target>
 
 	<target name="jar" unless="isWebapplication">
 		<jar destfile="${distribution.dir}/${product.name}-${version}.${build.number}.${patch.number}.${jarFileExtension}" basedir="${package.src.dir}">
 			<manifest>
-				<attribute name="Main-Class" value="${main.class}" />
+				<attribute name="Main-Class" value="com.delcyon.capo.CapoApplication" />
 				<attribute name="Class-Path" value="${required.libraries}" />
 			</manifest>
 		</jar>
@@ -378,11 +407,11 @@
 	<!-- This make a distributiuon archive, it will only be run is the isApplication property is set. The installBuildTask is a custom build task. See the updater project for deatils-->
 	<target name="makeInstaller" if="isApplication">
 		<InstallerBuildTask distributionfilename="${distribution.dir}/${product.name}-${version}.${build.number}.${patch.number}-dist.${jarFileExtension}">
-			<fileset dir="${distribution.dir}">
-				<include name="${product.name}.${jarFileExtension}" />
+			<fileset dir="${distribution.dir}">				
 				<include name="lib/**" />
 				<include name="bin/**" />
 				<include name="config/**" />
+				<include name="client/**" />
 			</fileset>
 			<fileset  dir=".">
 				<include name="${app}.install.xml" />

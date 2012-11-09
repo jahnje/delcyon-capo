@@ -29,6 +29,7 @@
         <filter replacement="${app.name}" trigger="app.name" />
         <filter replacement="${app.name}" trigger="app.long.name" />
     </copy>
+   
     <copy if="'${os.name}' = 'windows'" src="lib/wrapper-windows-x86-32.dll" dest="${install.dir}/lib/wrapper-windows-x86-32.dll"/>
     <copy if="'${os.name}' = 'windows'" src="bin/wrapper-windows-x86-32.exe" dest="${install.dir}/bin/wrapper-windows-x86-32.exe"/>
     <copy if="'${os.name}' = 'Mac OS X'" src="lib/libwrapper-macosx-universal-64.jnilib" dest="${install.dir}/lib/libwrapper-macosx-universal-64.jnilib" chmod="755"/>
