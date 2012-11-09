@@ -43,6 +43,7 @@ import com.delcyon.capo.resourcemanager.ResourceDescriptor.Action;
 import com.delcyon.capo.resourcemanager.ResourceParameter;
 import com.delcyon.capo.resourcemanager.ResourceParameterBuilder;
 import com.delcyon.capo.resourcemanager.types.ContentMetaData;
+import com.delcyon.capo.resourcemanager.types.FileResourceType;
 import com.delcyon.capo.server.CapoServer;
 
 @ControlElementProvider(name="sync")
@@ -244,7 +245,10 @@ public class SyncElement extends AbstractControl
             if (destMD5 == null || destMD5.equals(srcMD5) == false)
             {
                 CapoApplication.logger.log(Level.INFO, "Syncing file: "+sourceResourceDescriptor.getResourceURI().getBaseURI()+" ==> "+destinationResourceDescriptor.getResourceURI().getBaseURI());
-                OutputStream filteredOutputStream = wrapOutputStream(destinationResourceDescriptor.getOutputStream(getParentGroup(), ResourceParameterBuilder.getResourceParameters(getControlElementDeclaration())),getControlElementDeclaration());
+                ResourceParameterBuilder resourceParameterBuilder = new ResourceParameterBuilder();
+                resourceParameterBuilder.addAll(getControlElementDeclaration());
+                resourceParameterBuilder.addParameter(FileResourceType.Parameters.USE_TEMP, "true");
+                OutputStream filteredOutputStream = wrapOutputStream(destinationResourceDescriptor.getOutputStream(getParentGroup(), resourceParameterBuilder.getParameters()),getControlElementDeclaration());
                 StreamUtil.readInputStreamIntoOutputStream(sourceResourceDescriptor.getInputStream(getParentGroup(),ResourceParameterBuilder.getResourceParameters(getControlElementDeclaration())), filteredOutputStream);
                 filteredOutputStream.flush();
                 filteredOutputStream.close();

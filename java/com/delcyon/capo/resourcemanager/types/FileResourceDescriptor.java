@@ -29,6 +29,8 @@ import com.delcyon.capo.CapoApplication;
 import com.delcyon.capo.Configuration.PREFERENCE;
 import com.delcyon.capo.controller.VariableContainer;
 import com.delcyon.capo.datastream.NullOutputStream;
+import com.delcyon.capo.datastream.StreamEventFilterOutputStream;
+import com.delcyon.capo.datastream.StreamEventListener;
 import com.delcyon.capo.datastream.StreamUtil;
 import com.delcyon.capo.resourcemanager.ResourceParameter;
 import com.delcyon.capo.resourcemanager.ResourceType;
@@ -42,7 +44,7 @@ import com.delcyon.capo.xml.dom.ResourceDeclarationElement;
 /**
  * @author jeremiah
  */
-public class FileResourceDescriptor extends AbstractResourceDescriptor
+public class FileResourceDescriptor extends AbstractResourceDescriptor implements StreamEventListener
 {
 	
 	private FileResourceContentMetaData contentMetaData = null;
@@ -50,6 +52,7 @@ public class FileResourceDescriptor extends AbstractResourceDescriptor
 	private FileResourceContentMetaData outputMetaData = null;
 	private InputStream contentInputStream = null;
 	private CElement containerElement = null;
+    private File tempFile;
 	
 	@Override
 	protected FileResourceContentMetaData buildResourceMetaData(VariableContainer variableContainer,ResourceParameter... resourceParameters) throws Exception
@@ -207,6 +210,14 @@ public class FileResourceDescriptor extends AbstractResourceDescriptor
 	public OutputStream getOutputStream(VariableContainer variableContainer,ResourceParameter... resourceParameters) throws Exception
 	{
 	    advanceState(State.OPEN, variableContainer, resourceParameters);
+	    addResourceParameters(variableContainer, resourceParameters);
+	    String useTempString = getVarValue(variableContainer, Parameters.USE_TEMP);
+	    boolean useTemp = false;
+	    if(useTempString != null && useTempString.equalsIgnoreCase("true"))
+	    {
+	        useTemp = true;
+	    }
+	    
 		outputMetaData = new FileResourceContentMetaData(getResourceURI().getBaseURI());
 		File outputFile = new File(new URI(getResourceURI().getBaseURI()));
 		if (outputFile.exists() == false)
@@ -215,10 +226,52 @@ public class FileResourceDescriptor extends AbstractResourceDescriptor
 		    outputFile.createNewFile();
 		}
 		
-		return trackOutputStream(outputMetaData.wrapOutputStream(new FileOutputStream(outputFile)));	
+		OutputStream outputStream = null;
+		if(useTemp == true)
+		{
+		    tempFile = File.createTempFile(outputFile.getName(), "part");
+		    CapoApplication.logger.log(Level.INFO, "using temp file: "+tempFile+" for "+outputFile);
+		    StreamEventFilterOutputStream streamEventFilterOutputStream = new StreamEventFilterOutputStream(trackOutputStream(outputMetaData.wrapOutputStream(new FileOutputStream(tempFile))));
+	        streamEventFilterOutputStream.addStreamEventListener(this);
+	        outputStream = streamEventFilterOutputStream;
+		}
+		else
+		{
+		    outputStream = trackOutputStream(outputMetaData.wrapOutputStream(new FileOutputStream(outputFile)));
+		}
+		
+		return outputStream;	
 	}
 	
-	
+	@Override
+    public void processStreamEvent(StreamEvent streamEvent) throws IOException
+    {
+	    if(streamEvent == StreamEvent.CLOSED && tempFile != null && tempFile.exists())
+	    {
+	        try
+	        {
+	            File outputFile = new File(new URI(getResourceURI().getBaseURI()));
+	            if (outputFile.exists() == false)
+	            {
+	                new File(outputFile.getParent()).mkdirs();
+	                outputFile.createNewFile();
+	            }
+	            if(tempFile.renameTo(outputFile))
+	            {
+	                CapoApplication.logger.log(Level.INFO, "Rename of temp file to: "+outputFile+" was successful.");
+	            }
+	            else
+	            {
+	                CapoApplication.logger.log(Level.WARNING, "Rename of temp file to: "+outputFile+" failed.");
+	            }
+	            
+	        } catch (Exception exception)
+	        {
+	            exception.printStackTrace();
+	        }
+	    }
+        
+    }
 
     @Override
 	public void close(VariableContainer variableContainer,ResourceParameter... resourceParameters) throws Exception
@@ -400,4 +453,6 @@ public class FileResourceDescriptor extends AbstractResourceDescriptor
 	        return true;
 	    }
 	}
+
+    
 }

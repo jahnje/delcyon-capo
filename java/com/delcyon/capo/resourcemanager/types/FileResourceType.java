@@ -33,7 +33,9 @@ public class FileResourceType extends AbstractResourceType
 	public enum Parameters
 	{
 		PARENT_PROVIDED_DIRECTORY,
-		ROOT_DIR
+		ROOT_DIR,
+		/** Use a temp name until outputstream closes **/
+		USE_TEMP
 	}
 	@Override
 	public ResourceDescriptor getResourceDescriptor(String resourceURI) throws Exception
