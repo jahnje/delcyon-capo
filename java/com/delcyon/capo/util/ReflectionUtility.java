@@ -40,7 +40,15 @@ import com.delcyon.capo.util.ToStringControl.Control;
  */
 public class ReflectionUtility
 {
+    @SuppressWarnings("rawtypes")
     private static volatile ConcurrentHashMap<Class, Method[]> systemClassDeclaredMethodsHashMap = new ConcurrentHashMap<Class, Method[]>();
+    @SuppressWarnings("rawtypes")
+    private static volatile ConcurrentHashMap<Class, Field[]> systemClassDeclaredFieldsHashMap = new ConcurrentHashMap<Class, Field[]>();
+    @SuppressWarnings("rawtypes")
+    private static volatile ConcurrentHashMap<Class, Class[]> systemClassIneterfacesHashMap = new ConcurrentHashMap<Class, Class[]>();
+    @SuppressWarnings("rawtypes")
+    private static volatile ConcurrentHashMap<Class, Constructor[]> systemClassConstructorsHashMap = new ConcurrentHashMap<Class, Constructor[]>();
+    
 	public static final String DEFAULT_DATE_FORMAT = "MM/dd/yyyy";
 	public static final String DEFAULT_DATE_TIME_FORMAT = "MM/dd/yyyy HH:mm";
 
@@ -220,7 +228,18 @@ public class ReflectionUtility
         while (currentClass != null)
         {
             classVector.insertElementAt(currentClass, 0);
-            Class[] interfaceClasses = currentClass.getInterfaces();
+            Class[] interfaceClasses = null;
+            
+            if(systemClassIneterfacesHashMap.containsKey(currentClass))
+            {
+                interfaceClasses = systemClassIneterfacesHashMap.get(currentClass);
+            }
+            else
+            {
+                interfaceClasses = currentClass.getInterfaces();
+                systemClassIneterfacesHashMap.put(currentClass,interfaceClasses);
+            }
+            
             for (Class interfaceClass : interfaceClasses)
             {
                 classVector.insertElementAt(interfaceClass, 0);
@@ -265,7 +284,19 @@ public class ReflectionUtility
 		while (currentClass != null)
 		{
 			classVector.insertElementAt(currentClass, 0);
-			Class[] interfaceClasses = currentClass.getInterfaces();
+			
+			Class[] interfaceClasses = null;
+            
+            if(systemClassIneterfacesHashMap.containsKey(currentClass))
+            {
+                interfaceClasses = systemClassIneterfacesHashMap.get(currentClass);
+            }
+            else
+            {
+                interfaceClasses = currentClass.getInterfaces();
+                systemClassIneterfacesHashMap.put(currentClass,interfaceClasses);
+            }
+			
 			for (Class interfaceClass : interfaceClasses)
 			{
 				classVector.insertElementAt(interfaceClass, 0);
@@ -275,7 +306,18 @@ public class ReflectionUtility
 
 		for (Class clazz : classVector)
 		{
-			Field[] fields = clazz.getDeclaredFields();
+			Field[] fields = null;
+			
+			if(systemClassDeclaredFieldsHashMap.containsKey(clazz))
+            {
+			    fields = systemClassDeclaredFieldsHashMap.get(clazz);
+            }
+            else
+            {
+                fields = clazz.getDeclaredFields();
+                systemClassDeclaredFieldsHashMap.put(clazz,fields);
+            }
+			
 			for (Field field : fields)
 			{
 				fieldVector.add(field);
@@ -450,7 +492,18 @@ public class ReflectionUtility
 	@SuppressWarnings({ "unchecked", "rawtypes" })
 	public static Object getComplexInstance(Class type,Object...cloneableFieldInstances) throws IllegalArgumentException, InstantiationException, IllegalAccessException, InvocationTargetException
 	{
-		Constructor[] constructors = type.getDeclaredConstructors();
+	    
+	    Constructor[] constructors = null;
+        if(systemClassConstructorsHashMap.containsKey(type))
+        {
+            constructors = systemClassConstructorsHashMap.get(type);
+        }
+        else
+        {
+            constructors = type.getDeclaredConstructors();
+            systemClassConstructorsHashMap.put(type, constructors);
+        }
+	    
 		
 		Constructor defaultConstructor = null;
 		for (Constructor constructor : constructors)
@@ -524,7 +577,19 @@ public class ReflectionUtility
 	@SuppressWarnings({ "unchecked", "rawtypes" })
 	public static Constructor getDefaultConstructor(Class type)
 	{
-		for (Constructor constructor : type.getDeclaredConstructors())
+	    
+	    Constructor[] constructors = null;
+        if(systemClassConstructorsHashMap.containsKey(type))
+        {
+            constructors = systemClassConstructorsHashMap.get(type);
+        }
+        else
+        {
+            constructors = type.getDeclaredConstructors();
+            systemClassConstructorsHashMap.put(type, constructors);
+        }
+	    
+		for (Constructor constructor : constructors)
         {
             constructor.setAccessible(true);
             if (constructor.getParameterTypes().length == 0)
@@ -539,7 +604,18 @@ public class ReflectionUtility
 	@SuppressWarnings("rawtypes")
     public static boolean hasDefaultContructor(Class type)
 	{
-        for (Constructor constructor : type.getDeclaredConstructors())
+	    Constructor[] constructors = null;
+	    if(systemClassConstructorsHashMap.containsKey(type))
+	    {
+	        constructors = systemClassConstructorsHashMap.get(type);
+	    }
+	    else
+	    {
+	        constructors = type.getDeclaredConstructors();
+	        systemClassConstructorsHashMap.put(type, constructors);
+	    }
+	    
+        for (Constructor constructor : constructors)
         {
             constructor.setAccessible(true);
             if (constructor.getParameterTypes().length == 0)
