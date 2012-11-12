@@ -57,7 +57,11 @@ public class GroupElement extends AbstractControl implements XPathFunctionProces
 		timeout, 
 		exitCode, 
 		eval, 
-		stylesheet, returns, sessionId,initialGroup
+		stylesheet, 
+		returns, 
+		sessionId,
+		initialGroup,
+		table
 	}
 	
 	private static final String[] functionNames = {"group","table","entry"};
@@ -113,10 +117,25 @@ public class GroupElement extends AbstractControl implements XPathFunctionProces
 		//proccess entry attribute
 		if(getAttributeValue(Attributes.entry) != null && getAttributeValue(Attributes.entry).isEmpty() == false)
 		{
-			CapoServer.logger.log(Level.FINE, "Found Entry for "+getAttributeValue(Attributes.name));			
-			Node entryNode = XPath.selectSingleNode(controlElementDeclaration.getOwnerDocument().getDocumentElement(), group.processVars(getAttributeValue(Attributes.entry)),controlElementDeclaration.getPrefix());
+			CapoServer.logger.log(Level.FINE, "Found Entry for "+getAttributeValue(Attributes.name));
+			Element contextElement = null;
+			if (getAttributeValue(Attributes.table).isEmpty() == false)
+			{
+			    String tablePath = group.processVars(getAttributeValue(Attributes.table));
+			    contextElement = (Element) XPath.selectSingleNode(controlElementDeclaration, getAttributeValue(Attributes.table));
+			    if(contextElement == null)
+			    {
+			        throw new Exception("No table found at: "+tablePath);
+			    }
+			}
+			else
+			{
+			    contextElement = controlElementDeclaration;
+			}
+			Node entryNode = XPath.selectSingleNode(contextElement, group.processVars(getAttributeValue(Attributes.entry)),controlElementDeclaration.getPrefix());
 			if (entryNode != null)
 			{
+			    group.set("entry."+entryNode.getLocalName(), XPath.getXPath(entryNode));
 				//add defaults from parent node, but only if the child has a parent that isn't this node.
 				if (entryNode.getParentNode().equals(controlElementDeclaration) == false)
 				{
@@ -138,7 +157,7 @@ public class GroupElement extends AbstractControl implements XPathFunctionProces
 			}
 			else
 			{
-				CapoServer.logger.log(Level.WARNING, "no entry found for "+group.processVars(controlElementDeclaration.getAttribute(Attributes.entry.toString())));
+				CapoServer.logger.log(Level.WARNING, "no entry found for "+group.processVars(controlElementDeclaration.getAttribute(Attributes.entry.toString()))+" in "+XPath.getXPath(contextElement));
 			}
 		}
 		

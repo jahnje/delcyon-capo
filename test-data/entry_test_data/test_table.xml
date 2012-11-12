@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<table defaultVar1="d_value1.d1" defaultVar2="d_value2.d1" defaultVar3="d_value3.d1" var1="value1.d1" var2="value2.d1" var3="value3.d1">
+    <entry var1="value1.e1" var2="value2.e1" />
+    <entry var1="value1.e2" var2="value2.e2" var3="value3.e2"/>
+    <entry var1="value1.e3" var2="value2.e3" var3="value3.e3"/>
+    <entry var1="value1.e4" var2="value2.e4" var3="value3.e4"/>
+    <entry var1="value1.e5" var2="value2.e5" var3="value3.e5"/>
+    <entry var1="value1.e6" var2="value2.e6" var3="value3.e6"/>
+    <entry var1="value1.e7" var2="value2.e7" var3="value3.e7"/>
+</table>

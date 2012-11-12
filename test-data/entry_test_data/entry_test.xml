@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<server:group
+    xmlns:server="http://www.delcyon.com/capo-server"
+    xmlns:client="http://www.delcyon.com/capo-client"
+    xmlns:resource="http://www.delcyon.com/capo/resource">
+    
+    <server:import name="lookup" src="file:test_table.xml"/>
+    
+    <server:var name="test_key" value="value1.e1"/>
+    
+    <server:group name="lookup" table="${import.lookup}/table" entry="entry[@var1 = '${test_key}']">        
+        <entry.output defaultVar1="${defaultVar1}" defaultVar2="${defaultVar2}" defaultVar3="${defaultVar3}" var1="${var1}" var2="${var2}" var3="${var3}"/>
+        <server:export dest="file:entry.output.xml" ref="../entry.output"/>            
+    </server:group>
+    
+</server:group>
