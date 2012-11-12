@@ -14,7 +14,7 @@ Mailing List: capo@delcyon.com
 
 Mailing List Archive: http://groups.delcyon.com/capo
 
-build: ant -Dapp=[client|server] [dist|patch|build|minor|major]
+build: ant [dist|patch|build|minor|major] this will result in client.distribution and server.distribution directories.
 
 install java -jar client-x.x.x.x-dist.jar or server-x.x.x.x-dist.jar
 
