@@ -68,8 +68,8 @@ public class Configuration
 	{
 		RETAIN("r", "retain", "overwrite values in configuration file with option from command line", null, null),
 		DISABLE_CONFIG_AUTOSYNC("DISABLE_CONFIG_AUTOSYNC", "DISABLE_CONFIG_AUTOSYNC", "Turns off Automaticaly syncing new preferences to filesystem or creating default directories. Useful for testing only!", null,null),
-		PORT("port", "port", "port to listen on", "8080", new String[] { "portNumber" }),
-		SERVER_PORT("sp", "SERVER_PORT", "server port to connect to. default 8080", "8080", new String[] { "portNumber" }),
+		PORT("port", "port", "port to listen on", "2442", new String[] { "portNumber" }),
+		SERVER_PORT("sp", "SERVER_PORT", "server port to connect to. default 2442", "2442", new String[] { "portNumber" }),
 		SERVER_LIST("sl", "SERVER_LIST", "server addresses. comma seperated. default 127.0.0.1", "127.0.0.1", new String[] { "address" }),
 		HELP("h", "help", "print usage", null, null), 
 		BUFFER_SIZE("bs", "BUFFER_SIZE", "Stream buffer size, default is 4096. ", "4096", new String[] { "int" }), 
