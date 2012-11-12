@@ -22,13 +22,13 @@ import java.io.OutputStream;
 import org.w3c.dom.Element;
 
 import com.delcyon.capo.controller.ControlElement;
-import com.delcyon.capo.controller.VariableContainer;
 import com.delcyon.capo.resourcemanager.ResourceDescriptor;
 import com.delcyon.capo.resourcemanager.ResourceParameter;
 import com.delcyon.capo.resourcemanager.ResourceType;
 import com.delcyon.capo.resourcemanager.ResourceURI;
 import com.delcyon.capo.resourcemanager.types.ContentMetaData;
 import com.delcyon.capo.xml.cdom.CElement;
+import com.delcyon.capo.xml.cdom.VariableContainer;
 
 /**
  * @author jeremiah

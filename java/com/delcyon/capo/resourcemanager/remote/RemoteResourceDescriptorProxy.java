@@ -26,7 +26,6 @@ import org.w3c.dom.Element;
 
 import com.delcyon.capo.CapoApplication;
 import com.delcyon.capo.controller.ControlElement;
-import com.delcyon.capo.controller.VariableContainer;
 import com.delcyon.capo.controller.server.ControllerClientRequestProcessor;
 import com.delcyon.capo.protocol.server.ClientRequest;
 import com.delcyon.capo.protocol.server.ClientRequestProcessor;
@@ -39,6 +38,7 @@ import com.delcyon.capo.resourcemanager.ResourceURI;
 import com.delcyon.capo.resourcemanager.remote.RemoteResourceDescriptorMessage.MessageType;
 import com.delcyon.capo.resourcemanager.types.ContentMetaData;
 import com.delcyon.capo.xml.cdom.CElement;
+import com.delcyon.capo.xml.cdom.VariableContainer;
 import com.delcyon.capo.xml.dom.ResourceDeclarationElement;
 
 /**

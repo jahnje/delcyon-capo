@@ -20,14 +20,15 @@ import java.util.HashMap;
 import java.util.Stack;
 import java.util.logging.Level;
 
-import com.delcyon.capo.controller.VariableContainer;
 import com.delcyon.capo.server.CapoServer;
+import com.delcyon.capo.xml.cdom.VariableContainer;
+import com.delcyon.capo.xml.cdom.VariableProcessor;
 
 /**
  * @author jeremiah
  *
  */
-public class VariableContainerWrapper implements VariableContainer
+public class VariableContainerWrapper implements VariableContainer,VariableProcessor
 {
 
 	private VariableContainer parentVariableContainer;
@@ -118,6 +119,19 @@ public class VariableContainerWrapper implements VariableContainer
         CapoServer.logger.log(Level.FINE,"final replacement =  '"+varStringBuffer+"'");
 		
 	}
+
+    @Override
+    public void setVariableContainer(VariableContainer variableContainer)
+    {
+        this.parentVariableContainer = variableContainer; 
+        
+    }
+
+    @Override
+    public VariableContainer getVariableContainer()
+    {
+       return parentVariableContainer;
+    }
 	
 	
 	

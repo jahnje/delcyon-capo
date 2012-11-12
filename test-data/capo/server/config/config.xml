@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <config>
     
-   <entry key="port" value="8080"/>
-   <entry key="SERVER_PORT" value="8080"/>
+   <entry key="port" value="2442"/>
+   <entry key="SERVER_PORT" value="2442"/>
    <entry key="SERVER_LIST" value="127.0.0.1"/>
    <entry key="BUFFER_SIZE" value="4096"/>
    <entry key="RESOURCE_MANAGER" value="com.delcyon.capo.resourcemanager.ResourceManager"/>

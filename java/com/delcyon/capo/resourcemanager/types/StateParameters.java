@@ -16,9 +16,9 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 package com.delcyon.capo.resourcemanager.types;
 
-import com.delcyon.capo.controller.VariableContainer;
 import com.delcyon.capo.resourcemanager.ResourceParameter;
 import com.delcyon.capo.resourcemanager.ResourceDescriptor.State;
+import com.delcyon.capo.xml.cdom.VariableContainer;
 
 /**
  * @author jeremiah

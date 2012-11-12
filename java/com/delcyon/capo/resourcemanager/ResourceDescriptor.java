@@ -20,9 +20,9 @@ import java.io.InputStream;
 import java.io.OutputStream;
 
 import com.delcyon.capo.controller.ControlElement;
-import com.delcyon.capo.controller.VariableContainer;
 import com.delcyon.capo.resourcemanager.types.ContentMetaData;
 import com.delcyon.capo.xml.cdom.CElement;
+import com.delcyon.capo.xml.cdom.VariableContainer;
 import com.delcyon.capo.xml.dom.ResourceDeclarationElement;
 
 /**

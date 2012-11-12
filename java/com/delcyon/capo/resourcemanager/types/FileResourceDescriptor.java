@@ -27,7 +27,6 @@ import java.util.logging.Level;
 
 import com.delcyon.capo.CapoApplication;
 import com.delcyon.capo.Configuration.PREFERENCE;
-import com.delcyon.capo.controller.VariableContainer;
 import com.delcyon.capo.datastream.NullOutputStream;
 import com.delcyon.capo.datastream.StreamEventFilterOutputStream;
 import com.delcyon.capo.datastream.StreamEventListener;
@@ -39,6 +38,7 @@ import com.delcyon.capo.resourcemanager.types.ContentMetaData.Attributes;
 import com.delcyon.capo.resourcemanager.types.FileResourceType.Parameters;
 import com.delcyon.capo.util.XMLSerializer;
 import com.delcyon.capo.xml.cdom.CElement;
+import com.delcyon.capo.xml.cdom.VariableContainer;
 import com.delcyon.capo.xml.dom.ResourceDeclarationElement;
 
 /**

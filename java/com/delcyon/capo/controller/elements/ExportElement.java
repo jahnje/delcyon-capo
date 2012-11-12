@@ -37,6 +37,7 @@ import com.delcyon.capo.resourcemanager.ResourceDescriptor;
 import com.delcyon.capo.resourcemanager.ResourceParameter;
 import com.delcyon.capo.resourcemanager.ResourceParameterBuilder;
 import com.delcyon.capo.xml.XPath;
+import com.delcyon.capo.xml.cdom.CDocument;
 
 /**
  * @author jeremiah
@@ -177,6 +178,8 @@ public class ExportElement extends AbstractControl
 		
 		refNode.normalize();
 		
+		((CDocument) refNode.getOwnerDocument()).setVariableProcessor(getParentGroup());
+		
 		TransformerFactory tFactory = TransformerFactory.newInstance();
 		Transformer transformer = tFactory.newTransformer();
 		transformer.setOutputProperty(OutputKeys.INDENT, "yes");
@@ -228,6 +231,7 @@ public class ExportElement extends AbstractControl
 			//resourceDescriptor.getOutputStream(getParentGroup(),resourceParameters).close();
 		}
 //		//cleanup and parameters we added when calling this.
+		((CDocument) refNode.getOwnerDocument()).setVariableProcessor(null);
 		//resourceDescriptor.close(getParentGroup(),resourceParameters);
 		
 		return null;

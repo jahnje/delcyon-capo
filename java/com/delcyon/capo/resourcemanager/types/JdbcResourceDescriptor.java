@@ -34,7 +34,6 @@ import org.w3c.dom.NodeList;
 
 import com.delcyon.capo.CapoApplication;
 import com.delcyon.capo.controller.ControlElement;
-import com.delcyon.capo.controller.VariableContainer;
 import com.delcyon.capo.resourcemanager.ContentFormatType;
 import com.delcyon.capo.resourcemanager.ResourceDescriptor;
 import com.delcyon.capo.resourcemanager.ResourceParameter;
@@ -45,6 +44,7 @@ import com.delcyon.capo.xml.XPath;
 import com.delcyon.capo.xml.cdom.CDocument;
 import com.delcyon.capo.xml.cdom.CElement;
 import com.delcyon.capo.xml.cdom.CNamedNodeMap;
+import com.delcyon.capo.xml.cdom.VariableContainer;
 import com.delcyon.capo.xml.dom.ResourceDeclarationElement;
 
 /**

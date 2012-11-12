@@ -39,10 +39,12 @@ import com.delcyon.capo.resourcemanager.ResourceParameterBuilder;
 import com.delcyon.capo.resourcemanager.ResourceURI;
 import com.delcyon.capo.server.CapoServer;
 import com.delcyon.capo.xml.XPath;
+import com.delcyon.capo.xml.cdom.VariableContainer;
+import com.delcyon.capo.xml.cdom.VariableProcessor;
 import com.delcyon.capo.xml.dom.ResourceDocument;
 import com.delcyon.capo.xml.dom.ResourceElement;
 
-public class Group implements VariableContainer
+public class Group implements VariableContainer,VariableProcessor
 {
 	
 	private HashMap<String, String> entryHashMap = new HashMap<String, String>();
@@ -349,6 +351,14 @@ public class Group implements VariableContainer
 	{
 		this.variableHashMap = variableHashMap;
 	}
+	
+	@Override
+	public VariableContainer getVariableContainer()
+	{
+	    return this;
+	}
+	
+	
 	
 	public void putResourceElement(ResourceControlElement resourceControlElement)
 	{

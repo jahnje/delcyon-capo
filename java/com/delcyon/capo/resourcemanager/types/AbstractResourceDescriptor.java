@@ -33,7 +33,6 @@ import org.w3c.dom.Element;
 
 import com.delcyon.capo.CapoApplication;
 import com.delcyon.capo.controller.ControlElement;
-import com.delcyon.capo.controller.VariableContainer;
 import com.delcyon.capo.datastream.NullOutputStream;
 import com.delcyon.capo.datastream.StreamEventFilterOutputStream;
 import com.delcyon.capo.datastream.StreamEventListener;
@@ -50,6 +49,7 @@ import com.delcyon.capo.util.ReflectionUtility;
 import com.delcyon.capo.xml.XPath;
 import com.delcyon.capo.xml.cdom.CDocument;
 import com.delcyon.capo.xml.cdom.CElement;
+import com.delcyon.capo.xml.cdom.VariableContainer;
 import com.delcyon.capo.xml.dom.ResourceDeclarationElement;
 
 /**

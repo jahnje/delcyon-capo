@@ -60,6 +60,7 @@ public class CDocument extends CNode implements Document
     @CloneControl(filter=Clone.exclude)
     private long documentID = incrementDocumentID();
 	private boolean silenceEvents = false;
+    private VariableProcessor variableProcessor;
     
     public CDocument()
     {
@@ -515,6 +516,16 @@ public class CDocument extends CNode implements Document
 	public void setSilenceEvents(boolean silenceEvents)
 	{
 		this.silenceEvents = silenceEvents;
+	}
+	
+	public void setVariableProcessor(VariableProcessor variableProcessor)
+	{
+	    this.variableProcessor = variableProcessor;
+	}
+	
+	public VariableProcessor getVariableProcessor()
+	{
+	    return this.variableProcessor;
 	}
 	
 }

@@ -27,7 +27,6 @@ import org.w3c.dom.Document;
 
 import com.delcyon.capo.CapoApplication;
 import com.delcyon.capo.CapoApplication.Location;
-import com.delcyon.capo.controller.VariableContainer;
 import com.delcyon.capo.datastream.StreamUtil;
 import com.delcyon.capo.preferences.Preference;
 import com.delcyon.capo.preferences.PreferenceInfo;
@@ -41,6 +40,7 @@ import com.delcyon.capo.resourcemanager.ResourceDescriptor;
 import com.delcyon.capo.resourcemanager.ResourceURI;
 import com.delcyon.capo.resourcemanager.remote.RemoteResourceDescriptorMessage.MessageType;
 import com.delcyon.capo.xml.XPath;
+import com.delcyon.capo.xml.cdom.VariableContainer;
 
 /**
  * @author jeremiah

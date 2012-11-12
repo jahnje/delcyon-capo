@@ -178,7 +178,11 @@ public abstract class CNode implements Node, ControlledClone
      */
     @Override
     public String getNodeValue() throws DOMException
-    {        
+    {   
+        if(this.nodeValue != null && ownerDocument != null && ownerDocument.getVariableProcessor() != null)
+        {
+            return ownerDocument.getVariableProcessor().processVars(nodeValue);
+        }
         return this.nodeValue;
     }
 

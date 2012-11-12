@@ -21,9 +21,9 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URL;
 
-import com.delcyon.capo.controller.VariableContainer;
 import com.delcyon.capo.resourcemanager.ResourceParameter;
 import com.delcyon.capo.resourcemanager.types.ContentMetaData.Attributes;
+import com.delcyon.capo.xml.cdom.VariableContainer;
 
 /**
  * @author jeremiah

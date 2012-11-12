@@ -27,7 +27,6 @@ import org.w3c.dom.NodeList;
 
 import com.delcyon.capo.CapoApplication;
 import com.delcyon.capo.controller.Group;
-import com.delcyon.capo.controller.VariableContainer;
 import com.delcyon.capo.controller.elements.ResourceControlElement;
 import com.delcyon.capo.resourcemanager.ResourceDescriptor;
 import com.delcyon.capo.resourcemanager.ResourceParameter;
@@ -38,6 +37,7 @@ import com.delcyon.capo.util.VariableContainerWrapper;
 import com.delcyon.capo.xml.XPath;
 import com.delcyon.capo.xml.cdom.CDocument;
 import com.delcyon.capo.xml.cdom.CElement;
+import com.delcyon.capo.xml.cdom.VariableContainer;
 
 /**
  * @author jeremiah
