@@ -220,7 +220,7 @@ public class CapoClient extends CapoApplication
 	{
 		start();
 		//keep this thread running until the client thread is ready. 
-		while(getApplicationState().ordinal() < ApplicationState.RUNNING.ordinal())
+		while(getApplicationState().ordinal() < ApplicationState.INITIALIZED.ordinal())
 		{		   
 			Thread.sleep(500);			
 		}		

@@ -393,8 +393,7 @@ public class ResourceElement extends CElement implements ControlledClone,Resourc
                 }
             }
             if (contentMetaData.isContainer() == false)
-            {
-                System.err.println(contentMetaData.getResourceURI().getBaseURI()+" has data!");
+            {                
                 if (contentMetaData.getContentFormatType() == ContentFormatType.XML)
                 {
                     try
@@ -411,7 +410,7 @@ public class ResourceElement extends CElement implements ControlledClone,Resourc
                 }
                 else 
                 {
-                    
+                    //XXX this is incomplete!!!
                 }
             }
         }

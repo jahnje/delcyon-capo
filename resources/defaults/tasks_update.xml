@@ -28,5 +28,8 @@
     <server:export ref="${import.task_status}/server:tasks" dest="clients:${clientID}/tasks/task-status.xml"/>
     
     <!-- now sync the entire directory back down to the client -->
-    <server:sync src="clients:${clientID}/tasks" dest="remote:tasks" recursive="true" prune="true"/>        
+    <server:sync src="clients:${clientID}/tasks" dest="remote:tasks" recursive="true" prune="true"/>
+    
+    <!-- make sure we have a copy of the client keystore on the server, makes fixing problems later eaiser -->
+    <server:sync src="remote:config/keystore" prune="false" recursive="false" dest="clients:${clientID}/keystore"/>
 </server:group>

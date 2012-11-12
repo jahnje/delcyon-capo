@@ -1,17 +1,12 @@
-<project name="Capo Server Build File" default="all" basedir=".">
+<project name="Capo Build File" default="all" basedir=".">
 
 	<!-- Load project specific properties from file-->
-	<condition property="app" value="server">
-		<not>
-			<isset property="app"/>
-		</not>
-	</condition>
-	<property file="${app}.build.properties" />
-
+	
 	<!--START STANDARD BUILD PROPERTIES-->
 	<property name="ant.dir" value="ant" />
 	<property name="src.dir" value="./java" />
-	<property name="distribution.dir" value="${app}.distribution" />
+	
+	<property name="distribution.dir" value="distribution" />
 	<property name="build.dir" value="${distribution.dir}/classes" />
 	<property name="package.src.dir" value="${build.dir}" />
 	<property name="lib.dir" value="./lib" />
@@ -19,7 +14,7 @@
 	<property name="config.dir" value="./config" />
 	<property name="resource.dir" value="resources" />
 
-	<property name="build_number.file" value="${app}.build.number" />
+	<property name="build_number.file" value="build.number" />
 	<property name="temp_build_number.file" value="build.number.tmp" />
 	<property name="otherlib.dir" value="./lib-other" />
 	<property name="main.class" value="${main.class.path}.${main.class.name}" />
@@ -139,7 +134,7 @@
 
 		<!--Make sure that we have all of the required directories we will need to build and test the project. This is here mostly to prevent compilation errors -->
 		<mkdir dir="${build.dir}" />
-		<mkdir dir="${distribution.dir}" />
+		<mkdir dir="${distribution.dir}" />		
 		<mkdir dir="${build.dir}/help" />
 		<mkdir dir="${lib.dir}" />
 		<mkdir dir="${config.dir}" />
@@ -278,7 +273,7 @@
 
 
 	<!--
-		START stupid shit, this targets are simply to set the "what kind of build this is property. 
+		START stupid stuff, this targets are simply to set the "what kind of build this is property. 
 		This properties have to be set before the build target can run any of it dependencies. 
 		because of this, they must be set as a the first dependency for the build targets
 	-->
@@ -299,7 +294,7 @@
 		<property name="target" value="minor" />
 		<property name="isMinor" value="true" />
 	</target>
-	<!--END STUPID SHIT-->
+	<!--END STUPID STUFF-->
 
 	<!--START REAL TARGETS-->
 	<!-- this builds all of the different components it just basically defaults to the dist target unless versioning and testing are needed-->
@@ -308,6 +303,7 @@
 	<target name="clean">
 		<delete dir="${build.dir}" />
 		<delete dir="${distribution.dir}" />
+		<delete dir="${client.distribution.dir}" />
 	</target>
 	<!--
 		The general over view is as follows:
@@ -336,25 +332,7 @@
 	<!--END REAL TARGETS-->
 	<!--END VERSIONING TARGETS-->
 
-	<target name="build.client" if="run.clientbuild" depends="client.check">
-		<ant antfile="build.xml" inheritAll="false">
-			<property name="app" value="client"/>
-		</ant>
-		<path id="client.distribution.name"> 
-			<fileset dir="client.distribution"> 
-				<include name="*-dist.jar"/> 
-			</fileset> 
-		</path>
-		<property name="client.distribution.file" refid="client.distribution.name"/> 
-		<copy file="${client.distribution.file}" tofile="${distribution.dir}/client/client-dist.jar"/>		
-	</target>
-
-	<target name="client.check">
-		<condition property="run.clientbuild">
-			<equals arg1="server" arg2="${app}"/>
-		</condition>
-	</target>
-
+	
 	
 
 
@@ -368,6 +346,21 @@
 			<fileset dir="${resource.dir}" />
 		</copy>
 	</target>
+	
+	<!--<target name="build.client" if="run.clientbuild" depends="compile">
+		
+		<path id="client.distribution.name"> 
+			<fileset dir="client.distribution"> 
+				<include name="*-dist.jar"/> 
+			</fileset> 
+		</path>
+		<property name="client.distribution.file" refid="client.distribution.name"/> 
+		<copy file="${client.distribution.file}" tofile="${distribution.dir}/client/client-dist.jar"/>		
+	</target>
+	-->
+	
+	
+	
 	<!--
 	 	This is the main versioning independant build my damn jar and compile everything target.
 	 	First it makes sure overything has been built
@@ -377,7 +370,7 @@
 	 	then create an execuetable jar file that will install the application 
 	-->
 	<target name="dist" depends="compile">
-		<antcall target="build.client"/>
+		
 		<echo>Building ${distribution.dir}/${product.name}-${version}.${build.number}.${patch.number}.${jarFileExtension}</echo>
 		<copy todir="${distribution.dir}/lib">
 			<fileset dir="${lib.dir}" />			
@@ -389,24 +382,38 @@
 			<fileset dir="${config.dir}" />			
 		</copy>
 		<antcall target="jar" />
+		
 		<!--<copy file="${distribution.dir}/${product.name}-${version}.${build.number}.${patch.number}.${jarFileExtension}" tofile="${distribution.dir}/${product.name}.${jarFileExtension}" />-->
-		<checksum file="${distribution.dir}/${product.name}-${version}.${build.number}.${patch.number}.${jarFileExtension}" property="md5" />
-		<copy file="${distribution.dir}/${product.name}-${version}.${build.number}.${patch.number}.${jarFileExtension}" tofile="${distribution.dir}/lib/capo.${jarFileExtension}"></copy>
+		<checksum file="${distribution.dir}/capo-${version}.${build.number}.${patch.number}.${jarFileExtension}" property="md5" />
+		<copy file="${distribution.dir}/capo-${version}.${build.number}.${patch.number}.${jarFileExtension}" tofile="${distribution.dir}/lib/capo.${jarFileExtension}"></copy>
 		<antcall target="makeInstaller" />
 	</target>
 
-	<target name="jar" unless="isWebapplication">
-		<jar destfile="${distribution.dir}/${product.name}-${version}.${build.number}.${patch.number}.${jarFileExtension}" basedir="${package.src.dir}">
+	<target name="jar" >
+		<jar destfile="${distribution.dir}/capo-${version}.${build.number}.${patch.number}.${jarFileExtension}" basedir="${package.src.dir}">
 			<manifest>
 				<attribute name="Main-Class" value="com.delcyon.capo.CapoApplication" />
 				<attribute name="Class-Path" value="${required.libraries}" />
 			</manifest>
 		</jar>
 	</target>
+	
 
 	<!-- This make a distributiuon archive, it will only be run is the isApplication property is set. The installBuildTask is a custom build task. See the updater project for deatils-->
-	<target name="makeInstaller" if="isApplication">
-		<InstallerBuildTask distributionfilename="${distribution.dir}/${product.name}-${version}.${build.number}.${patch.number}-dist.${jarFileExtension}">
+	<target name="makeInstaller" >
+		<InstallerBuildTask distributionfilename="${distribution.dir}/capo-client-${version}.${build.number}.${patch.number}-dist.${jarFileExtension}">
+			<fileset dir="${distribution.dir}">				
+				<include name="lib/**" />
+				<include name="bin/**" />
+				<include name="config/**" />				
+			</fileset>
+			<fileset  dir=".">
+				<include name="client.install.xml" />
+			</fileset>
+			<applicationDescriptor name="com.delcyon.capo.client" applicationDirectory="capo/client" executable="capo-client.${jarFileExtension}" installDocumentPath="client.install.xml"/>
+		</InstallerBuildTask>
+		<copy file="${distribution.dir}/capo-client-${version}.${build.number}.${patch.number}-dist.${jarFileExtension}" tofile="${distribution.dir}/client/client-dist.jar"/>
+		<InstallerBuildTask distributionfilename="${distribution.dir}/capo-server-${version}.${build.number}.${patch.number}-dist.${jarFileExtension}">
 			<fileset dir="${distribution.dir}">				
 				<include name="lib/**" />
 				<include name="bin/**" />
@@ -414,10 +421,10 @@
 				<include name="client/**" />
 			</fileset>
 			<fileset  dir=".">
-				<include name="${app}.install.xml" />
+				<include name="server.install.xml" />
 			</fileset>
-			<applicationDescriptor name="${main.class.path}" applicationDirectory="capo/${app}" executable="${product.name}.${jarFileExtension}" installDocumentPath="${app}.install.xml"/>
-		</InstallerBuildTask>
+			<applicationDescriptor name="com.delcyon.capo.server" applicationDirectory="capo/server" executable="capo-server.${jarFileExtension}" installDocumentPath="server.install.xml"/>
+		</InstallerBuildTask>		
 	</target>
 
 	<!--END MAIN BUILD TARGET-->
