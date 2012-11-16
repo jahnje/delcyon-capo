@@ -65,7 +65,7 @@ public class ControllerRequest extends XMLRequest
 			variableElement.setAttribute(Attributes.name.toString(), entry.getKey());
 			variableElement.setAttribute(Attributes.value.toString(), entry.getValue());
 			rootElement.appendChild(variableElement);
-			CapoClient.logger.log(Level.FINE, "Storing " + variableElement.getAttribute(Attributes.name.toString()) + " ==> " + variableElement.getAttribute(Attributes.value.toString()));
+			CapoClient.logger.log(Level.FINEST, "Storing " + variableElement.getAttribute(Attributes.name.toString()) + " ==> " + variableElement.getAttribute(Attributes.value.toString()));
 		}
 
 		// load system properties
@@ -78,7 +78,7 @@ public class ControllerRequest extends XMLRequest
 			variableElement.setAttribute(Attributes.name.toString(), entry.getKey().toString());
 			variableElement.setAttribute(Attributes.value.toString(), entry.getValue().toString());
 			rootElement.appendChild(variableElement);
-			CapoClient.logger.log(Level.FINE, "Storing " + variableElement.getAttribute(Attributes.name.toString()) + " ==> " + variableElement.getAttribute(Attributes.value.toString()));
+			CapoClient.logger.log(Level.FINEST, "Storing " + variableElement.getAttribute(Attributes.name.toString()) + " ==> " + variableElement.getAttribute(Attributes.value.toString()));
 		}
 		
 		//load id values
@@ -91,7 +91,7 @@ public class ControllerRequest extends XMLRequest
 			variableElement.setAttribute(Attributes.name.toString(), entry.getKey().toString());
 			variableElement.setAttribute(Attributes.value.toString(), entry.getValue().toString());
 			rootElement.appendChild(variableElement);
-			CapoClient.logger.log(Level.FINE, "Storing " + variableElement.getAttribute(Attributes.name.toString()) + " ==> " + variableElement.getAttribute(Attributes.value.toString()));
+			CapoClient.logger.log(Level.FINEST, "Storing " + variableElement.getAttribute(Attributes.name.toString()) + " ==> " + variableElement.getAttribute(Attributes.value.toString()));
 		}
 	}
 
