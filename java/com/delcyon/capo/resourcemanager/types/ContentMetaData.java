@@ -81,9 +81,26 @@ public interface ContentMetaData
 
 	public Long getLastModified();
 	
+	/**
+	 * Set an attributes values
+	 * @param name
+	 * @param value
+	 */
 	public void setValue(String name, String value);
 	
+	/**
+	 * returns an attributes values, null if it doesn't exist.
+	 * @param name
+	 * @return
+	 */
 	public String getValue(String name);
+	
+	/**
+     * returns an attributes values, null if it doesn't exist.
+     * @param name
+     * @return
+     */
+	public String getValue(Enum name);
 	
 	public boolean isSupported(String attributeName);
 	

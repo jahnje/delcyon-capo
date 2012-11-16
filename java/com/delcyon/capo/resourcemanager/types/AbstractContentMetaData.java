@@ -187,6 +187,9 @@ public abstract class AbstractContentMetaData implements ContentMetaData
 	{
 	    this.includeStreamAttributes = true;
 		streamAttributeFilterVector.clear();
+		attributeHashMap.remove(MD5FilterInputStream.ATTRIBUTE_NAME);
+		attributeHashMap.remove(SizeFilterInputStream.ATTRIBUTE_NAME);
+		attributeHashMap.remove(ContentFormatType.ATTRIBUTE_NAME);
 		for (Class outputStreamAttributeFilterProviderClass : outputStreamAttributeFilterVector)
 		{			
 			outputStream = (FilterOutputStream) outputStreamAttributeFilterProviderClass.getConstructor(OutputStream.class).newInstance(outputStream);
@@ -287,6 +290,12 @@ public abstract class AbstractContentMetaData implements ContentMetaData
 	{
 		return getAttributeMap().get(name);
 		
+	}
+	
+	@Override
+	public String getValue(Enum name)
+	{
+	    return getValue(name.toString());
 	}
 	
 	@Override
