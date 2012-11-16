@@ -20,6 +20,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.math.BigInteger;
 import java.net.URI;
+import java.util.Arrays;
 
 import com.delcyon.capo.datastream.stream_attribute_filter.MD5FilterInputStream;
 import com.delcyon.capo.resourcemanager.ResourceParameter;
@@ -32,7 +33,12 @@ import com.delcyon.capo.resourcemanager.ResourceURI;
  */
 public class FileResourceContentMetaData extends AbstractContentMetaData
 {
-	
+	public enum FileAttributes
+	{
+        absolutePath, canonicalPath
+	    
+	}
+    
 	@SuppressWarnings("unused")
 	private FileResourceContentMetaData() //serialization only
 	{
@@ -49,10 +55,11 @@ public class FileResourceContentMetaData extends AbstractContentMetaData
 		init(uri,currentDepth,resourceParameters);
 	}
 	
-	@Override
-	public Attributes[] getAdditionalSupportedAttributes()
+	@SuppressWarnings("rawtypes")
+    @Override
+	public Enum[] getAdditionalSupportedAttributes()
 	{
-		return new Attributes[]{Attributes.exists,Attributes.executable,Attributes.readable,Attributes.writeable,Attributes.container,Attributes.lastModified,Attributes.MD5};
+		return new Enum[]{Attributes.exists,Attributes.executable,Attributes.readable,Attributes.writeable,Attributes.container,Attributes.lastModified,Attributes.MD5,FileAttributes.absolutePath,FileAttributes.canonicalPath};
 	}
 
 	
@@ -102,7 +109,11 @@ public class FileResourceContentMetaData extends AbstractContentMetaData
 
 		getAttributeMap().put(Attributes.lastModified.toString(), file.lastModified()+"");
 		
+		getAttributeMap().put(Attributes.lastModified.toString(), file.lastModified()+"");
 		
+		getAttributeMap().put(FileAttributes.absolutePath.toString(), file.getAbsolutePath()+"");
+		
+		getAttributeMap().put(FileAttributes.canonicalPath.toString(), file.getCanonicalPath()+"");
 		
 		if (file.exists() == true && file.canRead() == true && file.isDirectory() == false)
 		{
@@ -113,7 +124,9 @@ public class FileResourceContentMetaData extends AbstractContentMetaData
 		else if (file.isDirectory() == true && getIntValue(com.delcyon.capo.controller.elements.ResourceMetaDataElement.Attributes.depth,1,resourceParameters) > currentDepth)
 		{	
 			BigInteger contentMD5 = new BigInteger(new byte[]{0});
-			for (String childURI : file.list())
+			String[] fileList = file.list(); 
+			Arrays.sort(fileList);
+			for (String childURI : fileList)
 			{
 				File childFile = new File(file,childURI);				
 				String tempChildURI = childFile.toURI().toString();
