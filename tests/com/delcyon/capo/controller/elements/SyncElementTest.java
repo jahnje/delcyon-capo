@@ -13,11 +13,11 @@ import org.w3c.dom.Element;
 import com.delcyon.capo.CapoApplication;
 import com.delcyon.capo.controller.Group;
 import com.delcyon.capo.resourcemanager.ResourceDescriptor;
-import com.delcyon.capo.resourcemanager.ResourceParameter;
 import com.delcyon.capo.resourcemanager.ResourceDescriptor.LifeCycle;
+import com.delcyon.capo.resourcemanager.ResourceParameter;
 import com.delcyon.capo.resourcemanager.types.ContentMetaData;
+import com.delcyon.capo.resourcemanager.types.FileResourceContentMetaData.FileAttributes;
 import com.delcyon.capo.resourcemanager.types.FileResourceType;
-import com.delcyon.capo.tests.util.TestCapoApplication;
 import com.delcyon.capo.tests.util.external.Util;
 import com.delcyon.capo.xml.XMLDiff;
 import com.delcyon.capo.xml.XPath;
@@ -75,6 +75,8 @@ public class SyncElementTest
         XMLDiff xmlDiff = new XMLDiff();
         xmlDiff.addIgnoreableAttribute(null,ContentMetaData.Attributes.path.toString());
         xmlDiff.addIgnoreableAttribute(null,ContentMetaData.Attributes.uri.toString());
+        xmlDiff.addIgnoreableAttribute(null,FileAttributes.absolutePath.toString());
+        xmlDiff.addIgnoreableAttribute(null,FileAttributes.canonicalPath.toString());
         Document diffDocument = xmlDiff.getDifferences(baseDocument, modDocument);
         
         //verify that root element of xml diff contains mod = base
@@ -127,6 +129,8 @@ public class SyncElementTest
          XMLDiff xmlDiff = new XMLDiff();
          xmlDiff.addIgnoreableAttribute(CapoApplication.RESOURCE_NAMESPACE_URI,ContentMetaData.Attributes.path.toString());
          xmlDiff.addIgnoreableAttribute(CapoApplication.RESOURCE_NAMESPACE_URI,ContentMetaData.Attributes.uri.toString());
+         xmlDiff.addIgnoreableAttribute(CapoApplication.RESOURCE_NAMESPACE_URI,FileAttributes.absolutePath.toString());
+         xmlDiff.addIgnoreableAttribute(CapoApplication.RESOURCE_NAMESPACE_URI,FileAttributes.canonicalPath.toString());
          Document diffDocument = xmlDiff.getDifferences(baseDocument, modDocument);
          baseDocument.close(LifeCycle.EXPLICIT);
          modDocument.close(LifeCycle.EXPLICIT);
@@ -158,6 +162,8 @@ public class SyncElementTest
           xmlDiff = new XMLDiff();
          xmlDiff.addIgnoreableAttribute(null,ContentMetaData.Attributes.path.toString());
          xmlDiff.addIgnoreableAttribute(null,ContentMetaData.Attributes.uri.toString());
+         xmlDiff.addIgnoreableAttribute(null,FileAttributes.absolutePath.toString());
+         xmlDiff.addIgnoreableAttribute(null,FileAttributes.canonicalPath.toString());
           diffDocument = xmlDiff.getDifferences(baseDocument, modDocument);
           baseDocument.close(LifeCycle.EXPLICIT);
           modDocument.close(LifeCycle.EXPLICIT);

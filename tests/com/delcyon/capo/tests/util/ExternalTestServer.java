@@ -13,6 +13,7 @@ import com.delcyon.capo.resourcemanager.ResourceDescriptor;
 import com.delcyon.capo.resourcemanager.ResourceDescriptor.LifeCycle;
 import com.delcyon.capo.resourcemanager.types.ContentMetaData;
 import com.delcyon.capo.resourcemanager.types.FileResourceType;
+import com.delcyon.capo.resourcemanager.types.FileResourceContentMetaData.FileAttributes;
 import com.delcyon.capo.resourcemanager.types.ShellResourceDescriptor.Parameter;
 import com.delcyon.capo.tests.util.external.Util;
 import com.delcyon.capo.xml.XMLDiff;
@@ -121,6 +122,8 @@ public class ExternalTestServer
         xmlDiff.addIgnoreableAttribute(null,ContentMetaData.Attributes.path.toString());
         xmlDiff.addIgnoreableAttribute(null,ContentMetaData.Attributes.uri.toString());
         xmlDiff.addIgnoreableAttribute(null,ContentMetaData.Attributes.lastModified.toString());
+        xmlDiff.addIgnoreableAttribute(null,FileAttributes.absolutePath.toString());
+        xmlDiff.addIgnoreableAttribute(null,FileAttributes.canonicalPath.toString());
         Document diffDocument = xmlDiff.getDifferences(baseDocument, modDocument);
         //XPath.dumpNode(diffDocument, System.out);
         //verify that root element of xml diff contains mod = base
@@ -128,7 +131,8 @@ public class ExternalTestServer
         modDocument.close(LifeCycle.EXPLICIT);
         if (diffDocument.getDocumentElement().getAttributeNS(XMLDiff.XDIFF_NAMESPACE_URI, XMLDiff.XDIFF_ELEMENT_ATTRIBUTE_NAME).equals(XMLDiff.EQUALITY) == false)
         {
-        	XPath.dumpNode(diffDocument, System.out);
+        	XPath.dumpNode(diffDocument, System.err);
+        	
         }
         Assert.assertEquals("There is a difference between "+src+" and "+dest+" Client did not update correctly",XMLDiff.EQUALITY,diffDocument.getDocumentElement().getAttributeNS(XMLDiff.XDIFF_NAMESPACE_URI, XMLDiff.XDIFF_ELEMENT_ATTRIBUTE_NAME));
         

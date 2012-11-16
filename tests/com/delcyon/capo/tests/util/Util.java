@@ -18,6 +18,7 @@ import com.delcyon.capo.resourcemanager.ResourceManager;
 import com.delcyon.capo.resourcemanager.ResourceParameter;
 import com.delcyon.capo.resourcemanager.types.ContentMetaData;
 import com.delcyon.capo.resourcemanager.types.FileResourceType;
+import com.delcyon.capo.resourcemanager.types.FileResourceContentMetaData.FileAttributes;
 import com.delcyon.capo.xml.XMLDiff;
 import com.delcyon.capo.xml.XPath;
 import com.delcyon.capo.xml.dom.ResourceDocument;
@@ -106,6 +107,8 @@ public class Util
         xmlDiff.addIgnoreableAttribute(null,ContentMetaData.Attributes.path.toString());
         xmlDiff.addIgnoreableAttribute(null,ContentMetaData.Attributes.uri.toString());
         xmlDiff.addIgnoreableAttribute(null,ContentMetaData.Attributes.lastModified.toString());
+        xmlDiff.addIgnoreableAttribute(null,FileAttributes.absolutePath.toString());
+        xmlDiff.addIgnoreableAttribute(null,FileAttributes.canonicalPath.toString());
         Document diffDocument = xmlDiff.getDifferences(baseDocument, modDocument);
         
         //verify that root element of xml diff contains mod = base
