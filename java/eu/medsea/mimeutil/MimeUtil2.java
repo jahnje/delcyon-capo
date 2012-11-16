@@ -438,7 +438,7 @@ public class MimeUtil2
 
 			try
 			{
-				CapoApplication.logger.fine("Getting MIME types for byte array [" + StringUtil.getHexString(data) + "].");
+				CapoApplication.logger.finest("Getting MIME types for byte array [" + StringUtil.getHexString(data) + "].");
 			} catch (UnsupportedEncodingException e)
 			{
 				throw new MimeException(e);
@@ -457,7 +457,7 @@ public class MimeUtil2
 			mimeTypes.add(unknownMimeType);
 		}
 
-		CapoApplication.logger.fine("Retrieved MIME types [" + mimeTypes.toString() + "]");
+		CapoApplication.logger.finest("Retrieved MIME types [" + mimeTypes.toString() + "]");
 
 		return mimeTypes;
 	}
@@ -508,7 +508,7 @@ public class MimeUtil2
 		else
 		{
 
-			CapoApplication.logger.fine("Getting MIME types for file [" + file.getAbsolutePath() + "].");
+			CapoApplication.logger.finest("Getting MIME types for file [" + file.getAbsolutePath() + "].");
 
 			if (file.isDirectory())
 			{
@@ -530,7 +530,7 @@ public class MimeUtil2
 			mimeTypes.add(unknownMimeType);
 		}
 
-		CapoApplication.logger.fine("Retrieved MIME types [" + mimeTypes.toString() + "]");
+		CapoApplication.logger.finest("Retrieved MIME types [" + mimeTypes.toString() + "]");
 
 		return mimeTypes;
 	}
@@ -587,7 +587,7 @@ public class MimeUtil2
 				throw new MimeException("InputStream must support the mark() and reset() methods.");
 			}
 
-			CapoApplication.logger.fine("Getting MIME types for InputSteam [" + in + "].");
+			CapoApplication.logger.finest("Getting MIME types for InputSteam [" + in + "].");
 
 			mimeTypes.addAll(mimeDetectorRegistry.getMimeTypes(in));
 
@@ -601,7 +601,7 @@ public class MimeUtil2
 			mimeTypes.add(unknownMimeType);
 		}
 
-		CapoApplication.logger.fine("Retrieved MIME types [" + mimeTypes.toString() + "]");
+		CapoApplication.logger.finest("Retrieved MIME types [" + mimeTypes.toString() + "]");
 
 		return mimeTypes;
 	}
@@ -652,7 +652,7 @@ public class MimeUtil2
 		else
 		{
 
-			CapoApplication.logger.fine("Getting MIME types for file name [" + fileName + "].");
+			CapoApplication.logger.finest("Getting MIME types for file name [" + fileName + "].");
 
 			// Test if this is a directory
 			File file = new File(fileName);
@@ -676,7 +676,7 @@ public class MimeUtil2
 			mimeTypes.add(unknownMimeType);
 		}
 
-		CapoApplication.logger.fine("Retrieved MIME types [" + mimeTypes.toString() + "]");
+		CapoApplication.logger.finest("Retrieved MIME types [" + mimeTypes.toString() + "]");
 
 		return mimeTypes;
 
@@ -711,7 +711,7 @@ public class MimeUtil2
 		else
 		{
 
-			CapoApplication.logger.fine("Getting MIME types for URL [" + url + "].");
+			CapoApplication.logger.finest("Getting MIME types for URL [" + url + "].");
 
 			// Test if this is a directory
 			File file = new File(url.getPath());
@@ -735,7 +735,7 @@ public class MimeUtil2
 			mimeTypes.add(unknownMimeType);
 		}
 
-		CapoApplication.logger.fine("Retrieved MIME types [" + mimeTypes.toString() + "]");
+		CapoApplication.logger.finest("Retrieved MIME types [" + mimeTypes.toString() + "]");
 
 		return mimeTypes;
 	}
@@ -1138,7 +1138,7 @@ class MimeDetectorRegistry
 			MimeDetector md = (MimeDetector) Class.forName(mimeDetector).newInstance();
 			md.init();
 
-			CapoApplication.logger.fine("Registering MimeDetector with name [" + md.getName() + "] and description [" + md.getDescription() + "]");
+			CapoApplication.logger.finest("Registering MimeDetector with name [" + md.getName() + "] and description [" + md.getDescription() + "]");
 
 			mimeDetectors.put(mimeDetector, md);
 			return md;
@@ -1327,7 +1327,7 @@ class MimeDetectorRegistry
 			return null;
 		}
 
-		CapoApplication.logger.fine("Unregistering MimeDetector [" + mimeDetector + "] from registry.");
+		CapoApplication.logger.finest("Unregistering MimeDetector [" + mimeDetector + "] from registry.");
 
 		try
 		{
