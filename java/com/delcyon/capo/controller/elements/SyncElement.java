@@ -19,9 +19,9 @@ package com.delcyon.capo.controller.elements;
 import java.io.OutputStream;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Vector;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.Vector;
 import java.util.logging.Level;
 
 import org.w3c.dom.Attr;
@@ -40,6 +40,7 @@ import com.delcyon.capo.datastream.TriggerFilterOutputStream;
 import com.delcyon.capo.datastream.stream_attribute_filter.MD5FilterOutputStream;
 import com.delcyon.capo.resourcemanager.ResourceDescriptor;
 import com.delcyon.capo.resourcemanager.ResourceDescriptor.Action;
+import com.delcyon.capo.resourcemanager.ResourceDescriptor.State;
 import com.delcyon.capo.resourcemanager.ResourceParameter;
 import com.delcyon.capo.resourcemanager.ResourceParameterBuilder;
 import com.delcyon.capo.resourcemanager.types.ContentMetaData;
@@ -68,10 +69,11 @@ public class SyncElement extends AbstractControl
 	
 	public enum Attributes
 	{
-		name,src,dest,onCopy,recursive,prune, syncAttributes
+		name,src,dest,onCopy,recursive,prune, syncAttributes,maxRetries
 	}
 	
 	private static final String[] supportedNamespaces = {CapoApplication.SERVER_NAMESPACE_URI};
+    private int maxRetries = 5;
 	
 	
 	
@@ -104,6 +106,12 @@ public class SyncElement extends AbstractControl
 	public Object processServerSideElement() throws Exception
 	{
 		
+	    if(getAttributeValue(Attributes.maxRetries).matches("\\d+"))
+	    {
+	        this.maxRetries = Integer.parseInt(getAttributeValue(Attributes.maxRetries));
+	    }
+	   
+	    
 		//make a copy to send to the client
 		Element tempCopyElement = (Element) getControlElementDeclaration().cloneNode(true);
 		
@@ -244,14 +252,80 @@ public class SyncElement extends AbstractControl
             String destMD5 = destinationResourceDescriptor.getResourceMetaData(getParentGroup(), ResourceParameterBuilder.getResourceParameters(getControlElementDeclaration())).getMD5();
             if (destMD5 == null || destMD5.equals(srcMD5) == false)
             {
-                CapoApplication.logger.log(Level.INFO, "Syncing file: "+sourceResourceDescriptor.getResourceURI().getBaseURI()+" ==> "+destinationResourceDescriptor.getResourceURI().getBaseURI());
-                ResourceParameterBuilder resourceParameterBuilder = new ResourceParameterBuilder();
-                resourceParameterBuilder.addAll(getControlElementDeclaration());
-                resourceParameterBuilder.addParameter(FileResourceType.Parameters.USE_TEMP, "true");
-                OutputStream filteredOutputStream = wrapOutputStream(destinationResourceDescriptor.getOutputStream(getParentGroup(), resourceParameterBuilder.getParameters()),getControlElementDeclaration());
-                StreamUtil.readInputStreamIntoOutputStream(sourceResourceDescriptor.getInputStream(getParentGroup(),ResourceParameterBuilder.getResourceParameters(getControlElementDeclaration())), filteredOutputStream);
-                filteredOutputStream.flush();
-                filteredOutputStream.close();
+                int retryCount = 0;
+                while(retryCount < maxRetries)
+                {
+                    CapoApplication.logger.log(Level.INFO, "Syncing file: "+sourceResourceDescriptor.getResourceURI().getBaseURI()+" ==> "+destinationResourceDescriptor.getResourceURI().getBaseURI());
+                    ResourceParameterBuilder resourceParameterBuilder = new ResourceParameterBuilder();
+                    resourceParameterBuilder.addAll(getControlElementDeclaration());
+                    resourceParameterBuilder.addParameter(FileResourceType.Parameters.USE_TEMP, "true");
+                    OutputStream filteredOutputStream = wrapOutputStream(destinationResourceDescriptor.getOutputStream(getParentGroup(), resourceParameterBuilder.getParameters()),getControlElementDeclaration());
+                    
+                    Exception exception = null;                    
+                    try
+                    {
+                        StreamUtil.readInputStreamIntoOutputStream(sourceResourceDescriptor.getInputStream(getParentGroup(),ResourceParameterBuilder.getResourceParameters(getControlElementDeclaration())), filteredOutputStream);
+                    }
+                    catch (Exception exceptionLocal)
+                    {
+                        exception = exceptionLocal;
+                    }
+
+                    try
+                    {
+                        filteredOutputStream.flush();
+                    }
+                    catch (Exception exceptionLocal)
+                    {
+                        if(exception == null)
+                        {
+                            exception = exceptionLocal;
+                        }                       
+                    }
+
+                    try
+                    {                       
+                        filteredOutputStream.close();
+                    }
+                    catch (Exception exceptionLocal)
+                    {
+                        if(exception == null)
+                        {
+                            exception = exceptionLocal;
+                        }
+                    }
+                   
+                    if(exception != null)
+                    {
+                        CapoApplication.logger.log(Level.WARNING, "There was an error trying to sync, restarting. ("+retryCount+")"+exception.getMessage());
+                        
+                    }
+                    
+                    //we'll wait here until this is done processing
+                    CapoApplication.logger.log(Level.INFO, "waiting here on output metadata");
+                    ContentMetaData outputMetaData = destinationResourceDescriptor.getOutputMetaData(getParentGroup());
+                    if(outputMetaData != null && srcMD5.equals(outputMetaData.getMD5()))
+                    {
+                        destinationResourceDescriptor.performAction(getParentGroup(), Action.COMMIT);
+                        break;
+                    }
+                    else
+                    {
+                        destinationResourceDescriptor.performAction(getParentGroup(), Action.ROLLBACK);
+                        destinationResourceDescriptor.reset(State.OPEN);
+                        sourceResourceDescriptor.reset(State.OPEN);
+                        retryCount++;
+                    }
+                }
+               
+                if(retryCount == maxRetries)
+                {
+                    destinationResourceDescriptor.close(getParentGroup());
+                    sourceResourceDescriptor.close(getParentGroup());
+                    throw new Exception("Couldn't sync "+sourceResourceDescriptor.getResourceURI().getResourceURIString());
+                }
+
+                
                 
                 copyContentMetaData(sourceContentMetaData,destinationResourceDescriptor);
                 
@@ -263,8 +337,6 @@ public class SyncElement extends AbstractControl
             }
         }
     }
-
-
 
 
 
