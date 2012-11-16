@@ -66,6 +66,7 @@ public class ShellResourceDescriptor extends AbstractResourceDescriptor
 	private Condition notification = null;
 	private boolean printBuffer = false;
 	private boolean debug = false;
+    private SimpleContentMetaData outputMetaData;
 	
 	@Override
 	public void setup(ResourceType resourceType, String resourceURI) throws Exception
@@ -216,7 +217,7 @@ public class ShellResourceDescriptor extends AbstractResourceDescriptor
 					
 					if (new String(buffer).matches(regex))
 					{
-					    buildIterationMetatData(data);
+					    buildIterationMetaData(data);
 						return true;
 					}
 					buffer = inputStreamTokenizer.readBytes();
@@ -240,7 +241,7 @@ public class ShellResourceDescriptor extends AbstractResourceDescriptor
             if(debug){System.out.println("waiting for results");}
             notification.await();
             if(debug){System.out.println("done waiting for results");}
-            buildIterationMetatData(stdoutThreadedInputStreamReader.getByteArrayOutputStream().toByteArray());
+            buildIterationMetaData(stdoutThreadedInputStreamReader.getByteArrayOutputStream().toByteArray());
             return true;
 		}
 		setResourceState(State.OPEN);
@@ -266,7 +267,7 @@ public class ShellResourceDescriptor extends AbstractResourceDescriptor
 //		}
 		//get the data
 		byte[] data = stdoutThreadedInputStreamReader.getByteArrayOutputStream().toByteArray();
-		buildIterationMetatData(data);
+		buildIterationMetaData(data);
 		//clear the buffer once we've read it.
 		stdoutThreadedInputStreamReader.getByteArrayOutputStream().reset();
 		setResourceState(State.OPEN);
@@ -282,6 +283,7 @@ public class ShellResourceDescriptor extends AbstractResourceDescriptor
 		if(debug){System.out.println("Running command:"+command);}
 		stdinOutputStream.write(block);
 		stdinOutputStream.flush();
+		buildOutputMetaData(block);
 	}
 	
 	@Override
@@ -302,9 +304,16 @@ public class ShellResourceDescriptor extends AbstractResourceDescriptor
 //		return stderrInputStream;
 //	}
 	
+	private void buildOutputMetaData(byte[] data) throws NoSuchAlgorithmException
+    {
+      outputMetaData = null;
+      outputMetaData = buildResourceMetaData(null);          
+      outputMetaData.setValue("MD5",StreamUtil.getMD5(data));         
+      outputMetaData.setValue("size",data.length);
+    }
 	
  	
- 	private void buildIterationMetatData(byte[] data) throws NoSuchAlgorithmException
+ 	private void buildIterationMetaData(byte[] data) throws NoSuchAlgorithmException
  	{
  	  iterationContentMetaData = null;
  	  iterationContentMetaData = buildResourceMetaData(null);          
@@ -318,6 +327,12 @@ public class ShellResourceDescriptor extends AbstractResourceDescriptor
 		return iterationContentMetaData;
 	}
 
+	@Override
+    public ContentMetaData getOutputMetaData(VariableContainer variableContainer, ResourceParameter... resourceParameters) throws Exception
+    {
+        return outputMetaData;
+    }
+	
 
 	@Override
 	public StreamFormat[] getSupportedStreamFormats(StreamType streamType)

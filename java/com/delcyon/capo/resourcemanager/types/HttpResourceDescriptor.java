@@ -33,6 +33,7 @@ public class HttpResourceDescriptor extends AbstractResourceDescriptor
 	
 	byte[] content = null;
     private SimpleContentMetaData contentMetaData;
+    private SimpleContentMetaData outputMetaData;
 
 	public HttpResourceDescriptor() throws Exception
 	{
@@ -94,12 +95,16 @@ public class HttpResourceDescriptor extends AbstractResourceDescriptor
 	public OutputStream getOutputStream(VariableContainer variableContainer,ResourceParameter... resourceParameters) throws Exception
 	{
 	    advanceState(State.OPEN, variableContainer, resourceParameters);
-		SimpleContentMetaData outputMetaData = new SimpleContentMetaData(getResourceURI());
+		outputMetaData = new SimpleContentMetaData(getResourceURI());
 		URL url = new URL(getResourceURI().getBaseURI());	
 		return outputMetaData.wrapOutputStream(url.openConnection().getOutputStream());
 	}
 	
-	
+	@Override
+	public ContentMetaData getOutputMetaData(VariableContainer variableContainer, ResourceParameter... resourceParameters) throws Exception
+	{
+	    return outputMetaData;
+	}
 
 	@Override
 	public void close(VariableContainer variableContainer,ResourceParameter... resourceParameters) throws Exception

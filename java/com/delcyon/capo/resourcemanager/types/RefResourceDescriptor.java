@@ -82,6 +82,12 @@ public class RefResourceDescriptor extends AbstractResourceDescriptor
 	}
 
 	@Override
+	public ContentMetaData getOutputMetaData(VariableContainer variableContainer, ResourceParameter... resourceParameters) throws Exception
+	{	 
+	    return null;
+	}
+	
+	@Override
 	public StreamFormat[] getSupportedStreamFormats(StreamType streamType) throws Exception
 	{
 		if (streamType == StreamType.INPUT)

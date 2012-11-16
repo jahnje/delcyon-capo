@@ -53,7 +53,9 @@ public interface ResourceDescriptor
 	{
 		CREATE,
 		DELETE, 
-		SET_ATTRIBUTE
+		SET_ATTRIBUTE,
+		ROLLBACK,
+		COMMIT
 	}
 	
 	/** This represents the state of a resource. 
@@ -180,6 +182,9 @@ public interface ResourceDescriptor
 	/** This is the Content Metadata available after a call to next() */
 	public ContentMetaData getContentMetaData(VariableContainer variableContainer, ResourceParameter... resourceParameters) throws Exception;
 	
+	/** This is the Content Metadata available after an output related call. It's only available once output is done. */
+    public ContentMetaData getOutputMetaData(VariableContainer variableContainer, ResourceParameter... resourceParameters) throws Exception;
+    
 	/** This returns the scope of a resource
 	 * @throws Exception */
 	public abstract LifeCycle getLifeCycle() throws Exception;

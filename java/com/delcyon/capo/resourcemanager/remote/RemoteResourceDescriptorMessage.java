@@ -64,8 +64,7 @@ public class RemoteResourceDescriptorMessage extends AbstractResponse
 		ADD_RESOURCE_PARAMETERS, 
 		IS_STREAM_SUPPORETED_FORMAT, 
 		CLOSE, GET_OUTPUTSTREAM, 
-		GET_VAR_VALUE, 
-		GET_ITERATION_METADATA, 
+		GET_VAR_VALUE, 		 
 		STEP, 
 		READ_XML, 
 		GET_LIFCYCLE, 
@@ -82,7 +81,9 @@ public class RemoteResourceDescriptorMessage extends AbstractResponse
 		IS_SUPPORTED_ACTION, 
 		IS_SUPPORTED_STREAM_TYPE,
 		RESET,
-		ADVANCE_STATE
+		ADVANCE_STATE,
+		GET_OUTPUT_METADATA,
+		GET_RESOURCE_METADATA
 	}
 
 	private MessageType messageType;
@@ -95,8 +96,7 @@ public class RemoteResourceDescriptorMessage extends AbstractResponse
 	private ContentMetaData contentMetaData;
 	private StreamFormat streamFormat;
 	private StreamType streamType;
-	private Boolean isStreamSupportedFormat;
-	private ContentMetaData iterationMetaData;
+	private Boolean isStreamSupportedFormat;	
 	private Boolean stepSuccess;
 	private CElement xmlElement;
 	private byte[] block;
@@ -108,7 +108,9 @@ public class RemoteResourceDescriptorMessage extends AbstractResponse
 	private Boolean isSupportedStreamType;
 	private Exception exception;
 	private State previousState;
-    private State desiredState;	
+    private State desiredState;
+    private ContentMetaData outputMetaData;
+    private ContentMetaData resourceMetaData;	
 	
 
 	public void setMessageType(MessageType messageType)
@@ -197,15 +199,7 @@ public class RemoteResourceDescriptorMessage extends AbstractResponse
 		this.resourceState = resourceState;
 	}
 
-	public ContentMetaData getContentMetaData()
-	{
-		return this.contentMetaData;
-	}
 	
-	public void setContentMetaData(ContentMetaData contentMetaData)
-	{
-		this.contentMetaData = contentMetaData;
-	}
 
 	public void setStreamFormat(StreamFormat streamFormat)
 	{
@@ -237,16 +231,36 @@ public class RemoteResourceDescriptorMessage extends AbstractResponse
 		this.isStreamSupportedFormat = isStreamSupportedFormat;
 	}
 
-	public void setIterationMetaData(ContentMetaData iterationMetaData)
+	public void setResourceMetaData(ContentMetaData resourceMetaData)
 	{
-		this.iterationMetaData = iterationMetaData;		
+		this.resourceMetaData = resourceMetaData;		
 	}
 	
-	public ContentMetaData getIterationMetaData()
+	public ContentMetaData getResourceMetaData()
 	{
-		return iterationMetaData;
+		return resourceMetaData;
 	}
-
+	
+	public ContentMetaData getContentMetaData()
+    {
+        return this.contentMetaData;
+    }
+    
+    public void setContentMetaData(ContentMetaData contentMetaData)
+    {
+        this.contentMetaData = contentMetaData;
+    }
+	
+	public void setOutputMetaData(ContentMetaData outputMetaData)
+    {
+        this.outputMetaData = outputMetaData;
+    }
+	
+	public ContentMetaData getOutputMetaData()
+	{
+	    return this.outputMetaData;
+	}
+	
 	public void setStepSuccess(boolean stepSuccess)
 	{
 		this.stepSuccess = stepSuccess;
@@ -366,4 +380,8 @@ public class RemoteResourceDescriptorMessage extends AbstractResponse
     {
         return desiredState;
     }
+
+    
+
+   
 }

@@ -22,7 +22,6 @@ import java.util.HashMap;
 import java.util.List;
 
 import org.w3c.dom.Document;
-import org.w3c.dom.Element;
 
 import com.delcyon.capo.CapoApplication;
 import com.delcyon.capo.controller.ControlElement;
@@ -113,8 +112,8 @@ public class RemoteResourceDescriptorProxy  implements ResourceDescriptor,Client
 		this.variableContainer = variableContainer;
 		RemoteResourceDescriptorMessage message = new RemoteResourceDescriptorMessage();
 		message.setResourceParameters(resourceParameters);		
-		message = sendResponse(message, MessageType.GET_CONTENT_METADATA,false);
-		return message.getContentMetaData();
+		message = sendResponse(message, MessageType.GET_RESOURCE_METADATA,false);
+		return message.getResourceMetaData();
 	}
 	
 	@Override
@@ -123,9 +122,19 @@ public class RemoteResourceDescriptorProxy  implements ResourceDescriptor,Client
 		this.variableContainer = variableContainer;
 		RemoteResourceDescriptorMessage message = new RemoteResourceDescriptorMessage();
 		message.setResourceParameters(resourceParameters);		
-		message = sendResponse(message, MessageType.GET_ITERATION_METADATA,false);
-		return message.getIterationMetaData();
+		message = sendResponse(message, MessageType.GET_CONTENT_METADATA,false);
+		return message.getContentMetaData();
 	}
+	
+	@Override
+    public ContentMetaData getOutputMetaData(VariableContainer variableContainer, ResourceParameter... resourceParameters) throws Exception
+    {
+        this.variableContainer = variableContainer;
+        RemoteResourceDescriptorMessage message = new RemoteResourceDescriptorMessage();
+        message.setResourceParameters(resourceParameters);      
+        message = sendResponse(message, MessageType.GET_OUTPUT_METADATA,false);
+        return message.getOutputMetaData();
+    }
 	
 	@Override
 	public ResourceDescriptor getChildResourceDescriptor(ControlElement callingControlElement, String relativeURI) throws Exception
@@ -434,15 +443,19 @@ public class RemoteResourceDescriptorProxy  implements ResourceDescriptor,Client
 	{
 		message.setSessionID(sessionID);
 		message.setMessageType(messageType);
+		if(message.getResourceURI() == null)
+		{
+		    message.setResourceURI(getResourceURI());
+		}
 		message.prepareResponse();
 		
 		controllerClientRequestProcessor.getClientRequestXMLProcessor().writeResponse(message);
 		if (needLock)
 		{
 			synchronized (lock)
-			{
+			{			    
 				lock.wait(30000);	
-			}
+			}			
 		}
 		//wait for a message from the client
 		Document replyDocument = controllerClientRequestProcessor.readNextDocument();
@@ -506,10 +519,12 @@ public class RemoteResourceDescriptorProxy  implements ResourceDescriptor,Client
 				break;
 			case GET_OUTPUTSTREAM:
 				synchronized (outputStreamLock)
-				{
+				{				    
 					this.outputStreamLock.wait();	
 				}				
 				break;
+            default:
+                break;
 
 		}
 			

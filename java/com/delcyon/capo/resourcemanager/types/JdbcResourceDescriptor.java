@@ -56,7 +56,7 @@ public class JdbcResourceDescriptor extends AbstractResourceDescriptor
 	
 	private enum LocalAttributes
 	{
-		rowCount,updateCount
+		rowCount,updateCount,sql
 	}
 	
 	private Connection connection = null;
@@ -278,7 +278,7 @@ public class JdbcResourceDescriptor extends AbstractResourceDescriptor
                     sql+=" where "+whereClause;
                 }
                 CapoApplication.logger.log(Level.FINE, "RUNNING SQL = '"+sql+"'");
-                System.err.println("RUNNING SQL = '"+sql+"'");
+                contentMetaData.setValue(LocalAttributes.sql,sql);
             }
 	        
 	        //see if we are running some sql against a table, or a DB
@@ -404,7 +404,8 @@ public class JdbcResourceDescriptor extends AbstractResourceDescriptor
 			{
 				Statement statement = connection.createStatement();
 				int rowCount = statement.executeUpdate(getVarValue(variableContainer,"update"));
-				outputMetaData.setValue(LocalAttributes.rowCount, rowCount); 				
+				outputMetaData.setValue(LocalAttributes.rowCount, rowCount);
+				outputMetaData.setValue(LocalAttributes.sql,getVarValue(variableContainer,"update"));
 			} 
 			catch (Exception exception)
 			{
@@ -462,7 +463,11 @@ public class JdbcResourceDescriptor extends AbstractResourceDescriptor
 		{
 		    sql = sql.substring(0, sql.length()-1)+")"+insertClause.substring(0,insertClause.length()-1)+")";
 		}
-		System.out.println(sql);
+		
+		outputMetaData = buildResourceMetaData(variableContainer,resourceParameters);
+        outputMetaData.addSupportedAttribute(LocalAttributes.values());        
+        outputMetaData.setValue(LocalAttributes.sql,sql);
+		
 		PreparedStatement preparedStatement = connection.prepareStatement(sql);
 		int index = 1;
 		for (Node node : cNamedNodeMap)
@@ -484,7 +489,8 @@ public class JdbcResourceDescriptor extends AbstractResourceDescriptor
 		    }
 		}
 		System.out.println(preparedStatement);
-		preparedStatement.executeUpdate();
+		int updateCount = preparedStatement.executeUpdate();
+		outputMetaData.setValue(LocalAttributes.updateCount, updateCount);
 		preparedStatement.close();		
 		if(getResourceURI().getChildResourceURI() != null && getResourceURI().getChildResourceURI().getParameterMap().size() == 0)
 		{
@@ -500,7 +506,11 @@ public class JdbcResourceDescriptor extends AbstractResourceDescriptor
 		return contentMetaData;
 	}
 
-	
+	@Override
+	public ContentMetaData getOutputMetaData(VariableContainer variableContainer, ResourceParameter... resourceParameters) throws Exception
+	{
+	   return outputMetaData;
+	}
 
 	
 

@@ -102,4 +102,10 @@ public class ClientsResourceDescriptor extends AbstractResourceDescriptor
     {
         return clientResourceDescriptor.getContentMetaData(variableContainer, resourceParameters);
     }
+    
+    @Override
+    public ContentMetaData getOutputMetaData(VariableContainer variableContainer, ResourceParameter... resourceParameters) throws Exception
+    {
+        return clientResourceDescriptor.getOutputMetaData(variableContainer, resourceParameters);
+    }
 }

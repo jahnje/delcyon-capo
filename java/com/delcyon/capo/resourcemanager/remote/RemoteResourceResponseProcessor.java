@@ -100,7 +100,7 @@ public class RemoteResourceResponseProcessor implements XMLServerResponseProcess
 	
 	
 	@SuppressWarnings("unchecked")
-    private synchronized static Hashtable<String, ThreadedInputStreamReader> getThreadedInputStreamReaderHashtable()
+    public synchronized static Hashtable<String, ThreadedInputStreamReader> getThreadedInputStreamReaderHashtable()
     {
         Hashtable<String, ThreadedInputStreamReader> threadedInputStreamReaderHashtable = (Hashtable<String, ThreadedInputStreamReader>) CapoApplication.getGlobalObject("threadedInputStreamReaderHashtable");
         if (threadedInputStreamReaderHashtable == null)
@@ -177,7 +177,7 @@ public class RemoteResourceResponseProcessor implements XMLServerResponseProcess
 			RemoteResourceRequest request = null;
 			
 			ThreadedInputStreamReader threadedInputSreamReader = null;
-			CapoApplication.logger.log(Level.FINE, sessionID+":"+message.getMessageType());
+			CapoApplication.logger.log(Level.FINER, sessionID+":"+message.getMessageType()+"==>"+message.getResourceURI().getResourceURIString());
 			switch (message.getMessageType())
 			{
 				case SETUP:
@@ -211,12 +211,16 @@ public class RemoteResourceResponseProcessor implements XMLServerResponseProcess
 				case ADVANCE_STATE:
 				    resourceDescriptor.advanceState(message.getDesiredState(), this, message.getResourceParameters());
 				    break;
+				case GET_RESOURCE_METADATA:
+                    reply.setResourceMetaData(resourceDescriptor.getResourceMetaData(this, message.getResourceParameters()));
+                    break;
 				case GET_CONTENT_METADATA:
-					reply.setContentMetaData(resourceDescriptor.getResourceMetaData(this, message.getResourceParameters()));
-					break;
-				case GET_ITERATION_METADATA:
-					reply.setIterationMetaData(resourceDescriptor.getContentMetaData(this, message.getResourceParameters()));
-					break;
+					reply.setContentMetaData(resourceDescriptor.getContentMetaData(this, message.getResourceParameters()));
+					break;				
+				case GET_OUTPUT_METADATA:
+				    waitforOutputStreamToFinish(sessionID);
+                    reply.setOutputMetaData(resourceDescriptor.getOutputMetaData(this, message.getResourceParameters()));
+                    break;
 				case GET_INPUTSTREAM:
 					capoConnection = new CapoConnection();
 					request = new RemoteResourceRequest(capoConnection.getOutputStream(),capoConnection.getInputStream());
@@ -228,6 +232,10 @@ public class RemoteResourceResponseProcessor implements XMLServerResponseProcess
 					break;
 				case GET_OUTPUTSTREAM:
 					capoConnection = new CapoConnection();
+					if(CapoApplication.logger.isLoggable(Level.FINE))
+					{
+					    capoConnection.dumpOnClose(true);
+					}
 					request = new RemoteResourceRequest(capoConnection.getOutputStream(),capoConnection.getInputStream());
 					request.setType(MessageType.GET_OUTPUTSTREAM);
 					request.setSessionId(sessionID);
@@ -310,6 +318,7 @@ public class RemoteResourceResponseProcessor implements XMLServerResponseProcess
 	    ThreadedInputStreamReader threadedInputStreamReader = getThreadedInputStreamReaderHashtable().get(sessionID); 
 	    if (threadedInputStreamReader != null)
 	    {
+	        CapoApplication.logger.log(Level.INFO, "Waiting for OutputStream timeout");
 	        int loopCount = 0;
 	        int waitTime = 100;
 	        int timeoutSeconds = CapoApplication.getConfiguration().getIntValue(Preferences.OUTPUT_STREAM_TIMEOUT);
@@ -323,6 +332,7 @@ public class RemoteResourceResponseProcessor implements XMLServerResponseProcess
 	                break;
 	            }
 	        }
+	        CapoApplication.logger.log(Level.INFO, "Done Waiting for OutputStream waited("+(waitTime*loopCount)+"ms)");
 	        getThreadedInputStreamReaderHashtable().remove(sessionID);
 	    }
 	}
@@ -364,23 +374,28 @@ public class RemoteResourceResponseProcessor implements XMLServerResponseProcess
 		{
 			try
 			{
-				CapoApplication.logger.log(Level.FINE, "Preparing bytes to remote resource descriptor");
-				long read = StreamUtil.readInputStreamIntoOutputStream(inputStream, outputStream);
-				outputStream.flush();
-				outputStream.close();
-				finished = true;
-				this.capoConnection = null;
-				CapoApplication.logger.log(Level.FINE, "Sent "+read+" bytes to remote resource descriptor");
+			    CapoApplication.logger.log(Level.INFO, "Preparing bytes to remote resource descriptor");
+			   
+			    long read = StreamUtil.readInputStreamIntoOutputStream(inputStream, outputStream);			    
+			    outputStream.flush();
+			    outputStream.close();
+			    finished = true;
+			    if(this.capoConnection != null)
+			    {
+			        this.capoConnection.close();
+			        this.capoConnection = null;
+			    }
+			    CapoApplication.logger.log(Level.INFO, "Processed "+read+" bytes with remote resource descriptor");
 			} 
 			catch (Exception exception)
 			{	
-			    	ResourceDescriptor currentResourceDescriptor = getResourceDescriptorHashtable().get(sessionID);
-			    	ResourceURI uri = null;
-			    	if (currentResourceDescriptor != null)
-			    	{
-			    	    uri = currentResourceDescriptor.getResourceURI();
-			    	}
-				CapoApplication.logger.log(Level.SEVERE, "Error sending bytes to remote resource descriptor: "+uri+" SID:"+sessionID,exception);
+			    ResourceDescriptor currentResourceDescriptor = getResourceDescriptorHashtable().get(sessionID);
+			    ResourceURI uri = null;
+			    if (currentResourceDescriptor != null)
+			    {
+			        uri = currentResourceDescriptor.getResourceURI();
+			    }
+			    CapoApplication.logger.log(Level.SEVERE, "Error sending bytes to remote resource descriptor: "+uri+" SID:"+sessionID,exception);
 			}
 		}
 

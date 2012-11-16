@@ -19,8 +19,6 @@ package com.delcyon.capo.xml.dom;
 import java.io.InputStream;
 import java.io.OutputStream;
 
-import org.w3c.dom.Element;
-
 import com.delcyon.capo.controller.ControlElement;
 import com.delcyon.capo.resourcemanager.ResourceDescriptor;
 import com.delcyon.capo.resourcemanager.ResourceParameter;
@@ -81,6 +79,12 @@ public class ResourceElementResourceDescriptor implements ResourceDescriptor
 	public ContentMetaData getContentMetaData(VariableContainer variableContainer, ResourceParameter... resourceParameters) throws Exception
 	{
 		return proxyedResourceDescriptor.getContentMetaData(variableContainer, resourceParameters);
+	}
+	
+	@Override
+	public ContentMetaData getOutputMetaData(VariableContainer variableContainer, ResourceParameter... resourceParameters) throws Exception
+	{
+	    return proxyedResourceDescriptor.getOutputMetaData(variableContainer, resourceParameters);
 	}
 	
 	@Override
