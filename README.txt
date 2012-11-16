@@ -14,12 +14,17 @@ Mailing List: capo@delcyon.com
 
 Mailing List Archive: http://groups.delcyon.com/capo
 
-build: ant [dist|patch|build|minor|major] this will result in client.distribution and server.distribution directories.
+build: ant [clean|dist|patch|build|minor|major] this will result in a distribution directory.
+	The dist option just builds a distribution w/o updating any build numbers. 
 
-install java -jar client-x.x.x.x-dist.jar or server-x.x.x.x-dist.jar
+install: java -jar client-x.x.x.x-dist.jar or server-x.x.x.x-dist.jar
+	The Capo server install includes the client. Once the server is up and running 
+	you may download the client from the server using a command like:  'wget 10.10.4.242:2442/client-dist.jar'. 
+	And install as above. 
 
-server: java -jar server.jar
+run: capo/[server|client]/bin/capo-[server|client].sh 
+	or in /etc/rc.d/init.d/capo-server or capo-client
 
-client: java -jar client.jar
+Status: alpha 
 
-Status: pre-alpha 
+You can download a pre-built distribution from here https://github.com/downloads/jahnje/delcyon-capo/capo-server-0.1.2.0-dist.jar
