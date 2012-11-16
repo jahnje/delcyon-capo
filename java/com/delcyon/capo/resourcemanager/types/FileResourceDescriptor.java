@@ -53,7 +53,9 @@ public class FileResourceDescriptor extends AbstractResourceDescriptor implement
 	private InputStream contentInputStream = null;
 	private CElement containerElement = null;
     private File tempFile;
-	
+    private State outputState = State.NONE;
+    OutputStream outputStream = null;
+    
 	@Override
 	protected FileResourceContentMetaData buildResourceMetaData(VariableContainer variableContainer,ResourceParameter... resourceParameters) throws Exception
 	{		
@@ -218,7 +220,7 @@ public class FileResourceDescriptor extends AbstractResourceDescriptor implement
 	        useTemp = true;
 	    }
 	    
-		outputMetaData = new FileResourceContentMetaData(getResourceURI().getBaseURI());
+		
 		File outputFile = new File(new URI(getResourceURI().getBaseURI()));
 		if (outputFile.exists() == false)
 		{
@@ -226,49 +228,49 @@ public class FileResourceDescriptor extends AbstractResourceDescriptor implement
 		    outputFile.createNewFile();
 		}
 		
-		OutputStream outputStream = null;
+		
 		if(useTemp == true)
 		{
 		    tempFile = File.createTempFile(outputFile.getName(), "part");
 		    CapoApplication.logger.log(Level.INFO, "using temp file: "+tempFile+" for "+outputFile);
-		    StreamEventFilterOutputStream streamEventFilterOutputStream = new StreamEventFilterOutputStream(trackOutputStream(outputMetaData.wrapOutputStream(new FileOutputStream(tempFile))));
-	        streamEventFilterOutputStream.addStreamEventListener(this);
-	        outputStream = streamEventFilterOutputStream;
+		    outputMetaData = new FileResourceContentMetaData(tempFile.toURI().toString());
+		    outputMetaData.getAttributeMap().clear();
+		    outputStream = trackOutputStream(outputMetaData.wrapOutputStream(new FileOutputStream(tempFile)));
 		}
 		else
 		{
+		    outputMetaData = new FileResourceContentMetaData(getResourceURI().getBaseURI());
+		    outputMetaData.getAttributeMap().clear();
 		    outputStream = trackOutputStream(outputMetaData.wrapOutputStream(new FileOutputStream(outputFile)));
 		}
 		
+		StreamEventFilterOutputStream streamEventFilterOutputStream = new StreamEventFilterOutputStream(outputStream);
+        streamEventFilterOutputStream.addStreamEventListener(this);
+        outputStream = streamEventFilterOutputStream;
+		outputState = State.OPEN;
 		return outputStream;	
+	}
+	
+	@Override
+	public ContentMetaData getOutputMetaData(VariableContainer variableContainer, ResourceParameter... resourceParameters) throws Exception
+	{
+	   while(outputState == State.OPEN)
+	   {
+	       CapoApplication.logger.log(Level.FINE, "waiting for output to close...");
+	       Thread.sleep(500);
+	   }
+	   //call this so that the attribute vectors get processed
+	   outputMetaData.getAttributeMap();
+	   return outputMetaData;
 	}
 	
 	@Override
     public void processStreamEvent(StreamEvent streamEvent) throws IOException
     {
-	    if(streamEvent == StreamEvent.CLOSED && tempFile != null && tempFile.exists())
-	    {
-	        try
-	        {
-	            File outputFile = new File(new URI(getResourceURI().getBaseURI()));
-	            if (outputFile.exists() == false)
-	            {
-	                new File(outputFile.getParent()).mkdirs();
-	                outputFile.createNewFile();
-	            }
-	            if(tempFile.renameTo(outputFile))
-	            {
-	                CapoApplication.logger.log(Level.INFO, "Rename of temp file to: "+outputFile+" was successful.");
-	            }
-	            else
-	            {
-	                CapoApplication.logger.log(Level.WARNING, "Rename of temp file to: "+outputFile+" failed.");
-	            }
-	            
-	        } catch (Exception exception)
-	        {
-	            exception.printStackTrace();
-	        }
+	    if(streamEvent == StreamEvent.CLOSED)
+	    {	        
+	        outputStream = null;
+	        outputState = State.CLOSED;
 	    }
         
     }
@@ -286,12 +288,36 @@ public class FileResourceDescriptor extends AbstractResourceDescriptor implement
 		    try
 		    {
 		        contentInputStream.close();
+		        contentInputStream = null;
 		    }
 		    catch (IOException ioException)
 		    {
 		        CapoApplication.logger.log(Level.WARNING, "Error closing stream", ioException);
 		    }
 		}
+		if(outputStream != null)
+        {
+            try
+            {
+                File localTempFile = null;
+                if(tempFile != null)
+                {
+                    localTempFile = tempFile;
+                    tempFile = null;
+                }
+                outputStream.close();
+                outputStream = null;
+                if(localTempFile != null)
+                {
+                    CapoApplication.logger.log(Level.WARNING, "ResourceDescriptor closed before outputStream closed, deleting temp file:"+localTempFile);
+                    localTempFile.delete();
+                }
+            }
+            catch (IOException ioException)
+            {
+                CapoApplication.logger.log(Level.WARNING, "Error closing stream", ioException);
+            }
+        }
 	}
 	
 	
@@ -423,7 +449,63 @@ public class FileResourceDescriptor extends AbstractResourceDescriptor implement
                 success = false;
             }
         }
-	    
+	    else if (action == Action.COMMIT)
+	    {
+	       
+	        try
+            {
+                if(tempFile != null && tempFile.exists())
+                {
+                    if(CapoApplication.logger.isLoggable(Level.FINER))
+                    {
+                        Thread.dumpStack();
+                    }
+                    File outputFile = new File(new URI(getResourceURI().getBaseURI()));
+                    if (outputFile.exists() == false)
+                    {
+                        new File(outputFile.getParent()).mkdirs();
+                        outputFile.createNewFile();
+                    }
+                    CapoApplication.logger.log(Level.INFO, "COMMITING Rename of "+tempFile+" to: "+outputFile+".");
+                    if(tempFile.renameTo(outputFile))
+                    {
+                        CapoApplication.logger.log(Level.INFO, "Rename of temp file to: "+outputFile+" was successful.");
+                    }
+                    else
+                    {
+                        CapoApplication.logger.log(Level.WARNING, "Rename of temp file to: "+outputFile+" failed.");
+                    }
+                    tempFile = null;
+                }
+            } catch (Exception exception)
+            {
+                exception.printStackTrace();
+                return false;
+            }
+            return true;
+	    }
+	    else if (action == Action.ROLLBACK)
+        {
+           
+            try
+            {
+                if(tempFile != null && tempFile.exists())
+                {
+                    CapoApplication.logger.log(Level.WARNING, "ABORTING Rename of "+tempFile+".");
+                    tempFile.delete();                    
+                    tempFile = null;
+                    if(outputStream != null)
+                    {
+                        outputStream.close();
+                    }
+                }
+            } catch (Exception exception)
+            {
+                exception.printStackTrace();
+                return false;
+            }
+            return true;
+        }
 		if (success == true)
 		{
 			refreshResourceMetaData(variableContainer,resourceParameters);
@@ -439,18 +521,28 @@ public class FileResourceDescriptor extends AbstractResourceDescriptor implement
 	    {
 	        if(file.isDirectory())
 	        {
-	            File[] children = file.listFiles();
-	            for (File child : children)
-                {	                
-                    delete(child);
-                }
+	            //see if this is a symlink, if so, it's not actual a directory, so just delete it.
+	            if(file.getAbsolutePath().equals(file.getCanonicalPath()) == false)
+	            {
+	                return file.delete();
+	            }
+	            else
+	            {
+	                File[] children = file.listFiles();
+	                for (File child : children)
+	                {	                
+	                    delete(child);
+	                }
+	            }
 	        }
 	        
 	        return file.delete();
 	    }
 	    else
 	    {
-	        return true;
+	        //gotta love symlinks, where they can exist = false, but still be deleted.
+	        //delete will not throw an exception if the file doesn't exist, so this is pretty safe.
+	        return file.delete();
 	    }
 	}
 
