@@ -87,7 +87,7 @@ public class TaskManagerThread extends ContextThread
         TASK_DEFAULT_ORPHAN_ACTION,
         @PreferenceInfo(arguments={"boolean"}, defaultValue="true", description="When shutting down the client. Controls if we want a hard exit, or controlled. Testing wants a hard exit. [true|false] default is false", longOption="QUICK_SHUTDOWN", option="QUICK_SHUTDOWN",location=Location.CLIENT)
 		QUICK_SHUTDOWN,
-		@PreferenceInfo(arguments={"ms"}, defaultValue="10000", description="Interval at witch overall task manager thread runs", longOption="TASK_INTERVAL", option="TASK_INTERVAL")
+		@PreferenceInfo(arguments={"ms"}, defaultValue="10000", description="Interval at which overall task manager thread runs", longOption="TASK_INTERVAL", option="TASK_INTERVAL")
         TASK_INTERVAL;
 		
 		@Override
@@ -589,6 +589,13 @@ public class TaskManagerThread extends ContextThread
 					
 					//cleanup file resource descriptor
 					resourceDescriptor.release(null);
+					
+					//we're done running, so see if a task asked us to restart
+					if (taskManagerState.ordinal() >= ApplicationState.STOPPING.ordinal())
+                    {
+					    CapoServer.logger.log(Level.INFO, "Ignoring any remaining tasks due to STOP request");
+                        break;    
+                    }
 					
 				}//===============================================END OVERALL TASKS RUN===============================================================
 			    

@@ -179,9 +179,8 @@ public abstract class CapoApplication extends ContextThread implements WrapperLi
 		System.setProperty("javax.xml.xpath.XPathFactory", "net.sf.saxon.xpath.XPathFactoryImpl");
 		System.setProperty("javax.xml.transform.TransformerFactory", "net.sf.saxon.TransformerFactoryImpl");
 		System.setProperty("javax.xml.parsers.DocumentBuilderFactory", "com.delcyon.capo.xml.cdom.CDocumentBuilderFactory");
-		
-		
-		//System.setProperty("javax.net.debug", "ssl");
+		//System.setProperty("javax.net.debug","ssl,handshake");
+				
 		if (logger == null)
 		{
 			logger = Logger.getLogger(this.getClass().getName());
@@ -257,6 +256,12 @@ public abstract class CapoApplication extends ContextThread implements WrapperLi
 	{
 		try
 		{
+		    TaskManagerThread taskManagerThread = getTaskManagerThread();
+		    //May have never been started, due to initial update
+		    if(taskManagerThread != null)
+		    {
+		        taskManagerThread.interrupt();
+		    }
 		    logger.log(Level.INFO, "Requesting Application Shutdown");		    
 			shutdown();
 			logger.log(Level.INFO, "Application Shutdown");			
