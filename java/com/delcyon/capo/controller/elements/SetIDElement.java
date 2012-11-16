@@ -25,7 +25,12 @@ import com.delcyon.capo.controller.AbstractControl;
 import com.delcyon.capo.controller.ControlElementProvider;
 import com.delcyon.capo.controller.server.ControllerClientRequestProcessor.Preferences;
 import com.delcyon.capo.resourcemanager.ResourceDescriptor;
+import com.delcyon.capo.resourcemanager.ResourceParameter;
 import com.delcyon.capo.resourcemanager.ResourceDescriptor.Action;
+import com.delcyon.capo.resourcemanager.types.ContentMetaData;
+import com.delcyon.capo.resourcemanager.types.FileResourceContentMetaData.FileAttributes;
+import com.delcyon.capo.resourcemanager.types.FileResourceDescriptor;
+import com.delcyon.capo.util.CommandExecution;
 import com.delcyon.capo.xml.XPath;
 
 /**
@@ -87,15 +92,76 @@ public class SetIDElement extends AbstractControl
 		//check and see if this is an identity push, identity information gets saved for later use
 		String identityControlName = CapoApplication.getConfiguration().getValue(Preferences.DEFAULT_IDENTITY_FILE);
 
-		ResourceDescriptor clientResourceDescriptor = CapoApplication.getDataManager().getResourceDescriptor(null, "clients:"+clientID+"/"+identityControlName);
-		if (clientResourceDescriptor.getResourceMetaData(null).exists() == false)
+		//load the clients identity.xml file
+		ResourceDescriptor clientResourceDescriptor = CapoApplication.getDataManager().getResourceDescriptor(this, "clients:"+clientID+"/"+identityControlName);
+		ContentMetaData clientResourceMetaData = clientResourceDescriptor.getResourceMetaData(getParentGroup()); 
+		if (clientResourceMetaData.exists() == false)
 		{
-		    clientResourceDescriptor.performAction(null, Action.CREATE);
+		    clientResourceDescriptor.performAction(getParentGroup(), Action.CREATE);
 		    CapoApplication.logger.log(Level.INFO,"Creating new identity document for "+clientID);
-		    XPath.dumpNode(CapoApplication.getDefaultDocument("ids.xml"), clientResourceDescriptor.getOutputStream(null));
+		    XPath.dumpNode(CapoApplication.getDefaultDocument("ids.xml"), clientResourceDescriptor.getOutputStream(getParentGroup()));
 		}
 
-		Element identityDocumentElement = CapoApplication.getDocumentBuilder().parse(clientResourceDescriptor.getInputStream(null)).getDocumentElement();
+		/*START symlink code
+		 * java as of version 6 doesn't support symlinks, so we do most of this via the command line
+		 */
+		
+		//get the clients directory, so we can get a simple location for it to use with symlinks
+		ResourceDescriptor clientDirResourceDescriptor = CapoApplication.getDataManager().getResourceDescriptor(this, "clients:"+clientID);
+				
+		ContentMetaData clientDirResourceMetaData = clientDirResourceDescriptor.getResourceMetaData(getParentGroup());
+		String baseURI = clientDirResourceDescriptor.getResourceURI().getResourceURIString().replaceFirst("/"+clientID, "").replaceFirst("file:", "");
+		clientDirResourceDescriptor.release(getParentGroup());
+		
+		//see if we have a place to put this kind of symlink, and if not, then create it.		
+		ResourceDescriptor idTypeResourceDescriptor = CapoApplication.getDataManager().getResourceDescriptor(this, "clients:by-"+name);
+		if(idTypeResourceDescriptor.getResourceMetaData(getParentGroup()).exists() == false)
+		{		    
+		    idTypeResourceDescriptor.performAction(getParentGroup(), Action.CREATE,new ResourceParameter(ResourceDescriptor.DefaultParameters.CONTAINER, "true"));
+		}
+		idTypeResourceDescriptor.release(getParentGroup());
+		
+		//now check and see if we already have a symlink for this name value pair
+		ResourceDescriptor idResourceDescriptor = CapoApplication.getDataManager().getResourceDescriptor(this, "clients:by-"+name+"/"+value);		
+		boolean createLink = false;
+		if(idResourceDescriptor instanceof FileResourceDescriptor)
+		{
+		    //if we don't then indicate that we need to make a new one.
+		    ContentMetaData idResourceMetaData = idResourceDescriptor.getResourceMetaData(getParentGroup()); 
+		    if(idResourceMetaData.exists() == false)
+		    {
+		        createLink = true;
+		    }
+		    //if we do, verify that it points to this client, and not some other
+		    else if(clientDirResourceMetaData.getValue(FileAttributes.canonicalPath).equals(idResourceMetaData.getValue(FileAttributes.canonicalPath)) == false)
+		    {
+		        //remove the old symlink, don't want to deal with unpredictable java symlink interaction, so use command line
+		        CommandExecution commandExecution = new CommandExecution("cd "+baseURI+"; rm -f by-"+name+"/"+value,1000l);
+		        commandExecution.executeCommand();
+		        if(commandExecution.getExitCode() == 0)
+		        {
+		            CapoApplication.logger.log(Level.WARNING,"Removed incorrect link for by-"+name+"/"+value+" to "+idResourceMetaData.getValue(FileAttributes.canonicalPath));
+		            //indicate we need to make a symlink
+		            createLink = true;
+		        }
+
+		    }
+
+		    //make a symlink using command line
+		    if(createLink == true)
+		    {		        
+		        CommandExecution commandExecution = new CommandExecution("cd "+baseURI+"; ln -s ../"+clientID+" by-"+name+"/"+value,1000l);
+		        commandExecution.executeCommand();
+		        if(commandExecution.getExitCode() == 0)
+		        {
+		            CapoApplication.logger.log(Level.INFO,"Created link for "+clientID+" to "+idResourceDescriptor.getResourceURI().getResourceURIString());
+		        }
+		    }
+		}
+		//free up our last resource
+		idResourceDescriptor.release(getParentGroup());
+		
+		Element identityDocumentElement = CapoApplication.getDocumentBuilder().parse(clientResourceDescriptor.getInputStream(getParentGroup())).getDocumentElement();
 		String oldMD5 = XPath.getElementMD5(identityDocumentElement);
 		
 		Element idElement = (Element) XPath.selectSingleNode(identityDocumentElement, "//server:id[@name = '"+name+"']");
