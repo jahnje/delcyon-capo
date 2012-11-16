@@ -18,12 +18,10 @@ build: ant [clean|dist|patch|build|minor|major] this will result in a distributi
 	The dist option just builds a distribution w/o updating any build numbers. 
 
 install: java -jar client-x.x.x.x-dist.jar or server-x.x.x.x-dist.jar
-	The Capo server install includes the client. Once the server is up and running 
-	you may download the client from the server using a command like:  'wget 10.10.4.242:2442/client-dist.jar'. 
-	And install as above. 
+	The Capo server install includes the client. Once the server is up and running you may download the client from the server using a command like:  'wget 10.10.4.242:2442/client-dist.jar'. And install as above. 
 
 run: capo/[server|client]/bin/capo-[server|client].sh 
-	or in /etc/rc.d/init.d/capo-server or capo-client
+	Or in /etc/rc.d/init.d/capo-server or capo-client
 
 Status: alpha 
 
