@@ -75,5 +75,11 @@ public class ClientRequest
 	{
 		return xmlStreamProcessor.getInputStream();
 	}
+
+    public void finish() throws Exception
+    {
+        getOutputStream().write(("FINISHED:"+sessionID).getBytes());
+        getOutputStream().flush();
+    }
 	
 }

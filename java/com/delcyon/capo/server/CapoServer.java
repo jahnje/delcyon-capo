@@ -26,10 +26,10 @@ import java.net.SocketException;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.KeyStore;
-import java.security.Security;
-import java.security.Signature;
 import java.security.KeyStore.PrivateKeyEntry;
 import java.security.KeyStore.TrustedCertificateEntry;
+import java.security.Security;
+import java.security.Signature;
 import java.security.cert.Certificate;
 import java.security.cert.X509Certificate;
 import java.util.Arrays;
@@ -44,8 +44,9 @@ import java.util.logging.Level;
 
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
-import javax.net.ssl.SSLHandshakeException;
+import javax.net.ssl.SSLException;
 import javax.net.ssl.SSLSocket;
+import javax.net.ssl.SSLSocketFactory;
 import javax.net.ssl.TrustManagerFactory;
 import javax.xml.bind.DatatypeConverter;
 import javax.xml.transform.OutputKeys;
@@ -80,11 +81,13 @@ import com.delcyon.capo.preferences.Preference;
 import com.delcyon.capo.preferences.PreferenceInfo;
 import com.delcyon.capo.preferences.PreferenceInfoHelper;
 import com.delcyon.capo.preferences.PreferenceProvider;
+import com.delcyon.capo.protocol.client.CapoConnection.ConnectionResponses;
+import com.delcyon.capo.protocol.client.CapoConnection.ConnectionTypes;
 import com.delcyon.capo.protocol.server.ClientRequestProcessorSessionManager;
 import com.delcyon.capo.resourcemanager.CapoDataManager;
 import com.delcyon.capo.resourcemanager.ResourceDescriptor;
-import com.delcyon.capo.resourcemanager.ResourceParameter;
 import com.delcyon.capo.resourcemanager.ResourceDescriptor.Action;
+import com.delcyon.capo.resourcemanager.ResourceParameter;
 import com.delcyon.capo.resourcemanager.types.FileResourceType;
 import com.delcyon.capo.tasks.TaskManagerThread;
 import com.delcyon.capo.xml.XPath;
@@ -164,6 +167,8 @@ public class CapoServer extends CapoApplication
 	private ClientRequestProcessorSessionManager clientRequestProcessorSessionManager;
    
 	private ThreadGroup threadPoolGroup;
+    private TrustManagerFactory trustManagerFactory;
+    private KeyManagerFactory keyManagerFactory;
 
 	public CapoServer() throws Exception
 	{
@@ -373,20 +378,26 @@ public class CapoServer extends CapoApplication
 		threadPoolExecutor = new ThreadPoolExecutor(getConfiguration().getIntValue(Preferences.START_THREADPOOL_SIZE), getConfiguration().getIntValue(Preferences.MAX_THREADPOOL_SIZE), getConfiguration().getIntValue(Preferences.THREAD_IDLE_TIME), TimeUnit.MILLISECONDS, synchronousQueue);
 		threadPoolExecutor.setThreadFactory(new CapoThreadFactory(threadPoolGroup));
 		
-		SSLContext sslContext = SSLContext.getInstance("SSL");
+		
 
-		TrustManagerFactory trustManagerFactory = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());  
+		trustManagerFactory = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());  
 		trustManagerFactory.init(getKeyStore());	
 		
-		KeyManagerFactory keyManagerFactory = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
+		keyManagerFactory = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
 		keyManagerFactory.init(getKeyStore(), getConfiguration().getValue(PREFERENCE.KEYSTORE_PASSWORD).toCharArray());
 		
-		sslContext.init(keyManagerFactory.getKeyManagers(), trustManagerFactory.getTrustManagers(), new java.security.SecureRandom());
-		setSslSocketFactory(sslContext.getSocketFactory());
-
+		setSslSocketFactory(getLocalSslSocketFactory());
+		
 		start();
 	}
 
+	private SSLSocketFactory getLocalSslSocketFactory() throws Exception
+	{
+	    SSLContext sslContext = SSLContext.getInstance("SSL");
+        sslContext.init(keyManagerFactory.getKeyManagers(), trustManagerFactory.getTrustManagers(), new java.security.SecureRandom());
+        return sslContext.getSocketFactory();
+	}
+	
 	@Override
     public void run()
 	{
@@ -401,6 +412,8 @@ public class CapoServer extends CapoApplication
 	            try 
 	            {
 	                socket = serverSocket.accept();
+	                socket.setSoLinger(false, 0);
+	                socket.setTcpNoDelay(true);
 	            } catch (SocketException socketException)
 	            {
 	                if (getApplicationState().ordinal() > ApplicationState.RUNNING.ordinal() && serverSocket.isClosed())
@@ -423,7 +436,7 @@ public class CapoServer extends CapoApplication
 
 	            String message = new String(buffer).trim();
 
-	            if (message.matches("CAPO_REQUEST"))
+	            if (message.matches(ConnectionTypes.CAPO_REQUEST.toString()))
 	            {
 	                if (threadPoolExecutor.getActiveCount() < threadPoolExecutor.getMaximumPoolSize())
 	                {                   
@@ -432,8 +445,8 @@ public class CapoServer extends CapoApplication
 	                else
 	                {                   
 	                    writeBusyMessage(socket);
-	                    continue;
-	                }
+                        continue;
+	                }	                
 	            }
 
 	            StreamProcessor streamProcessor = StreamHandler.getStreamProcessor(buffer);
@@ -446,7 +459,7 @@ public class CapoServer extends CapoApplication
 	                {
 
 	                    socket = CapoApplication.getSslSocketFactory().createSocket(socket, socket.getLocalAddress().getHostAddress(), socket.getLocalPort(), true);
-
+	                    
 	                } 
 	                catch (Exception exception)
 	                {
@@ -458,7 +471,8 @@ public class CapoServer extends CapoApplication
 	                //keep the ssl socket so that we can use it's session id for validation
 	                SSLSocket sslSocket = (SSLSocket) socket;
 	                sslSocket.setUseClientMode(false);
-
+	                //sslSocket.setReuseAddress(false); it's too late for this here, just left as a note
+	                sslSocket.setSendBufferSize((CapoApplication.getConfiguration().getIntValue(PREFERENCE.BUFFER_SIZE)*2)+728);
 	                //we effectively have a brand new socket, so we have to wrap it as well, so we can reset of checking it's content
 	                socket = new BufferedSocket(socket);
 	                inputStream = socket.getInputStream();
@@ -467,16 +481,16 @@ public class CapoServer extends CapoApplication
 	                {
 	                    inputStream.read(buffer);
 	                }
-	                catch (SSLHandshakeException sslHandshakeException)
+	                catch (SSLException sslException)
 	                {
-	                    CapoApplication.logger.log(Level.WARNING, "Unknown SSLException Type: "+sslHandshakeException.getMessage());
+	                    CapoApplication.logger.log(Level.WARNING, "Unknown SSLException Type: "+sslException.getMessage());
 	                    socket.close();
                         continue;
 	                }
 	                String authMessage = new String(buffer).trim();
 	                if (authMessage.matches("AUTH:CID=capo\\.(client|server)\\.\\d+:SIG=[A-F0-9]+.*:.*"))
 	                {
-	                    logger.finer("SSL SID:"+DatatypeConverter.printHexBinary(sslSocket.getSession().getId()));
+	                    logger.fine("SSL SID:"+DatatypeConverter.printHexBinary(sslSocket.getSession().getId()));
 	                    if (isValidAuthMessage(authMessage,sslSocket.getSession().getId()) == false)
 	                    {
 	                        CapoApplication.logger.log(Level.WARNING, "Invalid AUTH attempt "+authMessage+" from: "+socket);
@@ -553,7 +567,7 @@ public class CapoServer extends CapoApplication
 
 	                    message = new String(buffer).trim();
 
-	                    if (message.matches("CAPO_REQUEST"))
+	                    if (message.matches(ConnectionTypes.CAPO_REQUEST.toString()))
 	                    {
 	                        if (threadPoolExecutor.getActiveCount() < threadPoolExecutor.getMaximumPoolSize())
 	                        {
@@ -562,8 +576,8 @@ public class CapoServer extends CapoApplication
 	                        else
 	                        {
 	                            writeBusyMessage(socket);
-	                            continue;
-	                        }
+                                continue;
+	                        }	                        
 	                    }                   
 	                }
 
@@ -587,7 +601,7 @@ public class CapoServer extends CapoApplication
 	            StreamFinalizer streamFinalizer = new SocketFinalizer(socket);
 	            streamHandler.add(streamFinalizer);
 	            streamHandler.init((BufferedInputStream) socket.getInputStream(),socket.getOutputStream(),sessionHashMap);          
-	            logger.log(Level.FINE, "Starting a "+streamProcessor.getClass().getSimpleName()+" Stream Handler for "+clientID+"@"+socket.getRemoteSocketAddress());
+	            logger.log(Level.FINE, "Starting a "+streamProcessor.getClass().getSimpleName()+" Stream Handler for "+clientID+"@"+socket);	            
 	            try
 	            {
 	                threadPoolExecutor.execute(streamHandler);
@@ -609,7 +623,7 @@ public class CapoServer extends CapoApplication
 	{
 		inputStream.skip(message.length());
 		inputStream.mark(getConfiguration().getIntValue(PREFERENCE.BUFFER_SIZE));
-		socket.getOutputStream().write("OK".getBytes());
+		socket.getOutputStream().write(ConnectionResponses.OK.toString().getBytes());
 		socket.getOutputStream().flush();
 		Arrays.fill(buffer, (byte)0);
 		inputStream.read(buffer);
@@ -619,7 +633,7 @@ public class CapoServer extends CapoApplication
 	
 	private void writeBusyMessage(Socket socket) throws Exception
 	{
-		String busyString = new String("BUSY "+(getConfiguration().getIntValue(Preferences.INITIAL_CLIENT_RETRY_TIME)*1000));
+		String busyString = new String(ConnectionResponses.BUSY+" "+(getConfiguration().getIntValue(Preferences.INITIAL_CLIENT_RETRY_TIME)*1000));
 		logger.log(Level.WARNING, "Rejecting a request from "+socket.getRemoteSocketAddress()+" with "+busyString);
 		socket.getOutputStream().write(busyString.getBytes());
 		socket.getOutputStream().flush();

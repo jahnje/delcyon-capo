@@ -170,9 +170,16 @@ public class XMLStreamProcessor implements StreamProcessor
 	 */
 	public void writeDocument(Document document) throws Exception
 	{		
-		transformer.transform(new DOMSource(document), new StreamResult(outputStream));
+		transformer.transform(new DOMSource(document), new StreamResult(outputStream));		
 		outputStream.write(0);
 		outputStream.flush();
+		CapoApplication.logger.log(Level.FINE, "SENT OK bit to Remote After WRITE 0");
+		int writeResponseValue = inputStream.read();
+		CapoApplication.logger.log(Level.FINE, "READ OK bit to Remote After WRITE: "+writeResponseValue);
+		if(writeResponseValue != 1)
+		{
+		    throw new Exception("Server Reported an Error");
+		}
 	}
 	
 	/**
@@ -234,13 +241,23 @@ public class XMLStreamProcessor implements StreamProcessor
 		}
 		try
 		{
-			
-			return documentBuilder.parse(new ByteArrayInputStream(byteArrayOutputStream.toByteArray()));
-			
+		    
+			Document readDocument = documentBuilder.parse(new ByteArrayInputStream(byteArrayOutputStream.toByteArray()));
+			if (CapoApplication.logger.isLoggable(Level.FINER))
+			{
+			    XPath.dumpNode(readDocument, System.out);
+			}
+			//send ok to sender			
+            outputStream.write(1);
+            outputStream.flush();
+            CapoApplication.logger.log(Level.FINE, "SENT OK bit to Remote After READ: 1");            
+            return readDocument;
 		}
 		catch (SAXParseException saxParseException)
 		{
 			CapoApplication.logger.log(Level.WARNING,"length = "+byteArrayOutputStream.size()+" buffer = ["+new String(byteArrayOutputStream.toByteArray())+"]");
+			outputStream.write(0);
+			outputStream.flush();
 			throw saxParseException;
 		}
 	}

@@ -17,6 +17,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 package com.delcyon.capo.protocol.client;
 
 import java.io.BufferedInputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.ConnectException;
 import java.net.Socket;
@@ -30,21 +32,41 @@ import javax.xml.bind.DatatypeConverter;
 import com.delcyon.capo.CapoApplication;
 import com.delcyon.capo.Configuration.PREFERENCE;
 import com.delcyon.capo.client.CapoClient;
+import com.delcyon.capo.datastream.StreamEventFilterInputStream;
+import com.delcyon.capo.datastream.StreamEventListener;
 
 /**
  * @author jeremiah
  *
  */
-public class CapoConnection
+public class CapoConnection implements StreamEventListener
 {
-
+    
+	public enum ConnectionTypes
+	{
+	    CAPO_REQUEST
+	}
 	
+	public enum ConnectionResponses
+	{
+	    OK,
+	    BUSY
+	}
 	
 	private Socket socket;	
 	private BufferedInputStream inputStream;
 	private OutputStream outputStream;
     private String serverAddress;
     private int port;
+    private boolean dumpOnClose = false;
+    private StackTraceElement[] callerStackTraceElements;
+    @SuppressWarnings("unused")
+    private StackTraceElement[] closerStackTraceElements;
+    @SuppressWarnings("unused")
+    private StackTraceElement[] inputStreamcallerStackTraceElements;
+    @SuppressWarnings("unused")
+    private StackTraceElement[] inputStreamcloserStackTraceElements;
+    private String sslSID;
 
 	public CapoConnection() throws Exception
 	{
@@ -69,6 +91,7 @@ public class CapoConnection
 	
 	public Socket open() throws Exception
 	{
+		callerStackTraceElements = new Exception().getStackTrace();
 		
 		while (this.socket == null || socket.isClosed())
 		{
@@ -76,14 +99,12 @@ public class CapoConnection
 			CapoClient.logger.log(Level.FINE, "Opening Socket to "+serverAddress+":"+port);
 			try
 			{
+			    this.socket = new Socket(serverAddress, port);
 			    if (CapoApplication.getSslSocketFactory() != null)
-			    {				
-			        this.socket = CapoApplication.getSslSocketFactory().createSocket(serverAddress, port);
-			    }
-			    else 
-			    {
-			        this.socket = new Socket(serverAddress, port);
-			    }
+			    {	
+			        socket = CapoApplication.getSslSocketFactory().createSocket(socket, socket.getLocalAddress().getHostAddress(), socket.getLocalPort(), true);			        
+			        this.socket.setSendBufferSize(CapoApplication.getConfiguration().getIntValue(PREFERENCE.BUFFER_SIZE)+728);
+			    }			    
 			} 
 			catch (ConnectException connectException)
 			{
@@ -92,11 +113,26 @@ public class CapoConnection
 			}
 		}
 		socket.setKeepAlive(true);
-		this.inputStream = new BufferedInputStream(socket.getInputStream()); 
+		socket.setTcpNoDelay(true);
+		socket.setSoLinger(false, 0);
+		
 		this.outputStream = socket.getOutputStream();
+
+		//This is just for debugging when needed. 
+		InputStream tempInputStream = socket.getInputStream();		
+		if(CapoApplication.logger.isLoggable(Level.FINE))
+		{
+		    inputStreamcallerStackTraceElements = new Exception().getStackTrace();
+		    tempInputStream = new StreamEventFilterInputStream(tempInputStream);
+		    ((StreamEventFilterInputStream) tempInputStream).addStreamEventListener(this);		    
+		}
+
+		this.inputStream = new BufferedInputStream(tempInputStream);
+		
 		if (CapoApplication.getKeyStore() != null && CapoApplication.getSslSocketFactory() != null)
 		{
-			CapoApplication.logger.finer("SSL SID:"+DatatypeConverter.printHexBinary(((SSLSocket)socket).getSession().getId()));
+		    sslSID = DatatypeConverter.printHexBinary(((SSLSocket)socket).getSession().getId());		    
+			CapoApplication.logger.fine("SSL SID:"+sslSID);
 			String clientID = CapoApplication.getConfiguration().getValue(CapoClient.Preferences.CLIENT_ID);
 			char[] password = CapoApplication.getConfiguration().getValue(PREFERENCE.KEYSTORE_PASSWORD).toCharArray();
 			String authMessage = "AUTH:CID="+clientID;
@@ -112,23 +148,23 @@ public class CapoConnection
 			this.inputStream.read();
 		}
 		//check for a busy signal
-		this.outputStream.write("CAPO_REQUEST".getBytes());
+		this.outputStream.write(ConnectionTypes.CAPO_REQUEST.toString().getBytes());
 		this.outputStream.flush();
 		byte[] buffer = new byte[256];
 		this.inputStream.read(buffer);
 		
 		String message = new String(buffer).trim();
-		//TODO move this into capo connection, so that any connection attempt will handle a busy signal
+		
 		//check to see if this is a busy message
-		if (message.matches("BUSY \\d+"))
+		if (message.matches(ConnectionResponses.BUSY+" \\d+"))
 		{
-			long delaytime = Long.parseLong(message.replaceAll("BUSY (\\d+)", "$1"));
+			long delaytime = Long.parseLong(message.replaceAll(ConnectionResponses.BUSY+" (\\d+)", "$1"));
 			close();
 			CapoApplication.logger.log(Level.WARNING, "Server Busy. Retrying connection in "+delaytime+"ms.");
 			Thread.sleep(delaytime);
 			open();				
 		}
-		else if (message.matches("OK") == false)
+		else if (message.matches(ConnectionResponses.OK.toString()) == false)
 		{				
 			throw new Exception("Unknown message from server: '"+message+"'");				
 		}
@@ -148,11 +184,20 @@ public class CapoConnection
 	//CS & SS
 	public void close()
 	{
-		
+	   
 		if (socket != null)
 		{
 			try
 			{
+			    closerStackTraceElements = new Exception("Closing stack trace").getStackTrace();
+			    if(dumpOnClose && socket.isClosed() == false && CapoApplication.logger.isLoggable(Level.FINE))
+		        {
+		            System.err.println("Closing stack trace");
+		            Thread.dumpStack();         
+		            Exception exception = new Exception("Opening stack trace");
+		            exception.setStackTrace(callerStackTraceElements);
+		            exception.printStackTrace();
+		        }
 				socket.close();
 				if (socket instanceof SSLSocket)
 				{
@@ -205,5 +250,27 @@ public class CapoConnection
 	{
 		return this.inputStream;
 	}
+
+    public void dumpOnClose(boolean dumpOnClose)
+    {
+        System.out.println("===================SETTING DUMP ON CLOSE====================");
+        this.dumpOnClose = true;
+        
+    }
 	
+    @Override
+    public void processStreamEvent(StreamEvent streamEvent) throws IOException
+    {
+        if(streamEvent == StreamEvent.CLOSED && dumpOnClose)
+        {
+            inputStreamcloserStackTraceElements = new Exception().getStackTrace();
+            System.err.println("Closing stack trace");
+            Thread.dumpStack();         
+            Exception exception = new Exception("Opening stack trace");
+            exception.setStackTrace(callerStackTraceElements);
+            exception.printStackTrace();
+        }
+        
+    }
+    
 }

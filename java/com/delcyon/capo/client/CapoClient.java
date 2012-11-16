@@ -64,9 +64,9 @@ import com.delcyon.capo.protocol.client.CapoConnection;
 import com.delcyon.capo.protocol.client.Request;
 import com.delcyon.capo.resourcemanager.CapoDataManager;
 import com.delcyon.capo.resourcemanager.ResourceDescriptor;
-import com.delcyon.capo.resourcemanager.ResourceDescriptor.LifeCycle;
-import com.delcyon.capo.resourcemanager.ResourceParameter;
 import com.delcyon.capo.resourcemanager.ResourceDescriptor.Action;
+import com.delcyon.capo.resourcemanager.ResourceParameter;
+import com.delcyon.capo.resourcemanager.remote.RemoteResourceResponseProcessor;
 import com.delcyon.capo.resourcemanager.types.FileResourceType;
 import com.delcyon.capo.tasks.TaskManagerThread;
 import com.delcyon.capo.xml.XPath;
@@ -91,7 +91,9 @@ public class CapoClient extends CapoApplication
 		@PreferenceInfo(arguments={"months"}, defaultValue="36", description="Number of Months before key expires", longOption="KEY_MONTHS_VALID", option="KEY_MONTHS_VALID")
 		KEY_MONTHS_VALID,
 		@PreferenceInfo(arguments={"interval"}, defaultValue="1000", description="Milliseconds until retry, on connection failure", longOption="CONNECTION_RETRY_INTERVAL", option="CONNECTION_RETRY_INTERVAL")
-        CONNECTION_RETRY_INTERVAL;
+        CONNECTION_RETRY_INTERVAL,
+		@PreferenceInfo(arguments={"boolean"}, defaultValue="false", description="This will cause the client to ignore any server requests to restart. This should only be used for testing. Defaults to false.", longOption="IGNORE_RESTART_REQUEST", option="IGNORE_RESTART_REQUEST",location=Location.CLIENT)
+        IGNORE_RESTART_REQUEST;
 		
 		@Override
 		public String[] getArguments()
@@ -318,7 +320,7 @@ public class CapoClient extends CapoApplication
 		ControllerRequest controllerRequest = new ControllerRequest(capoConnection.getOutputStream(),capoConnection.getInputStream());
 		controllerRequest.setType("update");
 		controllerRequest.loadSystemVariables();
-		runRequest(capoConnection, controllerRequest,sessionHashMap);
+		runRequest(capoConnection, controllerRequest,sessionHashMap);		
 	}
 	
 	public void runTasksUpdateRequest(CapoConnection capoConnection,HashMap<String, String> sessionHashMap) throws Exception
@@ -346,19 +348,26 @@ public class CapoClient extends CapoApplication
 	    }
 		//send request
 		try
-		{					
+		{
+		    CapoApplication.logger.log(Level.INFO, "STARTING "+initialRequestType+" request.");
 			request.send();
 		}
 		catch (SocketException socketException)
 		{
+		    socketException.printStackTrace();
 			//do nothing, let any errors be processed later, since there might be a message in the buffer
 		}
 		boolean isFinished = false;
-		
-		while(isFinished == false)
+		int emptyCount = 0;
+		while(isFinished == false && emptyCount < 20)
 		{	
 			byte[] buffer = getBuffer(capoConnection.getInputStream());
-			//System.out.println(new String(buffer));
+			if(buffer == null)
+			{
+			    //connection closed
+			    CapoApplication.logger.log(Level.WARNING, "Server Connection closed unexpectedly for "+initialRequestType+" request.");
+			    break;
+			}
 			//figure out the kind of response
 			StreamProcessor streamProcessor = StreamHandler.getStreamProcessor(buffer);
 			if (streamProcessor != null)
@@ -371,12 +380,27 @@ public class CapoClient extends CapoApplication
 				//if we have no data, then we are finished, otherwise wait, then try again?
 				if (buffer.length == 0)
 				{
-				    
-				    
-				    
-				    CapoApplication.logger.log(Level.INFO, "Nothing left to process, finishing up "+initialRequestType+" request.");
-				    
-					isFinished = true;
+				    CapoApplication.logger.log(Level.WARNING, "Empty Response from server for "+initialRequestType+" request. Going to wait for more data.");
+				    emptyCount++;
+				}
+				else
+				{
+				    String bufferString = new String(buffer);
+				    if(bufferString.startsWith("FINISHED:"))
+				    {
+				        if(RemoteResourceResponseProcessor.getThreadedInputStreamReaderHashtable().size() != 0)
+				        {
+				            CapoApplication.logger.log(Level.SEVERE, "We shouldn't be done yet!");
+				            System.exit(1);
+				        }
+				        CapoApplication.logger.log(Level.INFO, "FINISHED "+initialRequestType+" request.");
+				        isFinished = true;				        
+				    }
+				    else
+				    {
+				        CapoApplication.logger.log(Level.WARNING, "Don't know what to do with '"+bufferString+"', finishing "+initialRequestType+" request.");
+				        isFinished = true;				        
+				    }
 				}
 				
 			}
@@ -396,7 +420,7 @@ public class CapoClient extends CapoApplication
 	    //totally pointless, but seems like a good idea at the time
 	    if (bytesRead < 0)
 	    {
-	    	return new byte[0];
+	    	return null;
 	    }
 	    else if (bytesRead < bufferSize)
 	    {

@@ -138,7 +138,8 @@ public class ClientRequestXMLProcessor implements XMLProcessor
 		{
 			
 			clientRequestProcessor.process(clientRequest);
-			//TODO send finished indicator
+			//send finished indicator
+			//TODO clientRequest.finish(); no indicator wanted here. If we want to start combining sockets, then this might be a good place to start
 		}
 		else
 		{
@@ -160,7 +161,9 @@ public class ClientRequestXMLProcessor implements XMLProcessor
 				clientRequestProcessor.process(clientRequest);
 				//because once a control main request processor runs, we no longer need to have a link reference to it, remove it. 
 				ClientRequestProcessorSessionManager.removeClientRequestProcessor(clientRequestProcessor);
-				//TODO send finished indicator
+				
+				//send finished indicator
+				clientRequest.finish();
 			}
 			else
 			{
