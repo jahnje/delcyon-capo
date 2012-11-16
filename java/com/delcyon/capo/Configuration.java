@@ -89,7 +89,8 @@ public class Configuration
 		MODE("m", "MODE", "mode to run capo in client, server, hybrid. default 'client'", "client", new String[] { "mode" }),
 		CLIENT_MODE("cm", "CLIENT_MODE", "what kind of client connection to use, persistant or dynamic. default is dynamic", "dynamic", new String[] { "client_mode" }), 
 		STARTUP_SCRIPT("STARTUP_SCRIPT","STARTUP_SCRIPT","Capo formatted XML file, relative to CONFIG_DIR, containing controls to run at startup, before server becomes available.","startup.xml",new String[] { "file" }), 
-		UPDATE_SCRIPT("UPDATE_SCRIPT","UPDATE_SCRIPT","Capo formatted XML file, relative to CONFIG_DIR, containing controls to run an update, before client control processing.","update.xml",new String[] { "file" }), 
+		UPDATE_SCRIPT("UPDATE_SCRIPT","UPDATE_SCRIPT","Capo formatted XML file, relative to CONFIG_DIR, containing controls to run an update, before client control processing.","update.xml",new String[] { "file" }),
+		LOGGING_LEVEL("l", "LOGGING_LEVEL", "Java Logging level to use. Can be Standard Java Logging Name, or a number", "INFO", new String[] { "level" }), 
 		;
 
 		private String option;
@@ -352,7 +353,8 @@ public class Configuration
 				CapoApplication.logger.log(Level.CONFIG, preference.longOption+"='"+getValue(preference)+"'");				
 			}
 		}
-		
+	
+		CapoApplication.logger.setLevel(Level.parse(getValue(PREFERENCE.LOGGING_LEVEL)));
 	}
 
 	public boolean hasOption(Preference preference)
