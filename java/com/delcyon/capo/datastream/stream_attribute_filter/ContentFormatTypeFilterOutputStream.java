@@ -117,7 +117,14 @@ public class ContentFormatTypeFilterOutputStream extends FilterOutputStream impl
 	@Override
 	public String getValue()
 	{
-		return contentFormatType.toString();
+	    if(contentFormatType == null)
+	    {
+	        return ContentFormatType.NO_CONTENT.toString();
+	    }
+	    else
+	    {
+	        return contentFormatType.toString();
+	    }
 	}
 	
 }
