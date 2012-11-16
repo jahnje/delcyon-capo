@@ -1,5 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <server:group name="update" xmlns:server="http://www.delcyon.com/capo-server" xmlns:client="http://www.delcyon.com/capo-client">
+    
+    <server:var name="requiresRestart" value="false"/>
+    
     <!-- need to check CapoApplication.getVariableValue("updater.lib.md5").equals(remoteLibMD5) -->
     <server:resourceMetaData resource="file:lib" depth="2" useRelativePaths="true" attributes="MD5" requiredAttributes="MD5"/>
     <server:resourceMetaData resource="remote:file:lib" depth="2" useRelativePaths="true" attributes="MD5" requiredAttributes="MD5"/>
