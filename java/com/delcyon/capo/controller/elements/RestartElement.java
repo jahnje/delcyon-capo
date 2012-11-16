@@ -16,14 +16,17 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 package com.delcyon.capo.controller.elements;
 
+import java.util.logging.Level;
+
 import org.tanukisoftware.wrapper.WrapperManager;
 import org.w3c.dom.Element;
 
 import com.delcyon.capo.CapoApplication;
+import com.delcyon.capo.client.CapoClient.Preferences;
 import com.delcyon.capo.controller.AbstractClientSideControl;
 import com.delcyon.capo.controller.ControlElementProvider;
 import com.delcyon.capo.controller.client.ClientSideControl;
-import com.delcyon.capo.xml.XPathFunctionProvider;
+import com.delcyon.capo.xml.XPath;
 
 /**
  * @author jeremiah
@@ -72,7 +75,16 @@ public class RestartElement extends AbstractClientSideControl implements ClientS
 	@Override
 	public Element processClientSideElement() throws Exception
 	{
-		WrapperManager.restartAndReturn();
+	    
+	    if(CapoApplication.getConfiguration().getBooleanValue(Preferences.IGNORE_RESTART_REQUEST) == false)
+	    {
+	        CapoApplication.logger.log(Level.WARNING, "Attempting to restart due to server request.");
+	        WrapperManager.restartAndReturn();
+	    }
+	    else
+	    {
+	        CapoApplication.logger.log(Level.WARNING, "Ignoring restart request because of IGNORE_RESTART_REQUEST preference. See config file.");
+	    }
 		//Return something here so that the server stops waiting for a document to read, and will shut down the connection. 
 		return (Element)(getControlElementDeclaration().cloneNode(true));
 	}
@@ -82,11 +94,13 @@ public class RestartElement extends AbstractClientSideControl implements ClientS
 	public Object processServerSideElement() throws Exception
 	{
 		if (getControlElementDeclaration().getNamespaceURI().equals(CapoApplication.CLIENT_NAMESPACE_URI))
-		{			
+		{
+		    CapoApplication.logger.log(Level.INFO, "Asking client to restart.");
 			getControllerClientRequestProcessor().sendServerSideClientElement((Element) getParentGroup().replaceVarsInAttributeValues(getControlElementDeclaration().cloneNode(true)));
 		}
 		else
 		{
+		    CapoApplication.logger.log(Level.WARNING, "Attempting to restart server due to request at: "+XPath.getXPath(getControlElementDeclaration()));
 			WrapperManager.restart();
 		}
 		
