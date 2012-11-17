@@ -179,8 +179,10 @@ public abstract class CapoApplication extends ContextThread implements WrapperLi
 		System.setProperty("javax.xml.xpath.XPathFactory", "net.sf.saxon.xpath.XPathFactoryImpl");
 		System.setProperty("javax.xml.transform.TransformerFactory", "net.sf.saxon.TransformerFactoryImpl");
 		System.setProperty("javax.xml.parsers.DocumentBuilderFactory", "com.delcyon.capo.xml.cdom.CDocumentBuilderFactory");
-		//System.setProperty("javax.net.debug","ssl,handshake");
-				
+		//System.setProperty("javax.net.debug","all");		
+		System.setProperty("sun.security.ssl.allowUnsafeRenegotiation", "true");
+		System.setProperty("sun.security.ssl.allowLegacyHelloMessages", "true");
+		
 		if (logger == null)
 		{
 			logger = Logger.getLogger(this.getClass().getName());
