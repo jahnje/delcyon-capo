@@ -204,10 +204,9 @@ public class XMLStreamProcessor implements StreamProcessor
 		
 		int bytesRead = 0;
 		long totalBytesRead = 0l;
+		byte[] buffer = new byte[CapoApplication.getConfiguration().getIntValue(PREFERENCE.BUFFER_SIZE)];
 		while(true)
 		{
-			byte[] buffer = new byte[CapoApplication.getConfiguration().getIntValue(PREFERENCE.BUFFER_SIZE)];
-			
 			bytesRead = inputStream.read(buffer);			
 			totalBytesRead += (long)bytesRead;
 			//end of stream
@@ -287,6 +286,5 @@ public class XMLStreamProcessor implements StreamProcessor
 		return -1;
 	}
 
-   
 	
 }
