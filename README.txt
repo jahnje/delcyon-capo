@@ -25,4 +25,4 @@ run: capo/[server|client]/bin/capo-[server|client].sh
 
 Status: alpha 
 
-You can download a pre-built distribution from here https://github.com/downloads/jahnje/delcyon-capo/capo-server-0.1.2.0-dist.jar
+You can download a pre-built distribution from here https://github.com/downloads/jahnje/delcyon-capo/capo-server-0.1.3.0-dist.jar
