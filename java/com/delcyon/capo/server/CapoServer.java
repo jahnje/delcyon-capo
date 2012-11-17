@@ -104,8 +104,10 @@ public class CapoServer extends CapoApplication
 		
 		@PreferenceInfo(arguments={"sec"}, defaultValue="15", description="The number of seconds to tell a client to wait before attempting to connect again", longOption="INITIAL_CLIENT_RETRY_TIME", option="INITIAL_CLIENT_RETRY_TIME")
 		INITIAL_CLIENT_RETRY_TIME,
-		@PreferenceInfo(arguments={"ms"}, defaultValue="600000", description="The number of ms to keep an idle thread alive", longOption="THREAD_IDLE_TIME", option="THREAD_IDLE_TIME")
+		@PreferenceInfo(arguments={"ms"}, defaultValue="60000", description="The number of ms to keep an idle thread alive", longOption="THREAD_IDLE_TIME", option="THREAD_IDLE_TIME")
 		THREAD_IDLE_TIME,
+		@PreferenceInfo(arguments={"ms"}, defaultValue="0", description="The number of ms to keep an socket alive", longOption="SOCKET_IDLE_TIME", option="SOCKET_IDLE_TIME")
+        SOCKET_IDLE_TIME,
 		@PreferenceInfo(arguments={"int"}, defaultValue="30", description="The number of concurrent connection to allow", longOption="MAX_THREADPOOL_SIZE", option="MAX_THREADPOOL_SIZE")
 		MAX_THREADPOOL_SIZE,
 		@PreferenceInfo(arguments={"int"}, defaultValue="10", description="The number of server threads to start with", longOption="START_THREADPOOL_SIZE", option="START_THREADPOOL_SIZE")
@@ -414,6 +416,7 @@ public class CapoServer extends CapoApplication
 	                socket = serverSocket.accept();
 	                socket.setSoLinger(false, 0);
 	                socket.setTcpNoDelay(true);
+	                socket.setSoTimeout(getConfiguration().getIntValue(Preferences.SOCKET_IDLE_TIME));
 	            } catch (SocketException socketException)
 	            {
 	                if (getApplicationState().ordinal() > ApplicationState.RUNNING.ordinal() && serverSocket.isClosed())
@@ -458,7 +461,7 @@ public class CapoServer extends CapoApplication
 	                try
 	                {
 
-	                    socket = CapoApplication.getSslSocketFactory().createSocket(socket, socket.getLocalAddress().getHostAddress(), socket.getLocalPort(), true);
+	                    socket = getLocalSslSocketFactory().createSocket(socket, socket.getLocalAddress().getHostAddress(), socket.getLocalPort(), true);
 	                    
 	                } 
 	                catch (Exception exception)
@@ -604,12 +607,13 @@ public class CapoServer extends CapoApplication
 	            logger.log(Level.FINE, "Starting a "+streamProcessor.getClass().getSimpleName()+" Stream Handler for "+clientID+"@"+socket);	            
 	            try
 	            {
-	                threadPoolExecutor.execute(streamHandler);
+	                threadPoolExecutor.execute(streamHandler);	                
 	            }
 	            catch (RejectedExecutionException e) 
 	            {
 	                writeBusyMessage(socket);
 	            }
+	            
 	        }
 	    }
 	    catch (Exception exception)
