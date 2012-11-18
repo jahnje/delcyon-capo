@@ -239,7 +239,7 @@ public class CertificateRequestProcessorTest
 		ExternalTestServer externalTestServer = new ExternalTestServer();
 		externalTestServer.startServer();
 		
-		TestClient.start(ApplicationState.RUNNING,"-CLIENT_VERIFICATION_PASSWORD",persistantPassword);
+		TestClient.start(ApplicationState.READY,"-CLIENT_VERIFICATION_PASSWORD",persistantPassword);
         TestClient.shutdown();
 		CopyOnWriteArrayList<Exception> exceptionList = TestClient.getExceptionList();
 		
@@ -279,7 +279,7 @@ public class CertificateRequestProcessorTest
 		ExternalTestServer externalTestServer = new ExternalTestServer();
 		externalTestServer.startServer();
 		
-		TestClient.start(ApplicationState.RUNNING,"-CLIENT_VERIFICATION_PASSWORD",persistantPassword);
+		TestClient.start(ApplicationState.READY,"-CLIENT_VERIFICATION_PASSWORD",persistantPassword);
 		TestClient.shutdown();
 		
 		

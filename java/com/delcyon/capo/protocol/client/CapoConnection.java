@@ -34,6 +34,7 @@ import com.delcyon.capo.Configuration.PREFERENCE;
 import com.delcyon.capo.client.CapoClient;
 import com.delcyon.capo.datastream.StreamEventFilterInputStream;
 import com.delcyon.capo.datastream.StreamEventListener;
+import com.delcyon.capo.datastream.StreamUtil;
 
 /**
  * @author jeremiah
@@ -58,6 +59,7 @@ public class CapoConnection implements StreamEventListener
 	private OutputStream outputStream;
     private String serverAddress;
     private int port;
+    private int securePort;
     private boolean dumpOnClose = false;
     private StackTraceElement[] callerStackTraceElements;
     @SuppressWarnings("unused")
@@ -72,15 +74,16 @@ public class CapoConnection implements StreamEventListener
 	{
 	    serverAddress = CapoApplication.getConfiguration().getValue(PREFERENCE.SERVER_LIST).split(",")[0];
         port = CapoApplication.getConfiguration().getIntValue(PREFERENCE.PORT);
+        securePort = CapoApplication.getConfiguration().getIntValue(PREFERENCE.SECURE_PORT);
 		open();					
 	}
 	
-	public CapoConnection(String serverAddress,int port) throws Exception
-	{
-	    this.serverAddress = serverAddress;
-	    this.port = port;
-	    open();
-	}
+//	public CapoConnection(String serverAddress,int port) throws Exception
+//	{
+//	    this.serverAddress = serverAddress;
+//	    this.port = port;
+//	    open();
+//	}
 	
 	/**
 	 * A little control logic so we can reuse sockets if we have them, as well as figuring out which server to connect to
@@ -96,15 +99,21 @@ public class CapoConnection implements StreamEventListener
 		while (this.socket == null || socket.isClosed())
 		{
 			
-			CapoClient.logger.log(Level.FINE, "Opening Socket to "+serverAddress+":"+port);
+			
 			try
 			{
-			    this.socket = new Socket(serverAddress, port);
+			    
 			    if (CapoApplication.getSslSocketFactory() != null)
-			    {	
-			        socket = CapoApplication.getSslSocketFactory().createSocket(socket, socket.getLocalAddress().getHostAddress(), socket.getLocalPort(), true);			        
+			    {
+			        CapoClient.logger.log(Level.FINE, "Opening Secure Socket to "+serverAddress+":"+securePort);
+			        this.socket = CapoApplication.getSslSocketFactory().createSocket(serverAddress, securePort);			        
 			        this.socket.setSendBufferSize(CapoApplication.getConfiguration().getIntValue(PREFERENCE.BUFFER_SIZE)+728);
-			    }			    
+			    }
+			    else
+			    {
+			        CapoClient.logger.log(Level.FINE, "Opening Socket to "+serverAddress+":"+port);
+			        this.socket = new Socket(serverAddress, port);    
+			    }
 			} 
 			catch (ConnectException connectException)
 			{
@@ -150,9 +159,8 @@ public class CapoConnection implements StreamEventListener
 		//check for a busy signal
 		this.outputStream.write(ConnectionTypes.CAPO_REQUEST.toString().getBytes());
 		this.outputStream.flush();
-		byte[] buffer = new byte[256];
-		this.inputStream.read(buffer);
-		
+		byte[] buffer = new byte[256];		
+		StreamUtil.fullyReadIntoBufferUntilPattern(inputStream, buffer, (byte)0);
 		String message = new String(buffer).trim();
 		
 		//check to see if this is a busy message

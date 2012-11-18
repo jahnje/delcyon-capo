@@ -295,7 +295,7 @@ public class TaskManagerThread extends ContextThread
 	@Override
 	public void run()
 	{
-		taskManagerState = ApplicationState.RUNNING;
+		taskManagerState = ApplicationState.READY;
 		while(taskManagerState.ordinal() < ApplicationState.STOPPING.ordinal())
 		{
 			try

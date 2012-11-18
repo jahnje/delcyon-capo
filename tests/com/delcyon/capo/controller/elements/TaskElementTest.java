@@ -222,7 +222,7 @@ public class TaskElementTest
         System.out.println("===================================================================");
         externalTestServer.startServer();
         System.out.println("===================================================================");
-        TestClient.start(ApplicationState.RUNNING,"-CLIENT_AS_SERVICE","true");
+        TestClient.start(ApplicationState.READY,"-CLIENT_AS_SERVICE","true");
         TestClient.getClientInstance().getConfiguration().setValue(TaskManagerThread.Preferences.TASK_INTERVAL, "2000");
         TestClient.getClientInstance().getConfiguration().setValue(TaskManagerThread.Preferences.TASK_DEFAULT_LIFESPAN, "6000");
         TestClient.getClientInstance().getConfiguration().setValue(TaskManagerThread.Preferences.DEFAULT_CLIENT_SYNC_INTERVAL, "1000");
@@ -275,7 +275,7 @@ public class TaskElementTest
     	System.out.println("===================================================================");
     	externalTestServer.startServer("-CAPO_DIR","capo/server");
     	System.out.println("===================================================================");
-    	TestClient.start(ApplicationState.RUNNING,"-CLIENT_AS_SERVICE","true","-CAPO_DIR","capo/client");
+    	TestClient.start(ApplicationState.READY,"-CLIENT_AS_SERVICE","true","-CAPO_DIR","capo/client");
     	TestServer.getServerInstance().getConfiguration().setValue(TaskManagerThread.Preferences.TASK_INTERVAL, "2000");
         TestServer.getServerInstance().getConfiguration().setValue(TaskManagerThread.Preferences.TASK_DEFAULT_LIFESPAN, "1000");
         TestServer.getServerInstance().getConfiguration().setValue(TaskManagerThread.Preferences.DEFAULT_CLIENT_SYNC_INTERVAL, "1000");

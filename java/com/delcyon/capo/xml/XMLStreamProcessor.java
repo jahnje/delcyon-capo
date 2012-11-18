@@ -178,7 +178,7 @@ public class XMLStreamProcessor implements StreamProcessor
 		CapoApplication.logger.log(Level.FINE, "READ OK bit to Remote After WRITE: "+writeResponseValue);
 		if(writeResponseValue != 1)
 		{
-		    throw new Exception("Server Reported an Error");
+		    throw new Exception("Remote End Reported an Error");
 		}
 	}
 	

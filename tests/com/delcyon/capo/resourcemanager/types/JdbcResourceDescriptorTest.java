@@ -12,18 +12,17 @@ import org.w3c.dom.Element;
 
 import com.delcyon.capo.CapoApplication;
 import com.delcyon.capo.resourcemanager.ResourceDescriptor;
-import com.delcyon.capo.resourcemanager.ResourceDescriptorTest;
-import com.delcyon.capo.resourcemanager.ResourceParameter;
 import com.delcyon.capo.resourcemanager.ResourceDescriptor.Action;
 import com.delcyon.capo.resourcemanager.ResourceDescriptor.LifeCycle;
 import com.delcyon.capo.resourcemanager.ResourceDescriptor.State;
 import com.delcyon.capo.resourcemanager.ResourceDescriptor.StreamFormat;
 import com.delcyon.capo.resourcemanager.ResourceDescriptor.StreamType;
+import com.delcyon.capo.resourcemanager.ResourceDescriptorTest;
+import com.delcyon.capo.resourcemanager.ResourceParameter;
 import com.delcyon.capo.tests.util.TestServer;
 import com.delcyon.capo.tests.util.Util;
 import com.delcyon.capo.xml.XMLDiff;
 import com.delcyon.capo.xml.XPath;
-import com.sun.source.tree.AssertTree;
 
 public class JdbcResourceDescriptorTest extends ResourceDescriptorTest
 {

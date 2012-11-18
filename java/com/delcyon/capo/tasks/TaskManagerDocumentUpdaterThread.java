@@ -79,7 +79,7 @@ public class TaskManagerDocumentUpdaterThread extends Thread
 	@Override
 	public void run()
 	{
-		this.state = ApplicationState.RUNNING;
+		this.state = ApplicationState.READY;
 		while(getUpdaterState().ordinal() < ApplicationState.STOPPING.ordinal() || documentUpdateQueue.isEmpty() == false)
 		{
 			try

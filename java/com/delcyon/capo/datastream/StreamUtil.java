@@ -41,6 +41,33 @@ public class StreamUtil
 		return readInputStreamIntoOutputStream(inputStream, outputStream,CapoApplication.getConfiguration().getIntValue(PREFERENCE.BUFFER_SIZE));
 	}
 	
+	public static int fullyReadIntoBufferUntilPattern(InputStream inputStream, byte[] buffer, byte... pattern) throws Exception
+	{
+	    int totalRead = 0;
+	    byte[] localBuffer = new byte[CapoApplication.getConfiguration().getIntValue(PREFERENCE.BUFFER_SIZE)];	    
+	    int destPos = 0;
+	    while(true)
+	    {
+	        int count =  inputStream.read(localBuffer);
+	        totalRead += count;
+	        if(count < 0)
+	        {
+	            break;
+	        }
+	        if(count > 0)
+	        {
+	            System.arraycopy(localBuffer, 0, buffer, destPos, count);
+	            destPos += count;
+
+	            if(searchForBytePattern(pattern, buffer, totalRead - pattern.length, pattern.length).size() > 0)
+	            {
+	                break;
+	            }
+
+	        }
+	    }
+	    return totalRead;
+	}
 	/**
 	 * 
 	 * @param inputStream
@@ -89,12 +116,18 @@ public class StreamUtil
 	public static List<Integer> searchForBytePattern(byte[] pattern, byte[] bytes, int start, int length)
 	{
 	    
+	    Vector<Integer> matchPositions = new Vector<Integer>();
+	    if(start < 0)
+	    {
+	        start = 0;
+	    }
+	    
 	    int endIndex = (start + length - 1);
 	    if (endIndex > bytes.length -1)
 	    {
-	        throw new IndexOutOfBoundsException("Final index of array can't be greater than "+(bytes.length-1));
+	        endIndex = bytes.length -1;
 	    }
-	    Vector<Integer> matchPositions = new Vector<Integer>();
+	    
 	    for(int index = start; index <= endIndex; index++)
 	    {
 	        //as we walk along the whole thing look for a match on the first byte of our pattern

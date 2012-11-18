@@ -77,7 +77,7 @@ public abstract class CapoApplication extends ContextThread implements WrapperLi
         INITIALIZING,
         INITIALIZED,
         STARTING,
-        RUNNING,
+        READY,
         STOPPING,
         STOPPED
         

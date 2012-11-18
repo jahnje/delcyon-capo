@@ -70,7 +70,7 @@ public class ExternalTestClient extends ClassLoader
 	    Util.copyTree("test-data/capo", "capo");
 		TestServer.start();
 		ExternalTestClient externalTestClient = new ExternalTestClient();
-		externalTestClient.startClient(ApplicationState.RUNNING);
+		externalTestClient.startClient(ApplicationState.READY);
 		
 		//Thread.sleep(10000);
 		externalTestClient.shutdown();

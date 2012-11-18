@@ -56,6 +56,7 @@ import com.delcyon.capo.crypto.CertificateRequest;
 import com.delcyon.capo.crypto.CertificateRequest.CertificateRequestType;
 import com.delcyon.capo.datastream.StreamHandler;
 import com.delcyon.capo.datastream.StreamProcessor;
+import com.delcyon.capo.datastream.StreamUtil;
 import com.delcyon.capo.preferences.Preference;
 import com.delcyon.capo.preferences.PreferenceInfo;
 import com.delcyon.capo.preferences.PreferenceInfoHelper;
@@ -294,7 +295,7 @@ public class CapoClient extends CapoApplication
 				System.exit(1);
 			}
 		}
-		setApplicationState(ApplicationState.RUNNING);
+		setApplicationState(ApplicationState.READY);
 	}
 
 	
@@ -413,7 +414,7 @@ public class CapoClient extends CapoApplication
 		int bufferSize = getConfiguration().getIntValue(PREFERENCE.BUFFER_SIZE);
 	    byte[] buffer = new byte[bufferSize];
 	    inputStream.mark(bufferSize);
-	    int bytesRead = inputStream.read(buffer);
+	    int bytesRead = StreamUtil.fullyReadIntoBufferUntilPattern(inputStream, buffer, (byte)0);
 	    inputStream.reset();
 	    
 	    //truncate the buffer so we can do accurate length checks on it
@@ -607,7 +608,7 @@ public class CapoClient extends CapoApplication
 	public void shutdown() throws Exception
 	{
 	    CapoApplication.logger.log(Level.INFO,"Waiting for processing to finish.");
-        while(getApplicationState().ordinal() < ApplicationState.RUNNING.ordinal())
+        while(getApplicationState().ordinal() < ApplicationState.READY.ordinal())
         {
             Thread.sleep(500);
         }

@@ -79,6 +79,7 @@ public class ClientRequest
     public void finish() throws Exception
     {
         getOutputStream().write(("FINISHED:"+sessionID).getBytes());
+        getOutputStream().write(0);
         getOutputStream().flush();
     }
 	
