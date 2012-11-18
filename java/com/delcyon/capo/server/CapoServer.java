@@ -568,8 +568,7 @@ public class CapoServer extends CapoApplication
 
         @Override
 	    public void run()
-	    {
-	        setApplicationState(ApplicationState.READY);
+	    {	        
 	        try
 	        {
 	            while (true)
@@ -823,7 +822,7 @@ public class CapoServer extends CapoApplication
         @Override
         public void run()
         {
-            setApplicationState(ApplicationState.READY);
+            
             try
             {
                 while (true)
