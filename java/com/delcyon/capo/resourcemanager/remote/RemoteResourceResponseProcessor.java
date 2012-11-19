@@ -24,6 +24,7 @@ import java.util.Hashtable;
 import java.util.logging.Level;
 
 import org.w3c.dom.Document;
+import org.w3c.dom.Element;
 
 import com.delcyon.capo.CapoApplication;
 import com.delcyon.capo.CapoApplication.Location;
@@ -39,6 +40,7 @@ import com.delcyon.capo.protocol.client.XMLServerResponseProcessorProvider;
 import com.delcyon.capo.resourcemanager.ResourceDescriptor;
 import com.delcyon.capo.resourcemanager.ResourceURI;
 import com.delcyon.capo.resourcemanager.remote.RemoteResourceDescriptorMessage.MessageType;
+import com.delcyon.capo.xml.XMLStreamProcessor;
 import com.delcyon.capo.xml.XPath;
 import com.delcyon.capo.xml.cdom.VariableContainer;
 
@@ -124,6 +126,19 @@ public class RemoteResourceResponseProcessor implements XMLServerResponseProcess
 	    
 	    return capoVarConnectionHashtable;
 	}
+	
+	@SuppressWarnings("unchecked")
+    private synchronized static Hashtable<String, XMLStreamProcessor> getCapoVarXMLStreamProcessorHashtable()
+    {
+        Hashtable<String, XMLStreamProcessor> capoVarXMLStreamProcessorHashtable = (Hashtable<String, XMLStreamProcessor>) CapoApplication.getGlobalObject("capoVarXMLStreamProcessorHashtable");
+        if (capoVarXMLStreamProcessorHashtable == null)
+        {
+            capoVarXMLStreamProcessorHashtable = new Hashtable<String, XMLStreamProcessor>();           
+            CapoApplication.setGlobalObject("capoVarXMLStreamProcessorHashtable",capoVarXMLStreamProcessorHashtable);
+        }
+        
+        return capoVarXMLStreamProcessorHashtable;
+    }
 	
 	@SuppressWarnings("unchecked")
     private synchronized static Hashtable<String, ResourceDescriptor> getResourceDescriptorHashtable()
@@ -244,7 +259,7 @@ public class RemoteResourceResponseProcessor implements XMLServerResponseProcess
 					threadedInputSreamReader.setCapoConnection(capoConnection);
 					if (getThreadedInputStreamReaderHashtable().contains(sessionID))
 					{
-					    throw new Exception("Stream Read already exists! Somebody didn't close something!");
+					    throw new Exception("Stream Reader already exists! Somebody didn't close something!");
 					}
 					getThreadedInputStreamReaderHashtable().put(sessionID, threadedInputSreamReader);
 					threadedInputSreamReader.start();				
@@ -407,30 +422,29 @@ public class RemoteResourceResponseProcessor implements XMLServerResponseProcess
 		try
 		{
 		    CapoConnection capoVarConnection = getCapoVarConnectionHashtable().get(sessionID);
+		    
 		    if (capoVarConnection == null)
 		    {
 		        capoVarConnection  = new CapoConnection();
 		        getCapoVarConnectionHashtable().put(sessionID,capoVarConnection);
+		       
 		    }
-			RemoteResourceRequest request = new RemoteResourceRequest(capoVarConnection.getOutputStream(),capoVarConnection.getInputStream());
-			request.setType(MessageType.GET_VAR_VALUE);
-			request.setVarName(varName);
-			request.setSessionId(sessionID);
-			request.send();
-			capoVarConnection.getInputStream();
-			
-			ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-			int value = 0;
-			while(true)
-			{
-			    value = capoVarConnection.getInputStream().read();
-			    if (value <= 0)
-			    {
-			        break;
-			    }
-			    byteArrayOutputStream.write(value);
-			}			
-			return new String(byteArrayOutputStream.toByteArray()); 
+		    
+		    RemoteResourceDescriptorMessage request = new RemoteResourceDescriptorMessage();
+	        request.setMessageType(MessageType.GET_VAR_VALUE);
+	        request.setSessionID(sessionID);
+	        request.setVarName(varName);
+		    request.prepareResponse();
+		    
+		    RemoteResourceRequest resourceRequest = new RemoteResourceRequest(capoVarConnection.getOutputStream(),capoVarConnection.getInputStream());
+
+		    resourceRequest.setType(MessageType.GET_VAR_VALUE);			
+		    resourceRequest.setSessionId(sessionID);
+		    resourceRequest.appendElement((Element) request.getResponseDocument().getDocumentElement().getElementsByTagName("*").item(0));
+		    resourceRequest.send();
+
+		    RemoteResourceDescriptorMessage message = new RemoteResourceDescriptorMessage(XPath.unwrapDocument(XPath.unwrapDocument(resourceRequest.readResponse(), true),true));
+			return message.getValue();
 		} catch (Exception exception)
 		{
 			exception.printStackTrace();
@@ -444,12 +458,21 @@ public class RemoteResourceResponseProcessor implements XMLServerResponseProcess
         if (capoVarConnection != null)
         {
             //shut down the pipe gracefully
-            RemoteResourceRequest request = new RemoteResourceRequest(capoVarConnection.getOutputStream(),capoVarConnection.getInputStream());
-            request.setType(MessageType.CLOSE);
-            request.setSessionId(sessionID);
-            request.send();
+            RemoteResourceRequest resourceRequest = new RemoteResourceRequest(capoVarConnection.getOutputStream(),capoVarConnection.getInputStream());
+            resourceRequest.setType(MessageType.CLOSE);
+            resourceRequest.setSessionId(sessionID);
+            
+            RemoteResourceDescriptorMessage request = new RemoteResourceDescriptorMessage();
+            request.setMessageType(MessageType.CLOSE);
+            request.setSessionID(sessionID);
+            
+            request.prepareResponse();
+            resourceRequest.appendElement((Element) request.getResponseDocument().getDocumentElement().getElementsByTagName("*").item(0));
+            resourceRequest.send();
             capoVarConnection.close();            
         }
         
     }
+	
+	
 }

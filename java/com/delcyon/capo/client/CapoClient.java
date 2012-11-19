@@ -564,7 +564,7 @@ public class CapoClient extends CapoApplication
             certificateRequest.resend();
             
             //we need to make sure that we wait for a server response here, so that we don't continue processing until the server has had time to update its keystore.
-            Element responseElement = certificateRequest.readResponse();
+            Element responseElement = certificateRequest.readResponse().getDocumentElement();
             if (responseElement.hasAttribute("result") == false)
             {
             	throw new Exception("Server did NOT process key request, check logs.");

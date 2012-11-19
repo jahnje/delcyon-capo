@@ -18,7 +18,6 @@ package com.delcyon.capo.xml;
 
 import java.io.BufferedInputStream;
 import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.OutputStream;
 import java.util.HashMap;
 import java.util.Set;
@@ -33,13 +32,12 @@ import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 
 import org.w3c.dom.Document;
-import org.xml.sax.SAXParseException;
+import org.xml.sax.SAXException;
 
 import com.delcyon.capo.CapoApplication;
-import com.delcyon.capo.Configuration.PREFERENCE;
 import com.delcyon.capo.datastream.StreamProcessor;
 import com.delcyon.capo.datastream.StreamProcessorProvider;
-import com.delcyon.capo.server.CapoServer;
+import com.delcyon.capo.datastream.StreamUtil;
 
 /**
  * @author jeremiah
@@ -142,12 +140,7 @@ public class XMLStreamProcessor implements StreamProcessor
 		this.inputStream = bufferedInputStream;
 		this.outputStream = outputStream;
 		Document document = getDocument(bufferedInputStream);
-		if (CapoServer.LOGGING_LEVEL.intValue() <= Level.FINE.intValue())
-        {
-			transformer.transform(new DOMSource(document), new StreamResult(System.out));
-			System.out.println();
-        }
-		
+
 		//load client request
 		String documentElementName = document.getDocumentElement().getLocalName();
 		XMLProcessor xmlProcessor = getXMLProcessor(documentElementName);		
@@ -174,9 +167,16 @@ public class XMLStreamProcessor implements StreamProcessor
 		outputStream.write(0);
 		outputStream.flush();
 		CapoApplication.logger.log(Level.FINE, "SENT OK bit to Remote After WRITE 0");
+		
+		if (CapoApplication.logger.isLoggable(Level.FINER))
+        {
+            CapoApplication.logger.log(Level.FINER, "Wrote Document:");
+            XPath.dumpNode(document, System.out);
+        }
+		
 		int writeResponseValue = inputStream.read();
 		CapoApplication.logger.log(Level.FINE, "READ OK bit to Remote After WRITE: "+writeResponseValue);
-		if(writeResponseValue != 1)
+		if(writeResponseValue != 0)
 		{
 		    throw new Exception("Remote End Reported an Error");
 		}
@@ -200,64 +200,28 @@ public class XMLStreamProcessor implements StreamProcessor
 	 */
 	public Document getDocument(BufferedInputStream inputStream) throws Exception
 	{
-		ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-		
-		int bytesRead = 0;
-		long totalBytesRead = 0l;
-		byte[] buffer = new byte[CapoApplication.getConfiguration().getIntValue(PREFERENCE.BUFFER_SIZE)];
-		while(true)
-		{
-			bytesRead = inputStream.read(buffer);			
-			totalBytesRead += (long)bytesRead;
-			//end of stream
-			if (bytesRead == -1)
-			{			
-				break;
-			}
-			//end of document per capo multi-document protocol
-			else if (buffer[bytesRead - 1] == 0)
-			{
-				byteArrayOutputStream.write(buffer, 0, bytesRead-1);				
-				break;
-			}
-			else
-			{
-				//scan buffer for 0; sometimes we stack non XML data right behind XML data, and we need to not process it as an XML file
-				int endPosition = indexOf(buffer, (byte) 0, bytesRead);
-				
-				if (endPosition >= 0)
-				{					
-					inputStream.reset();
-					inputStream.skip(endPosition+1);
-					byteArrayOutputStream.write(buffer,0,endPosition);					
-					break;
-				}
-				else
-				{
-					byteArrayOutputStream.write(buffer,0,bytesRead);
-				}
-			}
-		}
+		byte[] buffer = StreamUtil.fullyReadUntilPattern(inputStream,false, (byte)0);
 		try
 		{
 		    
-			Document readDocument = documentBuilder.parse(new ByteArrayInputStream(byteArrayOutputStream.toByteArray()));
+			Document readDocument = documentBuilder.parse(new ByteArrayInputStream(buffer));
 			if (CapoApplication.logger.isLoggable(Level.FINER))
 			{
+			    CapoApplication.logger.log(Level.FINER, "Read Document:");
 			    XPath.dumpNode(readDocument, System.out);
 			}
 			//send ok to sender			
-            outputStream.write(1);
+            outputStream.write(0);
             outputStream.flush();
-            CapoApplication.logger.log(Level.FINE, "SENT OK bit to Remote After READ: 1");            
+            CapoApplication.logger.log(Level.FINE, "SENT OK bit to Remote After READ: 0");            
             return readDocument;
 		}
-		catch (SAXParseException saxParseException)
+		catch (SAXException saxException)
 		{
-			CapoApplication.logger.log(Level.WARNING,"length = "+byteArrayOutputStream.size()+" buffer = ["+new String(byteArrayOutputStream.toByteArray())+"]");
-			outputStream.write(0);
+			CapoApplication.logger.log(Level.WARNING,"length = "+buffer.length+" buffer = ["+new String(buffer)+"]");
+			outputStream.write(1);			
 			outputStream.flush();
-			throw saxParseException;
+			throw saxException;
 		}
 	}
 
@@ -266,25 +230,5 @@ public class XMLStreamProcessor implements StreamProcessor
 		return inputStream;
 	}
 	
-	/**
-	 * 
-	 * @param byteArray
-	 * @param value
-	 * @param endPosition (exclusive)
-	 * @return
-	 */
-	private int indexOf(byte[] byteArray, byte value, int length)
-	{
-		
-		for (int index = 0; index < byteArray.length && index < length; index++)
-		{
-			if (byteArray[index] == value)
-			{
-				return index;
-			}
-		}
-		return -1;
-	}
-
 	
 }

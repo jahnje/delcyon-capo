@@ -31,7 +31,7 @@ public abstract class ModuleProvider
         	ModuleRequest moduleRequest = new ModuleRequest(capoConnection, localName);
         	moduleRequest.init();
         	moduleRequest.send();
-        	Element responseElement = moduleRequest.readResponse();
+        	Element responseElement = moduleRequest.readResponse().getDocumentElement();
         	
         	if (responseElement != null && responseElement.hasAttribute(Attributes.ERROR.toString()) == false && responseElement.getLocalName().equals("request") == false)
         	{

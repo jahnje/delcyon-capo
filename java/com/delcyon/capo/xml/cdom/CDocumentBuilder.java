@@ -59,7 +59,7 @@ public class CDocumentBuilder extends DocumentBuilder
             saxParser.parse(is, cdomHandler);
             return cdomHandler.getDocument();
         }
-        catch (ParserConfigurationException e)
+        catch (Exception e)
         {
             throw new SAXException(e);
         }        

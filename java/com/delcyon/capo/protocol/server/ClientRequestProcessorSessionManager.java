@@ -28,6 +28,7 @@ import com.delcyon.capo.preferences.Preference;
 import com.delcyon.capo.preferences.PreferenceInfo;
 import com.delcyon.capo.preferences.PreferenceInfoHelper;
 import com.delcyon.capo.preferences.PreferenceProvider;
+import com.delcyon.capo.resourcemanager.remote.RemoteResourceDescriptorProxy;
 
 /**
  * @author jeremiah
@@ -192,6 +193,10 @@ public class ClientRequestProcessorSessionManager extends Thread
 			if (entry.getValue().isTimedOut())
 			{
 			    CapoApplication.logger.log(Level.INFO, "Removing expired session: "+entry.getKey()+" - "+entry.getValue().getClientRequestProcessor().getClass().getCanonicalName());
+			    if(entry.getValue().getClientRequestProcessor() instanceof RemoteResourceDescriptorProxy)
+			    {
+			        CapoApplication.logger.log(Level.WARNING,"Resource was still open:"+((RemoteResourceDescriptorProxy) entry.getValue().getClientRequestProcessor()).getResourceURI());
+			    }
 			    getClientRequestProcessorSessionHashtable().remove(entry.getKey());
 			}
 			else

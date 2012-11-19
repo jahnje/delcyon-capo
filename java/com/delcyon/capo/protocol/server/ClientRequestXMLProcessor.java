@@ -132,7 +132,7 @@ public class ClientRequestXMLProcessor implements XMLProcessor
 	{
 		//see if we already have a session, and if we do, and there is a request handler, then pass us off to it.
 		//TODO change to ClientRequestProcessor from RequestHandler
-		ClientRequest clientRequest = new ClientRequest(requestDocument, xmlStreamProcessor, outputStream);
+		ClientRequest clientRequest = new ClientRequest(this,requestDocument, xmlStreamProcessor, outputStream);
 		ClientRequestProcessor clientRequestProcessor = ClientRequestProcessorSessionManager.getClientRequestProcessor(clientRequest.getSessionID());
 		if (clientRequestProcessor != null)
 		{

@@ -38,6 +38,8 @@ public class RemoteResourceRequest extends XMLRequest
 
 private Element controllerRequestElement = null;
 	
+    
+
 	public RemoteResourceRequest(OutputStream outputStream, BufferedInputStream inputStream) throws Exception
 	{
 		super(outputStream,inputStream);		
@@ -69,6 +71,14 @@ private Element controllerRequestElement = null;
 	    return getType(clientRequest.getRequestDocument());		
 	}
 	
+	@Override
+    public Element appendElement(Element element)
+    {
+        return (Element) controllerRequestElement.appendChild(element);
+    }
+	
+	
+	//TODO remove
 	public static String getVarName(ClientRequest clientRequest) throws Exception
 	{
 	    return getVarName(clientRequest.getRequestDocument());		
@@ -84,5 +94,7 @@ private Element controllerRequestElement = null;
 	{
 		controllerRequestElement.setAttribute(MessageType.GET_VAR_VALUE.toString(), varName);			
 	}
+	
+	
 	
 }

@@ -36,6 +36,7 @@ import com.delcyon.capo.resourcemanager.ResourceType;
 import com.delcyon.capo.resourcemanager.ResourceURI;
 import com.delcyon.capo.resourcemanager.remote.RemoteResourceDescriptorMessage.MessageType;
 import com.delcyon.capo.resourcemanager.types.ContentMetaData;
+import com.delcyon.capo.xml.XPath;
 import com.delcyon.capo.xml.cdom.CElement;
 import com.delcyon.capo.xml.cdom.VariableContainer;
 import com.delcyon.capo.xml.dom.ResourceDeclarationElement;
@@ -441,6 +442,11 @@ public class RemoteResourceDescriptorProxy  implements ResourceDescriptor,Client
 	
 	private RemoteResourceDescriptorMessage sendResponse(RemoteResourceDescriptorMessage message, MessageType messageType,boolean needLock) throws Exception
 	{
+	    return sendResponse(message, messageType, needLock, this.controllerClientRequestProcessor.getClientRequestXMLProcessor());
+	}
+	
+	private RemoteResourceDescriptorMessage sendResponse(RemoteResourceDescriptorMessage message, MessageType messageType,boolean needLock,ClientRequestXMLProcessor clientRequestXMLProcessor) throws Exception
+	{
 		message.setSessionID(sessionID);
 		message.setMessageType(messageType);
 		if(message.getResourceURI() == null)
@@ -449,7 +455,7 @@ public class RemoteResourceDescriptorProxy  implements ResourceDescriptor,Client
 		}
 		message.prepareResponse();
 		
-		controllerClientRequestProcessor.getClientRequestXMLProcessor().writeResponse(message);
+		clientRequestXMLProcessor.writeResponse(message);
 		if (needLock)
 		{
 			synchronized (lock)
@@ -458,7 +464,7 @@ public class RemoteResourceDescriptorProxy  implements ResourceDescriptor,Client
 			}			
 		}
 		//wait for a message from the client
-		Document replyDocument = controllerClientRequestProcessor.readNextDocument();
+		Document replyDocument = XPath.unwrapDocument(clientRequestXMLProcessor.readNextDocument(),true);
 		
 		message = new RemoteResourceDescriptorMessage(replyDocument);
 		if (message.getMessageType() == MessageType.FAILURE)
@@ -532,27 +538,25 @@ public class RemoteResourceDescriptorProxy  implements ResourceDescriptor,Client
 
 	private void processVarRequest(ClientRequest clientRequest) throws Exception
     {
-	    String varName = RemoteResourceRequest.getVarName(clientRequest);
+	    RemoteResourceDescriptorMessage requestMessage = new RemoteResourceDescriptorMessage(XPath.unwrapDocument(XPath.unwrapDocument(clientRequest.getRequestDocument(), true),true));	    
 	    while(true)
         {
-	        if (variableContainer != null)
+	        String varName = requestMessage.getVarName();
+	        RemoteResourceDescriptorMessage replyMessage = new RemoteResourceDescriptorMessage();
+	        replyMessage.setVarName(varName);
+	        if (variableContainer != null && varName != null)
 	        {
-	            String value = variableContainer.getVarValue(varName);
-	            if (value != null)
-	            {
-	                clientRequest.getOutputStream().write(value.getBytes());
-	            }
-	            clientRequest.getOutputStream().write(0);
-	            clientRequest.getOutputStream().flush();
+	            replyMessage.setValue(variableContainer.getVarValue(varName));	           
 	        }
-	        Document nextDocument = clientRequest.getXmlStreamProcessor().readNextDocument();
-	        if (RemoteResourceRequest.getType(nextDocument) != MessageType.GET_VAR_VALUE)
-	        {	            
+	        requestMessage = sendResponse(replyMessage, MessageType.GET_VAR_VALUE,false,clientRequest.getClientRequestXMLProcessor());
+	        
+	        if (requestMessage.getMessageType() == MessageType.CLOSE)
+	        {	       	            
 	            break;
 	        }
-	        else
+	        else if (requestMessage.getMessageType() != MessageType.GET_VAR_VALUE)
 	        {
-	            varName = RemoteResourceRequest.getVarName(nextDocument);
+	            throw new Exception("killing "+getResourceURI()+" varRequest connection due to "+requestMessage.getMessageType());
 	        }
         }
     }

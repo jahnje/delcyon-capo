@@ -36,13 +36,15 @@ public class ClientRequest
 	private XMLStreamProcessor xmlStreamProcessor;
 	private OutputStream outputStream;
 	private String sessionID;
+    private ClientRequestXMLProcessor clientRequestXMLProcessor;
 
-	public ClientRequest(Document requestDocument, XMLStreamProcessor xmlStreamProcessor, OutputStream outputStream)
+	public ClientRequest(ClientRequestXMLProcessor clientRequestXMLProcessor, Document requestDocument, XMLStreamProcessor xmlStreamProcessor, OutputStream outputStream)
 	{
 		this.requestDocument = requestDocument;
 		this.sessionID = requestDocument.getDocumentElement().getAttribute(SESSION_ID_ATTRIBUTE_NAME);
 		this.xmlStreamProcessor = xmlStreamProcessor;
 		this.outputStream = outputStream;
+		this.clientRequestXMLProcessor = clientRequestXMLProcessor;
 	}
 
 	public Document getRequestDocument()
@@ -54,6 +56,11 @@ public class ClientRequest
 	{
 		return outputStream;
 	}
+
+	public ClientRequestXMLProcessor getClientRequestXMLProcessor()
+    {
+        return clientRequestXMLProcessor;
+    }
 	
 	public XMLStreamProcessor getXmlStreamProcessor()
 	{

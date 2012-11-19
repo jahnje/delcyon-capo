@@ -164,7 +164,7 @@ public class CertificateRequest extends XMLRequest
 
 	public void parseResponse() throws Exception
 	{
-		Element responseElement = readResponse();
+		Element responseElement = readResponse().getDocumentElement();
 		//XPath.dumpNode(responseElement, System.out);
 		Element certificateRequestElement = (Element) XPath.selectSingleNode(responseElement, "//CertificateRequest");
 		String publicKeyString = XPath.selectSingleNodeValue(certificateRequestElement, "//CertificateRequest/@"+CertificateRequest.Attributes.SERVER_PUBLIC_KEY);

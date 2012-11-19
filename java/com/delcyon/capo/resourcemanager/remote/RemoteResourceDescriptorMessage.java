@@ -31,6 +31,7 @@ import com.delcyon.capo.resourcemanager.ResourceDescriptor.StreamType;
 import com.delcyon.capo.resourcemanager.types.ContentMetaData;
 import com.delcyon.capo.server.CapoServer;
 import com.delcyon.capo.util.XMLSerializer;
+import com.delcyon.capo.xml.XPath;
 import com.delcyon.capo.xml.cdom.CElement;
 
 /**
@@ -47,10 +48,14 @@ public class RemoteResourceDescriptorMessage extends AbstractResponse
 	public RemoteResourceDescriptorMessage(Document replyDocument) throws Exception
 	{
 		super(replyDocument);
+		while(replyDocument.getDocumentElement().getLocalName().equals("RemoteResourceDescriptorMessage") == false)
+		{
+		    replyDocument = XPath.unwrapDocument(replyDocument, true);
+		}
 		XMLSerializer xmlSerializer = new XMLSerializer();
 		xmlSerializer.marshall((Element) replyDocument.getDocumentElement(), this);
 	}
-
+	
 	public enum MessageType
 	{
 		SUCCESS,
@@ -110,7 +115,9 @@ public class RemoteResourceDescriptorMessage extends AbstractResponse
 	private State previousState;
     private State desiredState;
     private ContentMetaData outputMetaData;
-    private ContentMetaData resourceMetaData;	
+    private ContentMetaData resourceMetaData;
+    private String value;
+    private String varName;	
 	
 
 	public void setMessageType(MessageType messageType)
@@ -381,7 +388,23 @@ public class RemoteResourceDescriptorMessage extends AbstractResponse
         return desiredState;
     }
 
-    
+    public void setValue(String value)
+    {
+       this.value = value;        
+    }
 
-   
+    public String getValue()
+    {
+        return value;
+    }
+
+    public String getVarName()
+    {
+        return this.varName;
+    }
+
+    public void setVarName(String varName)
+    {
+        this.varName = varName;
+    }
 }

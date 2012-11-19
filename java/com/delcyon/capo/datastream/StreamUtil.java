@@ -16,6 +16,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 package com.delcyon.capo.datastream;
 
+import java.io.BufferedInputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.math.BigInteger;
@@ -36,15 +37,24 @@ import com.delcyon.capo.Configuration.PREFERENCE;
 public class StreamUtil
 {
 
-	public static long readInputStreamIntoOutputStream(InputStream inputStream, OutputStream outputStream) throws Exception
-	{
-		return readInputStreamIntoOutputStream(inputStream, outputStream,CapoApplication.getConfiguration().getIntValue(PREFERENCE.BUFFER_SIZE));
-	}
 	
-	public static int fullyReadIntoBufferUntilPattern(InputStream inputStream, byte[] buffer, byte... pattern) throws Exception
+	
+	public static int fullyReadIntoBufferUntilPattern(BufferedInputStream inputStream, byte[] buffer, byte... pattern) throws Exception
 	{
 	    int totalRead = 0;
-	    byte[] localBuffer = new byte[CapoApplication.getConfiguration().getIntValue(PREFERENCE.BUFFER_SIZE)];	    
+	    byte[] localBuffer = null;
+	    
+	    //make sure we don't read more than we need to, so choose the smallest buffer size.
+	    if(CapoApplication.getConfiguration().getIntValue(PREFERENCE.BUFFER_SIZE) > buffer.length)
+	    {
+	        localBuffer = new byte[buffer.length];
+	    }
+	    else
+	    {
+	        localBuffer = new byte[CapoApplication.getConfiguration().getIntValue(PREFERENCE.BUFFER_SIZE)];    
+	    }
+	    
+	    
 	    int destPos = 0;
 	    while(true)
 	    {
@@ -68,6 +78,53 @@ public class StreamUtil
 	    }
 	    return totalRead;
 	}
+	
+	public static byte[] fullyReadUntilPattern(BufferedInputStream inputStream,boolean includePattern, byte... pattern) throws Exception
+    {
+	    AccessibleByteArrayOutputStream byteArrayOutputStream = new AccessibleByteArrayOutputStream();
+        int totalRead = 0;
+        byte[] localBuffer = new byte[CapoApplication.getConfiguration().getIntValue(PREFERENCE.BUFFER_SIZE)];      
+        
+        boolean isEOF = false;
+        while(true)
+        {
+            int count =  inputStream.read(localBuffer);
+            totalRead += count;
+            if(count < 0)
+            {
+                isEOF = true;
+                break;
+            }
+            if(count > 0)
+            {                
+                byteArrayOutputStream.write(localBuffer, 0, count);
+        
+                if(searchForBytePattern(pattern, byteArrayOutputStream.getBuffer(), totalRead - pattern.length, pattern.length).size() > 0)
+                {
+                    break;
+                }
+
+            }
+        }
+        
+        byteArrayOutputStream.close();//pointless, but gets warnings to go away.
+        
+        if(includePattern == true || isEOF == true)
+        {
+            return byteArrayOutputStream.toByteArray();
+        }
+        else
+        {
+            return byteArrayOutputStream.toByteArray(0,byteArrayOutputStream.size()-pattern.length);
+        }
+    }
+	
+	
+	public static long readInputStreamIntoOutputStream(InputStream inputStream, OutputStream outputStream) throws Exception
+    {
+        return readInputStreamIntoOutputStream(inputStream, outputStream,CapoApplication.getConfiguration().getIntValue(PREFERENCE.BUFFER_SIZE));
+    }
+	
 	/**
 	 * 
 	 * @param inputStream

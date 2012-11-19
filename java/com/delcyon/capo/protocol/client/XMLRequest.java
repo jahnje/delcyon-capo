@@ -134,9 +134,9 @@ public abstract class XMLRequest extends Request
 		return importedChildRootElement;
 	}
 	
-	public Element readResponse() throws Exception
+	public Document readResponse() throws Exception
 	{
-		return xmlStreamProcessor.readNextDocument().getDocumentElement();
+		return xmlStreamProcessor.readNextDocument();
 	}
 	
 }
