@@ -16,6 +16,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 package com.delcyon.capo.xml;
 
+import java.io.ByteArrayOutputStream;
 import java.io.OutputStream;
 import java.util.logging.Level;
 
@@ -425,9 +426,11 @@ public class XPath
 		        unwrappedDocument.appendChild(unwrappedDocument.adoptNode(nodeList.item(0)));
 		    }
 		}
-		else
+		else		    
 		{
-			throw new Exception("No root element child found");
+		    ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+		    XPath.dumpNode(wrappedDocument, byteArrayOutputStream);
+			throw new Exception("No root element child found:"+new String(byteArrayOutputStream.toByteArray()));
 		}
 		return unwrappedDocument;
 	}
