@@ -52,6 +52,7 @@ import com.delcyon.capo.CapoApplication;
 import com.delcyon.capo.Configuration;
 import com.delcyon.capo.Configuration.PREFERENCE;
 import com.delcyon.capo.controller.server.ControllerProcessingException;
+import com.delcyon.capo.protocol.server.AbstractClientRequestProcessor;
 import com.delcyon.capo.protocol.server.ClientRequest;
 import com.delcyon.capo.protocol.server.ClientRequestProcessor;
 import com.delcyon.capo.protocol.server.ClientRequestProcessorProvider;
@@ -65,7 +66,7 @@ import com.delcyon.capo.xml.XPath;
  *
  */
 @ClientRequestProcessorProvider(name="CertificateRequest")
-public class CertificateRequestProcessor implements ClientRequestProcessor
+public class CertificateRequestProcessor extends AbstractClientRequestProcessor implements ClientRequestProcessor
 {
 
 	private static final String BC = org.bouncycastle.jce.provider.BouncyCastleProvider.PROVIDER_NAME;

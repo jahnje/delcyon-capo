@@ -39,4 +39,10 @@ public interface ClientRequestProcessor
 
 	public String getSessionId();
 
+    public boolean isStreamProcessor();
+
+    public void setNewSession(boolean isNewSession);
+    
+    public boolean isNewSession();
+
 }

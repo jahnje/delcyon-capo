@@ -9,9 +9,9 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
 import com.delcyon.capo.CapoApplication;
-import com.delcyon.capo.ContextThread;
 import com.delcyon.capo.CapoApplication.Location;
 import com.delcyon.capo.Configuration.PREFERENCE;
+import com.delcyon.capo.ContextThread;
 import com.delcyon.capo.annotations.DefaultDocumentProvider;
 import com.delcyon.capo.annotations.DirectoyProvider;
 import com.delcyon.capo.controller.elements.GroupElement;
@@ -20,13 +20,13 @@ import com.delcyon.capo.preferences.Preference;
 import com.delcyon.capo.preferences.PreferenceInfo;
 import com.delcyon.capo.preferences.PreferenceInfoHelper;
 import com.delcyon.capo.preferences.PreferenceProvider;
+import com.delcyon.capo.protocol.server.AbstractClientRequestProcessor;
 import com.delcyon.capo.protocol.server.ClientRequest;
-import com.delcyon.capo.protocol.server.ClientRequestProcessor;
 import com.delcyon.capo.protocol.server.ClientRequestProcessorProvider;
 import com.delcyon.capo.protocol.server.ClientRequestXMLProcessor;
 import com.delcyon.capo.resourcemanager.ResourceDescriptor;
-import com.delcyon.capo.resourcemanager.ResourceParameter;
 import com.delcyon.capo.resourcemanager.ResourceDescriptor.Action;
+import com.delcyon.capo.resourcemanager.ResourceParameter;
 import com.delcyon.capo.resourcemanager.types.FileResourceType;
 import com.delcyon.capo.server.CapoServer;
 import com.delcyon.capo.xml.XPath;
@@ -36,7 +36,7 @@ import com.delcyon.capo.xml.XPath;
 @DefaultDocumentProvider(directoryPreferenceName="CONTROLLER_DIR",preferences=ControllerClientRequestProcessor.Preferences.class,name="default.xml,update.xml,identity.xml,tasks_update.xml",location=Location.SERVER)
 @ClientRequestProcessorProvider(name="ControllerRequest")
 //@XMLProcessorProvider(documentElementNames={"ControllerRequest"},namespaceURIs={"http://www.delcyon.com/capo-client","http://www.delcyon.com/capo-server"})
-public class ControllerClientRequestProcessor implements ClientRequestProcessor
+public class ControllerClientRequestProcessor  extends AbstractClientRequestProcessor 
 {
 
 	
@@ -106,22 +106,28 @@ public class ControllerClientRequestProcessor implements ClientRequestProcessor
 	@Override
 	public void init(ClientRequestXMLProcessor clientRequestXMLProcessor,String sessionID,HashMap<String, String> sessionHashMap,String requestName) throws Exception
 	{
-		this.clientRequestXMLProcessor = clientRequestXMLProcessor;
-		this.clientControlerDocument = loadClientControlDocument(requestName,sessionHashMap.get("clientID"));
-		if (this.clientControlerDocument != null)
-		{
-			this.documentURI = this.clientControlerDocument.getDocumentURI();
-		}
-		this.sessionID = sessionID;
-		this.sessionHashMap = sessionHashMap;
+	    if(isNewSession())
+	    {
+	        this.clientRequestXMLProcessor = clientRequestXMLProcessor;
+	        this.clientControlerDocument = loadClientControlDocument(requestName,sessionHashMap.get("clientID"));
+	        if (this.clientControlerDocument != null)
+	        {
+	            this.documentURI = this.clientControlerDocument.getDocumentURI();
+	        }
+	        this.sessionID = sessionID;
+	        this.sessionHashMap = sessionHashMap;
+	    }
 	}
 	
 	public void init(ClientRequestXMLProcessor clientRequestXMLProcessor,String sessionID,Document clientControlerDocument,HashMap<String, String> sessionHashMap) throws Exception
 	{
-		this.clientRequestXMLProcessor = clientRequestXMLProcessor;
-		this.clientControlerDocument = clientControlerDocument;
-		this.sessionID = sessionID;
-		this.sessionHashMap = sessionHashMap;
+	    if(isNewSession())
+	    {
+	        this.clientRequestXMLProcessor = clientRequestXMLProcessor;
+	        this.clientControlerDocument = clientControlerDocument;
+	        this.sessionID = sessionID;
+	        this.sessionHashMap = sessionHashMap;
+	    }
 	}
 	
 	public ClientRequestXMLProcessor getClientRequestXMLProcessor()
@@ -342,7 +348,7 @@ public class ControllerClientRequestProcessor implements ClientRequestProcessor
 		NodeList nodeList = replyDocument.getDocumentElement().getElementsByTagName("*");
 		if (nodeList.getLength() > 0)
 		{
-			return (Element) clientElement.getOwnerDocument().importNode(nodeList.item(0), true);
+			return (Element) clientElement.getOwnerDocument().importNode(replyDocument.getDocumentElement(), true);
 		}
 		else
 		{

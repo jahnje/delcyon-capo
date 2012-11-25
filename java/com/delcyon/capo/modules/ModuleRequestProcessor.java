@@ -23,8 +23,8 @@ import org.w3c.dom.Element;
 
 import com.delcyon.capo.CapoApplication;
 import com.delcyon.capo.controller.server.ControllerProcessingException;
+import com.delcyon.capo.protocol.server.AbstractClientRequestProcessor;
 import com.delcyon.capo.protocol.server.ClientRequest;
-import com.delcyon.capo.protocol.server.ClientRequestProcessor;
 import com.delcyon.capo.protocol.server.ClientRequestProcessorProvider;
 import com.delcyon.capo.protocol.server.ClientRequestXMLProcessor;
 import com.delcyon.capo.xml.XPath;
@@ -34,7 +34,7 @@ import com.delcyon.capo.xml.XPath;
  *
  */
 @ClientRequestProcessorProvider(name="ModuleRequest")
-public class ModuleRequestProcessor implements ClientRequestProcessor
+public class ModuleRequestProcessor  extends AbstractClientRequestProcessor 
 {
 
 	public enum Attributes

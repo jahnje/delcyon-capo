@@ -78,6 +78,7 @@ public class RemoteGroupElement extends GroupElement implements ClientSideContro
 	private Group group;
 	private ServerControllerResponse serverControllerResponse;
 	private String sessionID = null;
+	private boolean isNewSession = true;
 	
 	public Group getGroup()
 	{
@@ -97,7 +98,26 @@ public class RemoteGroupElement extends GroupElement implements ClientSideContro
 		CapoServer.logger.log(Level.FINE, "init remote group = "+groupName);
 	}
 	
-
+	@Override
+	public boolean isStreamProcessor()
+	{
+	    return false;
+	}
+	
+	
+    
+    @Override
+    public void setNewSession(boolean isNewSession)
+    {
+        this.isNewSession = isNewSession;
+    }
+    
+    @Override
+    public boolean isNewSession()
+    {
+        return isNewSession;
+    }
+	
 	@Override
 	public ServerControllerResponse getServerControllerResponse()
 	{

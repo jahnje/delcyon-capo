@@ -387,7 +387,7 @@ public class SyncElement extends AbstractControl
 
 
 
-	private OutputStream wrapOutputStream(OutputStream outputStream, Element copyElement)
+	private OutputStream wrapOutputStream(OutputStream outputStream, Element copyElement) throws Exception
 	{
 		
 		OutputStream lastOutputStream = outputStream;

@@ -30,4 +30,5 @@ public interface XMLServerResponseProcessor
 	public void init(Document responseDocument, XMLServerResponse xmlServerResponse,HashMap<String, String> sessionHashMap) throws Exception;
 	public  void process() throws Exception;
 	public Document getResponseDocument();
+    public boolean isStreamProcessor();
 }
