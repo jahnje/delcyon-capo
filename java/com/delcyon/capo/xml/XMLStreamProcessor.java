@@ -23,6 +23,9 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Set;
 import java.util.Stack;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.Condition;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.logging.Level;
 
 import javax.xml.parsers.DocumentBuilder;
@@ -107,7 +110,11 @@ public class XMLStreamProcessor implements StreamProcessor
     private long initialTID = -1l;
     private Thread processorThread;
     private byte[] ackBuffer = new byte[]{-1};
-    private Stack<ContextThread> readerStack = new Stack<ContextThread>();
+    
+    private ReentrantLock lock = new ReentrantLock(true);
+    private Condition readyToRead = lock.newCondition();
+    private Condition readyToACK = lock.newCondition();
+    
 	public XMLStreamProcessor() throws Exception
 	{
 		_init();
@@ -193,78 +200,75 @@ public class XMLStreamProcessor implements StreamProcessor
 		    String tid = document.getDocumentElement().getAttribute("TID");
 		    //TODO tid null check
 
-		    
-		        XMLProcessor xmlProcessor = getXMLProcessor(documentElementName);		
-		        if (xmlProcessor != null)
-		        {			
-		            xmlProcessor.init(document, this, outputStream,sessionHashMap);
-		            ContextThread contextThread = new ContextThread(processorThread.getThreadGroup(), xmlProcessor);
-		            threadMap.put(tid, contextThread);
-		            if(initialTID < 0l)
-		            {
-		                initialTID = contextThread.getId();
-		            }
-		            
-		            //don't start until we can make sure that nothing is trying to write
-		            synchronized (ackBuffer)
-                    {
-		                //check to see if this xmlProcessor handles it's own streams.
-		                if(xmlProcessor.isStreamProcessor() == true)
-		                {
-		                    //if so, don't make a separate thread, just run it in this one. 
-		                    contextThread.run();
-		                    if(exception != null)
-		                    {
-		                        throw exception;
-		                    }
-		                    break;
-		                }
-		                else
-		                {
-		                    contextThread.start();
-		                }
-                    }
-		            		        
-		        }
-		        else if(readerStack.size() != 0)
+
+		    XMLProcessor xmlProcessor = getXMLProcessor(documentElementName);		
+		    if (xmlProcessor != null)
+		    {			
+		        xmlProcessor.init(document, this, outputStream,sessionHashMap);
+		        ContextThread contextThread = new ContextThread(processorThread.getThreadGroup(), xmlProcessor);
+		        threadMap.put(tid, contextThread);
+		        if(initialTID < 0l)
 		        {
-		            synchronized (readerStack)
+		            initialTID = contextThread.getId();
+		        }
+
+		        //don't start until we can make sure that nothing is trying to write
+		        synchronized (ackBuffer)
+		        {
+		            //check to see if this xmlProcessor handles it's own streams.
+		            if(xmlProcessor.isStreamProcessor() == true)
 		            {
-		                synchronized (readerStack.peek())
+		                //if so, don't make a separate thread, just run it in this one. 
+		                contextThread.run();
+		                if(exception != null)
 		                {
-		                    this.returnDocument = document;
-		                    readerStack.pop().notify();
+		                    throw exception;
 		                }
+		                break;
+		            }
+		            else
+		            {
+		                contextThread.start();
 		            }
 		        }
+		        continue; 
+		    }
+		    
+		    //didn't find a match, so didn't make a new thread, check to see if there is something waiting for us.
+		    lock.lock();
+		    if(lock.hasWaiters(readyToRead) == true)
+		    {
+		        this.returnDocument = document;
+		        readyToRead.signal();
+		        lock.unlock();
+		    }
+		    //no one found waiting, so let's poll for a bit, then give up if nothing ever shows up. 
+		    else
+		    {
+		        //wait for the stack to fill up for a sec, just to double check.
+		        int attemptCount = 0;
+		        while(lock.hasWaiters(readyToRead) == false && attemptCount < 30)
+		        {
+		            lock.unlock();
+		            Thread.sleep(500);
+		            lock.lock();        
+		        }
+		        if(lock.hasWaiters(readyToRead) == true)
+		        {
+		            this.returnDocument = document;
+		            readyToRead.signal();
+		            lock.unlock();
+		        }		        
 		        else
 		        {
-		            //wait for the stack to fill up for a sec, just to double check.
-		            int attemptCount = 0;
-		            while(readerStack.size() == 0 && attemptCount < 30)
-		            {
-		                Thread.sleep(500);
-		            }
-		            if(readerStack.size() != 0)
-	                {
-		                synchronized (readerStack)
-		                {
-		                    synchronized (readerStack.peek())
-		                    {
-		                        this.returnDocument = document;
-		                        readerStack.pop().notify();
-		                    }
-		                }
-	                }
-	                else
-	                {
-	                    //well, we tried
-	                    CapoApplication.logger.log(Level.SEVERE, "Unknown XML Type: "+documentElementName);
-	                    throw new Exception("Unknown XML Type: "+documentElementName);
-	                }
-		            
+		            //well, we tried
+		            CapoApplication.logger.log(Level.SEVERE, "Unknown XML Type: "+documentElementName);
+		            lock.unlock();
+		            throw new Exception("Unknown XML Type: "+documentElementName);
 		        }
+
 		    }
+		}
 
 		
 		
@@ -353,14 +357,10 @@ public class XMLStreamProcessor implements StreamProcessor
 	 */
 	public Document readNextDocument() throws Exception
 	{
-	    synchronized (readerStack)
-	    {
-	        readerStack.push((ContextThread) Thread.currentThread());
-	    }
-	    synchronized (Thread.currentThread())
-	    {
-	        Thread.currentThread().wait(30000);    
-	    }
+
+	    lock.lock();
+	    readyToRead.await(30, TimeUnit.SECONDS); // this unlocks until we are signaled, at which point we re aquire the lock
+	    lock.unlock(); //so we must unlock it once we are done. 
 
 	    return returnDocument;		
 	}
