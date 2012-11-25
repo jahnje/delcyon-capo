@@ -56,7 +56,8 @@ public class XMLSerializer
 	}
 	
 	/**
-	 * this will export the class as an XML element ownded by the owner document
+	 * this will export the class as an XML element owned by the owner document.
+	 * It will NOT append it to that document. This is DUE to the way the W3C DOM standard is written.
 	 * @param ownerDocument
 	 * @param object
 	 * @return
@@ -70,18 +71,23 @@ public class XMLSerializer
 		return returnElement;
 	}
 	
-//	/**
-//	 * 
-//	 * @param rootObject
-//	 * @param rootElement
-//	 * @param currentDepth
-//	 * @throws Exception
-//	 */
-//	public static void export(Object rootObject, Element rootElement, int currentDepth) throws Exception
-//	{
-//		XMLSerializer xmlSerializer = new XMLSerializer();
-//		xmlSerializer.export(rootObject, rootElement, currentDepth);
-//	}
+	/**
+	 * Append the serialization of an object to an element
+	 * @param parentElement
+	 * @param object
+	 * @return
+	 * @throws Exception
+	 */
+	public static Element export(Element parentElement, Object object) throws Exception   
+    {
+        XMLSerializer xmlSerializer = new XMLSerializer();
+        Element returnElement = parentElement.getOwnerDocument().createElement(object.getClass().getSimpleName());
+        xmlSerializer.export(object, returnElement,0);
+        parentElement.appendChild(returnElement);
+        return returnElement;
+    }
+	
+
 	
 	
 	public void setNamespace(String prefix, String namespaceURI)
