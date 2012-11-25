@@ -22,7 +22,7 @@ package com.delcyon.capo.xml.cdom;
  */
 public interface VariableProcessor
 {
-    public String processVars(String varString);
+    public String processVars(String varString) throws Exception;
     public void setVariableContainer(VariableContainer variableContainer);
     public VariableContainer getVariableContainer();
     

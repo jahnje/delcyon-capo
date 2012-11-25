@@ -399,7 +399,7 @@ public abstract class AbstractControl implements ServerSideControl
 	 * @param name
 	 * @return true if and only if value equals 'true', case is ignored. All other values return false;
 	 */
-	public boolean getBooleanValue(Enum name)
+	public boolean getBooleanValue(Enum name) throws Exception
 	{
 		if (getValue(name) != null)
 		{			
@@ -411,7 +411,7 @@ public abstract class AbstractControl implements ServerSideControl
 		return false;
 	}
 	
-	public String getValue(Enum name)
+	public String getValue(Enum name) throws Exception
 	{
 		if (getParentGroup() != null)
 		{

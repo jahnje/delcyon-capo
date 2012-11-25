@@ -46,7 +46,7 @@ public class VariableContainerWrapper implements VariableContainer,VariableProce
 	 * @see com.delcyon.capo.controller.VariableContainer#getVarValue(java.lang.String)
 	 */
 	@Override
-	public String getVarValue(String varName)
+	public String getVarValue(String varName) throws Exception
 	{
 		if(localVarHashMap.containsKey(varName))
 		{
@@ -63,7 +63,7 @@ public class VariableContainerWrapper implements VariableContainer,VariableProce
 		localVarHashMap.put(name, value);
 	}
 	
-	public String processVars(String varString)
+	public String processVars(String varString) throws Exception
 	{
 		StringBuffer stringBuffer = new StringBuffer(varString);
 		processVars(stringBuffer);
@@ -74,7 +74,7 @@ public class VariableContainerWrapper implements VariableContainer,VariableProce
 	 * Check String for variables and replace them with the value of the var
 	 * @param varStringBuffer
 	 */
-	private void processVars(StringBuffer varStringBuffer)
+	private void processVars(StringBuffer varStringBuffer) throws Exception
 	{
 	    while (varStringBuffer != null && varStringBuffer.toString().matches(".*\\$\\{.+}.*"))
         {

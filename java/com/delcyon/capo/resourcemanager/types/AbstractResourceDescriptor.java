@@ -40,10 +40,10 @@ import com.delcyon.capo.datastream.StreamUtil;
 import com.delcyon.capo.resourcemanager.ContentFormatType;
 import com.delcyon.capo.resourcemanager.ResourceDescriptor;
 import com.delcyon.capo.resourcemanager.ResourceParameter;
-import com.delcyon.capo.resourcemanager.ResourceType;
-import com.delcyon.capo.resourcemanager.ResourceURI;
 import com.delcyon.capo.resourcemanager.ResourceParameter.EvaluationContext;
 import com.delcyon.capo.resourcemanager.ResourceParameter.Source;
+import com.delcyon.capo.resourcemanager.ResourceType;
+import com.delcyon.capo.resourcemanager.ResourceURI;
 import com.delcyon.capo.server.CapoServer;
 import com.delcyon.capo.util.ReflectionUtility;
 import com.delcyon.capo.xml.XPath;
@@ -416,7 +416,7 @@ public abstract class AbstractResourceDescriptor implements ResourceDescriptor
 	
 	
 	
-	public String processVars(VariableContainer variableContainer, String varString)
+	public String processVars(VariableContainer variableContainer, String varString) throws Exception
 	{
 		StringBuffer stringBuffer = new StringBuffer(varString);
 		processVars(variableContainer,stringBuffer);
@@ -427,7 +427,7 @@ public abstract class AbstractResourceDescriptor implements ResourceDescriptor
 	 * Check String for variables and replace them with the value of the var
 	 * @param varStringBuffer
 	 */
-	private void processVars(VariableContainer variableContainer, StringBuffer varStringBuffer)
+	private void processVars(VariableContainer variableContainer, StringBuffer varStringBuffer) throws Exception
 	{
 	    while (varStringBuffer != null && varStringBuffer.toString().matches(".*\\$\\{.+}.*"))
         {
@@ -475,7 +475,7 @@ public abstract class AbstractResourceDescriptor implements ResourceDescriptor
 	
 	
 	@SuppressWarnings("rawtypes")
-    public String getVarValue(VariableContainer variableContainer, Enum varName)
+    public String getVarValue(VariableContainer variableContainer, Enum varName) throws Exception
 	{
 		return getVarValue(variableContainer, varName.toString());
 	}
@@ -487,7 +487,7 @@ public abstract class AbstractResourceDescriptor implements ResourceDescriptor
 	 * @param varName
 	 * @return
 	 */
-	public String getVarValue(VariableContainer variableContainer, String varName)
+	public String getVarValue(VariableContainer variableContainer, String varName) throws Exception
 	{
 		if (contextParameterHashMap.containsKey(varName))
 		{

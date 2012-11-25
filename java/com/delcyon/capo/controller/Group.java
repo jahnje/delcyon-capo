@@ -108,7 +108,7 @@ public class Group implements VariableContainer,VariableProcessor
 	 * @param node
 	 * @return
 	 */
-	public Node replaceVarsInAttributeValues(Node node)
+	public Node replaceVarsInAttributeValues(Node node) throws Exception
 	{
 		NamedNodeMap namedNodeMap = node.getAttributes();
 		if (namedNodeMap == null)
@@ -129,7 +129,7 @@ public class Group implements VariableContainer,VariableProcessor
 	 * @param varString
 	 * @return
 	 */
-	public String processVars(String varString)
+	public String processVars(String varString) throws Exception
 	{
 		StringBuffer stringBuffer = new StringBuffer(varString);
 		processVars(stringBuffer);
@@ -140,7 +140,7 @@ public class Group implements VariableContainer,VariableProcessor
 	 * Check String for variables and replace them with the value of the var
 	 * @param varStringBuffer
 	 */
-	public void processVars(StringBuffer varStringBuffer)
+	public void processVars(StringBuffer varStringBuffer) throws Exception
 	{
 	    
 		while (varStringBuffer != null && varStringBuffer.toString().matches(".*\\$\\{.+}.*"))
@@ -195,7 +195,7 @@ public class Group implements VariableContainer,VariableProcessor
 	 * @param varName
 	 * @return
 	 */
-	public String getVarValue(String varName)
+	public String getVarValue(String varName) throws Exception
 	{
 		if (controllerClientRequestProcessor != null && controllerClientRequestProcessor.getRequestHashMap().containsKey(varName))
 		{

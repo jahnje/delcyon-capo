@@ -22,5 +22,5 @@ package com.delcyon.capo.xml.cdom;
  */
 public interface VariableContainer
 {
-	public String getVarValue(String varName);
+	public String getVarValue(String varName) throws Exception;
 }
