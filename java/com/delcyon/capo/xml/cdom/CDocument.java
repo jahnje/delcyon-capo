@@ -527,5 +527,40 @@ public class CDocument extends CNode implements Document
 	{
 	    return this.variableProcessor;
 	}
-	
+
+	/**
+	 * This is a simple method to return a simple document structure based on a list of element names.
+	 * This will return a CDocument as the root node. 
+	 * @param path, a '/' separated XML path of element names.
+	 * @return 
+	 */
+    public static CDocument buildPath(String path)
+    {
+        return (CDocument) buildPath(null,path);
+    }
+
+    /**
+     * This is a simple method to return a simple document structure based on a list of element names.
+     * This will return a CDocument as the root node.
+     * @param contextNode, the node with which to build the path onto, If null, will return a CDocument as the root of the path. 
+     * @param path, a '/' separated XML path of element names.
+     * @return 
+     */
+    public static CNode buildPath(CNode contextNode, String path)
+    {
+        if(contextNode == null)
+        {
+            contextNode = new CDocument();
+        }
+        String[] splitPath = path.split("/");
+        CNode currentNode = contextNode;
+        for (String pathItem : splitPath)
+        {
+            CElement pathItemElement = new CElement(pathItem);
+            currentNode.appendChild(pathItemElement);
+            currentNode = pathItemElement;
+        }
+        return contextNode;
+    }
+
 }
