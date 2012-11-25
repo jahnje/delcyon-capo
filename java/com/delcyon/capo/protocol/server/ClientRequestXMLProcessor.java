@@ -87,6 +87,9 @@ public class ClientRequestXMLProcessor implements XMLProcessor
 	private OutputStream outputStream;
 	private String sessionId;
     private HashMap<String, String> sessionHashMap;
+    private ClientRequestProcessor clientRequestProcessor;
+    private ClientRequest clientRequest;
+    private boolean isRegisteredSession = false;
 
 	@Override
 	public OutputStream getOutputStream()
@@ -125,51 +128,74 @@ public class ClientRequestXMLProcessor implements XMLProcessor
 		{
 			sessionId = ClientRequestProcessorSessionManager.generateSessionID();
 		}
+		
+		//see if we already have a session, and if we do, and there is a request handler, then pass us off to it.
+        
+        clientRequest = new ClientRequest(this,requestDocument, xmlStreamProcessor, outputStream);
+        clientRequestProcessor = ClientRequestProcessorSessionManager.getClientRequestProcessor(clientRequest.getSessionID());
+        
+        if (clientRequestProcessor != null)
+        {
+            isRegisteredSession = true;
+            clientRequestProcessor.setNewSession(false);
+            clientRequestProcessor.init(this, sessionId, sessionHashMap, null);
+            
+        }
+        else
+        {
+            Element documentElement = XPath.unwrapDocument(requestDocument,false).getDocumentElement();
+            String requestName = null;
+            if (documentElement.hasAttribute("type"))
+            {
+                requestName = documentElement.getAttribute("type");
+            }
+            String documentElementName = documentElement.getLocalName();
+            clientRequestProcessor = ClientRequestXMLProcessor.getClientRequestProcessor(documentElementName);
+
+            if (clientRequestProcessor != null)
+            {   
+                String sessionID = ClientRequestProcessorSessionManager.generateSessionID();
+                clientRequest.setSessionID(sessionID);
+                clientRequestProcessor.setNewSession(true);
+                clientRequestProcessor.init(this,sessionID,sessionHashMap,requestName);
+                ClientRequestProcessorSessionManager.registerClientRequestProcessor(clientRequestProcessor);                
+            }
+            else
+            {
+                CapoApplication.logger.log(Level.SEVERE, "Couldn't find @ClientRequestProcessorProvider for: "+documentElementName);
+            }
+        }
+		
 	}
 
 	@Override
-	public void process() throws Exception
+	public boolean isStreamProcessor()
 	{
-		//see if we already have a session, and if we do, and there is a request handler, then pass us off to it.
-		//TODO change to ClientRequestProcessor from RequestHandler
-		ClientRequest clientRequest = new ClientRequest(this,requestDocument, xmlStreamProcessor, outputStream);
-		ClientRequestProcessor clientRequestProcessor = ClientRequestProcessorSessionManager.getClientRequestProcessor(clientRequest.getSessionID());
-		if (clientRequestProcessor != null)
-		{
-			
-			clientRequestProcessor.process(clientRequest);
-			//send finished indicator
-			//TODO clientRequest.finish(); no indicator wanted here. If we want to start combining sockets, then this might be a good place to start
-		}
-		else
-		{
-			Element documentElement = XPath.unwrapDocument(requestDocument,false).getDocumentElement();
-			String requestName = null;
-			if (documentElement.hasAttribute("type"))
-			{
-				requestName = documentElement.getAttribute("type");
-			}
-			String documentElementName = documentElement.getLocalName();
-			clientRequestProcessor = ClientRequestXMLProcessor.getClientRequestProcessor(documentElementName);
-					
-			if (clientRequestProcessor != null)
-			{	
-				String sessionID = ClientRequestProcessorSessionManager.generateSessionID();
-				clientRequest.setSessionID(sessionID);
-				clientRequestProcessor.init(this,sessionID,sessionHashMap,requestName);
-				ClientRequestProcessorSessionManager.registerClientRequestProcessor(clientRequestProcessor);
-				clientRequestProcessor.process(clientRequest);
-				//because once a control main request processor runs, we no longer need to have a link reference to it, remove it. 
-				ClientRequestProcessorSessionManager.removeClientRequestProcessor(clientRequestProcessor);
-				
-				//send finished indicator
-				clientRequest.finish();
-			}
-			else
-			{
-				CapoApplication.logger.log(Level.SEVERE, "Couldn't find @ClientRequestProcessorProvider for: "+documentElementName);
-			}
-		}
+	   return clientRequestProcessor.isStreamProcessor();
+	}
+	
+	@Override
+	public void run()
+	{
+	    try
+	    {
+	        
+	        clientRequestProcessor.process(clientRequest);
+	        if(isRegisteredSession == false)
+	        {
+	            //because once a control main request processor runs, we no longer need to have a link reference to it, remove it. 
+	            ClientRequestProcessorSessionManager.removeClientRequestProcessor(clientRequestProcessor);
+
+	            //send finished indicator
+	            clientRequest.finish();
+	            //send finished indicator
+	        }
+
+	    } catch (Exception exception)
+	    {
+	        CapoApplication.logger.log(Level.SEVERE, "Exception in  session:"+sessionId,exception);
+	        xmlStreamProcessor.throwException(exception);
+	    }
 	}
 
 

@@ -87,6 +87,7 @@ private static HashMap<String, Class<? extends XMLServerResponseProcessor>> xmlS
 	private String responseType;
 	private String sessionID;
     private HashMap<String, String> sessionHashMap = null;
+    private XMLServerResponseProcessor xmlServerResponseProcessor;
 
 	@Override
 	public void init(Document document, XMLStreamProcessor xmlStreamProcessor, OutputStream outputStream,HashMap<String, String> sessionHashMap) throws Exception
@@ -97,22 +98,33 @@ private static HashMap<String, Class<? extends XMLServerResponseProcessor>> xmlS
 		this.outputStream = outputStream;
 		this.sessionID = document.getDocumentElement().getAttribute(Attributes.sessionId.toString());
 		this.responseType = document.getDocumentElement().getAttribute(Attributes.type.toString());
+		String localName = XPath.unwrapDocument(document,false).getDocumentElement().getLocalName();
+        xmlServerResponseProcessor = getXMLServerResponseProcessor(localName);
+        if (xmlServerResponseProcessor != null)
+        {
+            xmlServerResponseProcessor.init(XPath.unwrapDocument(document,false),this,sessionHashMap);
+            
+        }
+        else
+        {
+            throw new Exception("Couldn't find @XMLServerResponseProcessorProvider(documentElementNames={\""+localName+"\"}, namespaceURIs={})");
+        }
 	}
 
 	@Override
-	public void process() throws Exception
+	public void run()
 	{
-		String localName = XPath.unwrapDocument(document,false).getDocumentElement().getLocalName();
-		XMLServerResponseProcessor xmlServerResponseProcessor = getXMLServerResponseProcessor(localName);
-		if (xmlServerResponseProcessor != null)
-		{
-			xmlServerResponseProcessor.init(XPath.unwrapDocument(document,false),this,sessionHashMap);
-			xmlServerResponseProcessor.process();
-		}
-		else
-		{
-			throw new Exception("Couldn't find @XMLServerResponseProcessorProvider(documentElementNames={\""+localName+"\"}, namespaceURIs={})");
-		}
+	    try
+	    {
+	        
+	        xmlServerResponseProcessor.process();
+	    }
+	    catch (Exception exception)
+	    {
+
+	        CapoApplication.logger.log(Level.SEVERE, "Exception in  session:"+sessionID,exception);
+	        xmlStreamProcessor.throwException(exception);
+	    }
 	}
 
 	
@@ -161,5 +173,11 @@ private static HashMap<String, Class<? extends XMLServerResponseProcessor>> xmlS
 	public BufferedInputStream getInputStream()
 	{
 		return xmlStreamProcessor.getInputStream();
+	}
+	
+	@Override
+	public boolean isStreamProcessor()
+	{
+	    return xmlServerResponseProcessor.isStreamProcessor();
 	}
 }

@@ -26,6 +26,7 @@ import org.w3c.dom.Document;
 import com.delcyon.capo.CapoApplication;
 import com.delcyon.capo.controller.ControlElement;
 import com.delcyon.capo.controller.server.ControllerClientRequestProcessor;
+import com.delcyon.capo.protocol.server.AbstractClientRequestProcessor;
 import com.delcyon.capo.protocol.server.ClientRequest;
 import com.delcyon.capo.protocol.server.ClientRequestProcessor;
 import com.delcyon.capo.protocol.server.ClientRequestProcessorSessionManager;
@@ -36,7 +37,9 @@ import com.delcyon.capo.resourcemanager.ResourceType;
 import com.delcyon.capo.resourcemanager.ResourceURI;
 import com.delcyon.capo.resourcemanager.remote.RemoteResourceDescriptorMessage.MessageType;
 import com.delcyon.capo.resourcemanager.types.ContentMetaData;
+import com.delcyon.capo.util.XMLSerializer;
 import com.delcyon.capo.xml.XPath;
+import com.delcyon.capo.xml.cdom.CDocument;
 import com.delcyon.capo.xml.cdom.CElement;
 import com.delcyon.capo.xml.cdom.VariableContainer;
 import com.delcyon.capo.xml.dom.ResourceDeclarationElement;
@@ -45,7 +48,7 @@ import com.delcyon.capo.xml.dom.ResourceDeclarationElement;
  * @author jeremiah
  *
  */
-public class RemoteResourceDescriptorProxy  implements ResourceDescriptor,ClientRequestProcessor
+public class RemoteResourceDescriptorProxy extends AbstractClientRequestProcessor implements ResourceDescriptor,ClientRequestProcessor
 {
 
 	private ControllerClientRequestProcessor controllerClientRequestProcessor;
@@ -59,6 +62,8 @@ public class RemoteResourceDescriptorProxy  implements ResourceDescriptor,Client
 	private ResourceURI resourceURI = null;
 	private ResourceType resourceType;
 	private LifeCycle lifeCycle;
+    private boolean isStreamProcessor = false;
+	
 	public RemoteResourceDescriptorProxy(ControllerClientRequestProcessor controllerClientRequestProcessor)
 	{
 		this.controllerClientRequestProcessor = controllerClientRequestProcessor;
@@ -539,34 +544,50 @@ public class RemoteResourceDescriptorProxy  implements ResourceDescriptor,Client
 	private void processVarRequest(ClientRequest clientRequest) throws Exception
     {
 	    RemoteResourceDescriptorMessage requestMessage = new RemoteResourceDescriptorMessage(XPath.unwrapDocument(XPath.unwrapDocument(clientRequest.getRequestDocument(), true),true));	    
-	    while(true)
+
+	    String varName = requestMessage.getVarName();
+	    
+	    RemoteResourceDescriptorMessage replyMessage = new RemoteResourceDescriptorMessage();
+	    replyMessage.setVarName(varName);
+	    if (variableContainer != null && varName != null)
+	    {
+	        replyMessage.setValue(variableContainer.getVarValue(varName));	           
+	    }
+	    replyMessage.setSessionID(sessionID);
+	    replyMessage.setMessageType(MessageType.GET_VAR_VALUE);
+        if(replyMessage.getResourceURI() == null)
         {
-	        String varName = requestMessage.getVarName();
-	        RemoteResourceDescriptorMessage replyMessage = new RemoteResourceDescriptorMessage();
-	        replyMessage.setVarName(varName);
-	        if (variableContainer != null && varName != null)
-	        {
-	            replyMessage.setValue(variableContainer.getVarValue(varName));	           
-	        }
-	        requestMessage = sendResponse(replyMessage, MessageType.GET_VAR_VALUE,false,clientRequest.getClientRequestXMLProcessor());
-	        
-	        if (requestMessage.getMessageType() == MessageType.CLOSE)
-	        {	       	            
-	            break;
-	        }
-	        else if (requestMessage.getMessageType() != MessageType.GET_VAR_VALUE)
-	        {
-	            throw new Exception("killing "+getResourceURI()+" varRequest connection due to "+requestMessage.getMessageType());
-	        }
+            replyMessage.setResourceURI(getResourceURI());
         }
+        
+        CDocument replyDocument = CDocument.buildPath("RemoteResourceVarRequestReply");
+        XMLSerializer.export(replyDocument.getDocumentElement(), replyMessage);        
+	    clientRequest.getClientRequestXMLProcessor().getXmlStreamProcessor().writeDocument(replyDocument);
+
     }
 
     @Override
 	public void init(ClientRequestXMLProcessor clientRequestXMLProcessor, String sessionID, HashMap<String, String> sessionHashMap,String requestName) throws Exception
 	{
-		throw new UnsupportedOperationException();		
+        RemoteResourceDescriptorMessage message = new RemoteResourceDescriptorMessage(clientRequestXMLProcessor.getDocument());        
+        switch (message.getMessageType())
+        {
+            case GET_INPUTSTREAM:
+            case GET_OUTPUTSTREAM:
+                isStreamProcessor  = true;
+                break;
+            default:
+                isStreamProcessor  = false;
+                break;
+        }
 	}
 
+    @Override
+    public boolean isStreamProcessor()
+    {
+        return isStreamProcessor;
+    }
+    
 	@Override
 	public Document readNextDocument() throws Exception
 	{

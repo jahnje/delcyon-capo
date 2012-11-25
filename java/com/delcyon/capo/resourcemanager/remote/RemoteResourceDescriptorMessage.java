@@ -50,7 +50,7 @@ public class RemoteResourceDescriptorMessage extends AbstractResponse
 		super(replyDocument);
 		while(replyDocument.getDocumentElement().getLocalName().equals("RemoteResourceDescriptorMessage") == false)
 		{
-		    replyDocument = XPath.unwrapDocument(replyDocument, true);
+		    replyDocument = XPath.unwrapDocument(replyDocument, false); //the same document is unwound multiple times, so don't alter it.
 		}
 		XMLSerializer xmlSerializer = new XMLSerializer();
 		xmlSerializer.marshall((Element) replyDocument.getDocumentElement(), this);

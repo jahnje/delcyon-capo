@@ -26,13 +26,14 @@ import org.w3c.dom.Document;
  * @author jeremiah
  *
  */
-public interface XMLProcessor
+public interface XMLProcessor extends Runnable
 {
 	public void init(Document document, XMLStreamProcessor xmlStreamProcessor, OutputStream outputStream,HashMap<String, String> sessionHashMap) throws Exception;
-	public void process() throws Exception;
+	public void run();
 	public Document getDocument();
 	public XMLStreamProcessor getXmlStreamProcessor();
 	public OutputStream getOutputStream();
 	public Document readNextDocument() throws Exception;
 	public void writeDocument(Document document) throws Exception;
+    public boolean isStreamProcessor();
 }

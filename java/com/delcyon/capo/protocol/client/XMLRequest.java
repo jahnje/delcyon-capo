@@ -56,8 +56,19 @@ public abstract class XMLRequest extends Request
 		requestDocument = CapoApplication.getDefaultDocument("default_request.xml");
 	}
 	
-	public void init() throws Exception{
-		xmlStreamProcessor = new XMLStreamProcessor(getInputStream(),getOutputStream());
+	public XMLRequest(XMLStreamProcessor xmlStreamProcessor) throws Exception
+	{
+	    this.xmlStreamProcessor = xmlStreamProcessor;
+	    requestDocument = CapoApplication.getDefaultDocument("default_request.xml");
+	    importedChildRootElement = (Element) requestDocument.getDocumentElement().appendChild(requestDocument.importNode(getChildRootElement(), true));
+	}
+	
+	public void init() throws Exception
+	{
+	    if(xmlStreamProcessor == null)
+	    {
+	        xmlStreamProcessor = new XMLStreamProcessor(getInputStream(),getOutputStream());
+	    }
 		importedChildRootElement = (Element) requestDocument.getDocumentElement().appendChild(requestDocument.importNode(getChildRootElement(), true));
 	}
 	

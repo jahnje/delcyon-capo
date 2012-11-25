@@ -27,6 +27,7 @@ import com.delcyon.capo.controller.server.ControllerClientRequestProcessor;
 import com.delcyon.capo.protocol.client.XMLRequest;
 import com.delcyon.capo.protocol.server.ClientRequest;
 import com.delcyon.capo.resourcemanager.remote.RemoteResourceDescriptorMessage.MessageType;
+import com.delcyon.capo.xml.XMLStreamProcessor;
 import com.delcyon.capo.xml.XPath;
 
 /**
@@ -46,7 +47,13 @@ private Element controllerRequestElement = null;
 		this.controllerRequestElement = super.getImportedChildRootElement();		
 	}
 	
-	/* (non-Javadoc)
+	public RemoteResourceRequest(XMLStreamProcessor xmlStreamProcessor) throws Exception
+    {
+       super(xmlStreamProcessor);
+       this.controllerRequestElement = super.getImportedChildRootElement();
+    }
+
+    /* (non-Javadoc)
 	 * @see com.delcyon.capo.protocol.client.XMLRequest#getChildRootElement()
 	 */
 	@Override

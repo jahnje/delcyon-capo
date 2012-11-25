@@ -269,13 +269,13 @@ public class CapoClient extends CapoApplication
 			//run identity scripts
 			capoConnection = new CapoConnection();
 			runIdentityRequest(capoConnection,sessionHashMap);
-			capoConnection.close();
-
-			capoConnection = new CapoConnection();
+//			capoConnection.close();
+//
+//			capoConnection = new CapoConnection();
             runTasksUpdateRequest(capoConnection,sessionHashMap);
-            capoConnection.close();
-            
-			capoConnection = new CapoConnection();
+//            capoConnection.close();
+//            
+//			capoConnection = new CapoConnection();
 			runDefaultRequest(capoConnection,sessionHashMap);
 			capoConnection.close();
 			
@@ -389,11 +389,19 @@ public class CapoClient extends CapoApplication
 				    String bufferString = new String(buffer);
 				    if(bufferString.startsWith("FINISHED:"))
 				    {
-				        if(RemoteResourceResponseProcessor.getThreadedInputStreamReaderHashtable().size() != 0)
+				        int count = 0;
+				        while(RemoteResourceResponseProcessor.getThreadedInputStreamReaderHashtable().size() != 0)
 				        {
-				            CapoApplication.logger.log(Level.SEVERE, "We shouldn't be done yet!");
-				            System.exit(1);
+				            CapoApplication.logger.log(Level.WARNING, "We shouldn't be done yet!");
+				            Thread.sleep(1000);
+				            count++;
+				            if(count >= 30)
+				            {
+				                CapoApplication.logger.log(Level.SEVERE, "Well, that didn't work");
+				                break;
+				            }
 				        }
+				        StreamUtil.fullyReadUntilPattern(capoConnection.getInputStream(), false, (byte)0);
 				        CapoApplication.logger.log(Level.INFO, "FINISHED "+initialRequestType+" request.");
 				        isFinished = true;				        
 				    }

@@ -47,6 +47,10 @@ public abstract class AbstractResponse implements Response
 
 	public Document getResponseDocument()
 	{
+	    if (getSessionID() != null)
+        {
+	        responseDocument.getDocumentElement().setAttribute(ClientRequest.SESSION_ID_ATTRIBUTE_NAME,getSessionID());
+        }        	   
 		return responseDocument;
 	}
 

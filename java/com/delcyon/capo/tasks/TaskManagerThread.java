@@ -325,18 +325,16 @@ public class TaskManagerThread extends ContextThread
 			    		HashMap<String, String> sessionHashMap = new HashMap<String, String>();
 			    		CapoConnection capoConnection = new CapoConnection();
 			    		((CapoClient)CapoApplication.getApplication()).runUpdateRequest(capoConnection, sessionHashMap);
-			    		capoConnection.close();
+			    		//capoConnection.close();
 			    		if (WrapperManager.isShuttingDown()) //bail out of thread and client sync if we're restarting
 			    		{
 			    			break;
 			    		}
-			    		capoConnection = new CapoConnection();
+			    		//capoConnection = new CapoConnection();
 			    		((CapoClient)CapoApplication.getApplication()).runIdentityRequest(capoConnection, sessionHashMap);
-			    		capoConnection.close();
-			    		capoConnection = new CapoConnection();
+			    		
 			    		((CapoClient)CapoApplication.getApplication()).runTasksUpdateRequest(capoConnection, sessionHashMap);
-			    		capoConnection.close();
-			    		capoConnection = new CapoConnection();
+			    		
 			    		((CapoClient)CapoApplication.getApplication()).runDefaultRequest(capoConnection, sessionHashMap);
 			    		capoConnection.close();
 			    		lastSyncTime = System.currentTimeMillis();

@@ -29,6 +29,7 @@ import com.delcyon.capo.client.CapoClient;
 import com.delcyon.capo.controller.elements.GroupElement.Attributes;
 import com.delcyon.capo.controller.server.ControllerClientRequestProcessor;
 import com.delcyon.capo.protocol.client.XMLRequest;
+import com.delcyon.capo.xml.XMLStreamProcessor;
 
 /**
  * @author jeremiah
@@ -43,6 +44,12 @@ public class ControllerRequest extends XMLRequest
 		super(outputStream,inputStream);		
 		this.controllerRequestElement = super.getImportedChildRootElement();		
 	}
+	
+	public ControllerRequest(XMLStreamProcessor xmlStreamProcessor) throws Exception
+    {
+        super(xmlStreamProcessor);        
+        this.controllerRequestElement = super.getImportedChildRootElement();        
+    }
 
 	@Override
 	public Element getChildRootElement() throws Exception

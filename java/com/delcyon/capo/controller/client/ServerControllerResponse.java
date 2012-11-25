@@ -26,6 +26,7 @@ import org.w3c.dom.NodeList;
 import com.delcyon.capo.CapoApplication;
 import com.delcyon.capo.controller.AbstractControl;
 import com.delcyon.capo.controller.Group;
+import com.delcyon.capo.controller.server.ControllerResponse;
 import com.delcyon.capo.protocol.client.XMLServerResponse;
 import com.delcyon.capo.protocol.client.XMLServerResponseProcessor;
 import com.delcyon.capo.protocol.client.XMLServerResponseProcessorProvider;
@@ -53,6 +54,12 @@ public class ServerControllerResponse implements XMLServerResponseProcessor
 	}
 
 	@Override
+	public boolean isStreamProcessor()
+	{	 
+	    return false;
+	}
+	
+	@Override
 	public void process() throws Exception
 	{
 		Element controlElement = getControlElementDeclaration();
@@ -68,11 +75,12 @@ public class ServerControllerResponse implements XMLServerResponseProcessor
 				resultElement = clientSideControl.processClientSideElement();
 				if (resultElement != null)
 				{
-					ControllerRequest controllerRequest = new ControllerRequest(xmlServerResponse.getOutputStream(),xmlServerResponse.getInputStream());
-					controllerRequest.setSessionId(xmlServerResponse.getSessionID());
-					controllerRequest.setRequestType(xmlServerResponse.getResponseType());
-					controllerRequest.appendElement(resultElement);
-					controllerRequest.send();				
+				    
+				    ControllerResponse controllerResponse = new ControllerResponse();
+				    controllerResponse.setSessionID(xmlServerResponse.getSessionID());
+				    controllerResponse.setType(xmlServerResponse.getResponseType());
+				    controllerResponse.appendElement(resultElement);					
+					xmlServerResponse.writeDocument(controllerResponse.getResponseDocument());
 				}
 			}
 			else
