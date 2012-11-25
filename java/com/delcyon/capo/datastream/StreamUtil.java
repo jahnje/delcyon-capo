@@ -41,6 +41,7 @@ public class StreamUtil
 	
 	public static int fullyReadIntoBufferUntilPattern(BufferedInputStream inputStream, byte[] buffer, byte... pattern) throws Exception
 	{
+	    
 	    int totalRead = 0;
 	    byte[] localBuffer = null;
 	    
@@ -66,7 +67,14 @@ public class StreamUtil
 	        }
 	        if(count > 0)
 	        {
-	            System.arraycopy(localBuffer, 0, buffer, destPos, count);
+	            try
+	            {
+	                System.arraycopy(localBuffer, 0, buffer, destPos, count);
+	            } catch (ArrayIndexOutOfBoundsException arrayIndexOutOfBoundsException)
+	            {
+	                System.err.println("got here");
+	                throw arrayIndexOutOfBoundsException;
+	            }
 	            destPos += count;
 
 	            if(searchForBytePattern(pattern, buffer, totalRead - pattern.length, pattern.length).size() > 0)
@@ -82,34 +90,80 @@ public class StreamUtil
 	public static byte[] fullyReadUntilPattern(BufferedInputStream inputStream,boolean includePattern, byte... pattern) throws Exception
     {
 	    AccessibleByteArrayOutputStream byteArrayOutputStream = new AccessibleByteArrayOutputStream();
-        int totalRead = 0;
+        int lastScanPosition = 0;
         byte[] localBuffer = new byte[CapoApplication.getConfiguration().getIntValue(PREFERENCE.BUFFER_SIZE)];      
         
         boolean isEOF = false;
+        boolean needMoreData = false;
+        int count = 0;
         while(true)
         {
-            int count =  inputStream.read(localBuffer);
-            totalRead += count;
+            if(needMoreData == true)
+            {
+                inputStream.mark(localBuffer.length);
+            }
+            else
+            {
+                count = 0;
+            }
+            
+            count += inputStream.read(localBuffer,count,localBuffer.length-count);
+           
             if(count < 0)
             {
                 isEOF = true;
                 break;
             }
+            
+            
+            
             if(count > 0)
-            {                
-                byteArrayOutputStream.write(localBuffer, 0, count);
-        
-                if(searchForBytePattern(pattern, byteArrayOutputStream.getBuffer(), totalRead - pattern.length, pattern.length).size() > 0)
+            {
+                if(byteArrayOutputStream.size() + count < pattern.length)
+                {                     
+                    needMoreData = true;
+                    continue;
+                }
+                else
                 {
+                    needMoreData = false;
+                }
+                
+                byteArrayOutputStream.write(localBuffer, 0, count);
+                
+                List<Integer> posList = searchForBytePattern(pattern, byteArrayOutputStream.getBuffer(), lastScanPosition, count);
+                if(posList.size() > 0)
+                {
+                    if(posList.get(0) < byteArrayOutputStream.size()-1)
+                    {                        
+                        //There was more on the buffer than we needed
+                        //reset to the start of last read
+                        inputStream.reset();
+                        //skip to our found pos + length of pattern.
+                        inputStream.skip(posList.get(0)-lastScanPosition+pattern.length);
+                        
+                        //now trim our buffer
+                        byte[] osBuffer = byteArrayOutputStream.toByteArray(0, posList.get(0)+pattern.length);
+                        byteArrayOutputStream.reset();
+                        byteArrayOutputStream.write(osBuffer);                        
+                    }
                     break;
+                }
+                else
+                {
+                    lastScanPosition += count; 
                 }
 
             }
         }
         
         byteArrayOutputStream.close();//pointless, but gets warnings to go away.
-        
-        if(includePattern == true || isEOF == true)
+        //use this to indicate that we're done with this stream, because it's closed.
+        if(isEOF && byteArrayOutputStream.size() == 0)
+        {
+            return null;
+        }
+        else if(includePattern == true || isEOF == true)
         {
             return byteArrayOutputStream.toByteArray();
         }
