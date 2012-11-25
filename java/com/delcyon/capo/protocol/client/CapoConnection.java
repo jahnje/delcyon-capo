@@ -176,7 +176,7 @@ public class CapoConnection implements StreamEventListener
 		{				
 			throw new Exception("Unknown message from server: '"+message+"'");				
 		}
-		CapoApplication.logger.log(Level.FINE, "Opened Socket: "+socket);
+		CapoApplication.logger.log(Level.INFO, "Opened Socket: "+socket);
 		return socket;
 	}
 	
@@ -206,11 +206,12 @@ public class CapoConnection implements StreamEventListener
 		            exception.setStackTrace(callerStackTraceElements);
 		            exception.printStackTrace();
 		        }
+			    CapoApplication.logger.log(Level.INFO, "Closing Socket: "+socket);
 				socket.close();
-				if (socket instanceof SSLSocket)
-				{
-					((SSLSocket) socket).getSession().invalidate();
-				}
+//				if (socket instanceof SSLSocket)
+//				{
+//					((SSLSocket) socket).getSession().invalidate();
+//				}
 				socket = null;
 			}
 			catch (Exception e)
