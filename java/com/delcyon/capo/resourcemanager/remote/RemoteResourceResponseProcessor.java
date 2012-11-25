@@ -16,7 +16,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 package com.delcyon.capo.resourcemanager.remote;
 
-import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.HashMap;
@@ -40,7 +39,6 @@ import com.delcyon.capo.protocol.client.XMLServerResponseProcessorProvider;
 import com.delcyon.capo.resourcemanager.ResourceDescriptor;
 import com.delcyon.capo.resourcemanager.ResourceURI;
 import com.delcyon.capo.resourcemanager.remote.RemoteResourceDescriptorMessage.MessageType;
-import com.delcyon.capo.util.XMLSerializer;
 import com.delcyon.capo.xml.XMLStreamProcessor;
 import com.delcyon.capo.xml.XPath;
 import com.delcyon.capo.xml.cdom.VariableContainer;
