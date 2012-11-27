@@ -106,10 +106,12 @@ public class XMLStreamProcessor implements StreamProcessor
     //private ThreadGroup subThreadGroup = null;
     private Exception exception = null;
     private Document returnDocument;
-    private long processorTID;
+    
     private long initialTID = -1l;
-    private Thread processorThread;
-    private byte[] ackBuffer = new byte[]{-1};
+    private Thread processorThread  = Thread.currentThread();    
+    private long processorTID = processorThread.getId();
+    
+   // private byte[] ackBuffer = new byte[]{-1};
     
     private ReentrantLock lock = new ReentrantLock(true);
     private Condition readyToRead = lock.newCondition();
@@ -161,11 +163,10 @@ public class XMLStreamProcessor implements StreamProcessor
 	    //get the thread variables all setup. We don't want to do this in init because we're not in our own thread until we start processing.
 	    HashMap<String, ContextThread> threadMap = new HashMap<String, ContextThread>();
 	    //subThreadGroup = new ThreadGroup(getClass().getName()+" - "+System.nanoTime());        
-        processorThread = Thread.currentThread();
-        processorTID = processorThread.getId();
+        
         
         //indicate we're actually in the read loop
-        ackBuffer[0] = 0; 
+     //   ackBuffer[0] = 0; 
         
         //setup our data streams
 		this.inputStream = bufferedInputStream;
@@ -197,6 +198,7 @@ public class XMLStreamProcessor implements StreamProcessor
 
 		    //load client request
 		    String documentElementName = document.getDocumentElement().getLocalName();
+		    //System.err.println("searching for "+documentElementName);
 		    String tid = document.getDocumentElement().getAttribute("TID");
 		    //TODO tid null check
 
@@ -213,7 +215,7 @@ public class XMLStreamProcessor implements StreamProcessor
 		        }
 
 		        //don't start until we can make sure that nothing is trying to write
-		        synchronized (ackBuffer)
+		//        synchronized (ackBuffer)
 		        {
 		            //check to see if this xmlProcessor handles it's own streams.
 		            if(xmlProcessor.isStreamProcessor() == true)
@@ -282,8 +284,8 @@ public class XMLStreamProcessor implements StreamProcessor
 	public void writeDocument(Document document) throws Exception
 	{	
 
-	    int writeResponseValue = -1;
-        synchronized (ackBuffer)
+	    int writeResponseValue = 1;//TODO-1;
+        //synchronized (ackBuffer)
         {
             long tid = Thread.currentThread().getId();
             //make sure we always use a know TID, 
@@ -303,42 +305,42 @@ public class XMLStreamProcessor implements StreamProcessor
             }
             outputStream.write(0);
             outputStream.flush();
-            CapoApplication.logger.log(Level.FINE, "SENT OK bit to Remote After WRITE 0");
+            CapoApplication.logger.log(Level.FINE, "SENT END bit to Remote After WRITE: 0");
 		
 		
 		    boolean notInReadLoop = false;
             //check to see if we have our return value yet
-		    if(ackBuffer[0] == 0)
-		    {
-		        ackBuffer.wait(30000);  
-		    }
-		    //check to see if we're actually in the read loop here
-		    else if(ackBuffer[0] == -1)
-		    {
-		        notInReadLoop = true;
-		        //since we're not in the loop, we're going to have to read the stream ourselves
-		        byte[] buffer = new byte[2];
-		        StreamUtil.fullyReadIntoBufferUntilPattern(inputStream,buffer, (byte)0);
-		        if(buffer[1] == 0)
-		        {
-		            ackBuffer[0] = buffer[0];
-		        }
-		        else
-		        {		            
-		            throw new Exception("Expecting an ACK, not "+buffer);
-		        }
-		    }
-            writeResponseValue = ackBuffer[0];
-            //reset the buffer to 0
-            if(notInReadLoop == false)
-            {
-                ackBuffer[0] = 0;
-            }
-            else
-            {
-                ackBuffer[0] = -1;
-            }
-            ackBuffer.notify();
+//		    if(ackBuffer[0] == 0)
+//		    {
+//		        ackBuffer.wait(30000);  
+//		    }
+//		    //check to see if we're actually in the read loop here
+//		    else if(ackBuffer[0] == -1)
+//		    {
+//		        notInReadLoop = true;
+//		        //since we're not in the loop, we're going to have to read the stream ourselves
+//		        byte[] buffer = new byte[2];
+//		        StreamUtil.fullyReadIntoBufferUntilPattern(inputStream,buffer, (byte)0);
+//		        if(buffer[1] == 0)
+//		        {
+//		            ackBuffer[0] = buffer[0];
+//		        }
+//		        else
+//		        {		            
+//		            throw new Exception("Expecting an ACK, not "+buffer);
+//		        }
+//		    }
+//            writeResponseValue = ackBuffer[0];
+//            //reset the buffer to 0
+//            if(notInReadLoop == false)
+//            {
+//                ackBuffer[0] = 0;
+//            }
+//            else
+//            {
+//                ackBuffer[0] = -1;
+//            }
+//            ackBuffer.notify();
         }
 		
 
@@ -346,7 +348,8 @@ public class XMLStreamProcessor implements StreamProcessor
 		CapoApplication.logger.log(Level.FINE, "READ OK bit to Remote After WRITE: "+writeResponseValue);
 		if(writeResponseValue != 1)
 		{
-		    throw new Exception("Remote End Reported an Error");
+			 XPath.dumpNode(document, System.err);
+		    throw new Exception("Remote End Reported an Error: "+writeResponseValue);
 		}
 	}
 	
@@ -357,12 +360,20 @@ public class XMLStreamProcessor implements StreamProcessor
 	 */
 	public Document readNextDocument() throws Exception
 	{
-
-	    lock.lock();
-	    readyToRead.await(30, TimeUnit.SECONDS); // this unlocks until we are signaled, at which point we re aquire the lock
-	    lock.unlock(); //so we must unlock it once we are done. 
-
-	    return returnDocument;		
+		//don't lock our stream processing thread
+		if(Thread.currentThread().getId() == processorTID)
+		{
+			return getDocument(inputStream);
+		}
+		else
+		{
+			lock.lock();
+			//this unlocks until we are signaled, at which point we re aquire the lock
+			readyToRead.await(30,TimeUnit.SECONDS); 
+			lock.unlock(); //so we must unlock it once we are done.
+			 return returnDocument;
+		}
+	   		
 	}
 	
 	/**
@@ -382,21 +393,23 @@ public class XMLStreamProcessor implements StreamProcessor
 		    return null;
 		}
 		//check for write ack message
-		if(buffer.length == 1)
-		{		    
-		    synchronized(ackBuffer)
-		    {
-		        //set the value
-		        ackBuffer[0] = buffer[0];
-		        //let anyone listening know that we've processed something
-		        ackBuffer.notify();
-		        //wait until they tell us to keep processing
-		        ackBuffer.wait();
-		    }
-		    //return blank document to indicate this was just an ACK
-		    return new CDocument();
-		}
-		else if(buffer.length >= 10 && new String(buffer,0,9).startsWith("FINISHED:"))
+//		if(buffer.length == 1)
+//		{		    
+//		    synchronized(ackBuffer)
+//		    {
+//		        //set the value
+//		        ackBuffer[0] = buffer[0];
+//		        //let anyone listening know that we've processed something
+//		        ackBuffer.notify();
+//		        //wait until they tell us to keep processing
+//		        ackBuffer.wait();
+//		    }
+//		    //return blank document to indicate this was just an ACK
+//		    return new CDocument();
+//		}
+//		else 
+			
+			if(buffer.length >= 10 && new String(buffer,0,9).startsWith("FINISHED:"))
 		{
 		    inputStream.reset();
 		    return null;
@@ -413,18 +426,18 @@ public class XMLStreamProcessor implements StreamProcessor
 		            XPath.dumpNode(readDocument, System.out);
 		        }
 		        //send ok to sender
-		        outputStream.write(1);
-		        outputStream.write(0);
-		        outputStream.flush();
-		        CapoApplication.logger.log(Level.FINE, "SENT OK bit to Remote After READ: 0");            
+//		        outputStream.write(1);
+//		        outputStream.write(0);
+//		        outputStream.flush();
+//		        CapoApplication.logger.log(Level.FINE, "SENT OK bit to Remote After READ: 1,0");            
 		        return readDocument;
 		    }
 		    catch (SAXException saxException)
 		    {
-		        CapoApplication.logger.log(Level.WARNING,"length = "+buffer.length+" buffer = ["+new String(buffer)+"]\nRAW:["+Arrays.toString(buffer)+"]");		        
-		        outputStream.write(2);
-		        outputStream.write(0);
-		        outputStream.flush();
+//		        CapoApplication.logger.log(Level.WARNING,"length = "+buffer.length+" buffer = ["+new String(buffer)+"]\nRAW:["+Arrays.toString(buffer)+"]");		        
+//		        outputStream.write(2);
+//		        outputStream.write(0);
+//		        outputStream.flush();
 		        throw saxException;
 		    }
 		}
