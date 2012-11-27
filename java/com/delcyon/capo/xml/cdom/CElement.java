@@ -173,7 +173,10 @@ public class CElement extends CNode implements Element
                     }
                     else
                     {
-                        ((Element) node).getTagName().equals(name);
+                        if(((Element) node).getTagName().equals(name) == true)
+                        {
+                        	nodeList.add(node);
+                        }
                     }
                 }
                 
