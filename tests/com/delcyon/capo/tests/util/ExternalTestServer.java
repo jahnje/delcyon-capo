@@ -129,6 +129,8 @@ public class ExternalTestServer
         //verify that root element of xml diff contains mod = base
         baseDocument.close(LifeCycle.EXPLICIT);
         modDocument.close(LifeCycle.EXPLICIT);
+        sourceResourceDescriptor.release(null);
+        destinationResourceDescriptor.release(null);
         if (diffDocument.getDocumentElement().getAttributeNS(XMLDiff.XDIFF_NAMESPACE_URI, XMLDiff.XDIFF_ELEMENT_ATTRIBUTE_NAME).equals(XMLDiff.EQUALITY) == false)
         {
         	XPath.dumpNode(diffDocument, System.err);

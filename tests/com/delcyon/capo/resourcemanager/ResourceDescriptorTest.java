@@ -61,6 +61,10 @@ public abstract class ResourceDescriptorTest
     @After
     public void tearDown() throws Exception
     {
+    	if(this.resourceDescriptor != null)
+    	{
+    		this.resourceDescriptor.release(null);
+    	}
     }
 
     @Test
