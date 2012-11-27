@@ -164,14 +164,13 @@ public class CertificateRequest extends XMLRequest
 
 	public void parseResponse() throws Exception
 	{
-		Element responseElement = readResponse().getDocumentElement();
-		//XPath.dumpNode(responseElement, System.out);
-		Element certificateRequestElement = (Element) XPath.selectSingleNode(responseElement, "//CertificateRequest");
-		String publicKeyString = XPath.selectSingleNodeValue(certificateRequestElement, "//CertificateRequest/@"+CertificateRequest.Attributes.SERVER_PUBLIC_KEY);
-		payloadString = XPath.selectSingleNodeValue(certificateRequestElement, "//CertificateRequest/@"+CertificateRequest.Attributes.PAYLOAD);
-		String serverID = XPath.selectSingleNodeValue(certificateRequestElement, "//CertificateRequest/@"+CertificateRequest.Attributes.SERVER_ID);
+		Element responseElement = readResponse().getDocumentElement(); 
+		Element certificateRequestElement = (Element) XPath.selectSingleNode(responseElement, "//CertificateRequestResponse");
+		String publicKeyString = XPath.selectSingleNodeValue(certificateRequestElement, "//CertificateRequestResponse/@"+CertificateRequest.Attributes.SERVER_PUBLIC_KEY);
+		payloadString = XPath.selectSingleNodeValue(certificateRequestElement, "//CertificateRequestResponse/@"+CertificateRequest.Attributes.PAYLOAD);
+		String serverID = XPath.selectSingleNodeValue(certificateRequestElement, "//CertificateRequestResponse/@"+CertificateRequest.Attributes.SERVER_ID);
 		setParameter(Attributes.SERVER_ID, serverID);
-		String clientID = XPath.selectSingleNodeValue(certificateRequestElement, "//CertificateRequest/@"+CertificateRequest.Attributes.CLIENT_ID);
+		String clientID = XPath.selectSingleNodeValue(certificateRequestElement, "//CertificateRequestResponse/@"+CertificateRequest.Attributes.CLIENT_ID);
 		setParameter(Attributes.CLIENT_ID, clientID);
 		KeyFactory keyFactory1 = KeyFactory.getInstance("DH");
         X509EncodedKeySpec x509Spec = new X509EncodedKeySpec(DatatypeConverter.parseBase64Binary(publicKeyString));

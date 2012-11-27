@@ -60,6 +60,7 @@ import com.delcyon.capo.protocol.server.ClientRequestXMLProcessor;
 import com.delcyon.capo.server.CapoServer;
 import com.delcyon.capo.server.CapoServer.Preferences;
 import com.delcyon.capo.xml.XPath;
+import com.delcyon.capo.xml.cdom.CNode;
 
 /**
  * @author jeremiah
@@ -164,11 +165,14 @@ public class CertificateRequestProcessor extends AbstractClientRequestProcessor 
 				oneTimePassword = (new Random().nextInt(Integer.MAX_VALUE))+"";
 				CapoApplication.logger.log(Level.INFO, "One time client verification password = '"+oneTimePassword+"'");
 			}
+			Document originalRequestDocument = clientRequest.getRequestDocument();
+			//chnage this to a response, and send it back
+			((CNode) originalRequestDocument.getDocumentElement()).setNodeName("ServerResponse");
+			((CNode) originalRequestDocument.getDocumentElement().getElementsByTagName("CertificateRequest").item(0)).setNodeName("CertificateRequestResponse");
+			clientRequest.getXmlStreamProcessor().writeDocument(originalRequestDocument);
+			Document requestDocument = clientRequest.getXmlStreamProcessor().readNextDocument();
 			
-			clientRequest.getXmlStreamProcessor().writeDocument(clientRequest.getRequestDocument());
-			Document reuquestDocument = clientRequest.getXmlStreamProcessor().readNextDocument();
-			
-			byte[] encryptedPayload = DatatypeConverter.parseBase64Binary(XPath.selectSingleNodeValue(reuquestDocument.getDocumentElement(), "//CertificateRequest/@"+CertificateRequest.Attributes.PAYLOAD));
+			byte[] encryptedPayload = DatatypeConverter.parseBase64Binary(XPath.selectSingleNodeValue(requestDocument.getDocumentElement(), "//CertificateRequest/@"+CertificateRequest.Attributes.PAYLOAD));
 
 			//decrypt message
 
@@ -177,7 +181,7 @@ public class CertificateRequestProcessor extends AbstractClientRequestProcessor 
 			if (oneTimePassword.equals(returnedPassword))
 			{
 				//create certificate from public key
-				byte[] clientPublicKeyBytes = DatatypeConverter.parseBase64Binary(XPath.selectSingleNodeValue(reuquestDocument.getDocumentElement(), "//CertificateRequest/@"+CertificateRequest.Attributes.CLIENT_PUBLIC_KEY));
+				byte[] clientPublicKeyBytes = DatatypeConverter.parseBase64Binary(XPath.selectSingleNodeValue(requestDocument.getDocumentElement(), "//CertificateRequest/@"+CertificateRequest.Attributes.CLIENT_PUBLIC_KEY));
 				KeyFactory keyFactory3 = KeyFactory.getInstance("RSA");
 				X509EncodedKeySpec x509Spec3 = new X509EncodedKeySpec(clientPublicKeyBytes);
 

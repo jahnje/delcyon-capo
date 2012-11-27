@@ -86,7 +86,7 @@ public class CertificateRequestProcessorTest
 		{
 			
 			String output = new String(byteArrayOutputStream.toByteArray());
-			
+			oldSystemOutPrintStream.println("===>"+output+"<=====");
 			
 			if (output.matches("(?smi).*Enter Password:*.*"))
 			{
@@ -95,6 +95,7 @@ public class CertificateRequestProcessorTest
 			}
 			else
 			{
+				
 				Thread.sleep(500);
 				waitTime += 500;
 				if (waitTime > 10000)
@@ -110,9 +111,18 @@ public class CertificateRequestProcessorTest
 		}
 		
 		//reset stdout
-		System.setOut(oldSystemOutPrintStream);
 		
-		String[] lines = new String(byteArrayOutputStream.toByteArray()).split("\n");
+		
+		
+		String[] lines = new String[]{};
+		while(lines.length < 2)
+		{
+			String output = new String (byteArrayOutputStream.toByteArray());
+			oldSystemOutPrintStream.println("====>"+output+"<=====");
+			lines = output.split("\n");
+			Thread.sleep(1000);
+		}
+		System.setOut(oldSystemOutPrintStream);
 		System.out.println(lines[lines.length-1]);
 		System.out.println(lines[lines.length-2]);
 		

@@ -71,6 +71,7 @@ import com.delcyon.capo.resourcemanager.remote.RemoteResourceResponseProcessor;
 import com.delcyon.capo.resourcemanager.types.FileResourceType;
 import com.delcyon.capo.tasks.TaskManagerThread;
 import com.delcyon.capo.xml.XPath;
+import com.delcyon.capo.xml.cdom.CNode;
 
 /**
  * @author jeremiah
@@ -569,6 +570,7 @@ public class CapoClient extends CapoApplication
             }
             certificateRequest.setPayload(serverPassword);
             certificateRequest.setParameter(CertificateRequest.Attributes.CLIENT_PUBLIC_KEY, DatatypeConverter.printBase64Binary(rsaKeyPair.getPublic().getEncoded()));
+            ((CNode) certificateRequest.getRequestDocument().getDocumentElement()).setNodeName("ClientResponse");
             certificateRequest.resend();
             
             //we need to make sure that we wait for a server response here, so that we don't continue processing until the server has had time to update its keystore.
