@@ -253,10 +253,18 @@ public class TaskManagerThread extends ContextThread
 	public void interrupt()
 	{
 		
+		
 		synchronized (this)
 		{
+			//check to see if we've already been interrupted, it's possible that we can be called twice sometimes esp. in testing.
+			if(this.taskManagerState.ordinal() >= ApplicationState.STOPPING.ordinal())
+			{
+				CapoServer.logger.log(Level.WARNING, "Second call to interrupt TaskManager.");
+				//just bail out if we're already stopping.
+				return;
+			}
 			//only set us to stopping if we're running or something earlier, this can happen when we don't run the client as a service
-			if (this.taskManagerState.ordinal() < ApplicationState.STOPPING.ordinal())
+			else if (this.taskManagerState.ordinal() < ApplicationState.STOPPING.ordinal())
 			{
 				this.taskManagerState = ApplicationState.STOPPING;
 			}
