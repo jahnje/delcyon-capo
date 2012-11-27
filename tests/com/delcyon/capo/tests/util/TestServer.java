@@ -43,7 +43,8 @@ public class TestServer
 		if (serverThread != null)
 		{
 			System.err.println("found an existing server" + serverThread);
-			System.exit(0);
+			shutdown();
+			//System.exit(0);
 		}
 		serverThread  = new Thread("TestServer")
 		{

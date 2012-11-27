@@ -40,7 +40,7 @@ public class Util
     				
     				if(name.startsWith("com.delcyon.capo.xml.cdom."))
     				{
-    					System.out.println("looking for class '"+name+"'");
+    					//System.out.println("looking for class '"+name+"'");
     					return parentClassLoader.loadClass(name);
     				}
     				if(name.startsWith("com.delcyon.capo.util.CloneControl"))

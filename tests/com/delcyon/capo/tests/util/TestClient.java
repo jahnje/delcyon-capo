@@ -42,7 +42,8 @@ public class TestClient
 		if (clientThread != null)
 		{
 			System.err.println("found an existing client" + clientThread);
-			System.exit(0);
+			shutdown();
+			//System.exit(0);
 		}
 		exceptionList = new CopyOnWriteArrayList<Exception>();
 		clientThread = new Thread("TestClient")
