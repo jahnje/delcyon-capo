@@ -182,6 +182,7 @@ public abstract class CapoApplication extends ContextThread implements WrapperLi
 		//System.setProperty("javax.net.debug","all");		
 		System.setProperty("sun.security.ssl.allowUnsafeRenegotiation", "true");
 		System.setProperty("sun.security.ssl.allowLegacyHelloMessages", "true");
+		System.setProperty("hsqldb.reconfig_logging", "false"); 
 		
 		if (logger == null)
 		{
