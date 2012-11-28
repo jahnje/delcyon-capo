@@ -19,12 +19,11 @@ package com.delcyon.capo;
 import java.io.PrintStream;
 import java.net.URL;
 import java.security.KeyStore;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.PropertyResourceBundle;
 import java.util.Set;
 import java.util.Vector;
 import java.util.concurrent.ConcurrentHashMap;
@@ -212,7 +211,11 @@ public abstract class CapoApplication extends ContextThread implements WrapperLi
 			}
 		}
 		
-		logger.log(Level.INFO, "Starting Capo "+getApplication().getApplicationDirectoryName());
+		PropertyResourceBundle versionResourceBundle = new PropertyResourceBundle(ClassLoader.getSystemResource("version.properties").openStream());
+		String version = versionResourceBundle.getString("version");
+        String versionDate = versionResourceBundle.getString("version.date");
+		
+		logger.log(Level.INFO, "Starting Capo "+getApplication().getApplicationDirectoryName()+" version: "+version+" compiled on: "+versionDate);
 		
 		//setup Mime Type Processing
 		MimeUtil.registerMimeDetector("eu.medsea.mimeutil.detector.MagicMimeMimeDetector");
