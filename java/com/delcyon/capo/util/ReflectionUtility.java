@@ -48,6 +48,8 @@ public class ReflectionUtility
     private static volatile ConcurrentHashMap<Class, Class[]> systemClassIneterfacesHashMap = new ConcurrentHashMap<Class, Class[]>();
     @SuppressWarnings("rawtypes")
     private static volatile ConcurrentHashMap<Class, Constructor[]> systemClassConstructorsHashMap = new ConcurrentHashMap<Class, Constructor[]>();
+    @SuppressWarnings("rawtypes")
+    private static volatile ConcurrentHashMap<Class, Vector<Method>> systemClassMethodVectorHashMap = new ConcurrentHashMap<Class, Vector<Method>>();
     
 	public static final String DEFAULT_DATE_FORMAT = "MM/dd/yyyy";
 	public static final String DEFAULT_DATE_TIME_FORMAT = "MM/dd/yyyy HH:mm";
@@ -222,9 +224,18 @@ public class ReflectionUtility
     public static Vector<Method> getMethodVector(Object object)
     {
         Vector<Class> classVector = new Vector<Class>();
-        Vector<Method> methodVector = new Vector<Method>();
+        
 
         Class currentClass = object.getClass();
+        Vector<Method> methodVector = systemClassMethodVectorHashMap.get(currentClass);
+        if(methodVector != null)
+        {
+            return methodVector;
+        }
+        else
+        {
+            methodVector = new Vector<Method>();
+        }
         while (currentClass != null)
         {
             classVector.insertElementAt(currentClass, 0);
@@ -264,7 +275,7 @@ public class ReflectionUtility
                 methodVector.add(method);
             }
         }
-
+        systemClassMethodVectorHashMap.put(object.getClass(), methodVector);
         return methodVector;
     }
 	
