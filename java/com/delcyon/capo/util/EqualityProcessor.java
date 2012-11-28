@@ -161,9 +161,13 @@ public abstract class EqualityProcessor {
 					Object cloneableFieldInstance = field.get(cloneable);
 					if(cloneableFieldInstance != null)
 					{
-						if(ReflectionUtility.isPrimitive(field.getType()))
+					    if(field.getType().isPrimitive()) //check for pure primitives, which can be copied straight across
+                        {
+                            field.set(clone, cloneableFieldInstance);
+                        }
+					    else if(ReflectionUtility.isPrimitive(field.getType()))
 						{	
-							field.set(clone, ReflectionUtility.getPrimitiveInstance(field.getType(), ReflectionUtility.getSerializedString(cloneableFieldInstance)));
+					        field.set(clone, ReflectionUtility.getPrimitiveInstance(field.getType(), ReflectionUtility.getSerializedString(cloneableFieldInstance)));
 						}
 						else
 						{
