@@ -294,8 +294,8 @@ public class CapoClient extends CapoApplication
 			}
 			else //we're on our own here, so just exit.
 			{
-				CapoApplication.logger.log(Level.SEVERE, "Exception thrown in main processing loop. Exiting.",e);				
-				System.exit(1);
+				CapoApplication.logger.log(Level.SEVERE, "Exception thrown in main processing loop. Restarting.",e);				
+				WrapperManager.restart();
 			}
 		}
 		setApplicationState(ApplicationState.READY);
