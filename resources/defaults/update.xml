@@ -94,7 +94,7 @@
                 <xsl:choose>
                     <xsl:when test="@src = 'MOD' and exists(key('sync_src_good',@dest)) = false()">
                         <!-- since we didn't find a match anywhere, we need to mark this uri fro deletion -->
-                        <server:sync delete="true" dest="{@dest}" />
+                        <server:sync prune="true" dest="{@dest}" />
                     </xsl:when>
                     <xsl:when test="@src = 'MOD' and exists(key('sync_src_good',@dest))">
                         <!-- Do Nothing/Drop this since we found a 'good' match -->
@@ -112,8 +112,9 @@
                 <xsl:param name="remoteRootPath"/>
                 <server:sync onCopy="$update:requiresRestart">
                     <!-- copy over any delete information -->
-                    <xsl:if test="exists(@delete)">
-                        <xsl:copy-of select="@delete"/>
+                    <xsl:if test="exists(@prune)">
+                        <xsl:copy-of select="@prune"/>
+                        <xsl:attribute name="src" select="concat($localRootPath,@dest)"/>
                     </xsl:if>
                     <!-- fixup the src uri if we have one -->
                     <xsl:if test="exists(@src)">

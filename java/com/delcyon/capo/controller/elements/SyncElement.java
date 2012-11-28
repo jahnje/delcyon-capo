@@ -126,7 +126,7 @@ public class SyncElement extends AbstractControl
 		//this was trying to work off of temp copy element, but don't know why
 		ResourceDescriptor sourceResourceDescriptor = getParentGroup().getResourceDescriptor(this,getAttributeValue(Attributes.src));
 		
-		if (sourceResourceDescriptor != null && sourceResourceDescriptor.getResourceMetaData(getParentGroup(), ResourceParameterBuilder.getResourceParameters(getControlElementDeclaration())).exists())
+		if (sourceResourceDescriptor != null && (sourceResourceDescriptor.getResourceMetaData(getParentGroup(), ResourceParameterBuilder.getResourceParameters(getControlElementDeclaration())).exists() || getAttributeBooleanValue(Attributes.prune) == true))
 		{
 			
 //			String destMD5 = null;			
@@ -175,15 +175,29 @@ public class SyncElement extends AbstractControl
 
 	public void syncTree(ResourceDescriptor sourceResourceDescriptor, ResourceDescriptor destinationResourceDescriptor) throws Exception
     {
+	    
 	    ContentMetaData sourceContentMetaData = sourceResourceDescriptor.getResourceMetaData(getParentGroup(), ResourceParameterBuilder.getResourceParameters(getControlElementDeclaration()));
 	    ContentMetaData destinationContentMetaData = destinationResourceDescriptor.getResourceMetaData(getParentGroup(), ResourceParameterBuilder.getResourceParameters(getControlElementDeclaration()));
 	    
 	    
         if (sourceContentMetaData.exists() == false)
         {
-            throw new Exception(" src='"+ sourceContentMetaData.getResourceURI() +"' does not exist, can't sync.");
+            if(getAttributeBooleanValue(Attributes.prune) == true && destinationContentMetaData.exists() == true)
+            {
+                destinationResourceDescriptor.performAction(null, Action.DELETE);
+                destinationResourceDescriptor.close(null);
+                CapoApplication.logger.log(Level.INFO, "Done deleting "+destinationContentMetaData.getResourceURI());
+                if(getAttributeValue(Attributes.onCopy).isEmpty() == false)
+                {
+                    getParentGroup().set(getAttributeValue(Attributes.onCopy), "true");
+                }
+            }
+            else
+            {
+                throw new Exception(" src='"+ sourceContentMetaData.getResourceURI() +"' does not exist, can't sync.");
+            }
         }
-        if (sourceContentMetaData.isContainer() == true )
+        else if (sourceContentMetaData.isContainer() == true )
         {
             
             if (destinationContentMetaData.exists() == true && destinationContentMetaData.isContainer() == false)
