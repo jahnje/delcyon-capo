@@ -52,9 +52,9 @@ public class RemoteResourceDescriptorProxy extends AbstractClientRequestProcesso
 {
 
 	private ControllerClientRequestProcessor controllerClientRequestProcessor;
-	private String lock = "lock";
-	private String inputStreamLock = "inputStreamLock";
-	private String outputStreamLock = "outputStreamLock";
+	private String lock = new String("lock");
+	private String inputStreamLock = new String("inputStreamLock");
+	private String outputStreamLock = new String("outputStreamLock");
 	private String sessionID = ClientRequestProcessorSessionManager.generateSessionID();
 	private VariableContainer variableContainer;
 	private InputStream inputStream;
