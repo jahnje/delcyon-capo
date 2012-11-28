@@ -348,7 +348,7 @@ public class RemoteResourceResponseProcessor implements XMLServerResponseProcess
 	    ThreadedInputStreamReader threadedInputStreamReader = getThreadedInputStreamReaderHashtable().get(sessionID); 
 	    if (threadedInputStreamReader != null)
 	    {
-	        CapoApplication.logger.log(Level.INFO, "Waiting for OutputStream timeout");
+	        CapoApplication.logger.log(Level.FINE, "Waiting for OutputStream timeout");
 	        int loopCount = 0;
 	        int waitTime = 100;
 	        int timeoutSeconds = CapoApplication.getConfiguration().getIntValue(Preferences.OUTPUT_STREAM_TIMEOUT);
@@ -362,7 +362,7 @@ public class RemoteResourceResponseProcessor implements XMLServerResponseProcess
 	                break;
 	            }
 	        }
-	        CapoApplication.logger.log(Level.INFO, "Done Waiting for OutputStream waited("+(waitTime*loopCount)+"ms)");
+	        CapoApplication.logger.log(Level.FINE, "Done Waiting for OutputStream waited("+(waitTime*loopCount)+"ms)");
 	        getThreadedInputStreamReaderHashtable().remove(sessionID);
 	    }
 	}
