@@ -49,10 +49,7 @@ public class CAttr extends CNode implements Attr
     
     public CAttr(CElement parentNode, String uri, String qName, String value)
     {
-        if(value.matches(".*:libfile:.*"))
-        {
-            System.err.println("ATTR==>"+uri+"-->"+qName+"-->"+value);
-        }
+        
         setOwnerDocument(parentNode.getOwnerDocument());
         setParent(parentNode);
         setNodeName(qName);
