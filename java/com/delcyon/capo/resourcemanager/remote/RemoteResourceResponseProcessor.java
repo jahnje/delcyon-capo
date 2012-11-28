@@ -16,6 +16,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 package com.delcyon.capo.resourcemanager.remote;
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.HashMap;
@@ -366,7 +367,7 @@ public class RemoteResourceResponseProcessor implements XMLServerResponseProcess
 	    }
 	}
 
-	private class ThreadedInputStreamReader extends Thread
+	public class ThreadedInputStreamReader extends Thread
 	{
 
 		private InputStream inputStream;
@@ -406,14 +407,7 @@ public class RemoteResourceResponseProcessor implements XMLServerResponseProcess
 			    CapoApplication.logger.log(Level.INFO, "Preparing bytes to remote resource descriptor");
 			   
 			    long read = StreamUtil.readInputStreamIntoOutputStream(inputStream, outputStream);			    
-			    outputStream.flush();
-			    outputStream.close();
-			    finished = true;
-			    if(this.capoConnection != null)
-			    {
-			        this.capoConnection.close();
-			        this.capoConnection = null;
-			    }
+			    close();
 			    CapoApplication.logger.log(Level.INFO, "Processed "+read+" bytes with remote resource descriptor");
 			} 
 			catch (Exception exception)
@@ -427,6 +421,19 @@ public class RemoteResourceResponseProcessor implements XMLServerResponseProcess
 			    CapoApplication.logger.log(Level.SEVERE, "Error sending bytes to remote resource descriptor: "+uri+" SID:"+sessionID,exception);
 			}
 		}
+
+        public void close() throws Exception
+        {
+            outputStream.flush();
+            outputStream.close();
+            finished = true;
+            if(this.capoConnection != null)
+            {
+                this.capoConnection.close();
+                this.capoConnection = null;
+            }
+            
+        }
 
 	}
 

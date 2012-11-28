@@ -30,6 +30,7 @@ import java.security.KeyStore.PrivateKeyEntry;
 import java.security.KeyStore.TrustedCertificateEntry;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateFactory;
+import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.logging.Level;
 
@@ -68,6 +69,7 @@ import com.delcyon.capo.resourcemanager.ResourceDescriptor;
 import com.delcyon.capo.resourcemanager.ResourceDescriptor.Action;
 import com.delcyon.capo.resourcemanager.ResourceParameter;
 import com.delcyon.capo.resourcemanager.remote.RemoteResourceResponseProcessor;
+import com.delcyon.capo.resourcemanager.remote.RemoteResourceResponseProcessor.ThreadedInputStreamReader;
 import com.delcyon.capo.resourcemanager.types.FileResourceType;
 import com.delcyon.capo.tasks.TaskManagerThread;
 import com.delcyon.capo.xml.XPath;
@@ -398,7 +400,14 @@ public class CapoClient extends CapoApplication
 				            count++;
 				            if(count >= 30)
 				            {
-				                CapoApplication.logger.log(Level.SEVERE, "Well, that didn't work");
+				                CapoApplication.logger.log(Level.SEVERE, "Well, that didn't work, killing all of the connections.");
+				                Enumeration<ThreadedInputStreamReader> threadedInputStreamReaderEnumeration =  RemoteResourceResponseProcessor.getThreadedInputStreamReaderHashtable().elements();
+				                while(threadedInputStreamReaderEnumeration.hasMoreElements())
+				                {
+				                    ThreadedInputStreamReader threadedInputStreamReader = threadedInputStreamReaderEnumeration.nextElement();
+				                    threadedInputStreamReader.close();
+				                }
+				                RemoteResourceResponseProcessor.getThreadedInputStreamReaderHashtable().clear();
 				                break;
 				            }
 				        }
