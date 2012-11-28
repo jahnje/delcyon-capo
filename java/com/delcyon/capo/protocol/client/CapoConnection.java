@@ -59,8 +59,7 @@ public class CapoConnection implements StreamEventListener
 	private BufferedInputStream inputStream;
 	private OutputStream outputStream;
     private String serverAddress;
-    private int port;
-    private int securePort;
+    private int port;    
     private boolean dumpOnClose = false;
     private StackTraceElement[] callerStackTraceElements;
     @SuppressWarnings("unused")
@@ -74,8 +73,7 @@ public class CapoConnection implements StreamEventListener
 	public CapoConnection() throws Exception
 	{
 	    serverAddress = CapoApplication.getConfiguration().getValue(PREFERENCE.SERVER_LIST).split(",")[0];
-        port = CapoApplication.getConfiguration().getIntValue(PREFERENCE.PORT);
-        securePort = CapoApplication.getConfiguration().getIntValue(PREFERENCE.SECURE_PORT);
+        port = CapoApplication.getConfiguration().getIntValue(PREFERENCE.PORT);        
 		open();					
 	}
 	
@@ -106,8 +104,8 @@ public class CapoConnection implements StreamEventListener
 			    
 			    if (CapoApplication.getSslSocketFactory() != null)
 			    {
-			        CapoClient.logger.log(Level.FINE, "Opening Secure Socket to "+serverAddress+":"+securePort);
-			        this.socket = CapoApplication.getSslSocketFactory().createSocket(serverAddress, securePort);			        
+			        CapoClient.logger.log(Level.FINE, "Opening Secure Socket to "+serverAddress+":"+port);
+			        this.socket = CapoApplication.getSslSocketFactory().createSocket(serverAddress, port);			        
 			        this.socket.setSendBufferSize(CapoApplication.getConfiguration().getIntValue(PREFERENCE.BUFFER_SIZE)+728);
 			        this.socket.setReceiveBufferSize(CapoApplication.getConfiguration().getIntValue(PREFERENCE.BUFFER_SIZE)+728);
 			    }

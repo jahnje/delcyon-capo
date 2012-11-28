@@ -17,7 +17,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 package com.delcyon.capo.server;
 
 import java.io.BufferedInputStream;
-import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.math.BigInteger;
@@ -47,9 +46,8 @@ import java.util.logging.Level;
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLException;
-import javax.net.ssl.SSLServerSocket;
-import javax.net.ssl.SSLServerSocketFactory;
 import javax.net.ssl.SSLSocket;
+import javax.net.ssl.SSLSocketFactory;
 import javax.net.ssl.TrustManagerFactory;
 import javax.xml.bind.DatatypeConverter;
 import javax.xml.transform.OutputKeys;
@@ -165,7 +163,7 @@ public class CapoServer extends CapoApplication
 	private static final String BC = org.bouncycastle.jce.provider.BouncyCastleProvider.PROVIDER_NAME;
 	private static final String APPLICATION_DIRECTORY_NAME = "server";
 	
-	
+	private ServerSocket serverSocket;
 	private boolean attemptSSL = true;
 	//private boolean isReady = false;
 	//private boolean isShutdown = false;
@@ -175,8 +173,8 @@ public class CapoServer extends CapoApplication
 	private ThreadGroup threadPoolGroup;
     private TrustManagerFactory trustManagerFactory;
     private KeyManagerFactory keyManagerFactory;
-    private SecureSocketListener secureSocketListener;
-    private SocketListener socketListener;
+    //private SecureSocketListener secureSocketListener;
+    //private SocketListener socketListener;
 
 	public CapoServer() throws Exception
 	{
@@ -269,9 +267,12 @@ public class CapoServer extends CapoApplication
         keyManagerFactory = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
         keyManagerFactory.init(getKeyStore(), getConfiguration().getValue(PREFERENCE.KEYSTORE_PASSWORD).toCharArray());
 		
-		secureSocketListener = new SecureSocketListener();
-		socketListener = new SocketListener();
+        setSslSocketFactory(getLocalSslSocketFactory());
+        
+        serverSocket = new ServerSocket(getConfiguration().getIntValue(PREFERENCE.PORT));
 		
+        logger.log(Level.INFO, "Listening on "+serverSocket);
+        
 		runStartupScript(getConfiguration().getValue(PREFERENCE.STARTUP_SCRIPT));
 		
 		setApplicationState(ApplicationState.INITIALIZED);
@@ -317,16 +318,10 @@ public class CapoServer extends CapoApplication
             Thread.sleep(incrementalWaitTime);
         }
 		setApplicationState(ApplicationState.STOPPING);
-		if (secureSocketListener != null)
-		{
-			logger.log(Level.INFO, "Closing Secure Socket Listener");
-			secureSocketListener.close();
-		}
-		
-		if (socketListener != null)
+		if (serverSocket != null)
         {
-            logger.log(Level.INFO, "Closing Socket Listener");
-            socketListener.close();
+            logger.log(Level.INFO, "Closing Socket");
+            serverSocket.close();
         }
 		
 		if (threadPoolExecutor != null)
@@ -402,22 +397,273 @@ public class CapoServer extends CapoApplication
 		start();
 	}
 
-	private SSLServerSocketFactory getLocalSslServerSocketFactory() throws Exception
+	private SSLSocketFactory getLocalSslSocketFactory() throws Exception
 	{
 	    SSLContext sslContext = SSLContext.getInstance("SSL");
         sslContext.init(keyManagerFactory.getKeyManagers(), trustManagerFactory.getTrustManagers(), new java.security.SecureRandom());
-        return sslContext.getServerSocketFactory();
+        return sslContext.getSocketFactory();
 	}
 	
 	@Override
-    public void run()
+	public void run()
 	{
-	    secureSocketListener.start();
-	    socketListener.start();
 	    setApplicationState(ApplicationState.READY);
-	    
-    }
-	
+	    try
+	    {
+	        while (true)
+	        {
+	            Socket socket = null;
+	            try
+	            {
+	                logger.log(Level.FINER, "waiting for connection");
+
+	                try 
+	                {
+	                    socket = serverSocket.accept();	                    
+	                    socket.setTcpNoDelay(true);
+	                    socket.setSoTimeout(getConfiguration().getIntValue(Preferences.SOCKET_IDLE_TIME));
+	                } catch (SocketException socketException)
+	                {
+	                    if (getApplicationState().ordinal() > ApplicationState.READY.ordinal() && serverSocket.isClosed())
+	                    {
+	                        logger.log(Level.INFO, "Shutting down server");
+	                        //isReady = false;
+	                        return;
+	                    }
+	                }
+	                logger.log(Level.FINE, "got connection: "+socket);
+	                socket = new BufferedSocket(socket);
+	                BufferedInputStream inputStream = (BufferedInputStream) socket.getInputStream();
+
+	                //figure out what kind of socket this is
+
+	                inputStream.mark(getConfiguration().getIntValue(PREFERENCE.BUFFER_SIZE));
+	                byte[] buffer = new byte[getConfiguration().getIntValue(PREFERENCE.BUFFER_SIZE)];   
+	                inputStream.read(buffer);
+	                inputStream.reset();
+
+	                String message = new String(buffer).trim();
+
+	                if (message.matches(ConnectionTypes.CAPO_REQUEST.toString()))
+	                {
+	                    if (threadPoolExecutor.getActiveCount() < threadPoolExecutor.getMaximumPoolSize())
+	                    {                   
+	                        writeOKMessage(inputStream, socket, message, buffer);
+	                    }
+	                    else
+	                    {                   
+	                        writeBusyMessage(socket);
+	                        continue;
+	                    }                   
+	                }
+
+	                StreamProcessor streamProcessor = StreamHandler.getStreamProcessor(buffer);
+	                String clientID = null;
+	                HashMap<String, String> sessionHashMap = new HashMap<String, String>();
+	                //if the header is an unknown type assume its SSL and pass it on, since we can't read anything from it
+	                if (streamProcessor == null && attemptSSL == true)
+	                {
+	                    try
+	                    {
+
+	                        socket = getSslSocketFactory().createSocket(socket, socket.getLocalAddress().getHostAddress(), socket.getLocalPort(), true);
+
+	                    } 
+	                    catch (Exception exception)
+	                    {
+	                        CapoApplication.logger.log(Level.WARNING, "Unknown Stream Type: "+exception.getMessage());
+	                        socket.close();
+	                        continue;
+	                    }
+
+	                    //keep the ssl socket so that we can use it's session id for validation
+	                    SSLSocket sslSocket = (SSLSocket) socket;
+	                    sslSocket.setUseClientMode(false);
+	                    //sslSocket.setReuseAddress(false); it's too late for this here, just left as a note
+	                    sslSocket.setSendBufferSize((CapoApplication.getConfiguration().getIntValue(PREFERENCE.BUFFER_SIZE)*2)+728);
+	                    //we effectively have a brand new socket, so we have to wrap it as well, so we can reset of checking it's content
+	                    socket = new BufferedSocket(socket);
+	                    inputStream = (BufferedInputStream) socket.getInputStream();
+	                    inputStream.mark(getConfiguration().getIntValue(PREFERENCE.BUFFER_SIZE));
+	                    try
+	                    {
+	                        inputStream.read(buffer);
+	                    }
+	                    catch (SSLException sslException)
+	                    {
+	                        CapoApplication.logger.log(Level.WARNING, "Unknown SSLException Type: "+sslException.getMessage());
+	                        socket.close();
+	                        continue;
+	                    }
+	                    String authMessage = new String(buffer).trim();
+	                    if (authMessage.matches("AUTH:CID=capo\\.(client|server)\\.\\d+:SIG=[A-F0-9]+.*:.*"))
+	                    {
+	                        logger.fine("SSL SID:"+DatatypeConverter.printHexBinary(sslSocket.getSession().getId()));
+	                        if (isValidAuthMessage(authMessage,sslSocket.getSession().getId()) == false)
+	                        {
+	                            CapoApplication.logger.log(Level.WARNING, "Invalid AUTH attempt "+authMessage+" from: "+socket);
+	                            socket.close();
+	                            continue;
+	                        }
+	                        else //got verified AUTH message
+	                        {
+	                            //the client is waiting for a response so send any single value;
+	                            socket.getOutputStream().write(0);
+	                            socket.getOutputStream().flush();
+	                            //reset to the beginning
+	                            inputStream.reset();
+	                            //skip ahead to the end of our AUTH message
+	                            inputStream.skip(authMessage.length());
+	                            //mark the spot
+	                            inputStream.mark(getConfiguration().getIntValue(PREFERENCE.BUFFER_SIZE));
+	                            //not re-read the buffer from our newly reset and marked location
+	                            Arrays.fill(buffer, (byte)0);
+	                            StreamUtil.fullyReadIntoBufferUntilPattern(inputStream, buffer, ConnectionTypes.CAPO_REQUEST.toString().getBytes());
+	                            //store client id
+	                            clientID = authMessage.replaceFirst("AUTH:CID=(capo\\.(client|server)\\.\\d+):SIG=[A-F0-9]+.*:.*", "$1");
+	                            sessionHashMap.put("clientID", clientID);
+
+	                            //check for a local client directory
+	                            ResourceDescriptor clientResourceDescriptor = getDataManager().getResourceDescriptor(null, "clients:"+clientID);
+	                            if (clientResourceDescriptor.getResourceMetaData(null).exists() == false)
+	                            {
+	                                logger.log(Level.INFO, "Creating new clients resource for "+clientID);
+	                                clientResourceDescriptor.performAction(null, Action.CREATE,new ResourceParameter(ResourceDescriptor.DefaultParameters.CONTAINER, "true"));
+	                                clientResourceDescriptor.close(null);
+	                                clientResourceDescriptor.open(null);
+	                            }
+
+	                            //check for a client resource directory
+	                            ResourceDescriptor clientResourcesResourceDescriptor = clientResourceDescriptor.getChildResourceDescriptor(null,getConfiguration().getValue(PREFERENCE.RESOURCE_DIR));
+	                            if (clientResourcesResourceDescriptor.getResourceMetaData(null).exists() == false)
+	                            {
+	                                logger.log(Level.INFO, "Creating new resource dir for "+clientID);
+	                                clientResourcesResourceDescriptor.performAction(null, Action.CREATE,new ResourceParameter(ResourceDescriptor.DefaultParameters.CONTAINER, "true"));
+	                                clientResourcesResourceDescriptor.close(null);
+	                                clientResourcesResourceDescriptor.open(null);
+	                            }
+
+	                            //check for a client tasks directory
+	                            ResourceDescriptor clientTasksResourceDescriptor = clientResourceDescriptor.getChildResourceDescriptor(null,getConfiguration().getValue(TaskManagerThread.Preferences.TASK_DIR));
+	                            if (clientTasksResourceDescriptor.getResourceMetaData(null).exists() == false)
+	                            {
+	                                logger.log(Level.INFO, "Creating new tasks dir for "+clientID);
+	                                clientTasksResourceDescriptor.performAction(null, Action.CREATE,new ResourceParameter(ResourceDescriptor.DefaultParameters.CONTAINER, "true"));
+	                                clientTasksResourceDescriptor.close(null);
+	                                clientTasksResourceDescriptor.open(null);
+	                            }
+
+	                            //update status information
+	                            ResourceDescriptor statusResourceDescriptor = clientResourceDescriptor.getChildResourceDescriptor(null,"status.xml");
+	                            Element statusRootElement = null;
+	                            if (statusResourceDescriptor.getResourceMetaData(null).exists() == false)
+	                            {
+	                                statusResourceDescriptor.performAction(null, Action.CREATE);
+	                                statusRootElement = CapoApplication.getDefaultDocument("status.xml").getDocumentElement();
+	                            }
+	                            else
+	                            {
+	                                statusRootElement = getDocumentBuilder().parse(statusResourceDescriptor.getInputStream(null)).getDocumentElement();
+	                            }
+	                            statusRootElement.setAttribute("lastConnectTime", System.currentTimeMillis()+"");
+	                            XPath.dumpNode(statusRootElement, statusResourceDescriptor.getOutputStream(null));
+	                            statusResourceDescriptor.close(null);
+	                        }
+
+
+	                        inputStream.reset();
+
+	                        message = new String(buffer).trim();
+
+	                        if (message.matches(ConnectionTypes.CAPO_REQUEST.toString()))
+	                        {
+	                            if (threadPoolExecutor.getActiveCount() < threadPoolExecutor.getMaximumPoolSize())
+	                            {
+	                                writeOKMessage(inputStream, socket, message, buffer);
+	                            }
+	                            else
+	                            {
+	                                writeBusyMessage(socket);
+	                                continue;
+	                            }                           
+	                        }                   
+	                    }
+
+	                    streamProcessor = StreamHandler.getStreamProcessor(buffer);
+
+	                    //reset the buffer
+	                    inputStream.reset();
+	                }
+	                logger.log(Level.FINE, "Request Buffer: '" + new String(buffer) +"'");
+
+	                //we should have a stream handler by this point
+	                if (streamProcessor == null)
+	                {
+
+	                    int initailSocketTimeout = socket.getSoTimeout();
+	                    try
+	                    {
+	                        socket.setSoTimeout(10000);
+	                        //keep trying to read enough into the buffer to make a determination;                               
+	                        while(streamProcessor == null)
+	                        {
+	                            int count = inputStream.read(buffer);
+	                            if(count > 0)
+	                            {
+	                                inputStream.reset();
+	                                inputStream.read(buffer);
+	                            }                                   
+	                            streamProcessor = StreamHandler.getStreamProcessor(buffer);
+	                        }                               
+	                    }
+	                    catch (SocketTimeoutException socketTimeoutException)
+	                    {
+	                        //one final try on the buffer                               
+	                        streamProcessor = StreamHandler.getStreamProcessor(buffer);
+	                    }
+	                    //still didn't find anything after at least 10 seconds 
+	                    if(streamProcessor == null)
+	                    {
+	                        CapoApplication.logger.log(Level.WARNING, "Unknown Stream Type from "+socket.getRemoteSocketAddress());
+	                        CapoApplication.logger.log(Level.WARNING, "Unknown Stream Type: "+new String(buffer));
+	                        socket.close();
+	                        continue;
+	                    }
+	                    //reset the buffer, since we've been beating the crap out of it.
+	                    inputStream.reset();
+	                    //reset the socket timeout
+	                    socket.setSoTimeout(initailSocketTimeout);
+
+	                }
+
+	                StreamHandler streamHandler = new StreamHandler(streamProcessor);
+	                StreamFinalizer streamFinalizer = new SocketFinalizer(socket);
+	                streamHandler.add(streamFinalizer);
+	                streamHandler.init(inputStream,socket.getOutputStream(),sessionHashMap);          
+	                logger.log(Level.FINE, "Starting a "+streamProcessor.getClass().getSimpleName()+" Stream Handler for "+clientID+"@"+socket);                
+	                try
+	                {
+	                    threadPoolExecutor.execute(streamHandler);                  
+	                }
+	                catch (RejectedExecutionException e) 
+	                {
+	                    writeBusyMessage(socket);
+	                }
+	            } 
+	            catch (SocketTimeoutException socketTimeoutException)
+	            {
+	                socket.close();
+	                socketTimeoutException.printStackTrace();
+	            }
+	        }
+	    }
+	    catch (Exception exception)
+	    {
+	        CapoApplication.logger.log(Level.SEVERE, "Exiting due to uncaught exception.",exception);
+	    }
+
+	}
+
 	private void writeOKMessage(InputStream inputStream,Socket socket, String message,byte[] buffer) throws Exception
 	{
 		inputStream.skip(message.length());
@@ -547,380 +793,5 @@ public class CapoServer extends CapoApplication
         keyStoreFileOutputStream.close();
         keystoreFile.close(null);
 	}
-
-	private class SecureSocketListener extends Thread
-	{
-	    private SSLServerSocket sslServerSocket;
-
-        public SecureSocketListener() throws IOException, Exception
-        {
-            super("SecureSocketListener:"+getConfiguration().getIntValue(PREFERENCE.SECURE_PORT));
-	        sslServerSocket = (SSLServerSocket) getLocalSslServerSocketFactory().createServerSocket(getConfiguration().getIntValue(PREFERENCE.SECURE_PORT));
-	        sslServerSocket.setUseClientMode(false);
-            //sslServerSocket.setReuseAddress(false); //it's too late for this here, just left as a note            
-            sslServerSocket.setReceiveBufferSize(CapoApplication.getConfiguration().getIntValue(PREFERENCE.BUFFER_SIZE)+728);            
-        }
-	    
-	    public void close() throws Exception
-        {
-	        sslServerSocket.close();            
-        }
-
-        @Override
-	    public void run()
-	    {	        
-	        try
-	        {
-	            while (true)
-	            {
-	                SSLSocket socket = null;
-	                try
-	                {
-	                    logger.log(Level.FINER, "waiting for secure connection");
-
-	                    try 
-	                    {
-	                        socket = (SSLSocket) sslServerSocket.accept();
-	                        socket.setSendBufferSize(CapoApplication.getConfiguration().getIntValue(PREFERENCE.BUFFER_SIZE)+728);
-	                        socket.setSoTimeout(getConfiguration().getIntValue(Preferences.SOCKET_IDLE_TIME));
-
-	                    } catch (SocketException socketException)
-	                    {
-	                        if (getApplicationState().ordinal() > ApplicationState.READY.ordinal() && sslServerSocket.isClosed())
-	                        {
-	                            logger.log(Level.INFO, "Shutting down secure server");
-	                            //isReady = false;
-	                            return;
-	                        }
-	                    }
-	                    logger.log(Level.FINE, "got secure connection: "+socket);
-	                    InputStream socketInputStream = socket.getInputStream();
-	                    BufferedInputStream inputStream = new BufferedInputStream(socketInputStream);
-
-	                    //figure out what kind of socket this is
-
-	                    inputStream.mark(getConfiguration().getIntValue(PREFERENCE.BUFFER_SIZE));
-	                    byte[] buffer = new byte[getConfiguration().getIntValue(PREFERENCE.BUFFER_SIZE)];   
-	                    inputStream.read(buffer);
-	                    inputStream.reset();
-
-	                    String message = new String(buffer).trim();
-
-	                    StreamProcessor streamProcessor = StreamHandler.getStreamProcessor(buffer);
-	                    String clientID = null;
-	                    HashMap<String, String> sessionHashMap = new HashMap<String, String>();
-	                    //if the header is an unknown type assume its an AUTH message, since we can't read anything from it
-	                    if (streamProcessor == null)
-	                    {
-
-	                        //sslSocket.setUseClientMode(false);
-	                        //sslSocket.setReuseAddress(false); it's too late for this here, just left as a note
-	                        //sslSocket.setSendBufferSize((CapoApplication.getConfiguration().getIntValue(PREFERENCE.BUFFER_SIZE)*2)+728);
-	                        //we effectively have a brand new socket, so we have to wrap it as well, so we can reset of checking it's content
-
-
-	                        if (message.matches("AUTH:CID=capo\\.(client|server)\\.\\d+:SIG=[A-F0-9]+.*:.*"))
-	                        {
-	                            logger.fine("SSL SID:"+DatatypeConverter.printHexBinary(socket.getSession().getId()));
-	                            if (isValidAuthMessage(message,socket.getSession().getId()) == false)
-	                            {
-	                                CapoApplication.logger.log(Level.WARNING, "Invalid AUTH attempt "+message+" from: "+socket);
-	                                socket.close();
-	                                continue;
-	                            }
-	                            else //got verified AUTH message
-	                            {
-	                                //the client is waiting for a response so send any single value;
-	                                socket.getOutputStream().write(0);
-	                                socket.getOutputStream().flush();
-	                                //reset to the beginning
-	                                inputStream.reset();
-	                                //skip ahead to the end of our AUTH message
-	                                inputStream.skip(message.length());
-	                                //mark the spot
-	                                inputStream.mark(getConfiguration().getIntValue(PREFERENCE.BUFFER_SIZE));
-	                                //not re-read the buffer from our newly reset and marked location
-	                                Arrays.fill(buffer, (byte)0);
-	                                StreamUtil.fullyReadIntoBufferUntilPattern(inputStream, buffer, ConnectionTypes.CAPO_REQUEST.toString().getBytes());
-	                                //store client id
-	                                clientID = message.replaceFirst("AUTH:CID=(capo\\.(client|server)\\.\\d+):SIG=[A-F0-9]+.*:.*", "$1");
-	                                sessionHashMap.put("clientID", clientID);
-
-	                                //check for a local client directory
-	                                ResourceDescriptor clientResourceDescriptor = getDataManager().getResourceDescriptor(null, "clients:"+clientID);
-	                                if (clientResourceDescriptor.getResourceMetaData(null).exists() == false)
-	                                {
-	                                    logger.log(Level.INFO, "Creating new clients resource for "+clientID);
-	                                    clientResourceDescriptor.performAction(null, Action.CREATE,new ResourceParameter(ResourceDescriptor.DefaultParameters.CONTAINER, "true"));
-	                                    clientResourceDescriptor.close(null);
-	                                    clientResourceDescriptor.open(null);
-	                                }
-
-	                                //check for a client resource directory
-	                                ResourceDescriptor clientResourcesResourceDescriptor = clientResourceDescriptor.getChildResourceDescriptor(null,getConfiguration().getValue(PREFERENCE.RESOURCE_DIR));
-	                                if (clientResourcesResourceDescriptor.getResourceMetaData(null).exists() == false)
-	                                {
-	                                    logger.log(Level.INFO, "Creating new resource dir for "+clientID);
-	                                    clientResourcesResourceDescriptor.performAction(null, Action.CREATE,new ResourceParameter(ResourceDescriptor.DefaultParameters.CONTAINER, "true"));
-	                                    clientResourcesResourceDescriptor.close(null);
-	                                    clientResourcesResourceDescriptor.open(null);
-	                                }
-
-	                                //check for a client tasks directory
-	                                ResourceDescriptor clientTasksResourceDescriptor = clientResourceDescriptor.getChildResourceDescriptor(null,getConfiguration().getValue(TaskManagerThread.Preferences.TASK_DIR));
-	                                if (clientTasksResourceDescriptor.getResourceMetaData(null).exists() == false)
-	                                {
-	                                    logger.log(Level.INFO, "Creating new tasks dir for "+clientID);
-	                                    clientTasksResourceDescriptor.performAction(null, Action.CREATE,new ResourceParameter(ResourceDescriptor.DefaultParameters.CONTAINER, "true"));
-	                                    clientTasksResourceDescriptor.close(null);
-	                                    clientTasksResourceDescriptor.open(null);
-	                                }
-
-	                                //update status information
-	                                ResourceDescriptor statusResourceDescriptor = clientResourceDescriptor.getChildResourceDescriptor(null,"status.xml");
-	                                Element statusRootElement = null;
-	                                if (statusResourceDescriptor.getResourceMetaData(null).exists() == false)
-	                                {
-	                                    statusResourceDescriptor.performAction(null, Action.CREATE);
-	                                    statusRootElement = CapoApplication.getDefaultDocument("status.xml").getDocumentElement();
-	                                }
-	                                else
-	                                {
-	                                    statusRootElement = getDocumentBuilder().parse(statusResourceDescriptor.getInputStream(null)).getDocumentElement();
-	                                }
-	                                statusRootElement.setAttribute("lastConnectTime", System.currentTimeMillis()+"");
-	                                XPath.dumpNode(statusRootElement, statusResourceDescriptor.getOutputStream(null));
-	                                statusResourceDescriptor.close(null);
-	                            }
-
-	                            //make sure that if we've read anything off the buffer in the auth check, that we reset the stream, so writeOK, can skip the length of our message.
-	                            //anything else should get the whole message anyway.
-	                            inputStream.reset();
-
-	                            message = new String(buffer).trim();
-
-	                            if (message.matches(ConnectionTypes.CAPO_REQUEST.toString()))
-	                            {
-	                                if (threadPoolExecutor.getActiveCount() < threadPoolExecutor.getMaximumPoolSize())
-	                                {
-	                                    writeOKMessage(inputStream, socket, message, buffer);
-	                                }
-	                                else
-	                                {
-	                                    writeBusyMessage(socket);
-	                                    continue;
-	                                }                           
-	                            }                   
-	                        }
-
-	                        streamProcessor = StreamHandler.getStreamProcessor(buffer);
-	                        
-	                        //reset the buffer
-	                        inputStream.reset();
-	                    }
-
-	                    logger.log(Level.FINE, "Request Buffer: '" + new String(buffer) +"'");
-
-	                    //we should have a stream handler by this point
-	                    if (streamProcessor == null)
-	                    {
-	                        
-	                        int initailSocketTimeout = socket.getSoTimeout();
-	                        try
-	                        {
-	                            socket.setSoTimeout(10000);
-	                            //keep trying to read enough into the buffer to make a determination;	                            
-	                            while(streamProcessor == null)
-	                            {
-	                                int count = inputStream.read(buffer);
-	                                if(count > 0)
-	                                {
-	                                    inputStream.reset();
-	                                    inputStream.read(buffer);
-	                                }	                                
-	                                streamProcessor = StreamHandler.getStreamProcessor(buffer);
-	                            }	                            
-	                        }
-	                        catch (SocketTimeoutException socketTimeoutException)
-	                        {
-	                            //one final try on the buffer	                            
-	                            streamProcessor = StreamHandler.getStreamProcessor(buffer);
-	                        }
-	                        
-	                        //still didn't find anything after at least 10 seconds 
-	                        if(streamProcessor == null)
-	                        {
-	                            CapoApplication.logger.log(Level.WARNING, "Unknown Stream Type from "+socket.getRemoteSocketAddress());
-	                            CapoApplication.logger.log(Level.WARNING, "Unknown Stream Type: "+new String(buffer));
-	                            socket.close();
-	                            continue;
-	                        }
-	                        //reset the buffer, since we've been beating the crap out of it.
-                            inputStream.reset();
-                            //reset the socket timeout
-                            socket.setSoTimeout(initailSocketTimeout);
-                            
-	                    }
-
-	                    StreamHandler streamHandler = new StreamHandler(streamProcessor);
-	                    StreamFinalizer streamFinalizer = new SocketFinalizer(socket);
-	                    streamHandler.add(streamFinalizer);
-	                    streamHandler.init(inputStream,socket.getOutputStream(),sessionHashMap);          
-	                    logger.log(Level.FINE, "Starting a "+streamProcessor.getClass().getSimpleName()+" Stream Handler for "+clientID+"@"+socket);                
-	                    try
-	                    {
-	                        threadPoolExecutor.execute(streamHandler);                  
-	                    }
-	                    catch (RejectedExecutionException e) 
-	                    {
-	                        writeBusyMessage(socket);
-	                    }
-	                } 
-	                catch (SocketTimeoutException socketTimeoutException)
-	                {
-	                    socket.close();
-	                    socketTimeoutException.printStackTrace();
-	                }
-	            }
-	        }
-	        catch (Exception exception)
-	        {
-	            CapoApplication.logger.log(Level.SEVERE, "Exiting due to uncaught exception.",exception);
-	            try
-                {
-                    shutdown();
-                }
-                catch (Exception e)
-                {
-                    // TODO Auto-generated catch block
-                    e.printStackTrace();
-                }
-	        }
-	    }
-	    
-	}
-	
-	
-	private class SocketListener extends Thread
-    {
-	    private ServerSocket serverSocket;
-
-        public SocketListener() throws IOException
-        {
-            super("SocketListener:"+getConfiguration().getIntValue(PREFERENCE.PORT));
-	        serverSocket = new ServerSocket(getConfiguration().getIntValue(PREFERENCE.PORT));
-        }
-	   
-        public void close() throws Exception
-        {
-            serverSocket.close();
-            
-        }
-
-        @Override
-        public void run()
-        {
-            
-            try
-            {
-                while (true)
-                {
-                    Socket socket = null;
-                    try
-                    {
-                        logger.log(Level.FINER, "waiting for connection");
-                        
-                        try 
-                        {
-                            socket = serverSocket.accept();
-                            socket.setSoLinger(false, 0);
-                            socket.setTcpNoDelay(true);
-                            socket.setSoTimeout(getConfiguration().getIntValue(Preferences.SOCKET_IDLE_TIME));
-                        } catch (SocketException socketException)
-                        {
-                            if (getApplicationState().ordinal() > ApplicationState.READY.ordinal() && serverSocket.isClosed())
-                            {
-                                logger.log(Level.INFO, "Shutting down server");
-                                //isReady = false;
-                                return;
-                            }
-                        }
-                        logger.log(Level.FINE, "got connection: "+socket);
-                        socket = new BufferedSocket(socket);
-                        InputStream inputStream = socket.getInputStream();
-
-                        //figure out what kind of socket this is
-
-                        inputStream.mark(getConfiguration().getIntValue(PREFERENCE.BUFFER_SIZE));
-                        byte[] buffer = new byte[getConfiguration().getIntValue(PREFERENCE.BUFFER_SIZE)];   
-                        inputStream.read(buffer);
-                        inputStream.reset();
-
-                        String message = new String(buffer).trim();
-
-                        if (message.matches(ConnectionTypes.CAPO_REQUEST.toString()))
-                        {
-                            if (threadPoolExecutor.getActiveCount() < threadPoolExecutor.getMaximumPoolSize())
-                            {                   
-                                writeOKMessage(inputStream, socket, message, buffer);
-                            }
-                            else
-                            {                   
-                                writeBusyMessage(socket);
-                                continue;
-                            }                   
-                        }
-
-                        StreamProcessor streamProcessor = StreamHandler.getStreamProcessor(buffer);
-                        String clientID = null;
-                        HashMap<String, String> sessionHashMap = new HashMap<String, String>();
-
-                        logger.log(Level.FINE, "Request Buffer: '" + new String(buffer) +"'");
-
-                        //we should have a stream handler by this point
-                        if (streamProcessor == null)
-                        {
-                            CapoApplication.logger.log(Level.WARNING, "Unknown Stream Type from "+socket.getRemoteSocketAddress());
-                            CapoApplication.logger.log(Level.WARNING, "Unknown Stream Type: "+new String(buffer));
-                            socket.close();
-                            continue;
-                        }
-
-                        StreamHandler streamHandler = new StreamHandler(streamProcessor);
-                        StreamFinalizer streamFinalizer = new SocketFinalizer(socket);
-                        streamHandler.add(streamFinalizer);
-                        streamHandler.init((BufferedInputStream) socket.getInputStream(),socket.getOutputStream(),sessionHashMap);          
-                        logger.log(Level.FINE, "Starting a "+streamProcessor.getClass().getSimpleName()+" Stream Handler for "+clientID+"@"+socket);                
-                        try
-                        {
-                            threadPoolExecutor.execute(streamHandler);                  
-                        }
-                        catch (RejectedExecutionException e) 
-                        {
-                            writeBusyMessage(socket);
-                        }
-                    } 
-                    catch (SocketTimeoutException socketTimeoutException)
-                    {
-                        socket.close();
-                        socketTimeoutException.printStackTrace();
-                    }
-                }
-            }
-            catch (Exception exception)
-            {
-                CapoApplication.logger.log(Level.SEVERE, "Exiting due to uncaught exception.",exception);
-                try
-                {
-                    shutdown();
-                }
-                catch (Exception e)
-                {                   
-                    e.printStackTrace();
-                }
-            }
-
-        }
-    }
 	
 }
