@@ -557,8 +557,8 @@ public class CapoServer extends CapoApplication
             super("SecureSocketListener:"+getConfiguration().getIntValue(PREFERENCE.SECURE_PORT));
 	        sslServerSocket = (SSLServerSocket) getLocalSslServerSocketFactory().createServerSocket(getConfiguration().getIntValue(PREFERENCE.SECURE_PORT));
 	        sslServerSocket.setUseClientMode(false);
-            sslServerSocket.setReuseAddress(false); //it's too late for this here, just left as a note
-            sslServerSocket.setReceiveBufferSize(15);            
+            //sslServerSocket.setReuseAddress(false); //it's too late for this here, just left as a note            
+            sslServerSocket.setReceiveBufferSize(CapoApplication.getConfiguration().getIntValue(PREFERENCE.BUFFER_SIZE)+728);            
         }
 	    
 	    public void close() throws Exception
@@ -581,9 +581,7 @@ public class CapoServer extends CapoApplication
 	                    try 
 	                    {
 	                        socket = (SSLSocket) sslServerSocket.accept();
-
-	                        socket.setSoLinger(false, 0);
-	                        socket.setTcpNoDelay(true);
+	                        socket.setSendBufferSize(CapoApplication.getConfiguration().getIntValue(PREFERENCE.BUFFER_SIZE)+728);
 	                        socket.setSoTimeout(getConfiguration().getIntValue(Preferences.SOCKET_IDLE_TIME));
 
 	                    } catch (SocketException socketException)

@@ -30,6 +30,7 @@ import javax.net.ssl.SSLSocket;
 import javax.xml.bind.DatatypeConverter;
 
 import com.delcyon.capo.CapoApplication;
+import com.delcyon.capo.CapoApplication.ApplicationState;
 import com.delcyon.capo.Configuration.PREFERENCE;
 import com.delcyon.capo.client.CapoClient;
 import com.delcyon.capo.datastream.StreamEventFilterInputStream;
@@ -108,6 +109,7 @@ public class CapoConnection implements StreamEventListener
 			        CapoClient.logger.log(Level.FINE, "Opening Secure Socket to "+serverAddress+":"+securePort);
 			        this.socket = CapoApplication.getSslSocketFactory().createSocket(serverAddress, securePort);			        
 			        this.socket.setSendBufferSize(CapoApplication.getConfiguration().getIntValue(PREFERENCE.BUFFER_SIZE)+728);
+			        this.socket.setReceiveBufferSize(CapoApplication.getConfiguration().getIntValue(PREFERENCE.BUFFER_SIZE)+728);
 			    }
 			    else
 			    {
@@ -117,6 +119,10 @@ public class CapoConnection implements StreamEventListener
 			} 
 			catch (ConnectException connectException)
 			{
+			    if(CapoApplication.getApplication().getApplicationState().ordinal() >= ApplicationState.STOPPING.ordinal())
+			    {
+			        throw new Exception("Application Shutting Down, ABORTING connection attempt.");
+			    }
 			    CapoApplication.logger.log(Level.WARNING, "Error opening socket, sleeping "+CapoApplication.getConfiguration().getLongValue(CapoClient.Preferences.CONNECTION_RETRY_INTERVAL)+"ms");
 			    Thread.sleep(CapoApplication.getConfiguration().getLongValue(CapoClient.Preferences.CONNECTION_RETRY_INTERVAL));
 			}
