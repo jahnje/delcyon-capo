@@ -261,7 +261,10 @@ public abstract class AbstractControl implements ServerSideControl
 				}
 				catch (Exception exception)
 				{
-					exception.printStackTrace();
+				    if(exception instanceof MissingAttributeException == false)
+				    {
+				        exception.printStackTrace();
+				    }
 					CapoApplication.logger.log(Level.WARNING, "Couldn't process "+XPath.getXPath(node)+"\nREASON: "+(exception.getMessage() == null ? exception.getCause().toString() : exception.getMessage()));
 					setContext(originalContext);
 					throw exception;
