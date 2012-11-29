@@ -16,10 +16,14 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 package com.delcyon.capo.xml.cdom;
 
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.net.URI;
+import java.net.URISyntaxException;
 
 import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
 
@@ -40,9 +44,37 @@ public class CDocumentBuilder extends DocumentBuilder
     private EntityResolver entityResolver;
     private ErrorHandler errorHandler;
     private static final SAXParserFactory saxParserFactory = SAXParserFactory.newInstance();
-    /* (non-Javadoc)
-     * @see javax.xml.parsers.DocumentBuilder#parse(org.xml.sax.InputSource)
-     */
+    
+    
+    
+    
+    @Override
+    public Document parse(String uri) throws SAXException, IOException
+    {
+        try
+        {
+            return parse(new InputSource(new URI(uri).toURL().openStream()));
+        }
+        catch (URISyntaxException e)
+        {
+            throw new IOException(e);
+        }
+    }
+    
+    
+    @Override
+    public Document parse(InputStream inputStream) throws SAXException, IOException
+    {
+        return parse(new InputSource(inputStream));
+    }
+    
+    
+    @Override
+    public Document parse(File file) throws SAXException, IOException
+    {
+        return parse(new InputSource(new FileInputStream(file)));
+    }
+    
     @Override
     public Document parse(InputSource is) throws SAXException, IOException
     {
@@ -55,12 +87,14 @@ public class CDocumentBuilder extends DocumentBuilder
         CDOMHandler cdomHandler = new CDOMHandler(entityResolver,errorHandler);
         try
         {
-            SAXParser saxParser = saxParserFactory.newSAXParser();            
+            SAXParser saxParser = saxParserFactory.newSAXParser(); 
+            saxParser.getXMLReader().setProperty("http://xml.org/sax/properties/lexical-handler", cdomHandler);
             saxParser.parse(is, cdomHandler);
             return cdomHandler.getDocument();
         }
         catch (Exception e)
         {
+            e.printStackTrace();
             throw new SAXException(e);
         }        
     }

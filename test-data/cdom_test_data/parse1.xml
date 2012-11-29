@@ -2,6 +2,7 @@
 <server:group xmlns:client="http://www.delcyon.com/capo-client"
     xmlns:server="http://www.delcyon.com/capo-server"
     name="update">
+    <!-- This is a test comment -->
     <ControllerRequest type="update">
         <var name="TERM" value="dumb"/>
         <var name="IMSETTINGS_MODULE" value="none"/>
@@ -11,6 +12,14 @@
         <var name="GNOME_DESKTOP_SESSION_ID" value="this-is-deprecated"/>
         <var name="IMSETTINGS_INTEGRATE_DESKTOP" value="yes"/>
         <var name="MOZ_PLUGIN_PATH" value="~/.plugins"/>
+        <!-- 
+            This 
+            is 
+            a 
+            multi-line 
+            test 
+            comment
+        -->
         <var name="MAIL" value="/var/spool/mail/jeremiah"/>
         <var name="GDMSESSION" value="gnome"/>
         <var name="XDG_SESSION_COOKIE"

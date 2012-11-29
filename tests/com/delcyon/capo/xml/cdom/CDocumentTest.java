@@ -1,5 +1,7 @@
 package com.delcyon.capo.xml.cdom;
 
+import java.io.File;
+
 import javax.xml.parsers.DocumentBuilderFactory;
 
 import org.junit.After;
@@ -46,14 +48,15 @@ public class CDocumentTest
         String file = "test-data/cdom_test_data/parse1.xml";
         DocumentBuilderFactory systemDocumentBuilderFactory = DocumentBuilderFactory.newInstance();
         systemDocumentBuilderFactory.setNamespaceAware(true);        
-        Document systemDocument = systemDocumentBuilderFactory.newDocumentBuilder().parse(file);
+        Document systemDocument = systemDocumentBuilderFactory.newDocumentBuilder().parse(new File(file));
         Assert.assertFalse(systemDocument instanceof CDocument);
         
         CDocumentBuilderFactory cDocumentBuilderFactory = new CDocumentBuilderFactory();
         cDocumentBuilderFactory.setNamespaceAware(true);
         
-        CDocument cDocument = (CDocument) cDocumentBuilderFactory.newDocumentBuilder().parse(file);
+        CDocument cDocument = (CDocument) cDocumentBuilderFactory.newDocumentBuilder().parse(new File(file));
         Assert.assertTrue(cDocument instanceof CDocument);
+        XPath.dumpNode(cDocument, System.err);
         
         XMLDiff xmlDiff = new XMLDiff();
         //xmlDiff.setAllowNamespaceMismatches(true);
@@ -74,13 +77,13 @@ public class CDocumentTest
         String file = "test-data/cdom_test_data/parse2.xml";
         DocumentBuilderFactory systemDocumentBuilderFactory = DocumentBuilderFactory.newInstance();
         systemDocumentBuilderFactory.setNamespaceAware(true);        
-        Document systemDocument = systemDocumentBuilderFactory.newDocumentBuilder().parse(file);
+        Document systemDocument = systemDocumentBuilderFactory.newDocumentBuilder().parse(new File(file));
         Assert.assertFalse(systemDocument instanceof CDocument);
         
         CDocumentBuilderFactory cDocumentBuilderFactory = new CDocumentBuilderFactory();
         cDocumentBuilderFactory.setNamespaceAware(true);
         
-        CDocument cDocument = (CDocument) cDocumentBuilderFactory.newDocumentBuilder().parse(file);
+        CDocument cDocument = (CDocument) cDocumentBuilderFactory.newDocumentBuilder().parse(new File(file));
         Assert.assertTrue(cDocument instanceof CDocument);
         
         Node sNode = XPath.selectSingleNode(systemDocument, "//stdout");
@@ -105,7 +108,14 @@ public class CDocumentTest
         
     }
 
-    
+    @Test
+    public void simpleTest() throws Exception
+    {
+        CDocumentBuilderFactory cDocumentBuilderFactory = new CDocumentBuilderFactory();
+        cDocumentBuilderFactory.setNamespaceAware(true);        
+        CDocument cDocument = (CDocument) cDocumentBuilderFactory.newDocumentBuilder().parse(new File("test-data/cdom_test_data/simple.xml"));
+        Assert.assertTrue(cDocument instanceof CDocument);
+    }
     
     
 }

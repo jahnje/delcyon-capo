@@ -18,6 +18,7 @@ package com.delcyon.capo.util.diff;
 
 
 import java.io.ByteArrayOutputStream;
+import java.io.File;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -28,12 +29,10 @@ import org.junit.Test;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
-import com.delcyon.capo.tests.util.Util;
 import com.delcyon.capo.util.diff.Diff.Side;
 import com.delcyon.capo.util.diff.InputStreamTokenizer.TokenList;
 import com.delcyon.capo.xml.XMLDiff;
 import com.delcyon.capo.xml.XPath;
-import com.delcyon.capo.xml.cdom.CDocumentBuilder;
 
 /**
  * @author jeremiah
@@ -68,10 +67,10 @@ public class XMLDiffTest
 
 		
 		
-		baseDocument = documentBuilder.parse("test-data/diff-testdata/baseDocument.xml");
+		baseDocument = documentBuilder.parse(new File("test-data/diff-testdata/baseDocument.xml"));
 		//XPath.dumpNode(baseDocument, System.out);
 		System.out.println();
-		changeDocument = documentBuilder.parse("test-data/diff-testdata/changeDocument.xml");
+		changeDocument = documentBuilder.parse(new File("test-data/diff-testdata/changeDocument.xml"));
 		ByteArrayOutputStream baseDocumentByteArrayOutputStream = new ByteArrayOutputStream();
 		ByteArrayOutputStream changeDocumentByteArrayOutputStream = new ByteArrayOutputStream();
 		XPath.dumpNode(baseDocument, baseDocumentByteArrayOutputStream);
@@ -203,7 +202,7 @@ public class XMLDiffTest
 	public void testSimpleXmlDiff() throws Exception
 	{
 		XMLDiff xmlDiff = new XMLDiff();
-		Document simpleXmlDiffDocument = documentBuilder.parse("test-data/diff-testdata/simpleXmlDiff.xml");
+		Document simpleXmlDiffDocument = documentBuilder.parse(new File("test-data/diff-testdata/simpleXmlDiff.xml"));
 		Element sideElement = xmlDiff.getElementForSide(baseDocument,(Element) simpleXmlDiffDocument.getDocumentElement().cloneNode(true), Side.MOD);
 		System.err.println("\n\nBASE dump");
 		XPath.dumpNode(sideElement, System.err);

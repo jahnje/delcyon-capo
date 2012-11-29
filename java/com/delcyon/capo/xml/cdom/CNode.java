@@ -435,6 +435,20 @@ public abstract class CNode implements Node, ControlledClone
         cascadeDOMEvent(prepareEvent(EventType.DELETE, this));
     }
     
+    protected void removeNodeTypeChildrenAll(short nodeType)
+    {
+        for(int index = 0; index < nodeList.getLength(); index++)
+        {
+            if(nodeList.item(index).getNodeType() == nodeType)
+            {
+                nodeList.remove(index);
+                index--;
+            }
+        }
+        
+        cascadeDOMEvent(prepareEvent(EventType.DELETE, this));
+    }
+    
     /* (non-Javadoc)
      * @see org.w3c.dom.Node#appendChild(org.w3c.dom.Node)
      */

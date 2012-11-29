@@ -89,10 +89,14 @@ public class CDocument extends CNode implements Document
         if(newChild instanceof CElement && documentElement == null)
         {
             this.documentElement = (CElement) newChild;
-            removeChildrenAll();
+            removeNodeTypeChildrenAll(newChild.getNodeType());
             super.appendChild(newChild);            
             ((CNode) newChild).setParent(this);
             return newChild;
+        }
+        else if(newChild instanceof CComment || newChild instanceof CProcessingInstruction)
+        {
+            return super.appendChild(newChild);            
         }
         else
         {

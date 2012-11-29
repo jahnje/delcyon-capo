@@ -18,9 +18,9 @@ package com.delcyon.capo.xml.cdom;
 
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.Stack;
-import java.util.Map.Entry;
 
 import org.w3c.dom.Document;
 import org.xml.sax.Attributes;
@@ -29,7 +29,7 @@ import org.xml.sax.ErrorHandler;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 import org.xml.sax.SAXParseException;
-import org.xml.sax.helpers.DefaultHandler;
+import org.xml.sax.ext.DefaultHandler2;
 
 import com.delcyon.capo.xml.XPath;
 
@@ -37,7 +37,7 @@ import com.delcyon.capo.xml.XPath;
  * @author jeremiah
  *
  */
-public class CDOMHandler extends DefaultHandler
+public class CDOMHandler extends DefaultHandler2
 {
     public static final String NAMESPACE_NAMESPACE_URI = "http://www.w3.org/2000/xmlns/";
     
@@ -115,13 +115,27 @@ public class CDOMHandler extends DefaultHandler
         
         nodeStack.push(element);
     }
-
+    
+    @Override
+    public void processingInstruction(String target, String data) throws SAXException
+    {
+        CProcessingInstruction processingInstruction = new CProcessingInstruction(target,data);       
+        nodeStack.peek().appendChild(processingInstruction);
+    }
+    
+    @Override
+    public void comment(char[] ch, int start, int length) throws SAXException
+    {
+        CComment text = new CComment();
+        text.setData(new String(ch,start,length));
+        nodeStack.peek().appendChild(text);
+    }
+    
     @Override
     public void characters(char[] ch, int start, int length) throws SAXException
-    {
-       StringBuffer buffer = new StringBuffer(new String(ch)); 
+    {       
        CText text = new CText();
-       text.setData(buffer.substring(start, start+length));
+       text.setData(new String(ch,start,length));
        nodeStack.peek().appendChild(text);
     }
     
@@ -158,8 +172,7 @@ public class CDOMHandler extends DefaultHandler
             XPath.dumpNode(document, System.err);
         }
         catch (Exception e)
-        {
-            // TODO Auto-generated catch block
+        {    
             e.printStackTrace();
         }
         errorHandler.fatalError(saxParseException);
