@@ -1,0 +1,26 @@
+Symbols:
+{
+	EOL 		= \n | \r	 
+	literal 	= ".." | '..'
+	assignment 	= =
+	alternation = \|	
+	delimiter 	= ' ' | \t | EOL
+}
+
+Grammar:
+{
+	SYMBOL 			= SYMBOL_NAME '=' LITERAL_LIST EOL
+	LITERAL_LIST 	= LITERAL | LITERAL '|' LITERAL_LIST
+	SYMBOL_LIST 	= SYMBOL | SYMBOL SYMBOL_LIST 
+	SYMBOLS 		= 'Symbols:' EOL '{' SYMBOL_LIST '}' EOL
+	
+	RULE			= RULE_NAME ASSIGNMENT EXPRESSION EOL
+	 
+	RULE_LIST		= RULE | RULE RULE_LIST
+	 
+	GRAMMER 		= 'Grammar:' EOL '{' RULE_LIST '}' EOL
+	
+	EXPRESSION		= LIST | LIST ALTERATION EXPRESSION
+	TERM			= LITERAL | RULE_NAME
+	LIST			= TERM | TERM LIST
+}

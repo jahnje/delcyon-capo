@@ -1,0 +1,34 @@
+Symbols:
+{
+	EOL = \n | \r | \r\n | ;	 
+	literal = ".." | '..'
+	assignment = ::=
+	alternation = \|
+	declaration = <..>
+	delimiter = ' ' | \t | $EOL
+}
+
+Grammar:
+{
+	<postal-address> 	::= <name-part> <street-address> <zip-part>
+ 	<name-part> 		::= <personal-part> <last-name> <opt-suffix-part> <EOL> | <personal-part> <name-part>
+ 	<personal-part>		::= <first-name> | <initial>"." 
+ 	<street-address> 	::= <house-num> <street-name> <opt-apt-num> <EOL>
+ 	<zip-part>			::= <town-name> "," <state-code> <ZIP-code> <EOL>
+ 	<opt-suffix-part>	::= "Sr." | "Jr." | <roman-numeral> | ""
+}
+
+XML:
+{
+		<postal-address>
+			<name-part last-name="">
+				<personal-part first-name=""/>
+				<personal-part initial="">.</personal-part>
+				<opt-suffix-part roman-numeral="" >Jr.</opt-suffix-part>
+			</name-part>
+			<street-address house-num="" street-name="" opt-apt-num=""/>
+			<zip-part town-name="" state-code="" ZIP-code="">,</zip-part>			
+		</postal-address>
+}
+
+
