@@ -19,6 +19,8 @@ package com.delcyon.capo.parsers;
 import java.io.StreamTokenizer;
 import java.util.Vector;
 
+import com.delcyon.capo.parsers.ParseToken.TokenType;
+
 /**
  * @author jeremiah
  *
@@ -27,7 +29,7 @@ public class ParseTape
 {
 
 	private int position = -1;
-	private Vector<String> streamVector = new Vector<String>();
+	private Vector<ParseToken> streamVector = new Vector<ParseToken>();
 	public ParseTape(StreamTokenizer streamTokenizer) throws Exception
 	{
 	
@@ -36,17 +38,18 @@ public class ParseTape
 			streamTokenizer.nextToken();
 			
 			if(streamTokenizer.sval != null)
-			{
-				streamVector.add(streamTokenizer.sval);
+			{				
+				streamVector.add(new ParseToken(streamTokenizer.sval,TokenType.WORD));
 			}
 			else if (streamTokenizer.ttype ==StreamTokenizer.TT_EOL)
 			{
-				streamVector.add("EOL");
+				streamVector.add(new ParseToken("EOL",TokenType.EOL));
 			}
 			else if (streamTokenizer.ttype ==StreamTokenizer.TT_EOF)
 			{				
 				break;
 			}
+			System.out.println(streamVector.lastElement());
 		}
 	}
 	
@@ -60,7 +63,7 @@ public class ParseTape
 		this.position = position;
 	}
 	
-	public String next()
+	public ParseToken next()
 	{
 		position++;
 		if(position < streamVector.size())
@@ -82,7 +85,7 @@ public class ParseTape
 		}
 	}
 	
-	public String getCurrent()
+	public ParseToken getCurrent()
 	{
 		if(position < streamVector.size())
 		{

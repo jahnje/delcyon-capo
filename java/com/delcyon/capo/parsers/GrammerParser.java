@@ -23,8 +23,12 @@ import java.io.StreamTokenizer;
 import java.util.HashMap;
 import java.util.Set;
 import java.util.Map.Entry;
+import java.util.Vector;
+
+import org.w3c.dom.NodeList;
 
 import com.delcyon.capo.xml.XPath;
+import com.delcyon.capo.xml.cdom.CElement;
 
 /**
  * @author jeremiah
@@ -40,26 +44,28 @@ public class GrammerParser
 	private HashMap<String, String> ruleHashMap = new HashMap<String, String>();
 	private HashMap<String, SymbolType> symbolTypeHashMap = new HashMap<String, SymbolType>();
 	private HashMap<String, String> notationHashMap = new HashMap<String, String>();
+    private Vector<ParseRule> notationParseRuleVector;
+    private Vector<ParseRule> grammerParseRuleVector;
 
 	public GrammerParser()
 	{
 
 		symbolHashMap.put(SymbolType.DELIMITER.toString(), new String[] { " ", "\t", "EOL" });
 		symbolHashMap.put(SymbolType.LITERAL.toString(), new String[] { "\"(.+)\"", "'(.+)'" });
-//		symbolHashMap.put(SymbolType.ASSIGNMENT.toString(), new String[] { "=" });
-//		symbolHashMap.put(SymbolType.ALTERNATION.toString(), new String[] { "|" });
+		symbolHashMap.put(SymbolType.ASSIGNMENT.toString(), new String[] { "=" });
+		symbolHashMap.put(SymbolType.ALTERNATION.toString(), new String[] { "|" });
 		symbolHashMap.put(SymbolType.EOL.toString(), new String[] { "\n" });
 
-		notationHashMap.put("SYMBOL", "SYMBOL_NAME '=' LITERAL_LIST EOL");
-		notationHashMap.put("LITERAL_LIST", "LITERAL | LITERAL '|' LITERAL_LIST");
-		notationHashMap.put("SYMBOL_LIST", "SYMBOL | SYMBOL SYMBOL_LIST");
-		notationHashMap.put("SYMBOLS", "'Symbols:' EOL '{' SYMBOL_LIST '}' EOL");
-		notationHashMap.put("RULE", "RULE_NAME ASSIGNMENT EXPRESSION EOL");
-		notationHashMap.put("RULE_LIST", "RULE | RULE RULE_LIST");
-		notationHashMap.put("GRAMMER", "'Grammar:' EOL '{' RULE_LIST '}' EOL");
-		notationHashMap.put("EXPRESSION", "LIST | LIST ALTERATION EXPRESSION");
-		notationHashMap.put("TERM", "LITERAL | RULE_NAME");
-		notationHashMap.put("LIST", "TERM | TERM LIST");
+//		notationHashMap.put("SYMBOL", "SYMBOL_NAME '=' LITERAL_LIST EOL");
+//		notationHashMap.put("LITERAL_LIST", "LITERAL | LITERAL '|' LITERAL_LIST");
+//		notationHashMap.put("SYMBOL_LIST", "SYMBOL | SYMBOL SYMBOL_LIST");
+//		notationHashMap.put("SYMBOLS", "'Symbols:' EOL '{' SYMBOL_LIST '}' EOL");
+//		notationHashMap.put("RULE", "RULE_NAME ASSIGNMENT EXPRESSION EOL");
+//		notationHashMap.put("RULE_LIST", "RULE | RULE RULE_LIST");
+//		notationHashMap.put("GRAMMER", "'Grammar:' EOL '{' RULE_LIST '}' EOL");
+//		notationHashMap.put("EXPRESSION", "LIST | LIST ALTERATION EXPRESSION");
+//		notationHashMap.put("TERM", "LITERAL | RULE_NAME");
+//		notationHashMap.put("LIST", "TERM | TERM LIST");
 
 		Set<Entry<String, String[]>> symbolEntrySet = symbolHashMap.entrySet();
 		for (Entry<String, String[]> entry : symbolEntrySet)
@@ -129,75 +135,140 @@ public class GrammerParser
 
 	}
 	
-	public void loadNotationGrammer(InputStream inputStream)
+	public void loadNotationGrammer(InputStream inputStream) throws Exception
 	{
-		// TODO Auto-generated method stub
+	    notationParseRuleVector = new Vector<ParseRule>();
+        
+        //clear rule hashmap        
+        
+        BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(inputStream));
+
+        //prepare symbol table with loaded symbols
+        StreamTokenizer streamTokenizer = new StreamTokenizer(bufferedReader);
+        streamTokenizer.resetSyntax();
+        streamTokenizer.wordChars(33, 126);
+        streamTokenizer.eolIsSignificant(true);
+        streamTokenizer.quoteChar('"');
+        //streamTokenizer.quoteChar('\'');
+        setDelimiters(streamTokenizer, SymbolType.DELIMITER.toString());
+        
+        
+        ParseTree notationParseTree = loadNotationParseTree();
+        notationParseTree.setSymbolHashMap(symbolHashMap);
+        notationParseTree.setSymbolTypeHashMap(symbolTypeHashMap);
+        notationParseTree.parse(streamTokenizer);
+        XPath.dumpNode(notationParseTree, System.out);
+        NodeList nodeList = XPath.selectNodes(notationParseTree, "//RULE");
+        for(int index = 0; index < nodeList.getLength(); index++)
+        {
+            CElement element = (CElement) nodeList.item(index);
+            
+            NodeList listNodeList =  XPath.selectNodes(element, "descendant::LIST");
+            Vector<Vector<String>> expressionsVector = new Vector<Vector<String>>();
+            Vector<String> expressionVector = new Vector<String>();
+            
+            for(int listIndex = 0; listIndex < listNodeList.getLength(); listIndex++)
+            {               
+                String term = ((CElement) listNodeList.item(listIndex)).getAttribute("TERM");
+                if(symbolTypeHashMap.get(term) == SymbolType.ALTERNATION)
+                {                   
+                    expressionsVector.add(expressionVector);
+                    expressionVector = new Vector<String>();
+                    System.err.println(symbolTypeHashMap.get(term)+"<---"+term);
+                }
+                else
+                {
+                    System.err.println(symbolTypeHashMap.get(term)+"<==="+term);
+                    expressionVector.add(term);
+                }
+                
+            }
+            expressionsVector.add(expressionVector);
+            
+            String[][] expressions = new String[expressionsVector.size()][];
+            for(int expressionsIndex = 0 ; expressionsIndex < expressionsVector.size(); expressionsIndex++)
+            {
+                Vector<String> expressionVectorLocal = expressionsVector.get(expressionsIndex);
+                expressions[expressionsIndex] = new String[expressionVectorLocal.size()];
+                for(int termIndex = 0; termIndex < expressions[expressionsIndex].length; termIndex++)
+                {
+                    expressions[expressionsIndex][termIndex] = expressionVectorLocal.get(termIndex);
+                }
+            }
+            ParseRule parseRule = new ParseRule(element.getAttribute("RULE_NAME"),expressions);
+            notationParseRuleVector.add(parseRule);
+            System.out.println(parseRule+" "+expressionsVector);
+        }
 		
 	}
 	
 	public void loadGrammer(InputStream inputStream) throws Exception
 	{
 		
-		
-		
-		//clear rule hashmap		
-		ruleHashMap.clear();
-		BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(inputStream));
+	    grammerParseRuleVector = new Vector<ParseRule>();
+        
+        BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(inputStream));
 
-		//prepare symbol table with loaded symbols
-		StreamTokenizer streamTokenizer = new StreamTokenizer(bufferedReader);
-		streamTokenizer.resetSyntax();
-		streamTokenizer.wordChars(33, 126);
-		streamTokenizer.eolIsSignificant(true);
-		streamTokenizer.quoteChar('"');
-		streamTokenizer.quoteChar('\'');
-		setDelimiters(streamTokenizer, SymbolType.DELIMITER.toString());
-		
-		
-		ParseTree notationParseTree = loadNotationParseTree();
-		notationParseTree.setSymbolHashMap(symbolHashMap);
-		notationParseTree.parse(streamTokenizer);
-		XPath.dumpNode(notationParseTree, System.out);
-		
-		while (streamTokenizer.nextToken() != StreamTokenizer.TT_EOF)
-		{
-			if (streamTokenizer.ttype == StreamTokenizer.TT_EOL)
-			{
-				System.out.println("EOL");
-			}
-			else
-			{
-				if (symbolTypeHashMap.containsKey(streamTokenizer.sval))
-				{
-					System.out.println(streamTokenizer.sval + "\t ==>\t " + symbolTypeHashMap.get(streamTokenizer.sval));
-				}
-				else if (notationHashMap.containsKey(streamTokenizer.sval))
-				{
-					System.out.println(streamTokenizer.sval + "\t ==>\t RULE");
-				}
-				else
-				{
-					String[] patterns = symbolHashMap.get(SymbolType.LITERAL.toString());
-					boolean hasLiteralMatch = false;
-					if (patterns != null)
-					{
-						for (String literalPattern : patterns)
-						{
-							if(streamTokenizer.sval.matches(literalPattern))
-							{
-								hasLiteralMatch = true;
-								System.out.println(streamTokenizer.sval + "\t ==>\t LITERAL");
-								break;
-							}
-						}
-					}
-					if(hasLiteralMatch == false)
-					{
-						System.out.println(streamTokenizer.sval + "\t ==>\t SYMBOL");
-					}
-				}
-			}
-		}
+        //prepare symbol table with loaded symbols
+        StreamTokenizer streamTokenizer = new StreamTokenizer(bufferedReader);
+        streamTokenizer.resetSyntax();
+        streamTokenizer.wordChars(33, 126);
+        streamTokenizer.eolIsSignificant(true);
+        streamTokenizer.quoteChar('"');
+        //streamTokenizer.quoteChar('\'');
+        setDelimiters(streamTokenizer, SymbolType.DELIMITER.toString());
+        
+        
+        ParseTree grammerParseTree = new ParseTree();
+        grammerParseTree.setSymbolHashMap(symbolHashMap);       
+        for (ParseRule parseRule : notationParseRuleVector)
+        {
+            grammerParseTree.addRule(parseRule);
+        }
+        grammerParseTree.setSymbolTypeHashMap(symbolTypeHashMap);
+        grammerParseTree.parse(streamTokenizer);
+        XPath.dumpNode(grammerParseTree, System.out);
+        NodeList nodeList = XPath.selectNodes(grammerParseTree, "//RULE");
+        for(int index = 0; index < nodeList.getLength(); index++)
+        {
+            CElement element = (CElement) nodeList.item(index);
+            
+            NodeList listNodeList =  XPath.selectNodes(element, "descendant::LIST");
+            Vector<Vector<String>> expressionsVector = new Vector<Vector<String>>();
+            Vector<String> expressionVector = new Vector<String>();
+            
+            for(int listIndex = 0; listIndex < listNodeList.getLength(); listIndex++)
+            {               
+                String term = ((CElement) listNodeList.item(listIndex)).getAttribute("TERM");
+                if(symbolTypeHashMap.get(term) == SymbolType.ALTERNATION)
+                {                   
+                    expressionsVector.add(expressionVector);
+                    expressionVector = new Vector<String>();
+                    System.err.println(symbolTypeHashMap.get(term)+"<---"+term);
+                }
+                else
+                {
+                    System.err.println(symbolTypeHashMap.get(term)+"<==="+term);
+                    expressionVector.add(term);
+                }
+                
+            }
+            expressionsVector.add(expressionVector);
+            
+            String[][] expressions = new String[expressionsVector.size()][];
+            for(int expressionsIndex = 0 ; expressionsIndex < expressionsVector.size(); expressionsIndex++)
+            {
+                Vector<String> expressionVectorLocal = expressionsVector.get(expressionsIndex);
+                expressions[expressionsIndex] = new String[expressionVectorLocal.size()];
+                for(int termIndex = 0; termIndex < expressions[expressionsIndex].length; termIndex++)
+                {
+                    expressions[expressionsIndex][termIndex] = expressionVectorLocal.get(termIndex);
+                }
+            }
+            ParseRule parseRule = new ParseRule(element.getAttribute("RULE_NAME"),expressions);
+            grammerParseRuleVector.add(parseRule);
+            System.out.println(parseRule+" "+expressionsVector);
+        }
 
 	}
 	
@@ -246,33 +317,29 @@ public class GrammerParser
 	{
 		BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(inputStream));
 
-		StreamTokenizer streamTokenizer = new StreamTokenizer(bufferedReader);
-		streamTokenizer.resetSyntax();
-		streamTokenizer.wordChars(33, 126);
-		streamTokenizer.eolIsSignificant(true);
-		setDelimiters(streamTokenizer, SymbolType.DELIMITER.toString());
-		while (streamTokenizer.nextToken() != StreamTokenizer.TT_EOF)
-		{
-			if (streamTokenizer.ttype == StreamTokenizer.TT_EOL)
-			{
-				System.out.println("EOL");
-			}
-			else
-			{
-				if (symbolTypeHashMap.containsKey(streamTokenizer.sval))
-				{
-					System.out.println(streamTokenizer.sval + "\t ==>\t " + symbolTypeHashMap.get(streamTokenizer.sval));
-				}
-				else if (ruleHashMap.containsKey(streamTokenizer.sval))
-				{
-					System.out.println(streamTokenizer.sval + "\t ==>\t RULE");
-				}
-				else
-				{
-					System.out.println(streamTokenizer.sval + "\t ==>\t LITERAL");
-				}
-			}
-		}
+		
+
+        //prepare symbol table with loaded symbols
+        StreamTokenizer streamTokenizer = new StreamTokenizer(bufferedReader);
+        streamTokenizer.resetSyntax();
+        streamTokenizer.wordChars(33, 126);
+        streamTokenizer.eolIsSignificant(true);
+        streamTokenizer.quoteChar('"');
+        //streamTokenizer.quoteChar('\'');
+        setDelimiters(streamTokenizer, SymbolType.DELIMITER.toString());
+        
+        
+        ParseTree grammerParseTree = new ParseTree();
+        grammerParseTree.setSymbolHashMap(symbolHashMap);
+        
+        for (ParseRule parseRule : grammerParseRuleVector)
+        {
+            grammerParseTree.addRule(parseRule);
+        }
+        grammerParseTree.parse(streamTokenizer);
+        grammerParseTree.setSymbolTypeHashMap(symbolTypeHashMap);
+        XPath.dumpNode(grammerParseTree, System.out);
+        
 
 	}
 

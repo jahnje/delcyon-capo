@@ -71,8 +71,7 @@ public class StreamUtil
 	            {
 	                System.arraycopy(localBuffer, 0, buffer, destPos, count);
 	            } catch (ArrayIndexOutOfBoundsException arrayIndexOutOfBoundsException)
-	            {
-	                System.err.println("got here");
+	            {	                
 	                throw arrayIndexOutOfBoundsException;
 	            }
 	            destPos += count;

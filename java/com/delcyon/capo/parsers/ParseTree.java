@@ -87,10 +87,10 @@ public class ParseTree extends CDocument
 	{
 		ParseTape parseTape = new ParseTape(streamTokenizer);
 		CElement parseNode = new CElement(parseRuleVector.firstElement().getName());
-		appendChild(parseNode);
+		//appendChild(parseNode);
 		if(parseRuleVector.firstElement().parse(parseNode,parseTape))
 		{
-			//appendChild(parseNode);
+			appendChild(adoptNode(parseNode));
 		}
 		
 	}
@@ -180,6 +180,23 @@ public class ParseTree extends CDocument
 	{
 		this.parseOrderPreference = parseOrderPreference;
 	}
+
+    public String getLiteralType(String value)
+    {
+        if(symbolTypeHashMap.containsKey(value))
+        {
+            return symbolTypeHashMap.get(value).toString();
+        }
+        else
+        {
+            return SymbolType.LITERAL.toString();
+        }
+    }
+
+    public void setSymbolTypeHashMap(HashMap<String, SymbolType> symbolTypeHashMap)
+    {
+        this.symbolTypeHashMap = symbolTypeHashMap;        
+    }
 	
 	
 }

@@ -16,16 +16,16 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 package com.delcyon.capo.parsers;
 
+import java.util.Arrays;
 import java.util.Vector;
 
 import org.w3c.dom.NodeList;
 
+import com.delcyon.capo.parsers.ParseToken.TokenType;
 import com.delcyon.capo.parsers.ParseTree.TermType;
-import com.delcyon.capo.xml.XPath;
 import com.delcyon.capo.xml.cdom.CElement;
 import com.delcyon.capo.xml.cdom.CNamedNodeMap;
 import com.delcyon.capo.xml.cdom.CNode;
-import com.delcyon.capo.xml.cdom.CText;
 
 /**
  * @author jeremiah
@@ -95,10 +95,10 @@ public class ParseRule
 					continue expressions;
 				}
 				
-				String token = parseTape.getCurrent();
+				ParseToken token = parseTape.getCurrent();
 				if(token == null )
 				{
-					token = "EOL";
+					token = new ParseToken("EOL", TokenType.EOL);
 				}
 				
 				//figure out what to do with the current term
@@ -116,13 +116,13 @@ public class ParseRule
 								peerParseNode.removeChild(parseNode);
 								foundExpressionMatch = false;
 								continue expressions;
-							}	
+							}							
 							break;
 						case LITERAL:
-							if(parseTree.getLiteralValue(term).equals(token))
-							{
+							if(parseTree.getLiteralValue(term).equals(token.getValue()))
+							{							    
 								CElement cElement = new CElement("LITERAL");
-								cElement.setAttribute("value", token);
+								cElement.setAttribute(parseTree.getLiteralType(token.getValue()), token.getValue());
 								peerParseNode.appendChild(cElement);
 							}
 							else
@@ -133,10 +133,21 @@ public class ParseRule
 							}
 							break;
 						case SYMBOL:
-							TermType termType = parseTree.getTermType(parseTape.getCurrent());
+						    String value = parseTape.getCurrent().getValue();
+							TermType termType = parseTree.getTermType(value);
+							//check to see if this is an escaped Literal, if so, it's a symbol
+							if(termType == TermType.LITERAL && parseTree.getLiteralValue(value).length() != value.length())
+                            {
+                                termType = TermType.SYMBOL;                                
+                            }
+							if(termType == TermType.DELIMITER && parseTape.getCurrent().getTokenType() == TokenType.WORD)
+							{
+							    termType = TermType.SYMBOL;
+							}
 							//delimiters should never be treated as symbols
 							if(termType == TermType.DELIMITER || termType == TermType.LITERAL)
 							{
+							    System.err.println(parseTape.getCurrent()+"<=="+termType);
 								parseTape.pushBack();
 								foundExpressionMatch = false;
 								continue expressions;	
@@ -145,17 +156,18 @@ public class ParseRule
 							//overlap with Literals should be ignored as a literal can be a SYMBOL_NAME							
 							else
 							{
-								peerParseNode.setAttribute(term, token);
+								peerParseNode.setAttribute(term, value);
 							}
 							break;
 						case DELIMITER:
 							
-							if(parseTree.getTermType(token) == TermType.DELIMITER)
+							if(parseTree.getTermType(token.getValue()) == TermType.DELIMITER && token.getTokenType() != TokenType.WORD)
 							{
 								//comsume it, and do nothing
 							}
 							else
 							{
+							    System.err.println(token+"<=="+parseTree.getTermType(token.getValue()));
 								parseTape.pushBack();
 								foundExpressionMatch = false;
 								continue expressions;
@@ -205,12 +217,12 @@ public class ParseRule
 			parseTape.setPosition(matchItem.endTapePosition);
 			NodeList childrenNodeList = matchItem.parseNode.getChildNodes();
 			for(int index = 0; index < childrenNodeList.getLength();)
-			{
+			{			    
 				peerParseNode.appendChild(childrenNodeList.item(index));
 				
 			}
 			peerParseNode.setAttributes((CNamedNodeMap) matchItem.parseNode.getAttributes());
-			XPath.dumpNode(peerParseNode, System.out);
+			//XPath.dumpNode(peerParseNode, System.out);
 			return true;
 		}
 		return false;
@@ -219,6 +231,12 @@ public class ParseRule
 	public String[][] getExpressions()
 	{
 		return expressions;
+	}
+	
+	@Override
+	public String toString()
+	{
+	   return getName()+""+Arrays.toString(expressions);
 	}
 	
 	private class MatchItem
