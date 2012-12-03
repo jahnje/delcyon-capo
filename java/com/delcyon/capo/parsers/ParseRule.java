@@ -202,7 +202,7 @@ public class ParseRule
 			}
 			parseTape.setPosition(matchItem.endTapePosition);
 			NodeList childrenNodeList = matchItem.parseNode.getChildNodes();
-			for(int index = 0; index < childrenNodeList.getLength(); index++)
+			for(int index = 0; index < childrenNodeList.getLength();)
 			{
 				peerParseNode.appendChild(childrenNodeList.item(index));
 				

@@ -55,7 +55,7 @@ public class ParseTree extends CDocument
 	private HashMap<String, SymbolType> symbolTypeHashMap = new HashMap<String, SymbolType>();
 	private HashMap<String, String> notationHashMap = new HashMap<String, String>();
 	
-	private ParseOrderPreference parseOrderPreference = ParseOrderPreference.MAX_LENGTH;
+	private ParseOrderPreference parseOrderPreference = ParseOrderPreference.RIGHT;
 	
 	public void addRule(ParseRule parseRule)
 	{

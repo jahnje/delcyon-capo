@@ -29,7 +29,6 @@ import org.w3c.dom.NodeList;
 import org.w3c.dom.Text;
 import org.w3c.dom.UserDataHandler;
 
-import com.delcyon.capo.CapoApplication;
 import com.delcyon.capo.util.CloneControl;
 import com.delcyon.capo.util.ControlledClone;
 import com.delcyon.capo.util.EqualityProcessor;
@@ -431,7 +430,10 @@ public abstract class CNode implements Node, ControlledClone
 
     public void removeChildrenAll()
     {
-    	
+    	for (Node node : nodeList)
+		{
+    		((CNode) node).setParent(null);
+		}
         nodeList.clear();
         cascadeDOMEvent(prepareEvent(EventType.DELETE, this));
     }
@@ -460,7 +462,11 @@ public abstract class CNode implements Node, ControlledClone
         if(newChild instanceof CNode)
         {
             if(newChild.getParentNode() != null)
-            {                
+            {   
+            	if(newChild.getParentNode().equals(this))
+            	{
+            		return newChild;
+            	}
                 newChild.getParentNode().removeChild(newChild);               
             }
             nodeList.add(newChild);
