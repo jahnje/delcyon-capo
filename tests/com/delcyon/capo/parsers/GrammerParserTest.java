@@ -16,10 +16,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 package com.delcyon.capo.parsers;
 
-import static org.junit.Assert.*;
-
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 
 import org.junit.After;
 import org.junit.AfterClass;
@@ -70,7 +67,10 @@ public class GrammerParserTest
     public void test() throws Exception
     {
         GrammerParser grammerParser = new GrammerParser();
-        grammerParser.parse(new FileInputStream("test-data/parser_test_data/BASE.grammer"));
+        //grammerParser.loadNotationGrammer(new FileInputStream("test-data/parser_test_data/SIMPLE.notation"));
+        //grammerParser.loadSymbols(new FileInputStream("test-data/parser_test_data/SIMPLE.symbols"));
+        grammerParser.loadGrammer(new FileInputStream("test-data/parser_test_data/SIMPLE.notation"));
+        //grammerParser.parse(new FileInputStream("test-data/parser_test_data/SIMPLE.input"));
     }
 
 }

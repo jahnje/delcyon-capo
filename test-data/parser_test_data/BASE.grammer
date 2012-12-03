@@ -1,7 +1,7 @@
 Symbols:
 {
 	EOL 		= \n | \r	 
-	literal 	= ".." | '..'
+	literal 	= ".+" | '.+'
 	assignment 	= =
 	alternation = \|	
 	delimiter 	= ' ' | \t | EOL

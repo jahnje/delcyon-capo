@@ -19,6 +19,7 @@ package com.delcyon.capo.xml.cdom;
 import java.lang.reflect.Modifier;
 import java.util.Vector;
 import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import org.w3c.dom.DOMException;
 import org.w3c.dom.Document;
@@ -428,14 +429,14 @@ public abstract class CNode implements Node, ControlledClone
        
     }
 
-    protected void removeChildrenAll()
+    public void removeChildrenAll()
     {
     	
         nodeList.clear();
         cascadeDOMEvent(prepareEvent(EventType.DELETE, this));
     }
     
-    protected void removeNodeTypeChildrenAll(short nodeType)
+    public void removeNodeTypeChildrenAll(short nodeType)
     {
         for(int index = 0; index < nodeList.getLength(); index++)
         {
@@ -518,7 +519,7 @@ public abstract class CNode implements Node, ControlledClone
         }
         catch (Exception exception)
         {
-            CapoApplication.logger.log(Level.SEVERE, "Couldn't clone "+this, exception);
+            Logger.global.log(Level.SEVERE, "Couldn't clone "+this, exception);
         }
         return clonedNode;
     }

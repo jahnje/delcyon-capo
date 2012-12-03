@@ -38,7 +38,12 @@ public class CText extends CNode implements Text
        
     }
     
-    /* (non-Javadoc)
+    public CText(String data)
+	{
+		this.data = data;
+	}
+
+	/* (non-Javadoc)
      * @see org.w3c.dom.CharacterData#getData()
      */
     @Override
