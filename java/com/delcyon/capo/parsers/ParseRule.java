@@ -121,7 +121,9 @@ public class ParseRule
 						case LITERAL:
 							if(parseTree.getLiteralValue(term).equals(token))
 							{
-								peerParseNode.appendChild(new CText(token));
+								CElement cElement = new CElement("LITERAL");
+								cElement.setAttribute("value", token);
+								peerParseNode.appendChild(cElement);
 							}
 							else
 							{
