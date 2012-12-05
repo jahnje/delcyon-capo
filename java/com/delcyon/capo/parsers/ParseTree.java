@@ -18,9 +18,9 @@ package com.delcyon.capo.parsers;
 
 import java.io.StreamTokenizer;
 import java.util.HashMap;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.Vector;
-import java.util.Map.Entry;
 
 import com.delcyon.capo.parsers.GrammerParser.SymbolType;
 import com.delcyon.capo.xml.cdom.CDocument;
@@ -56,6 +56,17 @@ public class ParseTree extends CDocument
 	private HashMap<String, String> notationHashMap = new HashMap<String, String>();
 	
 	private ParseOrderPreference parseOrderPreference = ParseOrderPreference.RIGHT;
+	private boolean allowPartialMatch = false;
+	
+	public boolean isAllowPartialMatch()
+    {
+        return allowPartialMatch;
+    }
+	
+	public void setAllowPartialMatch(boolean allowPartialMatch)
+    {
+        this.allowPartialMatch = allowPartialMatch;
+    }
 	
 	public void addRule(ParseRule parseRule)
 	{
@@ -90,7 +101,10 @@ public class ParseTree extends CDocument
 		//appendChild(parseNode);
 		if(parseRuleVector.firstElement().parse(parseNode,parseTape))
 		{
-			appendChild(adoptNode(parseNode));
+		    if(allowPartialMatch == true || parseTape.hasMore() == false)
+		    {
+		        appendChild(adoptNode(parseNode));
+		    }
 		}
 		
 	}

@@ -26,8 +26,10 @@ public class ParseToken
     {
         EOF,
         EOL,
-        WORD
-        
+        TERM,
+        ASSIGNMENT,
+        ALTERNATION,
+        SYMBOL
     }
     
     private String value = null;

@@ -72,7 +72,7 @@ public class ParseRule
 				matchItemVector.add(new MatchItem((CElement) peerParseNode.cloneNode(true),parseTape.getPosition()));
 			}
 			//check to see if we need to try something else, if we're out of tape, and we have a match, then we don't
-			if(parseTape.hasMore() == false & foundExpressionMatch)
+			if(parseTape.hasMore() == false && foundExpressionMatch)
 			{
 				break;
 			}
@@ -84,22 +84,77 @@ public class ParseRule
 			//backup. set list pointer to parse entry position
 			parseTape.setPosition(initialTapePosition);
 			
-			String[] expression = expressions[currentExpression];
+			String[] expression = expressions[currentExpression];			
 			for (int currentTerm = 0; currentTerm < expression.length; currentTerm++)
 			{
 				String term = expression[currentTerm];
-				if(parseTape.next() == null && currentTerm < expression.length-1)
-				{					
-					parseTape.pushBack();
-					foundExpressionMatch = false;
-					continue expressions;
-				}
+				boolean useQuantification = false;
+				boolean inQuantificationLoop = false;
+				int quantifier = 0;
+				int minimumQuantity = 0;
+				int maximumQuantity = Integer.MAX_VALUE;
 				
-				ParseToken token = parseTape.getCurrent();
-				if(token == null )
+				if(term.endsWith("+"))
 				{
-					token = new ParseToken("EOL", TokenType.EOL);
+				    useQuantification = true;
+				    inQuantificationLoop = true;
+				    term = term.substring(0, term.length()-1);
+				    minimumQuantity = 1;
 				}
+				else if(term.endsWith("?"))
+                {
+                    useQuantification = true;
+                    inQuantificationLoop = true;
+                    term = term.substring(0, term.length()-1);
+                    maximumQuantity = 1;
+                }
+				else if(term.endsWith("*"))
+				{
+				    useQuantification = true;
+                    inQuantificationLoop = true;
+                    term = term.substring(0, term.length()-1);
+                    
+				}
+				else if(term.matches(".+\\{\\d+\\}"))
+                {
+				    String originalTerm = term;
+                    useQuantification = true;
+                    inQuantificationLoop = true;
+                    term = originalTerm.replaceFirst("(.+)\\{\\d+\\}", "$1");
+                    maximumQuantity = Integer.parseInt(originalTerm.replaceFirst(".+\\{(\\d+)\\}", "$1"));
+                    minimumQuantity = maximumQuantity;
+                }
+				else if(term.matches(".+\\{\\d*,\\d+\\}"))
+                {
+                    String originalTerm = term;
+                    useQuantification = true;
+                    inQuantificationLoop = true;
+                    term = originalTerm.replaceFirst("(.+)\\{\\d*,\\d+\\}", "$1");
+                    maximumQuantity = Integer.parseInt(originalTerm.replaceFirst(".+\\{\\d*,(\\d+)\\}", "$1"));
+                    String minString = originalTerm.replaceFirst(".+\\{(\\d*),\\d+\\}", "$1");
+                    if(minString.isEmpty() == false)
+                    {
+                        minimumQuantity = Integer.parseInt(minString);
+                    }
+                }
+				do
+				{
+				    
+				    if(parseTape.next() == null && currentTerm < expression.length-1)
+				    {					
+				        parseTape.pushBack();
+				        foundExpressionMatch = false;
+				        if(inQuantificationLoop == false)
+				        {
+				            continue expressions;
+				        }
+				    }
+
+				    ParseToken token = parseTape.getCurrent();
+				    if(token == null )
+				    {
+				        token = new ParseToken("EOL", TokenType.EOL);
+				    }
 				
 				//figure out what to do with the current term
 				
@@ -115,7 +170,10 @@ public class ParseRule
 							{
 								peerParseNode.removeChild(parseNode);
 								foundExpressionMatch = false;
-								continue expressions;
+								if(inQuantificationLoop == false)
+		                        {
+		                            continue expressions;
+		                        }
 							}							
 							break;
 						case LITERAL:
@@ -129,7 +187,10 @@ public class ParseRule
 							{
 								parseTape.pushBack();
 								foundExpressionMatch = false;
-								continue expressions;
+								if(inQuantificationLoop == false)
+		                        {
+		                            continue expressions;
+		                        }
 							}
 							break;
 						case SYMBOL:
@@ -140,7 +201,7 @@ public class ParseRule
                             {
                                 termType = TermType.SYMBOL;                                
                             }
-							if(termType == TermType.DELIMITER && parseTape.getCurrent().getTokenType() == TokenType.WORD)
+							if(termType == TermType.DELIMITER && parseTape.getCurrent().getTokenType() == TokenType.TERM)
 							{
 							    termType = TermType.SYMBOL;
 							}
@@ -150,7 +211,10 @@ public class ParseRule
 							    System.err.println(parseTape.getCurrent()+"<=="+termType);
 								parseTape.pushBack();
 								foundExpressionMatch = false;
-								continue expressions;	
+								if(inQuantificationLoop == false)
+		                        {
+		                            continue expressions;
+		                        }
 							}
 							//overlap with RULE names should be ignored as something we're parsing can't refer to a rule name
 							//overlap with Literals should be ignored as a literal can be a SYMBOL_NAME							
@@ -161,7 +225,7 @@ public class ParseRule
 							break;
 						case DELIMITER:
 							
-							if(parseTree.getTermType(token.getValue()) == TermType.DELIMITER && token.getTokenType() != TokenType.WORD)
+							if(parseTree.getTermType(token.getValue()) == TermType.DELIMITER && token.getTokenType() != TokenType.TERM)
 							{
 								//comsume it, and do nothing
 							}
@@ -170,7 +234,10 @@ public class ParseRule
 							    System.err.println(token+"<=="+parseTree.getTermType(token.getValue()));
 								parseTape.pushBack();
 								foundExpressionMatch = false;
-								continue expressions;
+								if(inQuantificationLoop == false)
+		                        {
+		                            continue expressions;
+		                        }
 							}
 							break;
 						default:
@@ -179,7 +246,33 @@ public class ParseRule
 							break;
 					}
 					
-				
+					if(useQuantification == true && inQuantificationLoop == true)
+					{
+					    if(foundExpressionMatch)
+					    {
+					        quantifier++;
+					        if(quantifier > maximumQuantity)
+					        {
+					            foundExpressionMatch = false;
+                                continue expressions;
+					        }
+					    }
+					    else
+					    {
+					        inQuantificationLoop = false;
+					        if(quantifier >= minimumQuantity && quantifier <= maximumQuantity)
+					        {
+					            foundExpressionMatch = true;
+					        }
+					        else
+					        {
+					            foundExpressionMatch = false; //redundant
+					            continue expressions;
+					        }
+					    }
+					}					
+				}
+				while(useQuantification == true && inQuantificationLoop == true);
 			}
 		}
 		

@@ -196,8 +196,21 @@ public class GrammerParser
                 }
             }
             ParseRule parseRule = new ParseRule(element.getAttribute("RULE_NAME"),expressions);
-            notationParseRuleVector.add(parseRule);
-            System.out.println(parseRule+" "+expressionsVector);
+            if(parseRule.getName().equals("ALTERNATION"))
+            {
+                System.out.println(parseRule.getName()+"==>"+expressionsVector);
+            }
+            else if(parseRule.getName().equals("ASSIGNMENT"))            
+            {
+                System.out.println(parseRule.getName()+"==>"+expressionsVector);
+            }
+            else
+            {
+                notationParseRuleVector.add(parseRule);
+                System.out.println(parseRule.getName()+"==>"+expressionsVector);
+            }
+            
+            
         }
 		
 	}
@@ -330,6 +343,7 @@ public class GrammerParser
         
         
         ParseTree grammerParseTree = new ParseTree();
+        grammerParseTree.setAllowPartialMatch(true);
         grammerParseTree.setSymbolHashMap(symbolHashMap);
         
         for (ParseRule parseRule : grammerParseRuleVector)
