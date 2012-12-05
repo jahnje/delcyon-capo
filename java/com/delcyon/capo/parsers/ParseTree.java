@@ -57,6 +57,17 @@ public class ParseTree extends CDocument
 	
 	private ParseOrderPreference parseOrderPreference = ParseOrderPreference.RIGHT;
 	private boolean allowPartialMatch = false;
+	private boolean includeLiterals = false;
+	
+	public boolean isIncludeLiterals()
+    {
+        return includeLiterals;
+    }
+	
+	public void setIncludeLiterals(boolean includeLiterals)
+    {
+        this.includeLiterals = includeLiterals;
+    }
 	
 	public boolean isAllowPartialMatch()
     {

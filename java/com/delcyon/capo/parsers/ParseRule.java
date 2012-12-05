@@ -21,6 +21,7 @@ import java.util.Vector;
 
 import org.w3c.dom.NodeList;
 
+import com.delcyon.capo.datastream.StreamUtil;
 import com.delcyon.capo.parsers.ParseToken.TokenType;
 import com.delcyon.capo.parsers.ParseTree.TermType;
 import com.delcyon.capo.xml.cdom.CElement;
@@ -88,6 +89,37 @@ public class ParseRule
 			for (int currentTerm = 0; currentTerm < expression.length; currentTerm++)
 			{
 				String term = expression[currentTerm];
+				String parsedRegex = null;
+				String parsedReplacement = null;
+				
+				//check to see if we're dealing with a regex
+				if(term.startsWith("~") && term.matches("~.*/.+(/.*)?"))
+				{
+				    String originalTerm = term;
+				    int firstSlash = originalTerm.indexOf('/');
+				    int lastSlash = originalTerm.lastIndexOf('/');
+				    boolean defaultedLength = false;
+				    if(lastSlash == firstSlash)
+				    {
+				        defaultedLength = true;
+				        lastSlash = originalTerm.length();
+				    }
+				    term = originalTerm.substring(1,firstSlash);
+				    parsedRegex = originalTerm.substring(firstSlash+1,lastSlash);				    
+				    if ( firstSlash != lastSlash)
+				    {
+				        if(defaultedLength == false)
+				        {
+				            lastSlash++;
+				        }
+				        parsedReplacement = originalTerm.substring(lastSlash);
+				        if(parsedReplacement.isEmpty())
+				        {
+				            parsedReplacement = null;
+				        }
+				    }
+				}
+				
 				boolean useQuantification = false;
 				boolean inQuantificationLoop = false;
 				int quantifier = 0;
@@ -157,9 +189,14 @@ public class ParseRule
 				    }
 				
 				//figure out what to do with the current term
-				
+				    TermType termType = parseTree.getTermType(term); 
 					
-					switch (parseTree.getTermType(term))
+				    if(term.isEmpty() && parsedRegex != null)
+				    {
+				        termType = TermType.LITERAL;
+				    }
+				    
+					switch (termType)
 					{
 						case RULE:
 							//drill down into new rule
@@ -177,11 +214,23 @@ public class ParseRule
 							}							
 							break;
 						case LITERAL:
-							if(parseTree.getLiteralValue(term).equals(token.getValue()))
-							{							    
-								CElement cElement = new CElement("LITERAL");
-								cElement.setAttribute(parseTree.getLiteralType(token.getValue()), token.getValue());
-								peerParseNode.appendChild(cElement);
+						    if(parsedRegex != null && token.getValue().matches(parsedRegex))
+						    {
+						        if(parseTree.isIncludeLiterals() == true)
+						        {
+						            CElement cElement = new CElement("LITERAL");
+						            cElement.setAttribute(parseTree.getLiteralType(token.getValue()), token.getValue());
+						            peerParseNode.appendChild(cElement);
+						        }
+						    }
+						    else if(parseTree.getLiteralValue(term).equals(token.getValue()))
+							{
+						        if(parseTree.isIncludeLiterals() == true)
+						        {
+						            CElement cElement = new CElement("LITERAL");
+						            cElement.setAttribute(parseTree.getLiteralType(token.getValue()), token.getValue());
+						            peerParseNode.appendChild(cElement);
+						        }
 							}
 							else
 							{
@@ -195,20 +244,35 @@ public class ParseRule
 							break;
 						case SYMBOL:
 						    String value = parseTape.getCurrent().getValue();
-							TermType termType = parseTree.getTermType(value);
+						    if(parsedRegex != null && value.matches(parsedRegex) == false)
+						    {
+						        System.err.println(parseTape.getCurrent()+"<=="+parsedRegex);
+                                parseTape.pushBack();
+                                foundExpressionMatch = false;
+                                if(inQuantificationLoop == false)
+                                {
+                                    continue expressions;
+                                }                                    
+						    }
+						    if(parsedRegex != null && parsedReplacement != null)
+						    {
+						        value = value.replaceAll(parsedRegex, parsedReplacement);
+						    }
+						    
+							TermType valueTermType = parseTree.getTermType(value);
 							//check to see if this is an escaped Literal, if so, it's a symbol
-							if(termType == TermType.LITERAL && parseTree.getLiteralValue(value).length() != value.length())
+							if(valueTermType == TermType.LITERAL && parseTree.getLiteralValue(value).length() != value.length())
                             {
-                                termType = TermType.SYMBOL;                                
+                                valueTermType = TermType.SYMBOL;                                
                             }
-							if(termType == TermType.DELIMITER && parseTape.getCurrent().getTokenType() == TokenType.TERM)
+							if(valueTermType == TermType.DELIMITER && parseTape.getCurrent().getTokenType() == TokenType.TERM)
 							{
-							    termType = TermType.SYMBOL;
+							    valueTermType = TermType.SYMBOL;
 							}
 							//delimiters should never be treated as symbols
-							if(termType == TermType.DELIMITER || termType == TermType.LITERAL)
+							if(valueTermType == TermType.DELIMITER || valueTermType == TermType.LITERAL)
 							{
-							    System.err.println(parseTape.getCurrent()+"<=="+termType);
+							    System.err.println(parseTape.getCurrent()+"<=="+valueTermType);
 								parseTape.pushBack();
 								foundExpressionMatch = false;
 								if(inQuantificationLoop == false)
