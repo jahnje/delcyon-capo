@@ -316,6 +316,15 @@ public abstract class CNode implements Node, ControlledClone
         return attributeList;
     }
 
+    
+    public void removeAttributes()
+    {
+        while(attributeList.isEmpty() == false)
+        {
+            attributeList.remove(0);
+        }
+    }
+    
     public void setAttributes(CNamedNodeMap attributes)
     {
         this.attributeList = attributes;
