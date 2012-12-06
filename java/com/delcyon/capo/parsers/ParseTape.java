@@ -39,7 +39,7 @@ public class ParseTape
 			
 			if(streamTokenizer.sval != null)
 			{				
-				streamVector.add(new ParseToken(streamTokenizer.sval,TokenType.TERM));
+				streamVector.add(new ParseToken(streamTokenizer.sval,TokenType.WORD));
 			}
 			else if (streamTokenizer.ttype ==StreamTokenizer.TT_EOL)
 			{

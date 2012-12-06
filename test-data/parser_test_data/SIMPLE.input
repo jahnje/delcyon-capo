@@ -1,7 +1,36 @@
-Jeremiah Jahn literal
-60 "witch hollow" road
-makanda, IL 1
-makanda, IL 2
-makanda, IL 3
-makanda, IL 4
-makanda, IL 5
+eth0      Link encap:Ethernet  HWaddr CC:52:AF:3E:61:6A  
+          inet addr:206.80.71.242  Bcast:206.80.71.255  Mask:255.255.255.192
+          inet6 addr: fe80::ce52:afff:fe3e:616a/64 Scope:Link
+          UP BROADCAST RUNNING MULTICAST  MTU:1500  Metric:1
+          RX packets:3488898387 errors:0 dropped:0 overruns:0 frame:0
+          TX packets:7800117283 errors:0 dropped:0 overruns:0 carrier:0
+          collisions:0 txqueuelen:1000 
+          RX bytes:2000804756586 (1.8 TiB)  TX bytes:8853255328933 (8.0 TiB)
+          Interrupt:7 Memory:f9100000-f9120000 
+
+eth0:4    Link encap:Ethernet  HWaddr CC:52:AF:3E:61:6A  
+          inet addr:10.10.4.242  Bcast:10.10.4.255  Mask:255.255.255.0
+          UP BROADCAST RUNNING MULTICAST  MTU:1500  Metric:1
+          Interrupt:7 Memory:f9100000-f9120000 
+
+eth0:192  Link encap:Ethernet  HWaddr CC:52:AF:3E:61:6A  
+          inet addr:192.168.254.242  Bcast:192.168.254.255  Mask:255.255.255.192
+          UP BROADCAST RUNNING MULTICAST  MTU:1500  Metric:1
+          Interrupt:7 Memory:f9100000-f9120000 
+
+lo        Link encap:Local Loopback  
+          inet addr:127.0.0.1  Mask:255.0.0.0
+          inet6 addr: ::1/128 Scope:Host
+          UP LOOPBACK RUNNING  MTU:16436  Metric:1
+          RX packets:304534653 errors:0 dropped:0 overruns:0 frame:0
+          TX packets:304534653 errors:0 dropped:0 overruns:0 carrier:0
+          collisions:0 txqueuelen:0 
+          RX bytes:305094880530 (284.1 GiB)  TX bytes:305094880530 (284.1 GiB)
+
+virbr0    Link encap:Ethernet  HWaddr 52:54:00:2F:5E:FF  
+          inet addr:192.168.100.1  Bcast:192.168.100.255  Mask:255.255.255.0
+          UP BROADCAST RUNNING MULTICAST  MTU:1500  Metric:1
+          RX packets:17 errors:0 dropped:0 overruns:0 frame:0
+          TX packets:119476 errors:0 dropped:0 overruns:0 carrier:0
+          collisions:0 txqueuelen:0 
+          RX bytes:1748 (1.7 KiB)  TX bytes:15586680 (14.8 MiB)

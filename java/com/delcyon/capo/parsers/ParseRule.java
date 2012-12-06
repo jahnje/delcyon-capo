@@ -21,9 +21,9 @@ import java.util.Vector;
 
 import org.w3c.dom.NodeList;
 
-import com.delcyon.capo.datastream.StreamUtil;
 import com.delcyon.capo.parsers.ParseToken.TokenType;
 import com.delcyon.capo.parsers.ParseTree.TermType;
+import com.delcyon.capo.xml.XPath;
 import com.delcyon.capo.xml.cdom.CElement;
 import com.delcyon.capo.xml.cdom.CNamedNodeMap;
 import com.delcyon.capo.xml.cdom.CNode;
@@ -60,11 +60,26 @@ public class ParseRule
 		return name;
 	}
 
+	private void printPathMessage(CNode element, String message)
+	{
+	    StringBuilder stringBuilder = new StringBuilder();
+	    while(element != null)
+	    {
+	        stringBuilder.insert(0, element.getLocalName()+"/");	        
+	        element = (CNode) element.getParentNode();
+	    }
+	    System.out.println(stringBuilder+":"+message);
+	}
+	
 	public boolean parse(CElement peerParseNode, ParseTape parseTape) throws Exception
 	{
+	    System.out.println("\n\n");
+	    printPathMessage(peerParseNode, "STARTING:"+this);
+	    
 		Vector<MatchItem> matchItemVector = new Vector<MatchItem>();
 		boolean foundExpressionMatch = false;
 		int initialTapePosition = parseTape.getPosition();
+		
 		expressions:
 		for (int currentExpression = 0; currentExpression < expressions.length; currentExpression++)
 		{
@@ -78,14 +93,15 @@ public class ParseRule
 				break;
 			}
 			
-			((CNode)peerParseNode).removeChildrenAll();
-			//TODO clear attributes
+			peerParseNode.removeChildrenAll();
+			peerParseNode.removeAttributes();
 			foundExpressionMatch = true;
 			
 			//backup. set list pointer to parse entry position
 			parseTape.setPosition(initialTapePosition);
 			
-			String[] expression = expressions[currentExpression];			
+			String[] expression = expressions[currentExpression];
+			printPathMessage(peerParseNode, "starting parse with "+Arrays.toString(expression));
 			for (int currentTerm = 0; currentTerm < expression.length; currentTerm++)
 			{
 				String term = expression[currentTerm];
@@ -196,6 +212,8 @@ public class ParseRule
 				        termType = TermType.LITERAL;
 				    }
 				    
+				    printPathMessage(peerParseNode, "Checking "+term+"["+termType+"] against "+token);
+				    
 					switch (termType)
 					{
 						case RULE:
@@ -207,6 +225,7 @@ public class ParseRule
 							{
 								peerParseNode.removeChild(parseNode);
 								foundExpressionMatch = false;
+								printPathMessage(peerParseNode, "FAILURE "+term+"["+termType+"] against "+token);
 								if(inQuantificationLoop == false)
 		                        {
 		                            continue expressions;
@@ -236,6 +255,7 @@ public class ParseRule
 							{
 								parseTape.pushBack();
 								foundExpressionMatch = false;
+								printPathMessage(peerParseNode, "FAILURE "+term+"["+termType+"] against "+token);
 								if(inQuantificationLoop == false)
 		                        {
 		                            continue expressions;
@@ -243,38 +263,53 @@ public class ParseRule
 							}
 							break;
 						case SYMBOL:
-						    String value = parseTape.getCurrent().getValue();
+						    String value = token.getValue();
+						    TermType valueTermType = parseTree.getTermType(value);
+						    //named rules can't actually be referred to the INPUT, so change this to a symbol
+						    if(valueTermType == TermType.RULE)
+						    {
+						        valueTermType = TermType.SYMBOL;
+						    }
+						    
 						    if(parsedRegex != null && value.matches(parsedRegex) == false)
 						    {
-						        System.err.println(parseTape.getCurrent()+"<=="+parsedRegex);
+						        System.err.println(token+"<=="+parsedRegex);
                                 parseTape.pushBack();
                                 foundExpressionMatch = false;
+                                printPathMessage(peerParseNode, "FAILURE "+parsedRegex+"["+termType+"] against "+token);
                                 if(inQuantificationLoop == false)
                                 {
                                     continue expressions;
-                                }                                    
+                                }
+                                break;
 						    }
+						    
 						    if(parsedRegex != null && parsedReplacement != null)
 						    {
 						        value = value.replaceAll(parsedRegex, parsedReplacement);
+						        //if we've modified this, don't let it turn into some other TermType. it IS a symbol.
+						        valueTermType = TermType.SYMBOL;
 						    }
-						    
-							TermType valueTermType = parseTree.getTermType(value);
+						    else if(valueTermType == TermType.SYMBOL && parseTree.isLiteral(value))
+						    {
+						        valueTermType = TermType.LITERAL;
+						    }
 							//check to see if this is an escaped Literal, if so, it's a symbol
 							if(valueTermType == TermType.LITERAL && parseTree.getLiteralValue(value).length() != value.length())
                             {
                                 valueTermType = TermType.SYMBOL;                                
                             }
-							if(valueTermType == TermType.DELIMITER && parseTape.getCurrent().getTokenType() == TokenType.TERM)
+							if(valueTermType == TermType.DELIMITER && token.getTokenType() == TokenType.WORD)
 							{
 							    valueTermType = TermType.SYMBOL;
 							}
 							//delimiters should never be treated as symbols
 							if(valueTermType == TermType.DELIMITER || valueTermType == TermType.LITERAL)
 							{
-							    System.err.println(parseTape.getCurrent()+"<=="+valueTermType);
+							    System.err.println(token+"<=="+valueTermType);
 								parseTape.pushBack();
 								foundExpressionMatch = false;
+								printPathMessage(peerParseNode, "FAILURE "+term+"["+termType+"] against "+token+"["+valueTermType+"]");
 								if(inQuantificationLoop == false)
 		                        {
 		                            continue expressions;
@@ -284,12 +319,16 @@ public class ParseRule
 							//overlap with Literals should be ignored as a literal can be a SYMBOL_NAME							
 							else
 							{
+							    if(peerParseNode.hasAttribute(term))
+							    {
+							        value = peerParseNode.getAttribute(term) +" "+ value;
+							    }
 								peerParseNode.setAttribute(term, value);
 							}
 							break;
 						case DELIMITER:
 							
-							if(parseTree.getTermType(token.getValue()) == TermType.DELIMITER && token.getTokenType() != TokenType.TERM)
+							if(parseTree.getTermType(token.getValue()) == TermType.DELIMITER && token.getTokenType() != TokenType.WORD)
 							{
 								//comsume it, and do nothing
 							}
@@ -298,6 +337,7 @@ public class ParseRule
 							    System.err.println(token+"<=="+parseTree.getTermType(token.getValue()));
 								parseTape.pushBack();
 								foundExpressionMatch = false;
+								printPathMessage(peerParseNode, "FAILURE "+term+"["+termType+"] against "+token);
 								if(inQuantificationLoop == false)
 		                        {
 		                            continue expressions;
@@ -317,6 +357,7 @@ public class ParseRule
 					        quantifier++;
 					        if(quantifier > maximumQuantity)
 					        {
+					            printPathMessage(peerParseNode, "QUANTITY FAILURE "+term+"["+termType+"] against "+token);
 					            foundExpressionMatch = false;
                                 continue expressions;
 					        }
@@ -330,6 +371,7 @@ public class ParseRule
 					        }
 					        else
 					        {
+					            printPathMessage(peerParseNode, "QUANTITY FAILURE "+term+"["+termType+"] against "+token);
 					            foundExpressionMatch = false; //redundant
 					            continue expressions;
 					        }
@@ -346,6 +388,7 @@ public class ParseRule
 		}
 		
 		peerParseNode.removeChildrenAll();
+		peerParseNode.removeAttributes();
 		
 		if(matchItemVector.size() > 0)
 		{
@@ -380,8 +423,11 @@ public class ParseRule
 			}
 			peerParseNode.setAttributes((CNamedNodeMap) matchItem.parseNode.getAttributes());
 			//XPath.dumpNode(peerParseNode, System.out);
+			
+			printPathMessage(peerParseNode, "finished parse with TRUE");
 			return true;
 		}
+		printPathMessage(peerParseNode, "finished parse with FAILURE");
 		return false;
 	}
 
@@ -393,7 +439,14 @@ public class ParseRule
 	@Override
 	public String toString()
 	{
-	   return getName()+""+Arrays.toString(expressions);
+	    StringBuilder stringBuilder = new StringBuilder();
+	    stringBuilder.append("[");
+	    for (String[] expression : expressions)
+        {
+            stringBuilder.append(Arrays.toString(expression));
+        }
+	    stringBuilder.append("]");
+	   return getName()+""+stringBuilder;
 	}
 	
 	private class MatchItem

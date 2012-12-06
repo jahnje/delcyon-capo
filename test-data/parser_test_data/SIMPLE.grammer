@@ -1,4 +1,11 @@
-ADDRESS = NAME STREET | NAME STREET TOWN*
-NAME = FIRST_NAME LAST_NAME 'literal' EOL
-STREET = NUMBER STREET_NAME DESIGNATION EOL
-TOWN = ~TOWN_NAME/(.+)(,)/$1 STATE ZIPCODE EOL
+DEVICES = DEVICE+
+DEVICE 	= LINK INET INET6? STATUS RX? TX? OTHER+ STATS? OTHER* EOL
+LINK	= DEVICE_NAME 'Link' ENCAP HW HWADDR? EOL
+INET	= 'inet' ~ADDRESS/addr:(\d+\.\d+\.\d+\.\d+)/$1 ~BROADCAST?/Bcast:(\d+\.\d+\.\d+\.\d+)/$1 ~NETMASK?/Mask:(\d+\.\d+\.\d+\.\d+)/$1 EOL
+INET6	= 'inet6' 'addr:' ADDRESS ~SCOPE/Scope:(.+)/$1 EOL
+STATUS	= TERM+ EOL
+RX		= 'RX' ~packets/packets:(\d+)/$1 ~errors/errors:(\d+)/$1 ~dropped/dropped:(\d+)/$1 ~overruns/overruns:(\d+)/$1 ~frame/frame:(\d+)/$1 EOL
+TX		= 'TX' ~packets/packets:(\d+)/$1 ~errors/errors:(\d+)/$1 ~dropped/dropped:(\d+)/$1 ~overruns/overruns:(\d+)/$1 ~carrier/carrier:(\d+)/$1 EOL
+STATS	= 'RX' RECV RECV_T RECV_T 'TX' SEND SEND_T SEND_T EOL
+OTHER	= TERM+ EOL
+TERM	= VALUE

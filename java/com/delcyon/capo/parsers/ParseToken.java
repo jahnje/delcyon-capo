@@ -26,7 +26,7 @@ public class ParseToken
     {
         EOF,
         EOL,
-        TERM,
+        WORD,
         ASSIGNMENT,
         ALTERNATION,
         SYMBOL
@@ -54,6 +54,6 @@ public class ParseToken
     @Override
     public String toString()
     {
-        return new String(tokenType+"["+value+"]");
+        return new String("'"+value+"':["+tokenType+"]");
     }
 }

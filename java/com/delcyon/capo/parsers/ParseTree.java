@@ -53,7 +53,7 @@ public class ParseTree extends CDocument
 	
 	private HashMap<String, String[]> symbolHashMap = new HashMap<String, String[]>();	
 	private HashMap<String, SymbolType> symbolTypeHashMap = new HashMap<String, SymbolType>();
-	private HashMap<String, String> notationHashMap = new HashMap<String, String>();
+	private HashMap<String, String> literalHashMap = new HashMap<String, String>();
 	
 	private ParseOrderPreference parseOrderPreference = ParseOrderPreference.RIGHT;
 	private boolean allowPartialMatch = false;
@@ -96,7 +96,8 @@ public class ParseTree extends CDocument
 					{
 						if(term.matches(literalPattern))
 						{
-							symbolTypeHashMap.put(term.replaceAll(literalPattern, "$1"), SymbolType.LITERAL);
+							symbolTypeHashMap.put(term, SymbolType.LITERAL);
+							literalHashMap.put(term.replaceAll(literalPattern, "$1"), term);
 						}
 					}
 				}
@@ -196,6 +197,16 @@ public class ParseTree extends CDocument
 		return term;
 	}
 
+	/**
+	 * Check to see if a token value is registered as a literal
+	 * @param value
+	 * @return
+	 */
+	public boolean isLiteral(String value)
+	{
+	    return literalHashMap.containsKey(value);
+	}
+	
 	public ParseOrderPreference getParseOrderPreference()
 	{
 		return parseOrderPreference;

@@ -207,7 +207,7 @@ public class GrammerParser
             else
             {
                 notationParseRuleVector.add(parseRule);
-                System.out.println(parseRule.getName()+"==>"+expressionsVector);
+                System.out.println(parseRule);
             }
             
             
@@ -280,7 +280,7 @@ public class GrammerParser
             }
             ParseRule parseRule = new ParseRule(element.getAttribute("RULE_NAME"),expressions);
             grammerParseRuleVector.add(parseRule);
-            System.out.println(parseRule+" "+expressionsVector);
+            System.out.println(parseRule);
         }
 
 	}
