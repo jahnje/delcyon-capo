@@ -16,7 +16,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 package com.delcyon.capo.parsers;
 
-import java.io.StreamTokenizer;
 import java.util.Vector;
 
 import com.delcyon.capo.parsers.ParseToken.TokenType;
@@ -30,22 +29,22 @@ public class ParseTape
 
 	private int position = -1;
 	private Vector<ParseToken> streamVector = new Vector<ParseToken>();
-	public ParseTape(StreamTokenizer streamTokenizer) throws Exception
+	public ParseTape(Tokenizer tokenizer) throws Exception
 	{
 	
 		while(true)
 		{
-			streamTokenizer.nextToken();
+			tokenizer.nextToken();
 			
-			if(streamTokenizer.sval != null)
+			if(tokenizer.getValue() != null)
 			{				
-				streamVector.add(new ParseToken(streamTokenizer.sval,TokenType.WORD));
+				streamVector.add(new ParseToken(tokenizer.getValue(),TokenType.WORD));
 			}
-			else if (streamTokenizer.ttype ==StreamTokenizer.TT_EOL)
+			else if (tokenizer.getTokenType() == Tokenizer.TokenType.EOL)
 			{
 				streamVector.add(new ParseToken("EOL",TokenType.EOL));
 			}
-			else if (streamTokenizer.ttype ==StreamTokenizer.TT_EOF)
+			else if (tokenizer.getTokenType() ==Tokenizer.TokenType.EOF)
 			{				
 				break;
 			}

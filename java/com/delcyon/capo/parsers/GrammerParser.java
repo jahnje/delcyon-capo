@@ -21,12 +21,13 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.StreamTokenizer;
 import java.util.HashMap;
-import java.util.Set;
 import java.util.Map.Entry;
+import java.util.Set;
 import java.util.Vector;
 
 import org.w3c.dom.NodeList;
 
+import com.delcyon.capo.parsers.Tokenizer.CharacterType;
 import com.delcyon.capo.xml.XPath;
 import com.delcyon.capo.xml.cdom.CElement;
 
@@ -103,32 +104,32 @@ public class GrammerParser
 
 	public void loadSymbols(InputStream inputStream) throws Exception
 	{
-		BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(inputStream));
+		
 
-		StreamTokenizer streamTokenizer = new StreamTokenizer(bufferedReader);
+		Tokenizer streamTokenizer = new Tokenizer(inputStream);
 		streamTokenizer.resetSyntax();
-		streamTokenizer.wordChars(33, 126);
+		streamTokenizer.setCharRangeType(33, 126,CharacterType.ALPHA);
 		streamTokenizer.eolIsSignificant(true);
 		setDelimiters(streamTokenizer, SymbolType.DELIMITER.toString());
-		while (streamTokenizer.nextToken() != StreamTokenizer.TT_EOF)
+		while (streamTokenizer.nextToken() != Tokenizer.TokenType.EOF)
 		{
-			if (streamTokenizer.ttype == StreamTokenizer.TT_EOL)
+			if (streamTokenizer.getTokenType() == Tokenizer.TokenType.EOL)
 			{
 				System.out.println("EOL");
 			}
 			else
 			{
-				if (symbolTypeHashMap.containsKey(streamTokenizer.sval))
+				if (symbolTypeHashMap.containsKey(streamTokenizer.getValue()))
 				{
-					System.out.println(streamTokenizer.sval + "\t ==>\t " + symbolTypeHashMap.get(streamTokenizer.sval));
+					System.out.println(streamTokenizer.getValue() + "\t ==>\t " + symbolTypeHashMap.get(streamTokenizer.getValue()));
 				}
-				else if (ruleHashMap.containsKey(streamTokenizer.sval))
+				else if (ruleHashMap.containsKey(streamTokenizer.getValue()))
 				{
-					System.out.println(streamTokenizer.sval + "\t ==>\t RULE");
+					System.out.println(streamTokenizer.getValue() + "\t ==>\t RULE");
 				}
 				else
 				{					
-					System.out.println(streamTokenizer.sval + "\t ==>\t LITERAL");
+					System.out.println(streamTokenizer.getValue() + "\t ==>\t LITERAL");
 				}
 			}
 		}
@@ -141,14 +142,14 @@ public class GrammerParser
         
         //clear rule hashmap        
         
-        BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(inputStream));
+        
 
         //prepare symbol table with loaded symbols
-        StreamTokenizer streamTokenizer = new StreamTokenizer(bufferedReader);
+        Tokenizer streamTokenizer = new Tokenizer(inputStream);
         streamTokenizer.resetSyntax();
-        streamTokenizer.wordChars(33, 126);
-        streamTokenizer.eolIsSignificant(true);
-        streamTokenizer.quoteChar('"');
+        streamTokenizer.setCharRangeType(33, 126,CharacterType.ALPHA);
+        streamTokenizer.eolIsSignificant(true);        
+        streamTokenizer.setCharType('"', CharacterType.QUOTE);
         //streamTokenizer.quoteChar('\'');
         setDelimiters(streamTokenizer, SymbolType.DELIMITER.toString());
         
@@ -220,14 +221,14 @@ public class GrammerParser
 		
 	    grammerParseRuleVector = new Vector<ParseRule>();
         
-        BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(inputStream));
+       
 
         //prepare symbol table with loaded symbols
-        StreamTokenizer streamTokenizer = new StreamTokenizer(bufferedReader);
+        Tokenizer streamTokenizer = new Tokenizer(inputStream);
         streamTokenizer.resetSyntax();
-        streamTokenizer.wordChars(33, 126);
-        streamTokenizer.eolIsSignificant(true);
-        streamTokenizer.quoteChar('"');
+        streamTokenizer.setCharRangeType(33, 126,CharacterType.ALPHA);
+        streamTokenizer.eolIsSignificant(true);        
+        streamTokenizer.setCharType('"', CharacterType.QUOTE);
         //streamTokenizer.quoteChar('\'');
         setDelimiters(streamTokenizer, SymbolType.DELIMITER.toString());
         
@@ -328,16 +329,13 @@ public class GrammerParser
 
 	public void parse(InputStream inputStream) throws Exception
 	{
-		BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(inputStream));
-
-		
 
         //prepare symbol table with loaded symbols
-        StreamTokenizer streamTokenizer = new StreamTokenizer(bufferedReader);
+        Tokenizer streamTokenizer = new Tokenizer(inputStream);
         streamTokenizer.resetSyntax();
-        streamTokenizer.wordChars(33, 126);
-        streamTokenizer.eolIsSignificant(true);
-        streamTokenizer.quoteChar('"');
+        streamTokenizer.setCharRangeType(33, 126,CharacterType.ALPHA);
+        streamTokenizer.eolIsSignificant(true);        
+        streamTokenizer.setCharType('"', CharacterType.QUOTE);
         //streamTokenizer.quoteChar('\'');
         setDelimiters(streamTokenizer, SymbolType.DELIMITER.toString());
         
@@ -357,7 +355,7 @@ public class GrammerParser
 
 	}
 
-	private void setDelimiters(StreamTokenizer streamTokenizer, String symbolName)
+	private void setDelimiters(Tokenizer streamTokenizer, String symbolName)
 	{
 		String[] delimiters = symbolHashMap.get(symbolName);
 		if (delimiters == null)
@@ -367,8 +365,8 @@ public class GrammerParser
 		for (String string : delimiters)
 		{
 			if (string.length() == 1)
-			{
-				streamTokenizer.whitespaceChars(string.charAt(0), string.charAt(0));
+			{			            
+		        streamTokenizer.setCharType(string.charAt(0), CharacterType.WHITESPACE);		        
 			}
 			else if (string.length() > 1)
 			{

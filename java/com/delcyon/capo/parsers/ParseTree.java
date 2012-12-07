@@ -106,9 +106,9 @@ public class ParseTree extends CDocument
 		parseRule.setParseTree(this);
 	}
 
-	public void parse(StreamTokenizer streamTokenizer) throws Exception
+	public void parse(Tokenizer tokenizer) throws Exception
 	{
-		ParseTape parseTape = new ParseTape(streamTokenizer);
+		ParseTape parseTape = new ParseTape(tokenizer);
 		CElement parseNode = new CElement(parseRuleVector.firstElement().getName());
 		//appendChild(parseNode);
 		if(parseRuleVector.firstElement().parse(parseNode,parseTape))

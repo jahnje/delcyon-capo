@@ -23,7 +23,6 @@ import org.w3c.dom.NodeList;
 
 import com.delcyon.capo.parsers.ParseToken.TokenType;
 import com.delcyon.capo.parsers.ParseTree.TermType;
-import com.delcyon.capo.xml.XPath;
 import com.delcyon.capo.xml.cdom.CElement;
 import com.delcyon.capo.xml.cdom.CNamedNodeMap;
 import com.delcyon.capo.xml.cdom.CNode;
