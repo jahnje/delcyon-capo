@@ -98,6 +98,8 @@ public class Tokenizer
     private byte characterTypes[] = new byte[256];
     private Reader reader = null;
     private String value = null;
+    int currentChar = -4;
+    int currentQuoteChar = -1;
     private boolean pushedBack = false;
 
     private InternalTokenType internalTokenTypeHolder = new InternalTokenType(TokenType.NOTHING);
@@ -106,6 +108,9 @@ public class Tokenizer
   
     private boolean isEOLSignificant = false;
   
+    /**
+     * default constructor. This will set a number of basic char types. resetSyntax() should be called if you want a blank slate. 
+     */
     public Tokenizer() 
     {
         setCharRangeType('a', 'z', CharacterType.ALPHA);
@@ -131,6 +136,10 @@ public class Tokenizer
         this.reader = reader;
     }
 
+    /**
+     * will set the input stream to be read. 
+     * @param inputStream
+     */
     public void setInputStream(InputStream inputStream)
     {
         this.reader = new BufferedReader(new InputStreamReader(inputStream));
@@ -148,11 +157,22 @@ public class Tokenizer
         Arrays.fill(characterTypes, CharacterType.TOKEN.mask);
     }
 
+    /**
+     * Set a particular character to a characterType
+     * @param character
+     * @param characterType
+     */
     public void setCharType(int character, CharacterType characterType)
     {
         characterTypes[character] |= characterType.mask;
     }
    
+    /**
+     * Sets a range of characters to a characterType 'A','Z',ALPHA for example
+     * @param lowChar
+     * @param highChar
+     * @param characterType
+     */
     public void setCharRangeType(int lowChar, int highChar, CharacterType characterType)
     {
         if (lowChar < 0)
@@ -169,32 +189,40 @@ public class Tokenizer
         }
     }
     
-    public void eolIsSignificant(boolean flag)
+    /**
+     * determines of EOL will be returned as a separate token
+     * @param isEOLSignificant
+     */
+    public void setEOLSignificant(boolean isEOLSignificant)
     {
-        isEOLSignificant = flag;
+        this.isEOLSignificant = isEOLSignificant;
     }
 
-       
+    /**   
+     * @return the type of token that nextToken just read
+     */
     public TokenType getTokenType()
     {
         return internalTokenTypeHolder.tokenType;
     }
     
-
+    /**
+     * @return the value that nextToken just read
+     */
     public String getValue()
     {
         return value;
     }
     
     
-    /**
-     * temp rewrite area
-     * @return
-     * @throws IOException
-     */
-    int currentChar = -4;
-    int currentQuoteChar = -1;
     
+    
+    
+    /**
+     * This is the main method of this class. Each call to it will return the next token type from the stream, and make available getValue() and getTokenType() for use.
+     * @return
+     * @throws Exception
+     */
     public TokenType nextToken() throws Exception
     {
         
@@ -436,6 +464,11 @@ public class Tokenizer
         return internalTokenTypeHolder.tokenType;
     }
     
+    /**
+     * this will read up to 8 chars in brackets, or 2 without brackets, and make a char array from the resulting hexcode. 
+     * @return
+     * @throws Exception
+     */
     private char[] getHexCodeFromReader() throws Exception
     {
         
@@ -506,6 +539,12 @@ public class Tokenizer
         
     }
     
+    /**
+     * 
+     * @param the maximum length that the unicode declaration can be.
+     * @return char[] representing the unicode value.
+     * @throws Exception
+     */
     private char[] getUnicodeFromReader(int length) throws Exception
     {
         char[] buffer = new char[length];

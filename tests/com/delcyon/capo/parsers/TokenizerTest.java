@@ -36,7 +36,7 @@ public class TokenizerTest
     public void test() throws Exception
     {
         Tokenizer tokenizer = new Tokenizer(new FileInputStream("test-data/parser_test_data/tokenizer_test_data.txt"));
-        tokenizer.eolIsSignificant(true);
+        tokenizer.setEOLSignificant(true);
         tokenizer.setCharType('"', CharacterType.QUOTE);
         tokenizer.setCharType('\'', CharacterType.ALPHA);
         tokenizer.setCharType(';', CharacterType.COMMENT);

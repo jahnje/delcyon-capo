@@ -103,7 +103,7 @@ public class GrammerParser
 		Tokenizer streamTokenizer = new Tokenizer(inputStream);
 		streamTokenizer.resetSyntax();
 		streamTokenizer.setCharRangeType(33, 126,CharacterType.ALPHA);
-		streamTokenizer.eolIsSignificant(true);
+		streamTokenizer.setEOLSignificant(true);
 		setDelimiters(streamTokenizer, SymbolType.DELIMITER.toString());
 		while (streamTokenizer.nextToken() != Tokenizer.TokenType.EOF)
 		{
@@ -213,7 +213,7 @@ public class GrammerParser
         Tokenizer streamTokenizer = new Tokenizer(inputStream);
         streamTokenizer.resetSyntax();
         streamTokenizer.setCharRangeType(33, 126,CharacterType.ALPHA);
-        streamTokenizer.eolIsSignificant(true);        
+        streamTokenizer.setEOLSignificant(true);        
         streamTokenizer.setCharType('"', CharacterType.QUOTE);
         //streamTokenizer.quoteChar('\'');
         setDelimiters(streamTokenizer, SymbolType.DELIMITER.toString());
@@ -236,7 +236,7 @@ public class GrammerParser
         Tokenizer streamTokenizer = new Tokenizer(inputStream);
         streamTokenizer.resetSyntax();
         streamTokenizer.setCharRangeType(33, 126,CharacterType.ALPHA);
-        streamTokenizer.eolIsSignificant(true);        
+        streamTokenizer.setEOLSignificant(true);        
         streamTokenizer.setCharType('"', CharacterType.QUOTE);
         //streamTokenizer.quoteChar('\'');
         setDelimiters(streamTokenizer, SymbolType.DELIMITER.toString());
@@ -279,7 +279,7 @@ public class GrammerParser
         Tokenizer streamTokenizer = new Tokenizer(inputStream);
         streamTokenizer.resetSyntax();
         streamTokenizer.setCharRangeType(33, 126,CharacterType.ALPHA);
-        streamTokenizer.eolIsSignificant(true);        
+        streamTokenizer.setEOLSignificant(true);        
         streamTokenizer.setCharType('"', CharacterType.QUOTE);
         //streamTokenizer.quoteChar('\'');
         setDelimiters(streamTokenizer, SymbolType.DELIMITER.toString());
