@@ -23,11 +23,11 @@ import java.util.Set;
 import java.util.Vector;
 
 import org.w3c.dom.Document;
+import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 
 import com.delcyon.capo.parsers.Tokenizer.CharacterType;
 import com.delcyon.capo.xml.XPath;
-import com.delcyon.capo.xml.cdom.CElement;
 
 /**
  * @author jeremiah
@@ -141,7 +141,7 @@ public class GrammerParser
 	    NodeList ruleList = XPath.selectNodes(grammarParseTree, "//RULE");
         for(int ruleIndex = 0; ruleIndex < ruleList.getLength(); ruleIndex++)
         {
-            CElement ruleElement = (CElement) ruleList.item(ruleIndex);
+            Element ruleElement = (Element) ruleList.item(ruleIndex);
             
             NodeList expressionNodeList =  XPath.selectNodes(ruleElement, "EXPRESSION");
             Vector<Vector<String>> expressionsVector = new Vector<Vector<String>>();
@@ -154,7 +154,7 @@ public class GrammerParser
                 
                 for(int termIndex = 0; termIndex < termNodeList.getLength(); termIndex++)
                 {
-                    String value = ((CElement) termNodeList.item(termIndex)).getAttribute("VALUE");
+                    String value = ((Element) termNodeList.item(termIndex)).getAttribute("VALUE");
                     if(symbolTypeHashMap.get(value) == SymbolType.ALTERNATION)
                     {                   
                         expressionsVector.add(expressionVector);
@@ -220,10 +220,10 @@ public class GrammerParser
         ParseTree notationParseTree = loadNotationParseTree();
         notationParseTree.setSymbolHashMap(symbolHashMap);
         notationParseTree.setSymbolTypeHashMap(symbolTypeHashMap);
-        notationParseTree.parse(streamTokenizer);
-        XPath.dumpNode(notationParseTree, System.out);
+        Document parseDocument = notationParseTree.parse(streamTokenizer);
+        XPath.dumpNode(parseDocument, System.out);
         
-        notationParseRuleVector = getParseRules(notationParseTree);
+        notationParseRuleVector = getParseRules(parseDocument);
 	}
 	
 	
@@ -247,18 +247,17 @@ public class GrammerParser
             grammerParseTree.addRule(parseRule);
         }
         grammerParseTree.setSymbolTypeHashMap(symbolTypeHashMap);
-        grammerParseTree.parse(streamTokenizer);
-        XPath.dumpNode(grammerParseTree, System.out);
+        Document parseDocument = grammerParseTree.parse(streamTokenizer);
+        XPath.dumpNode(parseDocument, System.out);
         
-        grammerParseRuleVector = getParseRules(grammerParseTree);
+        grammerParseRuleVector = getParseRules(parseDocument);
 
 	}
 	
 	private ParseTree loadNotationParseTree()
 	{
 		ParseTree parseTree = new ParseTree();
-		parseTree.setSymbolHashMap(symbolHashMap);
-		
+		parseTree.setSymbolHashMap(symbolHashMap);		
 		ParseRule ruleListParseRule = new ParseRule("RULE_LIST",new String[]{"RULE+"});
 		parseTree.addRule(ruleListParseRule);
 		ParseRule ruleParseRule = new ParseRule("RULE",new String[]{"RULE_NAME","'='", "EXPRESSION","EOL"});
@@ -292,9 +291,9 @@ public class GrammerParser
         {
             grammerParseTree.addRule(parseRule);
         }
-        grammerParseTree.parse(streamTokenizer);
+        Document parseDocument = grammerParseTree.parse(streamTokenizer);
         grammerParseTree.setSymbolTypeHashMap(symbolTypeHashMap);
-        XPath.dumpNode(grammerParseTree, System.out);
+        XPath.dumpNode(parseDocument, System.out);
         
 
 	}

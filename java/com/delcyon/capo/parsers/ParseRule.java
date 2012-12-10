@@ -19,13 +19,14 @@ package com.delcyon.capo.parsers;
 import java.util.Arrays;
 import java.util.Vector;
 
+import org.w3c.dom.Attr;
+import org.w3c.dom.Element;
+import org.w3c.dom.NamedNodeMap;
+import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
 import com.delcyon.capo.parsers.ParseToken.TokenType;
 import com.delcyon.capo.parsers.ParseTree.TermType;
-import com.delcyon.capo.xml.cdom.CElement;
-import com.delcyon.capo.xml.cdom.CNamedNodeMap;
-import com.delcyon.capo.xml.cdom.CNode;
 
 /**
  * @author jeremiah
@@ -59,7 +60,7 @@ public class ParseRule
 		return name;
 	}
 
-	private void printPathMessage(CNode element, String message)
+	private void printPathMessage(Node element, String message)
 	{
 //	    StringBuilder stringBuilder = new StringBuilder();
 //	    while(element != null)
@@ -70,21 +71,23 @@ public class ParseRule
 //	    System.out.println(stringBuilder+":"+message);
 	}
 	
-	public boolean parse(CElement peerParseNode, ParseTape parseTape) throws Exception
+	public boolean parse(Element originalParseNode, ParseTape parseTape) throws Exception
 	{
 	    //System.out.println("\n\n");
-	    printPathMessage(peerParseNode, "STARTING:"+this);
+	    printPathMessage(originalParseNode, "STARTING:"+this);
 	    
 		Vector<MatchItem> matchItemVector = new Vector<MatchItem>();
 		boolean foundExpressionMatch = false;
 		int initialTapePosition = parseTape.getPosition();
+		
+		Element peerParseNode = (Element) originalParseNode.cloneNode(true);
 		
 		expressions:
 		for (int currentExpression = 0; currentExpression < expressions.length; currentExpression++)
 		{
 			if(foundExpressionMatch == true)
 			{
-				matchItemVector.add(new MatchItem((CElement) peerParseNode.cloneNode(true),parseTape.getPosition()));
+				matchItemVector.add(new MatchItem(peerParseNode,parseTape.getPosition()));
 			}
 			//check to see if we need to try something else, if we're out of tape, and we have a match, then we don't
 			if(parseTape.hasMore() == false && foundExpressionMatch)
@@ -92,8 +95,8 @@ public class ParseRule
 				break;
 			}
 			
-			peerParseNode.removeChildrenAll();
-			peerParseNode.removeAttributes();
+			peerParseNode = (Element) originalParseNode.cloneNode(true);
+			
 			foundExpressionMatch = true;
 			
 			//backup. set list pointer to parse entry position
@@ -218,7 +221,7 @@ public class ParseRule
 						case RULE:
 							//drill down into new rule
 							parseTape.pushBack();
-							CElement parseNode = new CElement(parseTree.getRuleNode(term).getName());
+							Element parseNode = originalParseNode.getOwnerDocument().createElement(parseTree.getRuleNode(term).getName());
 							peerParseNode.appendChild(parseNode);
 							if (parseTree.getRuleNode(term).parse(parseNode, parseTape) == false)
 							{
@@ -236,7 +239,7 @@ public class ParseRule
 						    {
 						        if(parseTree.isIncludeLiterals() == true)
 						        {
-						            CElement cElement = new CElement("LITERAL");
+						            Element cElement = originalParseNode.getOwnerDocument().createElement("LITERAL");
 						            cElement.setAttribute(parseTree.getLiteralType(token.getValue()), token.getValue());
 						            peerParseNode.appendChild(cElement);
 						        }
@@ -245,7 +248,7 @@ public class ParseRule
 							{
 						        if(parseTree.isIncludeLiterals() == true)
 						        {
-						            CElement cElement = new CElement("LITERAL");
+						            Element cElement = originalParseNode.getOwnerDocument().createElement("LITERAL");
 						            cElement.setAttribute(parseTree.getLiteralType(token.getValue()), token.getValue());
 						            peerParseNode.appendChild(cElement);
 						        }
@@ -383,11 +386,8 @@ public class ParseRule
 		
 		if(foundExpressionMatch == true)
 		{
-			matchItemVector.add(new MatchItem((CElement) peerParseNode.cloneNode(true),parseTape.getPosition()));
+			matchItemVector.add(new MatchItem(peerParseNode,parseTape.getPosition()));
 		}
-		
-		peerParseNode.removeChildrenAll();
-		peerParseNode.removeAttributes();
 		
 		if(matchItemVector.size() > 0)
 		{
@@ -417,10 +417,18 @@ public class ParseRule
 			NodeList childrenNodeList = matchItem.parseNode.getChildNodes();
 			for(int index = 0; index < childrenNodeList.getLength();)
 			{			    
-				peerParseNode.appendChild(childrenNodeList.item(index));
+				originalParseNode.appendChild(childrenNodeList.item(index));
 				
 			}
-			peerParseNode.setAttributes((CNamedNodeMap) matchItem.parseNode.getAttributes());
+			
+			NamedNodeMap namedNodeMap = matchItem.parseNode.getAttributes();
+			while(namedNodeMap.getLength() > 0)
+			{
+			    originalParseNode.setAttributeNode((Attr) namedNodeMap.removeNamedItem(namedNodeMap.item(0).getNodeName()));    
+			}
+			
+			
+			
 			//XPath.dumpNode(peerParseNode, System.out);
 			
 			printPathMessage(peerParseNode, "finished parse with TRUE");
@@ -451,10 +459,10 @@ public class ParseRule
 	private class MatchItem
 	{
 		
-		CElement parseNode = null;
+		Element parseNode = null;
 		int endTapePosition = -1;
 
-		public MatchItem(CElement parseNode, int position)
+		public MatchItem(Element parseNode, int position)
 		{
 			this.parseNode = parseNode;
 			this.endTapePosition = position;

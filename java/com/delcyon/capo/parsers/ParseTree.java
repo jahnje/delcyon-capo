@@ -16,21 +16,23 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 package com.delcyon.capo.parsers;
 
-import java.io.StreamTokenizer;
 import java.util.HashMap;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.Vector;
 
+import javax.xml.parsers.DocumentBuilderFactory;
+
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+
 import com.delcyon.capo.parsers.GrammerParser.SymbolType;
-import com.delcyon.capo.xml.cdom.CDocument;
-import com.delcyon.capo.xml.cdom.CElement;
 
 /**
  * @author jeremiah
  *
  */
-public class ParseTree extends CDocument
+public class ParseTree
 {
 
 	public enum ParseOrderPreference
@@ -106,18 +108,20 @@ public class ParseTree extends CDocument
 		parseRule.setParseTree(this);
 	}
 
-	public void parse(Tokenizer tokenizer) throws Exception
+	public Document parse(Tokenizer tokenizer) throws Exception
 	{
 		ParseTape parseTape = new ParseTape(tokenizer);
-		CElement parseNode = new CElement(parseRuleVector.firstElement().getName());
+		Document parseDocument = DocumentBuilderFactory.newInstance().newDocumentBuilder().newDocument();
+		Element parseNode = parseDocument.createElement(parseRuleVector.firstElement().getName());
 		//appendChild(parseNode);
 		if(parseRuleVector.firstElement().parse(parseNode,parseTape))
 		{
 		    if(allowPartialMatch == true || parseTape.hasMore() == false)
 		    {
-		        appendChild(adoptNode(parseNode));
+		        parseDocument.appendChild(parseNode);		        
 		    }
 		}
+		return parseDocument;
 		
 	}
 
