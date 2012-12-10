@@ -340,7 +340,7 @@ public class Tokenizer
         if ((charType & CharacterType.QUOTE.mask) != 0)
         {
             internalTokenTypeHolder.setTokenValue(currentChar);
-            int i = 0;
+            int bufferIndex = 0;
             /* Invariants (because \Octal needs a lookahead):
              *   (i)  c contains char value
              *   (ii) d contains the lookahead
@@ -355,24 +355,24 @@ public class Tokenizer
                     if (currentChar >= '0' && currentChar <= '7') 
                     {
                         currentChar = currentChar - '0';
-                        int c2 = reader.read();
-                        if ('0' <= c2 && c2 <= '7') 
+                        int nextNextChar = reader.read();
+                        if ('0' <= nextNextChar && nextNextChar <= '7') 
                         {
-                            currentChar = (currentChar << 3) + (c2 - '0');
-                            c2 = reader.read();
-                            if ('0' <= c2 && c2 <= '7' && first <= '3') 
+                            currentChar = (currentChar << 3) + (nextNextChar - '0');
+                            nextNextChar = reader.read();
+                            if ('0' <= nextNextChar && nextNextChar <= '7' && first <= '3') 
                             {
-                                currentChar = (currentChar << 3) + (c2 - '0');
+                                currentChar = (currentChar << 3) + (nextNextChar - '0');
                                 nextChar = reader.read();
                             }
                             else
                             {
-                                nextChar = c2;
+                                nextChar = nextNextChar;
                             }
                         } 
                         else
                         {
-                          nextChar = c2;
+                          nextChar = nextNextChar;
                         }
                     } 
                     else
@@ -409,11 +409,11 @@ public class Tokenizer
                     currentChar = nextChar;
                     nextChar = reader.read();
                 }
-                if (i >= buffer.length)
+                if (bufferIndex >= buffer.length)
                 {
                     buffer = Arrays.copyOf(buffer, buffer.length * 2);
                 }
-                buffer[i++] = (char)currentChar;
+                buffer[bufferIndex++] = (char)currentChar;
             }
 
             /* If we broke out of the loop because we found a matching quote
@@ -422,7 +422,7 @@ public class Tokenizer
              */
             peekChar = (nextChar == internalTokenTypeHolder.tokenValue) ? NEED_CHAR : nextChar;
 
-            value = String.copyValueOf(buffer, 0, i);
+            value = String.copyValueOf(buffer, 0, bufferIndex);
             return internalTokenTypeHolder.tokenType;
         }
 
@@ -479,6 +479,7 @@ public class Tokenizer
             }
         }
 
+        //if were a comment, then read until EOL or EOF
         if ((charType & CharacterType.COMMENT.mask) != 0)
         {
             while ((currentChar = reader.read()) != TokenType.EOL.value && currentChar != '\r' && currentChar >= 0);

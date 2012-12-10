@@ -61,18 +61,18 @@ public class ParseRule
 
 	private void printPathMessage(CNode element, String message)
 	{
-	    StringBuilder stringBuilder = new StringBuilder();
-	    while(element != null)
-	    {
-	        stringBuilder.insert(0, element.getLocalName()+"/");	        
-	        element = (CNode) element.getParentNode();
-	    }
-	    System.out.println(stringBuilder+":"+message);
+//	    StringBuilder stringBuilder = new StringBuilder();
+//	    while(element != null)
+//	    {
+//	        stringBuilder.insert(0, element.getLocalName()+"/");	        
+//	        element = (CNode) element.getParentNode();
+//	    }
+//	    System.out.println(stringBuilder+":"+message);
 	}
 	
 	public boolean parse(CElement peerParseNode, ParseTape parseTape) throws Exception
 	{
-	    System.out.println("\n\n");
+	    //System.out.println("\n\n");
 	    printPathMessage(peerParseNode, "STARTING:"+this);
 	    
 		Vector<MatchItem> matchItemVector = new Vector<MatchItem>();
@@ -305,7 +305,7 @@ public class ParseRule
 							//delimiters should never be treated as symbols
 							if(valueTermType == TermType.DELIMITER || valueTermType == TermType.LITERAL)
 							{
-							    System.err.println(token+"<=="+valueTermType);
+							    //System.err.println(token+"<=="+valueTermType);
 								parseTape.pushBack();
 								foundExpressionMatch = false;
 								printPathMessage(peerParseNode, "FAILURE "+term+"["+termType+"] against "+token+"["+valueTermType+"]");
@@ -333,7 +333,7 @@ public class ParseRule
 							}
 							else
 							{
-							    System.err.println(token+"<=="+parseTree.getTermType(token.getValue()));
+							    //System.err.println(token+"<=="+parseTree.getTermType(token.getValue()));
 								parseTape.pushBack();
 								foundExpressionMatch = false;
 								printPathMessage(peerParseNode, "FAILURE "+term+"["+termType+"] against "+token);

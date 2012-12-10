@@ -16,15 +16,13 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 package com.delcyon.capo.parsers;
 
-import java.io.BufferedReader;
 import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.StreamTokenizer;
 import java.util.HashMap;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.Vector;
 
+import org.w3c.dom.Document;
 import org.w3c.dom.NodeList;
 
 import com.delcyon.capo.parsers.Tokenizer.CharacterType;
@@ -136,9 +134,74 @@ public class GrammerParser
 
 	}
 	
+	private Vector<ParseRule> getParseRules(Document grammarParseTree) throws Exception
+	{
+	    Vector<ParseRule> parseRuleVector = new Vector<ParseRule>();
+	    
+	    NodeList ruleList = XPath.selectNodes(grammarParseTree, "//RULE");
+        for(int ruleIndex = 0; ruleIndex < ruleList.getLength(); ruleIndex++)
+        {
+            CElement ruleElement = (CElement) ruleList.item(ruleIndex);
+            
+            NodeList expressionNodeList =  XPath.selectNodes(ruleElement, "EXPRESSION");
+            Vector<Vector<String>> expressionsVector = new Vector<Vector<String>>();
+           
+            
+            for(int expressionIndex = 0; expressionIndex < expressionNodeList.getLength(); expressionIndex++)
+            {   
+                Vector<String> expressionVector = new Vector<String>();     
+                NodeList termNodeList = XPath.selectNodes(expressionNodeList.item(expressionIndex), "TERM");
+                
+                for(int termIndex = 0; termIndex < termNodeList.getLength(); termIndex++)
+                {
+                    String value = ((CElement) termNodeList.item(termIndex)).getAttribute("VALUE");
+                    if(symbolTypeHashMap.get(value) == SymbolType.ALTERNATION)
+                    {                   
+                        expressionsVector.add(expressionVector);
+                        expressionVector = new Vector<String>();
+                        //System.err.println(symbolTypeHashMap.get(value)+"<---"+value);
+                    }
+                    else
+                    {
+                        //System.err.println(symbolTypeHashMap.get(value)+"<==="+value);
+                        expressionVector.add(value);
+                    }
+                }
+                expressionsVector.add(expressionVector);    
+            }
+            
+            
+            String[][] expressions = new String[expressionsVector.size()][];
+            for(int expressionsIndex = 0 ; expressionsIndex < expressionsVector.size(); expressionsIndex++)
+            {
+                Vector<String> expressionVectorLocal = expressionsVector.get(expressionsIndex);
+                expressions[expressionsIndex] = new String[expressionVectorLocal.size()];
+                for(int termIndex = 0; termIndex < expressions[expressionsIndex].length; termIndex++)
+                {
+                    expressions[expressionsIndex][termIndex] = expressionVectorLocal.get(termIndex);
+                }
+            }
+            ParseRule parseRule = new ParseRule(ruleElement.getAttribute("RULE_NAME"),expressions);
+            if(parseRule.getName().equals("ALTERNATION"))
+            {
+                System.out.println(parseRule.getName()+"==>"+expressionsVector);
+            }
+            else if(parseRule.getName().equals("ASSIGNMENT"))            
+            {
+                System.out.println(parseRule.getName()+"==>"+expressionsVector);
+            }
+            else
+            {
+                parseRuleVector.add(parseRule);
+                System.out.println(parseRule);
+            }
+        }
+        return parseRuleVector;
+	}
+	
 	public void loadNotationGrammer(InputStream inputStream) throws Exception
 	{
-	    notationParseRuleVector = new Vector<ParseRule>();
+	    
         
         //clear rule hashmap        
         
@@ -159,69 +222,13 @@ public class GrammerParser
         notationParseTree.setSymbolTypeHashMap(symbolTypeHashMap);
         notationParseTree.parse(streamTokenizer);
         XPath.dumpNode(notationParseTree, System.out);
-        NodeList nodeList = XPath.selectNodes(notationParseTree, "//RULE");
-        for(int index = 0; index < nodeList.getLength(); index++)
-        {
-            CElement element = (CElement) nodeList.item(index);
-            
-            NodeList listNodeList =  XPath.selectNodes(element, "descendant::LIST");
-            Vector<Vector<String>> expressionsVector = new Vector<Vector<String>>();
-            Vector<String> expressionVector = new Vector<String>();
-            
-            for(int listIndex = 0; listIndex < listNodeList.getLength(); listIndex++)
-            {               
-                String term = ((CElement) listNodeList.item(listIndex)).getAttribute("TERM");
-                if(symbolTypeHashMap.get(term) == SymbolType.ALTERNATION)
-                {                   
-                    expressionsVector.add(expressionVector);
-                    expressionVector = new Vector<String>();
-                    System.err.println(symbolTypeHashMap.get(term)+"<---"+term);
-                }
-                else
-                {
-                    System.err.println(symbolTypeHashMap.get(term)+"<==="+term);
-                    expressionVector.add(term);
-                }
-                
-            }
-            expressionsVector.add(expressionVector);
-            
-            String[][] expressions = new String[expressionsVector.size()][];
-            for(int expressionsIndex = 0 ; expressionsIndex < expressionsVector.size(); expressionsIndex++)
-            {
-                Vector<String> expressionVectorLocal = expressionsVector.get(expressionsIndex);
-                expressions[expressionsIndex] = new String[expressionVectorLocal.size()];
-                for(int termIndex = 0; termIndex < expressions[expressionsIndex].length; termIndex++)
-                {
-                    expressions[expressionsIndex][termIndex] = expressionVectorLocal.get(termIndex);
-                }
-            }
-            ParseRule parseRule = new ParseRule(element.getAttribute("RULE_NAME"),expressions);
-            if(parseRule.getName().equals("ALTERNATION"))
-            {
-                System.out.println(parseRule.getName()+"==>"+expressionsVector);
-            }
-            else if(parseRule.getName().equals("ASSIGNMENT"))            
-            {
-                System.out.println(parseRule.getName()+"==>"+expressionsVector);
-            }
-            else
-            {
-                notationParseRuleVector.add(parseRule);
-                System.out.println(parseRule);
-            }
-            
-            
-        }
-		
+        
+        notationParseRuleVector = getParseRules(notationParseTree);
 	}
+	
 	
 	public void loadGrammer(InputStream inputStream) throws Exception
 	{
-		
-	    grammerParseRuleVector = new Vector<ParseRule>();
-        
-       
 
         //prepare symbol table with loaded symbols
         Tokenizer streamTokenizer = new Tokenizer(inputStream);
@@ -242,47 +249,8 @@ public class GrammerParser
         grammerParseTree.setSymbolTypeHashMap(symbolTypeHashMap);
         grammerParseTree.parse(streamTokenizer);
         XPath.dumpNode(grammerParseTree, System.out);
-        NodeList nodeList = XPath.selectNodes(grammerParseTree, "//RULE");
-        for(int index = 0; index < nodeList.getLength(); index++)
-        {
-            CElement element = (CElement) nodeList.item(index);
-            
-            NodeList listNodeList =  XPath.selectNodes(element, "descendant::LIST");
-            Vector<Vector<String>> expressionsVector = new Vector<Vector<String>>();
-            Vector<String> expressionVector = new Vector<String>();
-            
-            for(int listIndex = 0; listIndex < listNodeList.getLength(); listIndex++)
-            {               
-                String term = ((CElement) listNodeList.item(listIndex)).getAttribute("TERM");
-                if(symbolTypeHashMap.get(term) == SymbolType.ALTERNATION)
-                {                   
-                    expressionsVector.add(expressionVector);
-                    expressionVector = new Vector<String>();
-                    System.err.println(symbolTypeHashMap.get(term)+"<---"+term);
-                }
-                else
-                {
-                    System.err.println(symbolTypeHashMap.get(term)+"<==="+term);
-                    expressionVector.add(term);
-                }
-                
-            }
-            expressionsVector.add(expressionVector);
-            
-            String[][] expressions = new String[expressionsVector.size()][];
-            for(int expressionsIndex = 0 ; expressionsIndex < expressionsVector.size(); expressionsIndex++)
-            {
-                Vector<String> expressionVectorLocal = expressionsVector.get(expressionsIndex);
-                expressions[expressionsIndex] = new String[expressionVectorLocal.size()];
-                for(int termIndex = 0; termIndex < expressions[expressionsIndex].length; termIndex++)
-                {
-                    expressions[expressionsIndex][termIndex] = expressionVectorLocal.get(termIndex);
-                }
-            }
-            ParseRule parseRule = new ParseRule(element.getAttribute("RULE_NAME"),expressions);
-            grammerParseRuleVector.add(parseRule);
-            System.out.println(parseRule);
-        }
+        
+        grammerParseRuleVector = getParseRules(grammerParseTree);
 
 	}
 	
@@ -290,40 +258,16 @@ public class GrammerParser
 	{
 		ParseTree parseTree = new ParseTree();
 		parseTree.setSymbolHashMap(symbolHashMap);
-//		ParseRule addressParseRule = new ParseRule("ADDRESS",new String[]{"NAME", "STREET"},new String[]{"NAME", "STREET","TOWNS"});
-//		ParseRule nameParseRule = new ParseRule("NAME",new String[]{"FIRST_NAME", "LAST_NAME", "'literal'", "EOL"});
-//		ParseRule streetParseRule = new ParseRule("STREET",new String[]{"NUMBER", "STREET_NAME", "DESIGNATION", "EOL"});
-//		//TOWN = TOWN_NAME ',' STATE ZIPCODE
-//		ParseRule townsParseRule = new ParseRule("TOWNS", new String[]{"TOWN"},new String[]{"TOWN","TOWNS"});
-//		ParseRule townParseRule = new ParseRule("TOWN", new String[]{"TOWN_NAME","','","STATE","ZIPCODE", "EOL"});
-//		parseTree.addRule(addressParseRule);
-//		parseTree.addRule(nameParseRule);
-//		parseTree.addRule(streetParseRule);
-//		parseTree.addRule(townsParseRule);
-//		parseTree.addRule(townParseRule);
-
-		/*		
-		RULE_LIST		= RULE | RULE RULE_LIST
-		RULE			= RULE_NAME ASSIGNMENT EXPRESSION EOL		
-		EXPRESSION		= LIST | LIST ALTERATION EXPRESSION
-		TERM			= LITERAL | RULE_NAME
-		LIST			= TERM | TERM LIST
-		*/
 		
-//		ParseRule symbolParseRule = new ParseRule("SYMBOL",new String[]{"SYMBOL_NAME","'='", "LITERAL_LIST","EOL"});
-//		parseTree.addRule(symbolParseRule);
-//		ParseRule lieteralListParseRule = new ParseRule("LITERAL_LIST",new String[]{"LITERAL"},new String[]{"LITERAL","'|'","LITERAL_LIST"});
-//		parseTree.addRule(lieteralListParseRule);
-		ParseRule ruleListParseRule = new ParseRule("RULE_LIST",new String[]{"RULE"},new String[]{"RULE","RULE_LIST"});
+		ParseRule ruleListParseRule = new ParseRule("RULE_LIST",new String[]{"RULE+"});
 		parseTree.addRule(ruleListParseRule);
 		ParseRule ruleParseRule = new ParseRule("RULE",new String[]{"RULE_NAME","'='", "EXPRESSION","EOL"});
 		parseTree.addRule(ruleParseRule);
-		ParseRule expressionParseRule = new ParseRule("EXPRESSION",new String[]{"LIST"},new String[]{"LIST","'|'", "EXPRESSION"});
+		ParseRule expressionParseRule = new ParseRule("EXPRESSION",new String[]{"TERM+"},new String[]{"TERM+","'|'", "EXPRESSION"});
 		parseTree.addRule(expressionParseRule);
-//		ParseRule termParseRule = new ParseRule("TERM",new String[]{"LITERAL"},new String[]{"RULE_NAME"});
-//		parseTree.addRule(termParseRule);
-		ParseRule listParseRule = new ParseRule("LIST",new String[]{"TERM"},new String[]{"TERM","LIST"});
-		parseTree.addRule(listParseRule);
+		ParseRule termParseRule = new ParseRule("TERM",new String[]{"VALUE"});
+		parseTree.addRule(termParseRule);
+
 		return parseTree;
 	}
 

@@ -189,7 +189,7 @@ public class ParseTree extends CDocument
 			{
 				if(term.matches(literalPattern))
 				{					
-					System.out.println(term + "\t ==>\t LITERAL");
+					//System.out.println(term + "\t ==>\t LITERAL");
 					return term.replaceAll(literalPattern, "$1");
 				}
 			}
