@@ -286,6 +286,8 @@ public class GrammerParser
         
         
         ParseTree grammerParseTree = new ParseTree();
+        grammerParseTree.setPrefix("P");
+        grammerParseTree.setNamespaceURI("http://www.delcyon.com/parser");
         grammerParseTree.setAllowPartialMatch(true);
         grammerParseTree.setSymbolHashMap(symbolHashMap);
         
@@ -319,10 +321,4 @@ public class GrammerParser
 			}
 		}
 	}
-
-	
-
-	
-
-	
 }

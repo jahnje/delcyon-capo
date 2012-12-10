@@ -221,7 +221,7 @@ public class ParseRule
 						case RULE:
 							//drill down into new rule
 							parseTape.pushBack();
-							Element parseNode = originalParseNode.getOwnerDocument().createElement(parseTree.getRuleNode(term).getName());
+							Element parseNode = parseTree.createElement(originalParseNode,parseTree.getRuleNode(term).getName());
 							peerParseNode.appendChild(parseNode);
 							if (parseTree.getRuleNode(term).parse(parseNode, parseTape) == false)
 							{
@@ -239,7 +239,7 @@ public class ParseRule
 						    {
 						        if(parseTree.isIncludeLiterals() == true)
 						        {
-						            Element cElement = originalParseNode.getOwnerDocument().createElement("LITERAL");
+						            Element cElement = parseTree.createElement(originalParseNode,"LITERAL");
 						            cElement.setAttribute(parseTree.getLiteralType(token.getValue()), token.getValue());
 						            peerParseNode.appendChild(cElement);
 						        }
@@ -248,7 +248,7 @@ public class ParseRule
 							{
 						        if(parseTree.isIncludeLiterals() == true)
 						        {
-						            Element cElement = originalParseNode.getOwnerDocument().createElement("LITERAL");
+						            Element cElement = parseTree.createElement(originalParseNode,"LITERAL");
 						            cElement.setAttribute(parseTree.getLiteralType(token.getValue()), token.getValue());
 						            peerParseNode.appendChild(cElement);
 						        }

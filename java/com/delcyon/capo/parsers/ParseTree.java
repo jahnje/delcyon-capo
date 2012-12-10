@@ -21,10 +21,12 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.Vector;
 
+import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
+import org.w3c.dom.Node;
 
 import com.delcyon.capo.parsers.GrammerParser.SymbolType;
 
@@ -60,6 +62,28 @@ public class ParseTree
 	private ParseOrderPreference parseOrderPreference = ParseOrderPreference.RIGHT;
 	private boolean allowPartialMatch = false;
 	private boolean includeLiterals = false;
+	private String namespaceURI = null;
+	private String prefix = null;
+	
+	public void setNamespaceURI(String namespaceURI)
+    {
+        this.namespaceURI = namespaceURI;
+    }
+	
+	public String getNamespaceURI()
+    {
+        return namespaceURI;
+    }
+	
+	public void setPrefix(String prefix)
+    {
+        this.prefix = prefix;
+    }
+	
+	public String getPrefix()
+    {
+        return prefix;
+    }
 	
 	public boolean isIncludeLiterals()
     {
@@ -109,21 +133,31 @@ public class ParseTree
 	}
 
 	public Document parse(Tokenizer tokenizer) throws Exception
-	{
-		ParseTape parseTape = new ParseTape(tokenizer);
-		Document parseDocument = DocumentBuilderFactory.newInstance().newDocumentBuilder().newDocument();
-		Element parseNode = parseDocument.createElement(parseRuleVector.firstElement().getName());
-		//appendChild(parseNode);
-		if(parseRuleVector.firstElement().parse(parseNode,parseTape))
-		{
-		    if(allowPartialMatch == true || parseTape.hasMore() == false)
-		    {
-		        parseDocument.appendChild(parseNode);		        
-		    }
-		}
+	{		
+	    DocumentBuilderFactory documentBuilderFactory = DocumentBuilderFactory.newInstance();
+	    documentBuilderFactory.setNamespaceAware(true);
+		DocumentBuilder documentBuilder = documentBuilderFactory.newDocumentBuilder();		
+		Document parseDocument = documentBuilder.newDocument();		
+		parse(tokenizer, parseDocument);		
 		return parseDocument;
 		
 	}
+	
+	public void parse(Tokenizer tokenizer, Node node) throws Exception
+    {
+        ParseTape parseTape = new ParseTape(tokenizer);        
+        
+        Element parseNode = createElement(node, parseRuleVector.firstElement().getName());        
+        //appendChild(parseNode);
+        if(parseRuleVector.firstElement().parse(parseNode,parseTape))
+        {
+            if(allowPartialMatch == true || parseTape.hasMore() == false)
+            {
+                node.appendChild(parseNode);               
+            }
+        }        
+        
+    }
 
 	public boolean isRule(String term)
 	{
@@ -236,6 +270,27 @@ public class ParseTree
     public void setSymbolTypeHashMap(HashMap<String, SymbolType> symbolTypeHashMap)
     {
         this.symbolTypeHashMap = symbolTypeHashMap;        
+    }
+
+    public Element createElement(Node someNode, String name)
+    {
+        Document ownerDocument = null;
+        if(someNode instanceof Document)
+        {
+            ownerDocument = (Document) someNode;
+        }
+        else
+        {
+            ownerDocument = someNode.getOwnerDocument();
+        }
+        if(namespaceURI != null && prefix != null)
+        {
+            return ownerDocument.createElementNS(namespaceURI,prefix+":"+name);
+        }
+        else
+        {
+            return ownerDocument.createElement(name);
+        }
     }
 	
 	
