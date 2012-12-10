@@ -47,8 +47,7 @@ public class ParseTape
 			else if (tokenizer.getTokenType() ==Tokenizer.TokenType.EOF)
 			{				
 				break;
-			}
-			System.out.println(streamVector.lastElement());
+			}			
 		}
 	}
 	

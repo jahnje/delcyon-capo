@@ -274,8 +274,7 @@ public class ParseRule
 						    }
 						    
 						    if(parsedRegex != null && value.matches(parsedRegex) == false)
-						    {
-						        System.err.println(token+"<=="+parsedRegex);
+						    {						        
                                 parseTape.pushBack();
                                 foundExpressionMatch = false;
                                 printPathMessage(peerParseNode, "FAILURE "+parsedRegex+"["+termType+"] against "+token);
