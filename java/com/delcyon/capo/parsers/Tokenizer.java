@@ -2,7 +2,6 @@
 package com.delcyon.capo.parsers;
 
 import java.io.BufferedReader;
-import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
@@ -67,24 +66,20 @@ public class Tokenizer
     private class InternalTokenType
     {
         public TokenType tokenType = null;
-        public int tokenValue = 0;
         
         public InternalTokenType(TokenType tokenType)
         {
             this.tokenType = tokenType;
-            this.tokenValue = tokenType.value;
         }
 
         public TokenType setTokenType(TokenType tokenType, int tokenValue)
         {
             this.tokenType = tokenType;
-            this.tokenValue = tokenValue;
             return tokenType;
         }
         
         public TokenType setTokenValue(int tokenValue)
         {
-            this.tokenValue = tokenValue;
             for (TokenType tokenType : TokenType.values())
             {
                 if(tokenType.value == tokenValue)
@@ -98,25 +93,19 @@ public class Tokenizer
         }
     }
     
-    private static final int NEED_CHAR = Integer.MAX_VALUE;
-    private static final int SKIP_LF = Integer.MAX_VALUE - 1;
+  
+  
     private byte characterTypes[] = new byte[256];
-    
     private Reader reader = null;
-
-    private char buffer[] = new char[20];   
-    private int peekChar = NEED_CHAR;
     private String value = null;
     private boolean pushedBack = false;
-    private int lineNumber = 1;
+
     private InternalTokenType internalTokenTypeHolder = new InternalTokenType(TokenType.NOTHING);
     
     
-    private boolean forceLower;
+  
     private boolean isEOLSignificant = false;
-    private boolean enableSlashSlashComments = false;
-    private boolean enableSlashStarComments = false;
-
+  
     public Tokenizer() 
     {
         setCharRangeType('a', 'z', CharacterType.ALPHA);
@@ -145,11 +134,9 @@ public class Tokenizer
     public void setInputStream(InputStream inputStream)
     {
         this.reader = new BufferedReader(new InputStreamReader(inputStream));
-        //reset everything
-        peekChar = NEED_CHAR;
+        //reset everything        
         value = null;
-        pushedBack = false;
-        lineNumber = 1;
+        pushedBack = false;        
         internalTokenTypeHolder = new InternalTokenType(TokenType.NOTHING);
     }
     
@@ -187,25 +174,7 @@ public class Tokenizer
         isEOLSignificant = flag;
     }
 
-    
-    public void slashStarComments(boolean flag)
-    {
-        enableSlashStarComments = flag;
-    }
-
-   
-    public void slashSlashComments(boolean flag)
-    {
-        enableSlashSlashComments = flag;
-    }
-
-    
-    public void lowerCaseMode(boolean fl)
-    {
-        forceLower = fl;
-    }
-
-    
+       
     public TokenType getTokenType()
     {
         return internalTokenTypeHolder.tokenType;
@@ -216,318 +185,355 @@ public class Tokenizer
     {
         return value;
     }
-        
-    public int getLineNumber()
-    {
-        return lineNumber;
-    }
     
-    public void pushBack()
-    {
-        if (internalTokenTypeHolder.tokenType != TokenType.NOTHING)
-        {
-            pushedBack = true;
-        }
-    }
     
-    public TokenType nextToken() throws IOException 
+    /**
+     * temp rewrite area
+     * @return
+     * @throws IOException
+     */
+    int currentChar = -4;
+    int currentQuoteChar = -1;
+    
+    public TokenType nextToken() throws Exception
     {
-        if (pushedBack)
-        {
-            pushedBack = false;
-            return internalTokenTypeHolder.tokenType;
-        }
         
         value = null;
-
-        int currentChar = peekChar;
-        if (currentChar < 0)
-        {
-            currentChar = NEED_CHAR;
-        }
-        if (currentChar == SKIP_LF) 
-        {
-            currentChar = reader.read();
-            if (currentChar < 0)
-            {
-                return internalTokenTypeHolder.setTokenType(TokenType.EOF, currentChar);
-            }
-            if (currentChar == TokenType.EOL.value)
-            {
-                currentChar = NEED_CHAR;
-            }
-        }
-        if (currentChar == NEED_CHAR)
-        {
-            currentChar = reader.read();
-            if (currentChar < 0)
-            {
-                return internalTokenTypeHolder.setTokenType(TokenType.EOF, currentChar);
-            }
-        }
-                
-        internalTokenTypeHolder.setTokenValue(currentChar);
-
-        /* Set peekc so that the next invocation of nextToken will read
-         * another character unless peekc is reset in this invocation
-         */
-        peekChar = NEED_CHAR;
-
-        int charType = currentChar < 256 ? characterTypes[currentChar] : CharacterType.ALPHA.mask;
         
-        
-        while ((charType & CharacterType.WHITESPACE.mask) != 0)
+        if (pushedBack) //in theory, push back will only occur when we read a significant control char, or token 
         {
-            if (currentChar == '\r') 
+            pushedBack = false;
+            //if we're not a control char, then turn us into a token with a value.
+            if(internalTokenTypeHolder.setTokenValue(currentChar) == TokenType.OTHER)
             {
-                lineNumber++;
-                if (isEOLSignificant) 
-                {
-                    peekChar = SKIP_LF;
-                    return internalTokenTypeHolder.setTokenType(TokenType.EOL, currentChar);
-                }
-                currentChar = reader.read();
-                if (currentChar == TokenType.EOL.value)
-                {
-                    currentChar = reader.read();
-                }
-            } 
+                value = ((char)currentChar)+"";
+                return internalTokenTypeHolder.setTokenType(TokenType.TOKEN, currentChar);
+            }
             else
             {
-                if (currentChar == TokenType.EOL.value) 
-                {
-                    lineNumber++;
-                    if (isEOLSignificant) 
-                    {
-                        return internalTokenTypeHolder.setTokenType(TokenType.EOL, currentChar);
-                    }
-                }
-                currentChar = reader.read();
+                return internalTokenTypeHolder.tokenType;
             }
-            if (currentChar < 0)
-            {
-                return internalTokenTypeHolder.setTokenType(TokenType.EOL, currentChar);
-            }
-            charType = currentChar < 256 ? characterTypes[currentChar] : CharacterType.ALPHA.mask;
         }
-
         
-
-        if ((charType & CharacterType.ALPHA.mask) != 0)
+        StringBuffer stringBuffer = new StringBuffer();
+        
+        while(true)
         {
-            int i = 0;
-            do 
-            {
-                if (i >= buffer.length)
-                {
-                    buffer = Arrays.copyOf(buffer, buffer.length * 2);
-                }
-                buffer[i++] = (char) currentChar;
-                currentChar = reader.read();
-                charType = currentChar < 0 ? CharacterType.WHITESPACE.mask : currentChar < 256 ? characterTypes[currentChar] : CharacterType.ALPHA.mask;
-            } 
-            while ((charType & (CharacterType.ALPHA.mask)) != 0);
+            currentChar = reader.read();
             
-            peekChar = currentChar;
-            value = String.copyValueOf(buffer, 0, i);
-            if (forceLower)
+            //check for EOF
+            if(currentChar < 0)
             {
-                value = value.toLowerCase();
-            }
-            return internalTokenTypeHolder.setTokenType(TokenType.TOKEN, currentChar);
-        }
-
-        if ((charType & CharacterType.QUOTE.mask) != 0)
-        {
-            internalTokenTypeHolder.setTokenValue(currentChar);
-            int bufferIndex = 0;
-            /* Invariants (because \Octal needs a lookahead):
-             *   (i)  c contains char value
-             *   (ii) d contains the lookahead
-             */
-            int nextChar = reader.read();
-            while (nextChar >= 0 && nextChar != internalTokenTypeHolder.tokenValue && nextChar != '\n' && nextChar != '\r') 
-            {
-                if (nextChar == '\\') 
+                if(stringBuffer.length() == 0) //if we don't have data, just return
+                {                    
+                    return internalTokenTypeHolder.setTokenValue(currentChar);
+                }
+                else //if we do, return it, and push back for the next call
                 {
-                    currentChar = reader.read();
-                    int first = currentChar;   /* To allow \377, but not \477 */
-                    if (currentChar >= '0' && currentChar <= '7') 
+                    pushedBack = true;
+                    break;    
+                }
+            }
+            
+            //check for EOL
+            if(currentChar == TokenType.EOL.value)
+            {
+                if(isEOLSignificant) //check to see if we care about EOL chars
+                {
+                    //if we do, and we have no data, just return it.
+                    if(stringBuffer.length() == 0)
                     {
-                        currentChar = currentChar - '0';
-                        int nextNextChar = reader.read();
-                        if ('0' <= nextNextChar && nextNextChar <= '7') 
-                        {
-                            currentChar = (currentChar << 3) + (nextNextChar - '0');
-                            nextNextChar = reader.read();
-                            if ('0' <= nextNextChar && nextNextChar <= '7' && first <= '3') 
-                            {
-                                currentChar = (currentChar << 3) + (nextNextChar - '0');
-                                nextChar = reader.read();
-                            }
-                            else
-                            {
-                                nextChar = nextNextChar;
-                            }
-                        } 
-                        else
-                        {
-                          nextChar = nextNextChar;
-                        }
-                    } 
-                    else
-                    {
-                        switch (currentChar) 
-                        {
-                            case 'a':
-                                currentChar = 0x7;
-                                break;
-                            case 'b':
-                                currentChar = '\b';
-                                break;
-                            case 'f':
-                                currentChar = 0xC;
-                                break;
-                            case 'n':
-                                currentChar = '\n';
-                                break;
-                            case 'r':
-                                currentChar = '\r';
-                                break;
-                            case 't':
-                                currentChar = '\t';
-                                break;
-                            case 'v':
-                                currentChar = 0xB;
-                                break;
-                        }
-                        nextChar = reader.read();
+                       return internalTokenTypeHolder.setTokenValue(currentChar);
                     }
-                } 
+                    else //otherwise return our data, and then let the system know, that on the next read, we have to fake it.
+                    {
+                       pushedBack = true;
+                       break; 
+                    }
+                }                
+                else //we just need to eat EOL's like any other whitespace
+                {
+                    if(stringBuffer.length() == 0) //if we have no data, just keep reading
+                    {
+                       continue;
+                    }
+                    else //if we do have data, return it.
+                    {
+                       break; 
+                    }
+                }
+                
+            }
+            
+             
+            int charType = currentChar < 256 ? characterTypes[currentChar] : CharacterType.ALPHA.mask;
+            
+            //check for an escape symbol
+            //There are two kinds of escapes, one that turns a TOKEN into an ALPHA
+            //and one that actually un-escapes some sort of escape code like \n  
+            if((charType & CharacterType.ESCAPE.mask) != 0)
+            {
+                int nextChar = reader.read();
+                if(nextChar != currentChar) //if there are the same, then we're just escaping our escape char
+                {
+                    switch (nextChar)
+                    {
+                        case 'r':  
+                            currentChar = '\r';
+                            charType = CharacterType.ALPHA.mask;
+                            break; /* switch */
+                        case 'n':  
+                            currentChar = '\n';
+                            charType = CharacterType.ALPHA.mask;
+                            break; /* switch */
+                        case 'f':  
+                            currentChar = '\f';
+                            charType = CharacterType.ALPHA.mask;
+                            break; /* switch */                            
+                        case 'b':  
+                            currentChar = '\b';
+                            charType = CharacterType.ALPHA.mask;
+                            break; /* switch */
+                        case 't':  
+                            currentChar = '\t';
+                            charType = CharacterType.ALPHA.mask;
+                            break; /* switch */
+                        case 'a':  
+                            currentChar = '\007';
+                            charType = CharacterType.ALPHA.mask;
+                            break; /* switch */
+                        case 'e':  
+                            currentChar = '\033';
+                            charType = CharacterType.ALPHA.mask;
+                            break; /* switch */
+                        case 'c': //handle control chars
+                            nextChar = reader.read();
+                            if(nextChar > 0x7f)
+                            {
+                                throw new Exception("Expected ASCII after \\c");
+                            }
+                            stringBuffer.append(Character.toChars(nextChar ^ 64));
+                            continue; //while loop
+                        case '8'://start octal code
+                        case '9': throw new Exception("Illegal octal digit");
+                        case '1':
+                        case '2':
+                        case '3':
+                        case '4':
+                        case '5':
+                        case '6':
+                        case '7':
+                        case '0': 
+                            stringBuffer.append(getOctalCodeFromReader(nextChar));
+                            continue; //while loop
+                        case 'x': //start hex code
+                            stringBuffer.append(getHexCodeFromReader());
+                            continue; //while loop
+                        case 'u': //start unicode small                                           
+                            stringBuffer.append(getUnicodeFromReader(4));
+                            continue; //while loop                       
+                        case 'U'://start unicode big                           
+                            stringBuffer.append(getUnicodeFromReader(8));
+                            continue; //while loop
+                        default://we're just escaping a token here so set it as an alpha
+                            charType = CharacterType.ALPHA.mask;
+                            currentChar = nextChar;
+                    }                    
+                }
                 else
                 {
+                    //got the escape char twice, so assume we're escaping it and set it as an alpha
+                    charType = CharacterType.ALPHA.mask;
                     currentChar = nextChar;
-                    nextChar = reader.read();
                 }
-                if (bufferIndex >= buffer.length)
+                
+            }
+            
+           
+            //if were a comment, then read until EOL or EOF
+            if ((charType & CharacterType.COMMENT.mask) != 0)
+            {
+                while ((currentChar = reader.read()) != TokenType.EOL.value && currentChar >= 0);
+                //only push back if we've got some data, and EOL is Significant. Otherwise we just need to act like just a new token. 
+                if(isEOLSignificant == true && stringBuffer.length() != 0)
                 {
-                    buffer = Arrays.copyOf(buffer, buffer.length * 2);
+                    pushedBack = true;
                 }
-                buffer[bufferIndex++] = (char)currentChar;
+                else if(isEOLSignificant == true && stringBuffer.length() == 0)
+                {
+                    internalTokenTypeHolder.setTokenValue(currentChar);
+                }
+                break;
             }
 
-            /* If we broke out of the loop because we found a matching quote
-             * character then arrange to read a new character next time
-             * around; otherwise, save the character.
-             */
-            peekChar = (nextChar == internalTokenTypeHolder.tokenValue) ? NEED_CHAR : nextChar;
-
-            value = String.copyValueOf(buffer, 0, bufferIndex);
-            return internalTokenTypeHolder.tokenType;
-        }
-
-        if (currentChar == '/' && (enableSlashSlashComments || enableSlashStarComments)) {
-            currentChar = reader.read();
-            if (currentChar == '*' && enableSlashStarComments)
+            
+            //check for a quote symbol
+            if((charType & CharacterType.QUOTE.mask) != 0)
             {
-                int prevc = 0;
-                while ((currentChar = reader.read()) != '/' || prevc != '*') 
+                
+                //start quoting
+                if(stringBuffer.length() == 0 && currentQuoteChar < 0)
                 {
-                    if (currentChar == '\r') 
-                    {
-                        lineNumber++;
-                        currentChar = reader.read();
-                        if (currentChar == TokenType.EOL.value) 
-                        {
-                            currentChar = reader.read();
-                        }
-                    } else {
-                        if (currentChar == TokenType.EOL.value) 
-                        {
-                            lineNumber++;
-                            currentChar = reader.read();
-                        }
-                    }
-                    if (currentChar < 0)
-                    {
-                        return internalTokenTypeHolder.setTokenType(TokenType.EOF, currentChar);
-                    }
-                    prevc = currentChar;
+                    currentQuoteChar = currentChar; //keep track of our current quote type
+                    continue;
                 }
-                return nextToken();
-            } 
-            else if (currentChar == '/' && enableSlashSlashComments) 
-            {
-                while ((currentChar = reader.read()) != TokenType.EOL.value && currentChar != '\r' && currentChar >= 0);
-                peekChar = currentChar;
-                return nextToken();
-            }
-            else
-            {
-                /* Now see if it is still a single line comment */
-                if ((characterTypes['/'] & CharacterType.COMMENT.mask) != 0) 
+                else if(currentChar == currentQuoteChar && stringBuffer.length() > 0)//we're done quoting
                 {
-                    while ((currentChar = reader.read()) != TokenType.EOL.value && currentChar != '\r' && currentChar >= 0);
-                    peekChar = currentChar;
-                    return nextToken();
+                    currentQuoteChar = TokenType.NOTHING.value; //reset our current quote type
+                    break; 
+                }
+                else if(currentChar == currentQuoteChar && stringBuffer.length() == 0)//we're done quoting
+                {
+                    currentQuoteChar = TokenType.NOTHING.value; //reset our current quote type
+                    value = ""; //special case, where we've referred to the empty string, NOT null.
+                    break; 
+                }
+            }
+
+            if(currentQuoteChar > 0) //if we're quoting, then ignore whitespace
+            {
+                charType = CharacterType.ALPHA.mask;
+            }
+            
+            if((charType & CharacterType.WHITESPACE.mask) != 0)
+            {
+                if(stringBuffer.length() == 0)
+                {
+                   continue;
                 }
                 else
                 {
-                    peekChar = currentChar;
-                    return internalTokenTypeHolder.setTokenValue('/'); //XXX
+                   break; 
                 }
             }
-        }
-
-        //if were a comment, then read until EOL or EOF
-        if ((charType & CharacterType.COMMENT.mask) != 0)
-        {
-            while ((currentChar = reader.read()) != TokenType.EOL.value && currentChar != '\r' && currentChar >= 0);
-            peekChar = currentChar;
-            return nextToken();
-        }
-
-        return internalTokenTypeHolder.setTokenValue(currentChar); //XXX
-    }
-    
-    public String toString()
-    {
-        String ret;
-        switch (internalTokenTypeHolder.tokenType) 
-        {
-            case EOF:
-                ret = "EOF";
-                break;
-            case EOL:
-                ret = "EOL";
-                break;
-            case TOKEN:
-                ret = value;
-                break;          
-            case NOTHING:
-                ret = "NOTHING";
-                break;
-            default: 
+            
+            if(charType == 0)
             {
-                /*
-                 * ttype is the first character of either a quoted string or
-                 * is an ordinary character. ttype can definitely not be less
-                 * than 0, since those are reserved values used in the previous
-                 * case statements
-                 */
-                if (internalTokenTypeHolder.tokenValue < 256 && ((characterTypes[internalTokenTypeHolder.tokenValue] & CharacterType.QUOTE.mask) != 0))
+                if(stringBuffer.length() == 0) //if we don't have anything on the buffer, then just go ahead and dump this
                 {
-                    ret = value;
+                    stringBuffer.append((char)currentChar);
+                    internalTokenTypeHolder.setTokenType(TokenType.TOKEN, currentChar);
                     break;
                 }
-
-                char s[] = new char[3];
-                s[0] = s[2] = '\'';
-                s[1] = (char) internalTokenTypeHolder.tokenValue;
-                ret = new String(s);
+                else //already got something on the buffer, going to need to get creative, and push stuff back a bit.
+                {
+                    pushedBack = true;
+                    break; 
+                }
+            }
+            
+            if((charType & CharacterType.ALPHA.mask) != 0)
+            {
+                stringBuffer.append((char)currentChar);
+                internalTokenTypeHolder.setTokenType(TokenType.TOKEN, currentChar);             
+            }
+        }
+        
+        if(stringBuffer.length() != 0)
+        {
+            value = stringBuffer.toString();            
+        }
+        return internalTokenTypeHolder.tokenType;
+    }
+    
+    private char[] getHexCodeFromReader() throws Exception
+    {
+        
+        reader.mark(10);
+        char[] buffer = null; 
+        int firstChar = reader.read();
+        int count = 1;
+        boolean braced = false;
+        if(firstChar == '{')
+        {
+            braced = true;
+            buffer = new char[8];
+            count = 0;
+        }
+        else if((firstChar >= '0' && firstChar <= '9') || (firstChar >= 'A' && firstChar <= 'F') || (firstChar >= 'a' && firstChar <= 'f'))
+        {
+            buffer = new char[2];
+            buffer[0] = (char) firstChar;
+        }
+        for(;count < buffer.length;count++)
+        {
+            int ch = reader.read();
+            if ((ch >= '0' && ch <= '9') || (ch >= 'A' && ch <= 'F') || (ch >= 'a' && ch <= 'f')) 
+            {
+                buffer[count] = (char) ch;
+                reader.mark(10);
+            }
+            else if (ch == '}' && braced == true)
+            {
+                break;
+            }
+            else //not a valid hex, so reset
+            {                
+                reader.reset();
                 break;
             }
         }
-        return "Token[" + ret + "], line " + lineNumber;
+        
+        
+        int value = Integer.parseInt(new String(buffer,0,count), 16);
+        return Character.toChars(value);
     }
+    
+    
+    //read until we get a non octal char or we read 2 additional values.
+    private char[] getOctalCodeFromReader(int firstChar) throws Exception
+    {
+        reader.mark(10);
+        char[] buffer = new char[3];
+        buffer[0] = (char) firstChar;
+        int count = 1;
+        for(;count < buffer.length;count++)
+        {
+            int ch = reader.read();
+            if (ch >= '0' && ch <= '7') 
+            {
+                buffer[count] = (char) ch;
+                reader.mark(10);
+            }
+            else //not a valid octal, so reset
+            {                
+                reader.reset();
+                break;
+            }
+        }
+        int value = Integer.parseInt(new String(buffer,0,count), 8);
+        return Character.toChars(value);
+        
+    }
+    
+    private char[] getUnicodeFromReader(int length) throws Exception
+    {
+        char[] buffer = new char[length];
+        int readLength = reader.read(buffer);
+        if(readLength < length) //check length
+        {
+            throw new Exception("value to short of unicode escape");
+        }
+        //check values
+        for (int index = 0; index < length; index++) 
+        {
+            /* this also handles the surrogate issue */
+            if (buffer[index] > 127)
+            {
+                throw new Exception("Illegal non-ASCII hex digit in \\u escape");
+            }
+        }                            
+        int value = 0;
+        try
+        {
+            value = Integer.parseInt(new String(buffer), 16);
+            return Character.toChars(value);            
+        }
+        catch (NumberFormatException numberFormatException)
+        {
+            throw new Exception("Invalid hex value for \\u escape");
+        }
+        
+    }
+    
 }

@@ -36,15 +36,22 @@ public class GrammerParser
 {
 	public enum SymbolType
 	{
-		DELIMITER, LITERAL, ASSIGNMENT, ALTERNATION, DECLARATION, EOL,SYMBOL
+		DELIMITER, 
+		LITERAL, 
+		ASSIGNMENT, 
+		ALTERNATION, 
+		DECLARATION, 
+		EOL,
+		SYMBOL
 	}
 
 	private HashMap<String, String[]> symbolHashMap = new HashMap<String, String[]>();
 	private HashMap<String, String> ruleHashMap = new HashMap<String, String>();
 	private HashMap<String, SymbolType> symbolTypeHashMap = new HashMap<String, SymbolType>();
 	private HashMap<String, String> notationHashMap = new HashMap<String, String>();
-    private Vector<ParseRule> notationParseRuleVector;
-    private Vector<ParseRule> grammerParseRuleVector;
+	
+    private Vector<ParseRule> notationParseRuleVector; //this is used to parse and understand a grammar.
+    private Vector<ParseRule> grammerParseRuleVector; //this set of rules is used to parse input based on a grammar.
 
 	public GrammerParser()
 	{
@@ -54,17 +61,6 @@ public class GrammerParser
 		symbolHashMap.put(SymbolType.ASSIGNMENT.toString(), new String[] { "=" });
 		symbolHashMap.put(SymbolType.ALTERNATION.toString(), new String[] { "|" });
 		symbolHashMap.put(SymbolType.EOL.toString(), new String[] { "\n" });
-
-//		notationHashMap.put("SYMBOL", "SYMBOL_NAME '=' LITERAL_LIST EOL");
-//		notationHashMap.put("LITERAL_LIST", "LITERAL | LITERAL '|' LITERAL_LIST");
-//		notationHashMap.put("SYMBOL_LIST", "SYMBOL | SYMBOL SYMBOL_LIST");
-//		notationHashMap.put("SYMBOLS", "'Symbols:' EOL '{' SYMBOL_LIST '}' EOL");
-//		notationHashMap.put("RULE", "RULE_NAME ASSIGNMENT EXPRESSION EOL");
-//		notationHashMap.put("RULE_LIST", "RULE | RULE RULE_LIST");
-//		notationHashMap.put("GRAMMER", "'Grammar:' EOL '{' RULE_LIST '}' EOL");
-//		notationHashMap.put("EXPRESSION", "LIST | LIST ALTERATION EXPRESSION");
-//		notationHashMap.put("TERM", "LITERAL | RULE_NAME");
-//		notationHashMap.put("LIST", "TERM | TERM LIST");
 
 		Set<Entry<String, String[]>> symbolEntrySet = symbolHashMap.entrySet();
 		for (Entry<String, String[]> entry : symbolEntrySet)
@@ -134,11 +130,17 @@ public class GrammerParser
 
 	}
 	
-	private Vector<ParseRule> getParseRules(Document grammarParseTree) throws Exception
+	/**
+	 * This returns a set of rules that represent a grammar. 
+	 * @param ruleDocument
+	 * @return
+	 * @throws Exception
+	 */
+	private Vector<ParseRule> getParseRules(Document ruleDocument) throws Exception
 	{
 	    Vector<ParseRule> parseRuleVector = new Vector<ParseRule>();
 	    
-	    NodeList ruleList = XPath.selectNodes(grammarParseTree, "//RULE");
+	    NodeList ruleList = XPath.selectNodes(ruleDocument, "//RULE");
         for(int ruleIndex = 0; ruleIndex < ruleList.getLength(); ruleIndex++)
         {
             Element ruleElement = (Element) ruleList.item(ruleIndex);

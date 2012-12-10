@@ -1,0 +1,10 @@
+EOL			= '\n'
+DELIMITER   = "' '" | '\t' | 'EOL'
+QUOTECHAR	= "\""
+EMPTY		= ''
+ESCAPE		= '\\' ;and them some crazy irrelevant comment
+ZERO_MORE	= '*' \/and some other
+;this is just a lonely comment, but EOL is significant
+ONE_MORE	= '+'
+ZERO_ONE	= '?'
+TEST		= "~This is some crazy test\52\52\52\52\52\52\52\52\x58\x{000000F2}"
