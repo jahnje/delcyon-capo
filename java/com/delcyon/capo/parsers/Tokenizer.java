@@ -383,7 +383,12 @@ public class Tokenizer
             {
                 while ((currentChar = reader.read()) != TokenType.EOL.value && currentChar >= 0);
                 //only push back if we've got some data, and EOL is Significant. Otherwise we just need to act like just a new token. 
-                if(isEOLSignificant == true && stringBuffer.length() != 0)
+                if(internalTokenTypeHolder.tokenType == TokenType.EOL && stringBuffer.length() == 0)
+                {
+                    //do nothing, since the last token was already an EOL, we just want to absorb this one as this line was nothing but a comment.
+                    continue;
+                }
+                else if(isEOLSignificant == true && stringBuffer.length() != 0)
                 {
                     pushedBack = true;
                 }

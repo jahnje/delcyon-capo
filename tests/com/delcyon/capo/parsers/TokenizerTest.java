@@ -64,7 +64,7 @@ public class TokenizerTest
                 Assert.assertNotNull(tokenizer.getValue());
             }
         }
-        Assert.assertEquals(49, tokenCount);
+        Assert.assertEquals(48, tokenCount);
     }
 
 }
