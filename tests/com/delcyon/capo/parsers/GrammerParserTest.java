@@ -32,44 +32,11 @@ import org.junit.Test;
 public class GrammerParserTest
 {
 
-    /**
-     * @throws java.lang.Exception
-     */
-    @BeforeClass
-    public static void setUpBeforeClass() throws Exception
-    {
-    }
-
-    /**
-     * @throws java.lang.Exception
-     */
-    @AfterClass
-    public static void tearDownAfterClass() throws Exception
-    {
-    }
-
-    /**
-     * @throws java.lang.Exception
-     */
-    @Before
-    public void setUp() throws Exception
-    {
-    }
-
-    /**
-     * @throws java.lang.Exception
-     */
-    @After
-    public void tearDown() throws Exception
-    {
-    }
-
     @Test
     public void test() throws Exception
     {
         GrammerParser grammerParser = new GrammerParser();
-        grammerParser.loadNotationGrammer(new FileInputStream("test-data/parser_test_data/SIMPLE.notation"));
-        //grammerParser.loadSymbols(new FileInputStream("test-data/parser_test_data/SIMPLE.symbols"));
+        grammerParser.loadNotationGrammer(new FileInputStream("test-data/parser_test_data/SIMPLE.notation"));       
         grammerParser.loadGrammer(new FileInputStream("test-data/parser_test_data/SIMPLE.grammer"));
         grammerParser.parse(new FileInputStream("test-data/parser_test_data/SIMPLE.input"));
     }

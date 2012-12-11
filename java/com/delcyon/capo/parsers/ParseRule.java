@@ -25,8 +25,8 @@ import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
-import com.delcyon.capo.parsers.ParseToken.TokenType;
 import com.delcyon.capo.parsers.ParseTree.TermType;
+import com.delcyon.capo.parsers.Tokenizer.TokenType;
 
 /**
  * @author jeremiah
@@ -62,13 +62,13 @@ public class ParseRule
 
 	private void printPathMessage(Node element, String message)
 	{
-//	    StringBuilder stringBuilder = new StringBuilder();
-//	    while(element != null)
-//	    {
-//	        stringBuilder.insert(0, element.getLocalName()+"/");	        
-//	        element = (CNode) element.getParentNode();
-//	    }
-//	    System.out.println(stringBuilder+":"+message);
+	    StringBuilder stringBuilder = new StringBuilder();
+	    while(element != null)
+	    {
+	        stringBuilder.insert(0, element.getLocalName()+"/");	        
+	        element = (Node) element.getParentNode();
+	    }
+	    System.out.println(stringBuilder+":"+message);
 	}
 	
 	public boolean parse(Element originalParseNode, ParseTape parseTape) throws Exception
@@ -107,6 +107,8 @@ public class ParseRule
 			for (int currentTerm = 0; currentTerm < expression.length; currentTerm++)
 			{
 				String term = expression[currentTerm];
+				
+				//====================================REGEX CODE============================================
 				String parsedRegex = null;
 				String parsedReplacement = null;
 				
@@ -138,6 +140,7 @@ public class ParseRule
 				    }
 				}
 				
+				//=====================================QUANTIFICATION CODE==============================================
 				boolean useQuantification = false;
 				boolean inQuantificationLoop = false;
 				int quantifier = 0;
@@ -187,9 +190,10 @@ public class ParseRule
                         minimumQuantity = Integer.parseInt(minString);
                     }
                 }
+				
+				//=====================START MAIN DO WHILE LOOP====================================================
 				do
-				{
-				    
+				{				    
 				    if(parseTape.next() == null && currentTerm < expression.length-1)
 				    {					
 				        parseTape.pushBack();
@@ -203,7 +207,7 @@ public class ParseRule
 				    ParseToken token = parseTape.getCurrent();
 				    if(token == null )
 				    {
-				        token = new ParseToken("EOL", TokenType.EOL);
+				        token = new ParseToken(null, TokenType.EOL);
 				    }
 				
 				//figure out what to do with the current term
@@ -216,6 +220,8 @@ public class ParseRule
 				    
 				    printPathMessage(peerParseNode, "Checking "+term+"["+termType+"] against "+token);
 				    
+				    //==========================MATCHING TERM TO TOKEN CODE=======================================================
+				    //do the full term type checking
 					switch (termType)
 					{
 						case RULE:
@@ -235,12 +241,24 @@ public class ParseRule
 							}							
 							break;
 						case LITERAL:
-						    if(parsedRegex != null && token.getValue().matches(parsedRegex))
+						    //Literals must be tokens
+						    if(token.getTokenType() != TokenType.TOKEN)
+                            {
+                                parseTape.pushBack();
+                                foundExpressionMatch = false;
+                                printPathMessage(peerParseNode, "FAILURE "+parsedRegex+"["+termType+"] against "+token);
+                                if(inQuantificationLoop == false)
+                                {
+                                    continue expressions;
+                                }
+                                break;
+                            }
+						    else if(parsedRegex != null && token.getValue().matches(parsedRegex))
 						    {
 						        if(parseTree.isIncludeLiterals() == true)
 						        {
 						            Element cElement = parseTree.createElement(originalParseNode,"LITERAL");
-						            cElement.setAttribute(parseTree.getLiteralType(token.getValue()), token.getValue());
+						            cElement.setAttribute(parseTree.getLiteralType(token.getValue()).toString(), token.getValue());
 						            peerParseNode.appendChild(cElement);
 						        }
 						    }
@@ -249,7 +267,7 @@ public class ParseRule
 						        if(parseTree.isIncludeLiterals() == true)
 						        {
 						            Element cElement = parseTree.createElement(originalParseNode,"LITERAL");
-						            cElement.setAttribute(parseTree.getLiteralType(token.getValue()), token.getValue());
+						            cElement.setAttribute(parseTree.getLiteralType(token.getValue()).toString(), token.getValue());
 						            peerParseNode.appendChild(cElement);
 						        }
 							}
@@ -265,6 +283,19 @@ public class ParseRule
 							}
 							break;
 						case SYMBOL:
+						    //Symbols must be tokens 
+						    if(token.getTokenType() != TokenType.TOKEN)
+                            {
+                                parseTape.pushBack();
+                                foundExpressionMatch = false;
+                                printPathMessage(peerParseNode, "FAILURE "+parsedRegex+"["+termType+"] against "+token);
+                                if(inQuantificationLoop == false)
+                                {
+                                    continue expressions;
+                                }
+                                break;
+                            }
+						    
 						    String value = token.getValue();
 						    TermType valueTermType = parseTree.getTermType(value);
 						    //named rules can't actually be referred to the INPUT, so change this to a symbol
@@ -273,6 +304,8 @@ public class ParseRule
 						        valueTermType = TermType.SYMBOL;
 						    }
 						    
+						    //do a simple regex check against the value before we start to get fancier later. 
+						    //esp after we've tried to run a replacement regex against the value.
 						    if(parsedRegex != null && value.matches(parsedRegex) == false)
 						    {						        
                                 parseTape.pushBack();
@@ -285,26 +318,31 @@ public class ParseRule
                                 break;
 						    }
 						    
+						    //see if we need to do some sort of regex replacement
 						    if(parsedRegex != null && parsedReplacement != null)
 						    {
 						        value = value.replaceAll(parsedRegex, parsedReplacement);
 						        //if we've modified this, don't let it turn into some other TermType. it IS a symbol.
 						        valueTermType = TermType.SYMBOL;
 						    }
+						    //this is the basic literal check for symbols. but converted regex's are never marked as literals
 						    else if(valueTermType == TermType.SYMBOL && parseTree.isLiteral(value))
 						    {
 						        valueTermType = TermType.LITERAL;
 						    }
-							//check to see if this is an escaped Literal, if so, it's a symbol
+							//check to see if this is an escaped Literal, if so, it's a symbol. 
+						    //This can happen where the input includes a token wrapped in literal indicators, that was ALSO 
+						    //wrapped in literal indicators in the grammar. Such as '|' in a new notation and the Default Grammar.  
 							if(valueTermType == TermType.LITERAL && parseTree.getLiteralValue(value).length() != value.length())
                             {
                                 valueTermType = TermType.SYMBOL;                                
                             }
-							if(valueTermType == TermType.DELIMITER && token.getTokenType() == TokenType.WORD)
+							//check to see if it's a misplaced DELIMITER. DELIMITER's will never also be tokens
+							if(valueTermType == TermType.DELIMITER && token.getTokenType() == TokenType.TOKEN)
 							{
 							    valueTermType = TermType.SYMBOL;
 							}
-							//delimiters should never be treated as symbols
+							//delimiters and literals should never be treated as symbols
 							if(valueTermType == TermType.DELIMITER || valueTermType == TermType.LITERAL)
 							{
 							    //System.err.println(token+"<=="+valueTermType);
@@ -320,6 +358,7 @@ public class ParseRule
 							//overlap with Literals should be ignored as a literal can be a SYMBOL_NAME							
 							else
 							{
+							    //if we already have this attribute, then just append the values together
 							    if(peerParseNode.hasAttribute(term))
 							    {
 							        value = peerParseNode.getAttribute(term) +" "+ value;
@@ -328,8 +367,8 @@ public class ParseRule
 							}
 							break;
 						case DELIMITER:
-							
-							if(parseTree.getTermType(token.getValue()) == TermType.DELIMITER && token.getTokenType() != TokenType.WORD)
+						    //DELIMITER must NOT be tokens
+							if(token.getTokenType() != TokenType.TOKEN)
 							{
 								//comsume it, and do nothing
 							}
@@ -351,6 +390,7 @@ public class ParseRule
 							break;
 					}
 					
+					//=============================MORE QUANTIFICATION PROCESSING FOR CHECKING OF LOOP CONTINUATION================
 					if(useQuantification == true && inQuantificationLoop == true)
 					{
 					    if(foundExpressionMatch)
@@ -378,7 +418,7 @@ public class ParseRule
 					        }
 					    }
 					}					
-				}
+				}//============================END DO WHILE LOOP==============================================
 				while(useQuantification == true && inQuantificationLoop == true);
 			}
 		}

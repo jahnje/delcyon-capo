@@ -16,21 +16,15 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 package com.delcyon.capo.parsers;
 
+import com.delcyon.capo.parsers.Tokenizer.TokenType;
+
 /**
  * @author jeremiah
  *
  */
 public class ParseToken
 {
-    public enum TokenType
-    {
-        EOF,
-        EOL,
-        WORD,
-        ASSIGNMENT,
-        ALTERNATION,
-        SYMBOL
-    }
+    
     
     private String value = null;
     private TokenType tokenType = null;

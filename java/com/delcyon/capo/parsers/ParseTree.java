@@ -70,21 +70,32 @@ public class ParseTree
 		 */
 		SYMBOL,
 		/**
-		 * indicates that this term is used to separate terms, generally EOL is the only one that should really show up this way.
+		 * indicates that this term is used to separate terms, 
+		 * generally EOL is the only one that should really show up this way, 
+		 * most others will be taken care of by the tokenizer.
 		 */
 		DELIMITER,
 		/**
-		 * indicates that this term is a literal, and should be used for demarcating a token list.
+		 * indicates that this term is a literal, and should be used for demarcation of a token list.
 		 */
 		LITERAL
 	}
 	
+	//contains an ordered list of the parseRules
 	private Vector<ParseRule> parseRuleVector = new Vector<ParseRule>();
+	
+	//used for quick lookup of rules by name
 	private HashMap<String, ParseRule> parseRuleHashMap = new HashMap<String, ParseRule>();
 	
-	private HashMap<String, String[]> symbolHashMap = new HashMap<String, String[]>();	
+	//a hash table keyed by SymbolType.toString() and an array of symbols or setting for that type.
+	private HashMap<SymbolType, String[]> symbolHashMap = new HashMap<SymbolType, String[]>();
+	
+	//this is a reverse lookup against the symbol hashmap, that's keyed by the symbol, and returns it's symbol type.
 	private HashMap<String, SymbolType> symbolTypeHashMap = new HashMap<String, SymbolType>();
+	
+	//used to lookup if a term is a literal
 	private HashMap<String, String> literalHashMap = new HashMap<String, String>();
+	
 	
 	private ParseOrderPreference parseOrderPreference = ParseOrderPreference.RIGHT;
 	private boolean allowPartialMatch = false;
@@ -159,14 +170,13 @@ public class ParseTree
 		{
 			for (String term : expresssion)
 			{
-				String[] patterns = symbolHashMap.get(SymbolType.LITERAL.toString());			
+				String[] patterns = symbolHashMap.get(SymbolType.LITERAL);			
 				if (patterns != null)
 				{
 					for (String literalPattern : patterns)
 					{
 						if(term.matches(literalPattern))
-						{
-							symbolTypeHashMap.put(term, SymbolType.LITERAL);
+						{							
 							literalHashMap.put(term.replaceAll(literalPattern, "$1"), term);
 						}
 					}
@@ -201,7 +211,7 @@ public class ParseTree
 	 */
 	public void parse(Tokenizer tokenizer, Node node) throws Exception
     {
-	    //walk the list of literals, and find any that have a lenght of 1. then make sure that, that char is treated as a separate token, and not part of a word.
+	    //walk the list of literals, and find any that have a length of 1. then make sure that, that char is treated as a separate token, and not part of a word.
 	    Set<Entry<String, String>> entries =  literalHashMap.entrySet();
 	    for (Entry<String, String> entry : entries)
         {
@@ -235,16 +245,16 @@ public class ParseTree
 		return parseRuleHashMap.containsKey(term);
 	}
 
-	public void setSymbolHashMap(HashMap<String, String[]> symbolHashMap)
+	public void setSymbolHashMap(HashMap<SymbolType, String[]> symbolHashMap)
 	{
 		this.symbolHashMap = symbolHashMap;
-		Set<Entry<String, String[]>> symbolEntrySet = symbolHashMap.entrySet();
-		for (Entry<String, String[]> entry : symbolEntrySet)
+		Set<Entry<SymbolType, String[]>> symbolEntrySet = symbolHashMap.entrySet();
+		for (Entry<SymbolType, String[]> entry : symbolEntrySet)
 		{
 			String[] symbols = entry.getValue();
 			for (String symbol : symbols)
 			{
-				symbolTypeHashMap.put(symbol, SymbolType.valueOf(entry.getKey()));
+			    symbolTypeHashMap.put(symbol, entry.getKey());
 			}
 		}
 	}
@@ -283,7 +293,7 @@ public class ParseTree
 		}
 		else
 		{
-			String[] patterns = symbolHashMap.get(SymbolType.LITERAL.toString());			
+			String[] patterns = symbolHashMap.get(SymbolType.LITERAL);			
 			if (patterns != null)
 			{
 				for (String literalPattern : patterns)
@@ -306,14 +316,13 @@ public class ParseTree
 	 */
 	public String getLiteralValue(String term)
 	{
-		String[] patterns = symbolHashMap.get(SymbolType.LITERAL.toString());		
+		String[] patterns = symbolHashMap.get(SymbolType.LITERAL);		
 		if (patterns != null)
 		{
 			for (String literalPattern : patterns)
 			{
 				if(term.matches(literalPattern))
-				{					
-					//System.out.println(term + "\t ==>\t LITERAL");
+				{										
 					return term.replaceAll(literalPattern, "$1");
 				}
 			}
@@ -351,21 +360,16 @@ public class ParseTree
 	 * @param value
 	 * @return
 	 */
-    public String getLiteralType(String value)
+    public SymbolType getLiteralType(String value)
     {
-        if(symbolTypeHashMap.containsKey(value))
+        if(symbolTypeHashMap.containsKey(SymbolType.valueOf(value)))
         {
-            return symbolTypeHashMap.get(value).toString();
+            return symbolTypeHashMap.get(value);
         }
         else
         {
-            return SymbolType.LITERAL.toString();
+            return SymbolType.LITERAL;
         }
-    }
-
-    public void setSymbolTypeHashMap(HashMap<String, SymbolType> symbolTypeHashMap)
-    {
-        this.symbolTypeHashMap = symbolTypeHashMap;        
     }
 
     /**

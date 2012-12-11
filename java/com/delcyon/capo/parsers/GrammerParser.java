@@ -36,7 +36,9 @@ public class GrammerParser
 {
 	public enum SymbolType
 	{
-		DELIMITER, 
+	    /** used to specify WHITESPACE in the tokenizer **/
+		DELIMITER,
+		/** used to specify a regex replacement pattern to identify LITERALS and strip them of their indicator chars **/  
 		LITERAL, 
 		ASSIGNMENT, 
 		ALTERNATION, 
@@ -45,10 +47,12 @@ public class GrammerParser
 		SYMBOL
 	}
 
-	private HashMap<String, String[]> symbolHashMap = new HashMap<String, String[]>();
-	private HashMap<String, String> ruleHashMap = new HashMap<String, String>();
+	
+	private HashMap<SymbolType, String[]> symbolHashMap = new HashMap<SymbolType, String[]>();
+	
+	//symbol types are only used in the setDelimter code
 	private HashMap<String, SymbolType> symbolTypeHashMap = new HashMap<String, SymbolType>();
-	private HashMap<String, String> notationHashMap = new HashMap<String, String>();
+	
 	
     private Vector<ParseRule> notationParseRuleVector; //this is used to parse and understand a grammar.
     private Vector<ParseRule> grammerParseRuleVector; //this set of rules is used to parse input based on a grammar.
@@ -56,91 +60,168 @@ public class GrammerParser
 	public GrammerParser()
 	{
 
-		symbolHashMap.put(SymbolType.DELIMITER.toString(), new String[] { " ", "\t", "EOL" });
-		symbolHashMap.put(SymbolType.LITERAL.toString(), new String[] { "\"(.+)\"", "'(.+)'" });
-		symbolHashMap.put(SymbolType.ASSIGNMENT.toString(), new String[] { "=" });
-		symbolHashMap.put(SymbolType.ALTERNATION.toString(), new String[] { "|" });
-		symbolHashMap.put(SymbolType.EOL.toString(), new String[] { "\n" });
+		symbolHashMap.put(SymbolType.DELIMITER, new String[] { " ", "\t", "EOL" });
+		symbolHashMap.put(SymbolType.LITERAL, new String[] {  "'(.+)'" });
+		//symbolHashMap.put(SymbolType.LITERAL.toString(), new String[] { "\"(.+)\"", "'(.+)'" });
+//		symbolHashMap.put(SymbolType.ASSIGNMENT, new String[] { "=" });
+//		symbolHashMap.put(SymbolType.ALTERNATION, new String[] { "|" });
+//		symbolHashMap.put(SymbolType.EOL, new String[] { "\n" });
 
-		Set<Entry<String, String[]>> symbolEntrySet = symbolHashMap.entrySet();
-		for (Entry<String, String[]> entry : symbolEntrySet)
+		Set<Entry<SymbolType, String[]>> symbolEntrySet = symbolHashMap.entrySet();
+		for (Entry<SymbolType, String[]> entry : symbolEntrySet)
 		{
 			String[] symbols = entry.getValue();
 			for (String symbol : symbols)
 			{
-				symbolTypeHashMap.put(symbol, SymbolType.valueOf(entry.getKey()));
+				symbolTypeHashMap.put(symbol, entry.getKey());
 			}
 		}
-
-		Set<Entry<String, String>> ruleEntrySet = ruleHashMap.entrySet();
-		for (Entry<String, String> entry : ruleEntrySet)
-		{
-			//System.out.println(Arrays.toString(entry.getValue().split("[ \t]")));
-			String[] expressions = entry.getValue().split("[ \t]");
-			for (String expression : expressions)
-			{
-				if (ruleHashMap.containsKey(expression))
-				{
-					//System.out.println("NON-TERMINAL:\t" + expression);
-				}
-				else if (symbolTypeHashMap.containsKey(expression))
-				{
-					//System.out.println(symbolTypeHashMap.get(expression) + ":\t" + expression);
-				}
-				else
-				{
-					//System.out.println("TERMINAL:\t" + expression);
-				}
-			}
-		}
-		// constructTable
+		
 	}
 
-	public void loadSymbols(InputStream inputStream) throws Exception
-	{
-		
+	
+	private ParseTree loadDefaultNotationParseTree()
+    {
+        ParseTree parseTree = new ParseTree();
+        parseTree.setSymbolHashMap(symbolHashMap);      
+        ParseRule ruleListParseRule = new ParseRule("RULE_LIST",new String[]{"RULE+"});
+        parseTree.addRule(ruleListParseRule);
+        ParseRule ruleParseRule = new ParseRule("RULE",new String[]{"RULE_NAME","'='", "EXPRESSION","EOL"});
+        parseTree.addRule(ruleParseRule);
+        ParseRule expressionParseRule = new ParseRule("EXPRESSION",new String[]{"TERM+"},new String[]{"TERM+","'|'", "EXPRESSION"});
+        parseTree.addRule(expressionParseRule);
+        ParseRule termParseRule = new ParseRule("TERM",new String[]{"VALUE"});
+        parseTree.addRule(termParseRule);
 
-		Tokenizer streamTokenizer = new Tokenizer(inputStream);
-		streamTokenizer.resetSyntax();
-		streamTokenizer.setCharRangeType(33, 126,CharacterType.ALPHA);
-		streamTokenizer.setEOLSignificant(true);
-		setDelimiters(streamTokenizer, SymbolType.DELIMITER.toString());
-		while (streamTokenizer.nextToken() != Tokenizer.TokenType.EOF)
-		{
-			if (streamTokenizer.getTokenType() == Tokenizer.TokenType.EOL)
-			{
-				System.out.println("EOL");
-			}
-			else
-			{
-				if (symbolTypeHashMap.containsKey(streamTokenizer.getValue()))
-				{
-					System.out.println(streamTokenizer.getValue() + "\t ==>\t " + symbolTypeHashMap.get(streamTokenizer.getValue()));
-				}
-				else if (ruleHashMap.containsKey(streamTokenizer.getValue()))
-				{
-					System.out.println(streamTokenizer.getValue() + "\t ==>\t RULE");
-				}
-				else
-				{					
-					System.out.println(streamTokenizer.getValue() + "\t ==>\t LITERAL");
-				}
-			}
-		}
+        return parseTree;
+    }
+	
+	public void loadNotationGrammer(InputStream inputStream) throws Exception
+	{
+
+        //prepare symbol table with loaded symbols
+        Tokenizer streamTokenizer = new Tokenizer(inputStream);
+        streamTokenizer.resetSyntax();
+        streamTokenizer.setCharRangeType(33, 126,CharacterType.ALPHA);
+        streamTokenizer.setEOLSignificant(true);        
+        streamTokenizer.setCharType('"', CharacterType.QUOTE);
+        streamTokenizer.setCharType('\\', CharacterType.ESCAPE);
+        
+        setDelimiters(streamTokenizer, SymbolType.DELIMITER);
+        
+        
+        ParseTree notationParseTree = loadDefaultNotationParseTree();
+        notationParseTree.setSymbolHashMap(symbolHashMap);
+        //notationParseTree.setSymbolTypeHashMap(symbolTypeHashMap);
+        Document parseDocument = notationParseTree.parse(streamTokenizer);
+        XPath.dumpNode(parseDocument, System.out);
+        
+        notationParseRuleVector = getParseRules(parseDocument);
+	}
+	
+	
+	public void loadGrammer(InputStream inputStream) throws Exception
+	{
+
+        //prepare symbol table with loaded symbols
+        Tokenizer streamTokenizer = new Tokenizer(inputStream);
+        streamTokenizer.resetSyntax();
+        streamTokenizer.setCharRangeType(33, 126,CharacterType.ALPHA);
+        streamTokenizer.setEOLSignificant(true);        
+        streamTokenizer.setCharType('"', CharacterType.QUOTE);
+        streamTokenizer.setCharType('\\', CharacterType.ESCAPE);
+        
+        setDelimiters(streamTokenizer, SymbolType.DELIMITER);
+        
+        Document parseDocument = null;
+        ParseTree grammerParseTree = null;
+        
+        if(notationParseRuleVector != null)
+        {
+            grammerParseTree = new ParseTree();                   
+            for (ParseRule parseRule : notationParseRuleVector)
+            {
+                grammerParseTree.addRule(parseRule);
+            }
+            grammerParseTree.setSymbolHashMap(symbolHashMap);
+            //grammerParseTree.setSymbolTypeHashMap(symbolTypeHashMap);
+            parseDocument = grammerParseTree.parse(streamTokenizer);
+        }
+        else
+        {
+            grammerParseTree = loadDefaultNotationParseTree();
+            grammerParseTree.setSymbolHashMap(symbolHashMap);
+           // grammerParseTree.setSymbolTypeHashMap(symbolTypeHashMap);
+            parseDocument = grammerParseTree.parse(streamTokenizer);
+        }
+        
+        XPath.dumpNode(parseDocument, System.out);        
+        grammerParseRuleVector = getParseRules(parseDocument);
 
 	}
 	
-	/**
-	 * This returns a set of rules that represent a grammar. 
-	 * @param ruleDocument
-	 * @return
-	 * @throws Exception
-	 */
-	private Vector<ParseRule> getParseRules(Document ruleDocument) throws Exception
+	
+
+	public void parse(InputStream inputStream) throws Exception
 	{
-	    Vector<ParseRule> parseRuleVector = new Vector<ParseRule>();
-	    
-	    NodeList ruleList = XPath.selectNodes(ruleDocument, "//RULE");
+
+        //prepare symbol table with loaded symbols
+        Tokenizer streamTokenizer = new Tokenizer(inputStream);
+        streamTokenizer.resetSyntax();
+        streamTokenizer.setCharRangeType(33, 126,CharacterType.ALPHA);
+        streamTokenizer.setEOLSignificant(true);        
+        streamTokenizer.setCharType('"', CharacterType.QUOTE);
+        //streamTokenizer.quoteChar('\'');
+        setDelimiters(streamTokenizer, SymbolType.DELIMITER);
+        
+        
+        ParseTree grammerParseTree = new ParseTree();        
+        grammerParseTree.setNamespace("P","http://www.delcyon.com/parser");
+        grammerParseTree.setAllowPartialMatch(true);
+        grammerParseTree.setSymbolHashMap(symbolHashMap);
+        
+        for (ParseRule parseRule : grammerParseRuleVector)
+        {
+            grammerParseTree.addRule(parseRule);
+        }
+        Document parseDocument = grammerParseTree.parse(streamTokenizer);
+       
+        XPath.dumpNode(parseDocument, System.out);
+        
+
+	}
+
+	private void setDelimiters(Tokenizer streamTokenizer, SymbolType symbolName)
+	{
+		String[] delimiters = symbolHashMap.get(symbolName);
+		if (delimiters == null)
+		{
+			return;
+		}
+		for (String string : delimiters)
+		{
+			if (string.length() == 1)
+			{			            
+		        streamTokenizer.setCharType(string.charAt(0), CharacterType.WHITESPACE);		        
+			}
+			else if (string.length() > 1)
+			{
+				setDelimiters(streamTokenizer, SymbolType.valueOf(string));
+			}
+		}
+	}
+	
+	/**
+     * This returns a set of rules that represent a grammar. 
+     * @param ruleDocument
+     * @return
+     * @throws Exception
+     */
+    private Vector<ParseRule> getParseRules(Document ruleDocument) throws Exception
+    {
+        Vector<ParseRule> parseRuleVector = new Vector<ParseRule>();
+        
+        NodeList ruleList = XPath.selectNodes(ruleDocument, "//RULE");
         for(int ruleIndex = 0; ruleIndex < ruleList.getLength(); ruleIndex++)
         {
             Element ruleElement = (Element) ruleList.item(ruleIndex);
@@ -199,125 +280,5 @@ public class GrammerParser
             }
         }
         return parseRuleVector;
-	}
-	
-	public void loadNotationGrammer(InputStream inputStream) throws Exception
-	{
-	    
-        
-        //clear rule hashmap        
-        
-        
-
-        //prepare symbol table with loaded symbols
-        Tokenizer streamTokenizer = new Tokenizer(inputStream);
-        streamTokenizer.resetSyntax();
-        streamTokenizer.setCharRangeType(33, 126,CharacterType.ALPHA);
-        streamTokenizer.setEOLSignificant(true);        
-        streamTokenizer.setCharType('"', CharacterType.QUOTE);
-        //streamTokenizer.quoteChar('\'');
-        setDelimiters(streamTokenizer, SymbolType.DELIMITER.toString());
-        
-        
-        ParseTree notationParseTree = loadNotationParseTree();
-        notationParseTree.setSymbolHashMap(symbolHashMap);
-        notationParseTree.setSymbolTypeHashMap(symbolTypeHashMap);
-        Document parseDocument = notationParseTree.parse(streamTokenizer);
-        XPath.dumpNode(parseDocument, System.out);
-        
-        notationParseRuleVector = getParseRules(parseDocument);
-	}
-	
-	
-	public void loadGrammer(InputStream inputStream) throws Exception
-	{
-
-        //prepare symbol table with loaded symbols
-        Tokenizer streamTokenizer = new Tokenizer(inputStream);
-        streamTokenizer.resetSyntax();
-        streamTokenizer.setCharRangeType(33, 126,CharacterType.ALPHA);
-        streamTokenizer.setEOLSignificant(true);        
-        streamTokenizer.setCharType('"', CharacterType.QUOTE);
-        //streamTokenizer.quoteChar('\'');
-        setDelimiters(streamTokenizer, SymbolType.DELIMITER.toString());
-        
-        
-        ParseTree grammerParseTree = new ParseTree();
-        grammerParseTree.setSymbolHashMap(symbolHashMap);       
-        for (ParseRule parseRule : notationParseRuleVector)
-        {
-            grammerParseTree.addRule(parseRule);
-        }
-        grammerParseTree.setSymbolTypeHashMap(symbolTypeHashMap);
-        Document parseDocument = grammerParseTree.parse(streamTokenizer);
-        XPath.dumpNode(parseDocument, System.out);
-        
-        grammerParseRuleVector = getParseRules(parseDocument);
-
-	}
-	
-	private ParseTree loadNotationParseTree()
-	{
-		ParseTree parseTree = new ParseTree();
-		parseTree.setSymbolHashMap(symbolHashMap);		
-		ParseRule ruleListParseRule = new ParseRule("RULE_LIST",new String[]{"RULE+"});
-		parseTree.addRule(ruleListParseRule);
-		ParseRule ruleParseRule = new ParseRule("RULE",new String[]{"RULE_NAME","'='", "EXPRESSION","EOL"});
-		parseTree.addRule(ruleParseRule);
-		ParseRule expressionParseRule = new ParseRule("EXPRESSION",new String[]{"TERM+"},new String[]{"TERM+","'|'", "EXPRESSION"});
-		parseTree.addRule(expressionParseRule);
-		ParseRule termParseRule = new ParseRule("TERM",new String[]{"VALUE"});
-		parseTree.addRule(termParseRule);
-
-		return parseTree;
-	}
-
-	public void parse(InputStream inputStream) throws Exception
-	{
-
-        //prepare symbol table with loaded symbols
-        Tokenizer streamTokenizer = new Tokenizer(inputStream);
-        streamTokenizer.resetSyntax();
-        streamTokenizer.setCharRangeType(33, 126,CharacterType.ALPHA);
-        streamTokenizer.setEOLSignificant(true);        
-        streamTokenizer.setCharType('"', CharacterType.QUOTE);
-        //streamTokenizer.quoteChar('\'');
-        setDelimiters(streamTokenizer, SymbolType.DELIMITER.toString());
-        
-        
-        ParseTree grammerParseTree = new ParseTree();        
-        grammerParseTree.setNamespace("P","http://www.delcyon.com/parser");
-        grammerParseTree.setAllowPartialMatch(true);
-        grammerParseTree.setSymbolHashMap(symbolHashMap);
-        
-        for (ParseRule parseRule : grammerParseRuleVector)
-        {
-            grammerParseTree.addRule(parseRule);
-        }
-        Document parseDocument = grammerParseTree.parse(streamTokenizer);
-        grammerParseTree.setSymbolTypeHashMap(symbolTypeHashMap);
-        XPath.dumpNode(parseDocument, System.out);
-        
-
-	}
-
-	private void setDelimiters(Tokenizer streamTokenizer, String symbolName)
-	{
-		String[] delimiters = symbolHashMap.get(symbolName);
-		if (delimiters == null)
-		{
-			return;
-		}
-		for (String string : delimiters)
-		{
-			if (string.length() == 1)
-			{			            
-		        streamTokenizer.setCharType(string.charAt(0), CharacterType.WHITESPACE);		        
-			}
-			else if (string.length() > 1)
-			{
-				setDelimiters(streamTokenizer, string);
-			}
-		}
-	}
+    }
 }

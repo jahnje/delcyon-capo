@@ -18,8 +18,6 @@ package com.delcyon.capo.parsers;
 
 import java.util.Vector;
 
-import com.delcyon.capo.parsers.ParseToken.TokenType;
-
 /**
  * @author jeremiah
  *
@@ -36,18 +34,14 @@ public class ParseTape
 		{
 			tokenizer.nextToken();
 			
-			if(tokenizer.getValue() != null)
-			{				
-				streamVector.add(new ParseToken(tokenizer.getValue(),TokenType.WORD));
-			}
-			else if (tokenizer.getTokenType() == Tokenizer.TokenType.EOL)
-			{
-				streamVector.add(new ParseToken("EOL",TokenType.EOL));
-			}
-			else if (tokenizer.getTokenType() ==Tokenizer.TokenType.EOF)
+			if (tokenizer.getTokenType() == Tokenizer.TokenType.EOF)
 			{				
 				break;
-			}			
+			}
+			else
+			{
+			    streamVector.add(new ParseToken(tokenizer.getValue(),tokenizer.getTokenType()));
+			}
 		}
 	}
 	
