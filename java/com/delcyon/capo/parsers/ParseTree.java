@@ -29,6 +29,7 @@ import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 
 import com.delcyon.capo.parsers.GrammerParser.SymbolType;
+import com.delcyon.capo.parsers.Tokenizer.CharacterType;
 
 /**
  * @author jeremiah
@@ -145,6 +146,16 @@ public class ParseTree
 	
 	public void parse(Tokenizer tokenizer, Node node) throws Exception
     {
+	    //walk the list of literals, and find any that have a lenght of 1. then make sure that, that char is treated as a separate token, and not part of a word.
+	    Set<Entry<String, String>> entries =  literalHashMap.entrySet();
+	    for (Entry<String, String> entry : entries)
+        {
+            if(entry.getKey().length() == 1)
+            {
+                tokenizer.setCharType(entry.getKey().charAt(0), CharacterType.TOKEN);
+            }
+        }
+	    
         ParseTape parseTape = new ParseTape(tokenizer);        
         
         Element parseNode = createElement(node, parseRuleVector.firstElement().getName());        
