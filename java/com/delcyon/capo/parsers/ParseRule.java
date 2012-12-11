@@ -221,9 +221,9 @@ public class ParseRule
 						case RULE:
 							//drill down into new rule
 							parseTape.pushBack();
-							Element parseNode = parseTree.createElement(originalParseNode,parseTree.getRuleNode(term).getName());
+							Element parseNode = parseTree.createElement(originalParseNode,parseTree.getRule(term).getName());
 							peerParseNode.appendChild(parseNode);
-							if (parseTree.getRuleNode(term).parse(parseNode, parseTape) == false)
+							if (parseTree.getRule(term).parse(parseNode, parseTape) == false)
 							{
 								peerParseNode.removeChild(parseNode);
 								foundExpressionMatch = false;

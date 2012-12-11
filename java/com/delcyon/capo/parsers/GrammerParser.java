@@ -285,9 +285,8 @@ public class GrammerParser
         setDelimiters(streamTokenizer, SymbolType.DELIMITER.toString());
         
         
-        ParseTree grammerParseTree = new ParseTree();
-        grammerParseTree.setPrefix("P");
-        grammerParseTree.setNamespaceURI("http://www.delcyon.com/parser");
+        ParseTree grammerParseTree = new ParseTree();        
+        grammerParseTree.setNamespace("P","http://www.delcyon.com/parser");
         grammerParseTree.setAllowPartialMatch(true);
         grammerParseTree.setSymbolHashMap(symbolHashMap);
         

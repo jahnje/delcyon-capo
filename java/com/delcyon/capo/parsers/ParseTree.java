@@ -38,18 +38,44 @@ import com.delcyon.capo.parsers.Tokenizer.CharacterType;
 public class ParseTree
 {
 
+    /**
+     * Used when multiple but different expression matches are found for a rule. 
+     * @author jeremiah
+     *
+     */
 	public enum ParseOrderPreference
 	{
+	    /**
+	     * choose the farthest left matching expression
+	     */
 		LEFT,
+		/**
+		 * choose the farthest right matching expression
+		 */
 		RIGHT,
+		/**
+		 * choose the expression with the longest match, starting from the left. 
+		 */
 		MAX_LENGTH
 	}
 	
 	public enum TermType
 	{
+	    /**
+	     * indicates this term is a RULE
+	     */
 		RULE,
+		/**
+		 * indicates this term is a SYMBOL, which means it has no defined meaning.
+		 */
 		SYMBOL,
+		/**
+		 * indicates that this term is used to separate terms, generally EOL is the only one that should really show up this way.
+		 */
 		DELIMITER,
+		/**
+		 * indicates that this term is a literal, and should be used for demarcating a token list.
+		 */
 		LITERAL
 	}
 	
@@ -66,19 +92,20 @@ public class ParseTree
 	private String namespaceURI = null;
 	private String prefix = null;
 	
-	public void setNamespaceURI(String namespaceURI)
+	/**
+	 * This will set the namespace to be used for any created elements resulting from the parse.
+	 * @param prefix prefix of the namespace to use.  
+	 * @param namespaceURI namespaceURI to use.
+	 */
+	public void setNamespace(String prefix, String namespaceURI)
     {
         this.namespaceURI = namespaceURI;
+        this.prefix = prefix;
     }
 	
 	public String getNamespaceURI()
     {
         return namespaceURI;
-    }
-	
-	public void setPrefix(String prefix)
-    {
-        this.prefix = prefix;
     }
 	
 	public String getPrefix()
@@ -91,9 +118,25 @@ public class ParseTree
         return includeLiterals;
     }
 	
+	/**
+	 * The parse can either consume any literals it encounters, or include them in the result XML as <LITERAL VALUE=""/> elements.
+	 * @param includeLiterals
+	 */
 	public void setIncludeLiterals(boolean includeLiterals)
     {
         this.includeLiterals = includeLiterals;
+    }
+	
+	/**
+	 * Controls whether or not we return the best match we've found, even if all of the data has not been matched. 
+	 * This is handy if you want to partially parse the first part of a file, but don't care about the remainder.   
+	 *  
+	 *  defaults to false
+	 */
+	
+	public void setAllowPartialMatch(boolean allowPartialMatch)
+    {
+        this.allowPartialMatch = allowPartialMatch;
     }
 	
 	public boolean isAllowPartialMatch()
@@ -101,11 +144,11 @@ public class ParseTree
         return allowPartialMatch;
     }
 	
-	public void setAllowPartialMatch(boolean allowPartialMatch)
-    {
-        this.allowPartialMatch = allowPartialMatch;
-    }
 	
+	/**
+	 * This adds a parse rule to the tree. The order that these rules are added is the order in which they will be processed. 
+	 * @param parseRule
+	 */
 	public void addRule(ParseRule parseRule)
 	{
 		parseRuleVector.add(parseRule);
@@ -133,6 +176,12 @@ public class ParseTree
 		parseRule.setParseTree(this);
 	}
 
+	/**
+	 * Given a tokenizer object, apply an parse rules, and return the resulting XML Document 
+	 * @param tokenizer
+	 * @return
+	 * @throws Exception
+	 */
 	public Document parse(Tokenizer tokenizer) throws Exception
 	{		
 	    DocumentBuilderFactory documentBuilderFactory = DocumentBuilderFactory.newInstance();
@@ -144,6 +193,12 @@ public class ParseTree
 		
 	}
 	
+	/**
+	 * Given a tokenizer, and an XML Element or Document, this will append the result of the parse rules to that node. 
+	 * @param tokenizer
+	 * @param node
+	 * @throws Exception
+	 */
 	public void parse(Tokenizer tokenizer, Node node) throws Exception
     {
 	    //walk the list of literals, and find any that have a lenght of 1. then make sure that, that char is treated as a separate token, and not part of a word.
@@ -170,6 +225,11 @@ public class ParseTree
         
     }
 
+	/**
+	 * This returns whether or not a string in the name of a parse Rule. 
+	 * @param term
+	 * @return
+	 */
 	public boolean isRule(String term)
 	{
 		return parseRuleHashMap.containsKey(term);
@@ -189,12 +249,21 @@ public class ParseTree
 		}
 	}
 
-	public ParseRule getRuleNode(String term)
+	/**
+	 * This returns a rule for a given name.
+	 * @param term
+	 * @return
+	 */
+	public ParseRule getRule(String term)
 	{
 		return parseRuleHashMap.get(term);
 	}
 
-	
+	/**
+	 * this returns the TermType for a given string.
+	 * @param term
+	 * @return
+	 */
 	public TermType getTermType(String term)
 	{
 		if (symbolTypeHashMap.containsKey(term) )
@@ -229,6 +298,12 @@ public class ParseTree
 		}
 	}
 	
+	/**
+	 * Given a term that still has it's literal indicators around it, will find a matching pattern and use it to remove them.
+	 * For example 'value' will result in value.
+	 * @param term
+	 * @return
+	 */
 	public String getLiteralValue(String term)
 	{
 		String[] patterns = symbolHashMap.get(SymbolType.LITERAL.toString());		
@@ -256,16 +331,26 @@ public class ParseTree
 	    return literalHashMap.containsKey(value);
 	}
 	
-	public ParseOrderPreference getParseOrderPreference()
-	{
-		return parseOrderPreference;
-	}
 	
+	/**
+	 * Allows you to set the way the parse tree will choose when finding multiple rules that match a particular token list.
+	 * @param parseOrderPreference
+	 */
 	public void setParseOrderPreference(ParseOrderPreference parseOrderPreference)
 	{
 		this.parseOrderPreference = parseOrderPreference;
 	}
 
+	public ParseOrderPreference getParseOrderPreference()
+    {
+        return parseOrderPreference;
+    }
+	
+	/**
+	 * Returns the symbol type of this literal, or LITERAL if there is no match.
+	 * @param value
+	 * @return
+	 */
     public String getLiteralType(String value)
     {
         if(symbolTypeHashMap.containsKey(value))
@@ -283,6 +368,12 @@ public class ParseTree
         this.symbolTypeHashMap = symbolTypeHashMap;        
     }
 
+    /**
+     * centralized method for creating an element where we take set namespace and prefix into account. 
+     * @param someNode
+     * @param name
+     * @return
+     */
     public Element createElement(Node someNode, String name)
     {
         Document ownerDocument = null;
