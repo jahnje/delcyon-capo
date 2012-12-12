@@ -192,7 +192,14 @@ public class Tokenizer
         }
         while (lowChar <= highChar)
         {
-            characterTypes[lowChar++] |= characterType.mask;
+        	if(characterType.mask == 0)
+            {
+                characterTypes[lowChar++] = characterType.mask;
+            }
+            else
+            {
+                characterTypes[lowChar++] |= characterType.mask;
+            }           
         }
     }
     
