@@ -18,6 +18,8 @@ package com.delcyon.capo.parsers;
 
 import java.util.Arrays;
 import java.util.Vector;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import org.w3c.dom.Attr;
 import org.w3c.dom.Element;
@@ -62,13 +64,16 @@ public class ParseRule
 
 	private void printPathMessage(Node element, String message)
 	{
-//	    StringBuilder stringBuilder = new StringBuilder();
-//	    while(element != null)
-//	    {
-//	        stringBuilder.insert(0, element.getLocalName()+"/");	        
-//	        element = (Node) element.getParentNode();
-//	    }
-//	    System.out.println(stringBuilder+":"+message);
+	    if(Logger.global.isLoggable(Level.FINER))
+	    {
+	        StringBuilder stringBuilder = new StringBuilder();
+	        while(element != null)
+	        {
+	            stringBuilder.insert(0, element.getNodeName()+"/");	        
+	            element = (Node) element.getParentNode();
+	        }
+	        System.out.println(stringBuilder+":"+message);
+	    }
 	}
 	
 	public boolean parse(Element originalParseNode, ParseTape parseTape) throws Exception
