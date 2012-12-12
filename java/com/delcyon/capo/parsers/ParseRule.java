@@ -62,13 +62,13 @@ public class ParseRule
 
 	private void printPathMessage(Node element, String message)
 	{
-	    StringBuilder stringBuilder = new StringBuilder();
-	    while(element != null)
-	    {
-	        stringBuilder.insert(0, element.getLocalName()+"/");	        
-	        element = (Node) element.getParentNode();
-	    }
-	    System.out.println(stringBuilder+":"+message);
+//	    StringBuilder stringBuilder = new StringBuilder();
+//	    while(element != null)
+//	    {
+//	        stringBuilder.insert(0, element.getLocalName()+"/");	        
+//	        element = (Node) element.getParentNode();
+//	    }
+//	    System.out.println(stringBuilder+":"+message);
 	}
 	
 	public boolean parse(Element originalParseNode, ParseTape parseTape) throws Exception

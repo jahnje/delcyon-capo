@@ -86,9 +86,9 @@ public class GrammerParser
         parseTree.setSymbolHashMap(symbolHashMap);      
         ParseRule ruleListParseRule = new ParseRule("RULE_LIST",new String[]{"RULE+"});
         parseTree.addRule(ruleListParseRule);
-        ParseRule ruleParseRule = new ParseRule("RULE",new String[]{"RULE_NAME","'='", "EXPRESSION","EOL"});
+        ParseRule ruleParseRule = new ParseRule("RULE",new String[]{"RULE_NAME","'='", "EXPRESSION+","EOL"});
         parseTree.addRule(ruleParseRule);
-        ParseRule expressionParseRule = new ParseRule("EXPRESSION",new String[]{"TERM+"},new String[]{"TERM+","'|'", "EXPRESSION"});
+        ParseRule expressionParseRule = new ParseRule("EXPRESSION",new String[]{"TERM+"},new String[]{"'|'", "TERM+"});
         parseTree.addRule(expressionParseRule);
         ParseRule termParseRule = new ParseRule("TERM",new String[]{"VALUE"});
         parseTree.addRule(termParseRule);

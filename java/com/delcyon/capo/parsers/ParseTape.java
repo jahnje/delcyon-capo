@@ -35,11 +35,12 @@ public class ParseTape
 			tokenizer.nextToken();
 			
 			if (tokenizer.getTokenType() == Tokenizer.TokenType.EOF)
-			{				
+			{
+			    System.out.println(streamVector);
 				break;
 			}
 			else
-			{
+			{			    
 			    streamVector.add(new ParseToken(tokenizer.getValue(),tokenizer.getTokenType()));
 			}
 		}

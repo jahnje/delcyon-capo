@@ -164,7 +164,14 @@ public class Tokenizer
      */
     public void setCharType(int character, CharacterType characterType)
     {
-        characterTypes[character] |= characterType.mask;
+        if(characterType.mask == 0)
+        {
+            characterTypes[character] = characterType.mask;
+        }
+        else
+        {
+            characterTypes[character] |= characterType.mask;
+        }
     }
    
     /**

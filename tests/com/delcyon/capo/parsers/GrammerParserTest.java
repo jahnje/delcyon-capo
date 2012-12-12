@@ -41,4 +41,12 @@ public class GrammerParserTest
         grammerParser.parse(new FileInputStream("test-data/parser_test_data/SIMPLE.input"));
     }
 
+    @Test
+    public void testZipcode() throws Exception
+    {
+        GrammerParser grammerParser = new GrammerParser();
+               
+        grammerParser.loadGrammer(new FileInputStream("test-data/parser_test_data/ZIPCODE.grammer"));
+        grammerParser.parse(new FileInputStream("test-data/parser_test_data/ZIPCODE.input"));
+    }
 }
