@@ -17,6 +17,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 package com.delcyon.capo.parsers;
 
 import java.io.FileInputStream;
+import java.util.Vector;
 
 import org.junit.Assert;
 import org.junit.Test;
@@ -48,14 +49,20 @@ public class TokenizerTest
 //        tokenizer.setCharType(' ', CharacterType.WHITESPACE);
         tokenizer.setCharType('\\', CharacterType.ESCAPE);
         int tokenCount = 0;
+        Vector<String> tokenVector = new Vector<String>();
         while(tokenizer.nextToken() != Tokenizer.TokenType.EOF)
         {
-            System.out.println(tokenizer.getValue());
+            
             tokenCount++;            
             if(tokenizer.getValue() == null)
             {
                 Assert.assertEquals(TokenType.EOL, tokenizer.getTokenType());
             }
+            else
+            {
+                tokenVector.add(tokenizer.getValue());
+            }
+            
             if(tokenizer.getTokenType() == TokenType.EOL)
             {
                 Assert.assertNull(tokenizer.getValue());
@@ -65,6 +72,7 @@ public class TokenizerTest
                 Assert.assertNotNull(tokenizer.getValue());
             }
         }
+        System.out.println(tokenVector);
         Assert.assertEquals(49, tokenCount);
     }
 
