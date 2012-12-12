@@ -17,6 +17,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 package com.delcyon.capo.parsers;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Vector;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -27,6 +28,7 @@ import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
+import com.delcyon.capo.parsers.ParseTree.ParseOrderPreference;
 import com.delcyon.capo.parsers.ParseTree.TermType;
 import com.delcyon.capo.parsers.Tokenizer.TokenType;
 
@@ -40,6 +42,7 @@ public class ParseRule
 	private String name;
 	private String[][] expressions;
 	private ParseTree parseTree;
+    private String[][] localExpressions;
 
 	/**
 	 * 
@@ -87,13 +90,34 @@ public class ParseRule
 		
 		Element peerParseNode = (Element) originalParseNode.cloneNode(true);
 		
+		//there is only one instance of each rule, treat this as setup, to see if we need to reverse this array for RIGHT tree optimizations 
+		if(localExpressions == null)
+		{
+		    localExpressions = expressions;
+		    if(parseTree.getParseOrderPreference() == ParseOrderPreference.RIGHT && expressions.length > 1)
+		    {		        
+		        Collections.reverse(Arrays.asList(localExpressions));
+		    }
+		}
+		
+		//EXPRESSIONS LOOP
 		expressions:
-		for (int currentExpression = 0; currentExpression < expressions.length; currentExpression++)
+		for (int currentExpression = 0; currentExpression < localExpressions.length; currentExpression++)
 		{
 			if(foundExpressionMatch == true)
 			{
 				matchItemVector.add(new MatchItem(peerParseNode,parseTape.getPosition()));
+				
+				//quick optimization, if we're not doing a max length, and we have a match, we can bail out here and don't need to go further.
+				if(parseTree.getParseOrderPreference() != ParseOrderPreference.MAX_LENGTH)
+				{
+				    foundExpressionMatch = false; //this isn't true, but keeps us from adding an additional match outside this loop.
+				    break;
+				}
 			}
+			
+			
+			
 			//check to see if we need to try something else, if we're out of tape, and we have a match, then we don't
 			if(parseTape.hasMore() == false && foundExpressionMatch)
 			{
@@ -107,7 +131,7 @@ public class ParseRule
 			//backup. set list pointer to parse entry position
 			parseTape.setPosition(initialTapePosition);
 			
-			String[] expression = expressions[currentExpression];
+			String[] expression = localExpressions[currentExpression];
 			printPathMessage(peerParseNode, "starting parse with "+Arrays.toString(expression));
 			for (int currentTerm = 0; currentTerm < expression.length; currentTerm++)
 			{
@@ -210,10 +234,6 @@ public class ParseRule
 				    }
 
 				    ParseToken token = parseTape.getCurrent();
-				    if(token == null )
-				    {
-				        token = new ParseToken(null, TokenType.EOL);
-				    }
 				
 				//figure out what to do with the current term
 				    TermType termType = parseTree.getTermType(term); 
@@ -440,11 +460,9 @@ public class ParseRule
 			switch(parseTree.getParseOrderPreference())
 			{				
 				case LEFT:
+				case RIGHT: //we reverse the expressions above, so on left or right, our first match should always be the correct one to return.
 					matchItem = matchItemVector.firstElement();
-					break;
-				case RIGHT:
-					matchItem = matchItemVector.lastElement();
-					break;
+					break;				
 				case MAX_LENGTH:
 					int matchItemPos = -1;
 					for (int index = 0 ; index < matchItemVector.size(); index++)

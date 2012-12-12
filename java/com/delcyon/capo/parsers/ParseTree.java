@@ -97,7 +97,7 @@ public class ParseTree
 	private HashMap<String, String> literalHashMap = new HashMap<String, String>();
 	
 	
-	private ParseOrderPreference parseOrderPreference = ParseOrderPreference.RIGHT;
+	private ParseOrderPreference parseOrderPreference = ParseOrderPreference.LEFT;
 	private boolean allowPartialMatch = false;
 	private boolean includeLiterals = false;
 	private boolean useLiteralsAsTokens = false;
