@@ -115,7 +115,7 @@ public class GrammerParser
         notationParseTree.setUseLiteralsAsTokens(false);
         //notationParseTree.setSymbolTypeHashMap(symbolTypeHashMap);
         Document parseDocument = notationParseTree.parse(streamTokenizer);
-        XPath.dumpNode(parseDocument, System.out);
+        //XPath.dumpNode(parseDocument, System.out);
         
         notationParseRuleVector = getParseRules(parseDocument);
 	}
@@ -154,14 +154,14 @@ public class GrammerParser
         //grammerParseTree.setSymbolTypeHashMap(symbolTypeHashMap);
         Document parseDocument = grammerParseTree.parse(streamTokenizer);
         
-        XPath.dumpNode(parseDocument, System.out);        
+        //XPath.dumpNode(parseDocument, System.out);        
         grammerParseRuleVector = getParseRules(parseDocument);
 
 	}
 	
 	
 
-	public void parse(InputStream inputStream) throws Exception
+	public Document parse(InputStream inputStream) throws Exception
 	{
 
         //prepare symbol table with loaded symbols
@@ -184,8 +184,9 @@ public class GrammerParser
         }
         Document parseDocument = inputParseTree.parse(streamTokenizer);
        
-        XPath.dumpNode(parseDocument, System.out);
+       // XPath.dumpNode(parseDocument, System.out);
         
+        return parseDocument;
 
 	}
 
@@ -274,7 +275,7 @@ public class GrammerParser
             else
             {
                 parseRuleVector.add(parseRule);
-                System.out.println(parseRule);
+                //System.out.println(parseRule);
             }
         }
         return parseRuleVector;
