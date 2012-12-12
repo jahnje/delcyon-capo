@@ -50,6 +50,7 @@ public class TokenizerTest
         int tokenCount = 0;
         while(tokenizer.nextToken() != Tokenizer.TokenType.EOF)
         {
+            System.out.println(tokenizer.getValue());
             tokenCount++;            
             if(tokenizer.getValue() == null)
             {
@@ -64,7 +65,7 @@ public class TokenizerTest
                 Assert.assertNotNull(tokenizer.getValue());
             }
         }
-        Assert.assertEquals(48, tokenCount);
+        Assert.assertEquals(49, tokenCount);
     }
 
 }

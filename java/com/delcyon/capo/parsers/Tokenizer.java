@@ -1,10 +1,9 @@
 
 package com.delcyon.capo.parsers;
 
-import java.io.BufferedReader;
+import java.io.BufferedInputStream;
+import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.Reader;
 import java.util.Arrays;
 
 /**
@@ -96,7 +95,7 @@ public class Tokenizer
   
   
     private byte characterTypes[] = new byte[256];
-    private Reader reader = null;
+    private BufferedInputStream reader = null;
     private String value = null;
     int currentChar = -4;
     int currentQuoteChar = -1;
@@ -124,25 +123,18 @@ public class Tokenizer
     
     public Tokenizer(InputStream inputStream)
     {
-        this(new BufferedReader(new InputStreamReader(inputStream)));
+        this();
+        reader = new BufferedInputStream(inputStream,1);
     }
     
-    public Tokenizer(Reader reader) 
-    {
-        this();
-        if (reader == null) {
-            throw new NullPointerException();
-        }
-        this.reader = reader;
-    }
-
+    
     /**
      * will set the input stream to be read. 
      * @param inputStream
      */
     public void setInputStream(InputStream inputStream)
     {
-        this.reader = new BufferedReader(new InputStreamReader(inputStream));
+        this.reader = new BufferedInputStream(inputStream,1);
         //reset everything        
         value = null;
         pushedBack = false;        
@@ -229,7 +221,18 @@ public class Tokenizer
     }
     
     
-    
+    public boolean hasMore() throws IOException
+    {
+        //if we've already read an EOF, then the answer is no
+        if(internalTokenTypeHolder.tokenType == TokenType.EOF)
+        {
+            return false;
+        }
+        else //if we haven't gotten an EOF, then we're going to be allowed to read 
+        {    //at least one more char even if it results in an EOF, since we count that as the final token 
+            return true;            
+        }
+    }
     
     
     /**
@@ -499,7 +502,7 @@ public class Tokenizer
         if(firstChar == '{')
         {
             braced = true;
-            buffer = new char[8];
+            buffer = new char[9];
             count = 0;
         }
         else if((firstChar >= '0' && firstChar <= '9') || (firstChar >= 'A' && firstChar <= 'F') || (firstChar >= 'a' && firstChar <= 'f'))
@@ -566,7 +569,7 @@ public class Tokenizer
      */
     private char[] getUnicodeFromReader(int length) throws Exception
     {
-        char[] buffer = new char[length];
+        byte[] buffer = new byte[length];
         int readLength = reader.read(buffer);
         if(readLength < length) //check length
         {
@@ -589,6 +592,7 @@ public class Tokenizer
         }
         catch (NumberFormatException numberFormatException)
         {
+            numberFormatException.printStackTrace();
             throw new Exception("Invalid hex value for \\u escape");
         }
         
