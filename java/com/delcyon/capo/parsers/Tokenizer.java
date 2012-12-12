@@ -502,7 +502,7 @@ public class Tokenizer
         if(firstChar == '{')
         {
             braced = true;
-            buffer = new char[9];
+            buffer = new char[8];
             count = 0;
         }
         else if((firstChar >= '0' && firstChar <= '9') || (firstChar >= 'A' && firstChar <= 'F') || (firstChar >= 'a' && firstChar <= 'f'))
@@ -510,7 +510,7 @@ public class Tokenizer
             buffer = new char[2];
             buffer[0] = (char) firstChar;
         }
-        for(;count < buffer.length;count++)
+        for(;count <= buffer.length;count++)
         {
             int ch = reader.read();
             if ((ch >= '0' && ch <= '9') || (ch >= 'A' && ch <= 'F') || (ch >= 'a' && ch <= 'f')) 
