@@ -100,8 +100,24 @@ public class ParseTree
 	private ParseOrderPreference parseOrderPreference = ParseOrderPreference.RIGHT;
 	private boolean allowPartialMatch = false;
 	private boolean includeLiterals = false;
+	private boolean useLiteralsAsTokens = false;
 	private String namespaceURI = null;
 	private String prefix = null;
+
+	/**
+	 * Setting this to true will cause any length 1 literals in a rule to be marked as separate tokens when reading the input. 
+	 * This should always be turned off if parsing a notation, and probably a grammar.  
+	 * @param useLiteralsAsTokens
+	 */
+	public void setUseLiteralsAsTokens(boolean useLiteralsAsTokens)
+	{
+		this.useLiteralsAsTokens = useLiteralsAsTokens;
+	}
+	
+	public boolean isUseLiteralsAsTokens()
+	{
+		return useLiteralsAsTokens;
+	}
 	
 	/**
 	 * This will set the namespace to be used for any created elements resulting from the parse.
@@ -212,15 +228,17 @@ public class ParseTree
 	public void parse(Tokenizer tokenizer, Node node) throws Exception
     {
 	    //walk the list of literals, and find any that have a length of 1. then make sure that, that char is treated as a separate token, and not part of a word.
-	    Set<Entry<String, String>> entries =  literalHashMap.entrySet();
-	    for (Entry<String, String> entry : entries)
-        {
-            if(entry.getKey().length() == 1)
-            {
-                tokenizer.setCharType(entry.getKey().charAt(0), CharacterType.TOKEN);
-            }
-        }
-	    
+		if(useLiteralsAsTokens == true)
+		{
+			Set<Entry<String, String>> entries =  literalHashMap.entrySet();
+			for (Entry<String, String> entry : entries)
+			{
+				if(entry.getKey().length() == 1)
+				{
+					tokenizer.setCharType(entry.getKey().charAt(0), CharacterType.TOKEN);
+				}
+			}
+		}
         ParseTape parseTape = new ParseTape(tokenizer);        
         
         Element parseNode = createElement(node, parseRuleVector.firstElement().getName());        
