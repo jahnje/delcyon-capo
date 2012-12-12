@@ -112,6 +112,7 @@ public class GrammerParser
         
         ParseTree notationParseTree = loadDefaultNotationParseTree();
         notationParseTree.setSymbolHashMap(symbolHashMap);
+        notationParseTree.setUseLiteralsAsTokens(false);
         //notationParseTree.setSymbolTypeHashMap(symbolTypeHashMap);
         Document parseDocument = notationParseTree.parse(streamTokenizer);
         XPath.dumpNode(parseDocument, System.out);
@@ -133,7 +134,6 @@ public class GrammerParser
         
         setDelimiters(streamTokenizer, SymbolType.DELIMITER);
         
-        Document parseDocument = null;
         ParseTree grammerParseTree = null;
         
         if(notationParseRuleVector != null)
@@ -143,17 +143,17 @@ public class GrammerParser
             {
                 grammerParseTree.addRule(parseRule);
             }
-            grammerParseTree.setSymbolHashMap(symbolHashMap);
-            //grammerParseTree.setSymbolTypeHashMap(symbolTypeHashMap);
-            parseDocument = grammerParseTree.parse(streamTokenizer);
+            
         }
         else
         {
-            grammerParseTree = loadDefaultNotationParseTree();
-            grammerParseTree.setSymbolHashMap(symbolHashMap);
-           // grammerParseTree.setSymbolTypeHashMap(symbolTypeHashMap);
-            parseDocument = grammerParseTree.parse(streamTokenizer);
+            grammerParseTree = loadDefaultNotationParseTree();            
         }
+        
+        grammerParseTree.setSymbolHashMap(symbolHashMap);
+        grammerParseTree.setUseLiteralsAsTokens(false);
+        //grammerParseTree.setSymbolTypeHashMap(symbolTypeHashMap);
+        Document parseDocument = grammerParseTree.parse(streamTokenizer);
         
         XPath.dumpNode(parseDocument, System.out);        
         grammerParseRuleVector = getParseRules(parseDocument);
@@ -175,16 +175,16 @@ public class GrammerParser
         setDelimiters(streamTokenizer, SymbolType.DELIMITER);
         
         
-        ParseTree grammerParseTree = new ParseTree();        
-        grammerParseTree.setNamespace("P","http://www.delcyon.com/parser");
-        grammerParseTree.setAllowPartialMatch(true);
-        grammerParseTree.setSymbolHashMap(symbolHashMap);
-        
+        ParseTree inputParseTree = new ParseTree();        
+        inputParseTree.setNamespace("P","http://www.delcyon.com/parser");
+        inputParseTree.setAllowPartialMatch(true);
+        inputParseTree.setSymbolHashMap(symbolHashMap);
+        inputParseTree.setUseLiteralsAsTokens(true);
         for (ParseRule parseRule : grammerParseRuleVector)
         {
-            grammerParseTree.addRule(parseRule);
+            inputParseTree.addRule(parseRule);
         }
-        Document parseDocument = grammerParseTree.parse(streamTokenizer);
+        Document parseDocument = inputParseTree.parse(streamTokenizer);
        
         XPath.dumpNode(parseDocument, System.out);
         
