@@ -47,6 +47,19 @@ public class GrammerParserTest
         GrammerParser grammerParser = new GrammerParser();
                
         grammerParser.loadGrammer(new FileInputStream("test-data/parser_test_data/ZIPCODE.grammer"));
-        grammerParser.parse(new FileInputStream("test-data/parser_test_data/ZIPCODE.input"));
+        FileInputStream zipCodeFileInputStream = new FileInputStream("test-data/parser_test_data/ZIPCODE.input"); 
+        grammerParser.parse(zipCodeFileInputStream);
+        while(true)
+        {
+            int value = zipCodeFileInputStream.read();
+            if (value < 0)
+            {
+                break;
+            }
+            else
+            {           
+                System.out.print((char)value);
+            }
+        }
     }
 }

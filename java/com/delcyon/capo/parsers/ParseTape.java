@@ -27,24 +27,11 @@ public class ParseTape
 
 	private int position = -1;
 	private Vector<ParseToken> streamVector = new Vector<ParseToken>();
+	private Tokenizer tokenizer = null;
+	
 	public ParseTape(Tokenizer tokenizer) throws Exception
 	{
-	
-		while(true)
-		{
-			tokenizer.nextToken();
-			
-			if (tokenizer.getTokenType() == Tokenizer.TokenType.EOF)
-			{
-			    streamVector.add(new ParseToken(tokenizer.getValue(),tokenizer.getTokenType()));
-			    System.out.println(streamVector);
-				break;
-			}
-			else
-			{			    
-			    streamVector.add(new ParseToken(tokenizer.getValue(),tokenizer.getTokenType()));
-			}
-		}
+	    this.tokenizer = tokenizer;
 	}
 	
 	public int getPosition()
@@ -57,16 +44,23 @@ public class ParseTape
 		this.position = position;
 	}
 	
-	public ParseToken next()
+	public ParseToken next() throws Exception
 	{
 		position++;
 		if(position < streamVector.size())
 		{
 			return streamVector.get(position);
 		}
+		else if(hasMore())
+		{
+		    tokenizer.nextToken();
+		    streamVector.add(new ParseToken(tokenizer.getValue(),tokenizer.getTokenType()));
+		    return streamVector.lastElement();
+		}
 		else
 		{
-			return null;
+		    position--;
+		    return null;
 		}
 	}
 	
@@ -91,15 +85,8 @@ public class ParseTape
 		}
 	}
 	
-	public boolean hasMore()
+	public boolean hasMore() throws Exception
 	{
-		if (position+1 < streamVector.size())
-		{
-			return true;
-		}
-		else
-		{
-			return false;
-		}
+		return tokenizer.hasMore();
 	}
 }
