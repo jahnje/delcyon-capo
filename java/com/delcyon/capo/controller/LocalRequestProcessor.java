@@ -17,6 +17,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 package com.delcyon.capo.controller;
 
 import java.util.HashMap;
+import java.util.concurrent.locks.ReentrantLock;
 
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -31,7 +32,8 @@ import com.delcyon.capo.controller.server.ControllerClientRequestProcessor;
  */
 public class LocalRequestProcessor extends ControllerClientRequestProcessor
 {
-
+    ReentrantLock lock = new ReentrantLock();
+    
 	public GroupElement process(Document localDocument) throws Exception
 	{
 		return process(localDocument.getDocumentElement(),null);		
@@ -60,17 +62,57 @@ public class LocalRequestProcessor extends ControllerClientRequestProcessor
 		{
 			contextThread = (ContextThread) Thread.currentThread();
 			contextThread.setContext(groupElement);
+			groupElement.processServerSideElement();
+	        if (contextThread != null)
+	        {
+	            contextThread.setContext(null);
+	        }
 		}
-		
-		
-		groupElement.processServerSideElement();
-		if (contextThread != null)
+		else
 		{
-			contextThread.setContext(null);
+		    lock.lock();
+		    LocalContextThread localContextThread = new LocalContextThread(groupElement);
+		    localContextThread.start();		    
+		    lock.unlock();
+		    while(localContextThread.isAlive())
+		    {
+		        Thread.sleep(500);
+		    }
 		}
+		
+		
 		
 		return groupElement;
 	}
 
-	
+	private class LocalContextThread extends ContextThread
+	{
+	    private GroupElement groupElement;
+
+        public LocalContextThread(GroupElement groupElement)
+        {
+            this.groupElement = groupElement;
+            setContext(groupElement);
+        }
+        
+        @Override
+        public void run()
+        {
+            try
+            {
+                lock.lock();
+                groupElement.processServerSideElement();
+            }
+            catch (Exception e)
+            {                
+                e.printStackTrace();
+            }
+            finally
+            {
+                lock.unlock();
+            }
+        }
+        
+        
+	}
 }
