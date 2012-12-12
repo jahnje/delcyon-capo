@@ -103,7 +103,24 @@ public class ParseTree
 	private boolean useLiteralsAsTokens = false;
 	private String namespaceURI = null;
 	private String prefix = null;
+    private boolean isEOLSignificant = false;
+	
+	
+	/**
+     * determines of EOL will be returned as a separate token, or treated as whitespace.
+     * This will automatically be set if EOL is used as a term in a RULE added to this parse tree.
+     * @param isEOLSignificant
+     */
+    public void setEOLSignificant(boolean isEOLSignificant)
+    {
+        this.isEOLSignificant = isEOLSignificant;
+    }
 
+    public boolean isEOLSignificant()
+    {
+        return isEOLSignificant;
+    }
+    
 	/**
 	 * Setting this to true will cause any length 1 literals in a rule to be marked as separate tokens when reading the input. 
 	 * This should always be turned off if parsing a notation, and probably a grammar.  
@@ -186,6 +203,10 @@ public class ParseTree
 		{
 			for (String term : expresssion)
 			{
+			    if(term.equals("EOL"))
+			    {
+			        isEOLSignificant = true;
+			    }
 				String[] patterns = symbolHashMap.get(SymbolType.LITERAL);			
 				if (patterns != null)
 				{
@@ -228,17 +249,21 @@ public class ParseTree
 	public void parse(Tokenizer tokenizer, Node node) throws Exception
     {
 	    //walk the list of literals, and find any that have a length of 1. then make sure that, that char is treated as a separate token, and not part of a word.
-		if(useLiteralsAsTokens == true)
-		{
-			Set<Entry<String, String>> entries =  literalHashMap.entrySet();
-			for (Entry<String, String> entry : entries)
-			{
-				if(entry.getKey().length() == 1)
-				{
-					tokenizer.setCharType(entry.getKey().charAt(0), CharacterType.TOKEN);
-				}
-			}
-		}
+		
+	    Set<Entry<String, String>> entries =  literalHashMap.entrySet();
+	    for (Entry<String, String> entry : entries)
+	    {	        
+	        if(entry.getKey().length() == 1)
+	        {
+	            if(useLiteralsAsTokens == true)
+	            {
+	                tokenizer.setCharType(entry.getKey().charAt(0), CharacterType.TOKEN);
+	            }
+	        }
+	    }
+	    
+	    tokenizer.setEOLSignificant(isEOLSignificant);
+	    
         ParseTape parseTape = new ParseTape(tokenizer);        
         
         Element parseNode = createElement(node, parseRuleVector.firstElement().getName());        
