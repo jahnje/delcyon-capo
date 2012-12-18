@@ -1,0 +1,2 @@
+Documents = Document+
+Document = '"' rowNum '"' ',' '"' caseType '"' ',' '"' subType '"' ',' '"' subTypeDesc* '"' ',' '"' category namePart* '"' ',' '"' total '"' EOL

@@ -24,6 +24,9 @@ import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.w3c.dom.Document;
+
+import com.delcyon.capo.xml.XPath;
 
 /**
  * @author jeremiah
@@ -64,5 +67,31 @@ public class GrammerParserTest
         }
         System.out.println("\n==========END REMAINDER============");
         zipCodeFileInputStream.close();
+    }
+    
+    @Test
+    public void testDocumentUsage() throws Exception
+    {
+        GrammerParser grammerParser = new GrammerParser();
+        //grammerParser.setNamespace("dt","gal/doctype");
+        grammerParser.loadGrammer(new FileInputStream("test-data/parser_test_data/document_usage.grammar"));
+        FileInputStream csvFileInputStream = new FileInputStream("test-data/parser_test_data/document_usage.csv"); 
+        Document parseResultDocument = grammerParser.parse(csvFileInputStream);
+        //XPath.dumpNode(parseResultDocument, System.out);
+        System.out.println("==========REMAINDER============");
+        while(true)
+        {
+            int value = csvFileInputStream.read();
+            if (value < 0)
+            {
+                break;
+            }
+            else
+            {           
+                System.out.print((char)value);
+            }
+        }
+        System.out.println("\n==========END REMAINDER============");
+        csvFileInputStream.close();
     }
 }
