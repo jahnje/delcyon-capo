@@ -57,6 +57,10 @@ public class GrammerParser
     private Vector<ParseRule> notationParseRuleVector; //this is used to parse and understand a grammar.
     private Vector<ParseRule> grammerParseRuleVector; //this set of rules is used to parse input based on a grammar.
 
+    private String prefix;
+
+    private String uri;
+
 	public GrammerParser()
 	{
 
@@ -106,7 +110,8 @@ public class GrammerParser
                 
         streamTokenizer.setCharType('"', CharacterType.QUOTE);
         streamTokenizer.setCharType('\\', CharacterType.ESCAPE);
-        
+        streamTokenizer.setCharType('\n', CharacterType.EOL);
+        streamTokenizer.setCharType('\r', CharacterType.EOL);
         setDelimiters(streamTokenizer, SymbolType.DELIMITER);
         
         
@@ -130,7 +135,8 @@ public class GrammerParser
         streamTokenizer.setCharRangeType(33, 126,CharacterType.ALPHA);                
         streamTokenizer.setCharType('"', CharacterType.QUOTE);
         streamTokenizer.setCharType('\\', CharacterType.ESCAPE);
-        
+        streamTokenizer.setCharType('\n', CharacterType.EOL);
+        streamTokenizer.setCharType('\r', CharacterType.EOL);
         setDelimiters(streamTokenizer, SymbolType.DELIMITER);
         
         ParseTree grammerParseTree = null;
@@ -167,14 +173,16 @@ public class GrammerParser
         //prepare symbol table with loaded symbols
         Tokenizer streamTokenizer = new Tokenizer(inputStream);
         streamTokenizer.resetSyntax();
-        streamTokenizer.setCharRangeType(33, 126,CharacterType.ALPHA);               
-        streamTokenizer.setCharType('"', CharacterType.QUOTE);
+        streamTokenizer.setCharRangeType(33, 126,CharacterType.ALPHA);
+        streamTokenizer.setCharType('\n', CharacterType.EOL);
+        streamTokenizer.setCharType('\r', CharacterType.EOL);
+        //streamTokenizer.setCharType('"', CharacterType.QUOTE);
         //streamTokenizer.quoteChar('\'');
         setDelimiters(streamTokenizer, SymbolType.DELIMITER);
         
         
         ParseTree inputParseTree = new ParseTree();        
-        inputParseTree.setNamespace("P","http://www.delcyon.com/parser");
+        inputParseTree.setNamespace(prefix,uri);
         inputParseTree.setAllowPartialMatch(true);
         inputParseTree.setSymbolHashMap(symbolHashMap);
         inputParseTree.setUseLiteralsAsTokens(true);
@@ -279,5 +287,12 @@ public class GrammerParser
             }
         }
         return parseRuleVector;
+    }
+
+
+    public void setNamespace(String prefix, String uri)
+    {
+        this.prefix = prefix;
+        this.uri = uri;
     }
 }
