@@ -31,7 +31,9 @@ public class Tokenizer
         /** used to indicate a comment char **/
         COMMENT,        
         /** used to indicate the start of an escape sequence for an non ALPHA chars.**/
-        ESCAPE
+        ESCAPE,
+        /** used to indicate a EOL char **/
+        EOL
         ;
         
         /**
@@ -48,10 +50,10 @@ public class Tokenizer
     
     public enum TokenType
     {
-        NOTHING(-4),
-        TOKEN(-3),
-        OTHER(-2),
-        EOL('\n'),
+        NOTHING(-5),
+        TOKEN(-4),
+        OTHER(-3),
+        EOL(-2),
         EOF(-1);
         
         public int value;
@@ -65,29 +67,43 @@ public class Tokenizer
     private class InternalTokenType
     {
         public TokenType tokenType = null;
+        public int tokenValue = TokenType.NOTHING.value;
         
         public InternalTokenType(TokenType tokenType)
         {
             this.tokenType = tokenType;
+            this.tokenValue = tokenType.value;
         }
 
         public TokenType setTokenType(TokenType tokenType, int tokenValue)
         {
             this.tokenType = tokenType;
+            this.tokenValue = tokenValue;
             return tokenType;
         }
         
         public TokenType setTokenValue(int tokenValue)
         {
-            for (TokenType tokenType : TokenType.values())
+            this.tokenValue = tokenValue;
+            if(tokenValue < 0)
             {
-                if(tokenType.value == tokenValue)
+                for (TokenType tokenType : TokenType.values())
                 {
-                    this.tokenType = tokenType;
-                    return tokenType;
+                    if(tokenType.value == tokenValue)
+                    {
+                        this.tokenType = tokenType;                        
+                        return tokenType;
+                    }
                 }
             }
-            tokenType = TokenType.OTHER;
+            else if(tokenValue < 256 && (characterTypes[tokenValue] & CharacterType.EOL.mask) != 0)
+            {
+                tokenType = TokenType.EOL;
+            }
+            else
+            {
+                tokenType = TokenType.OTHER;
+            }
             return tokenType;
         }
     }
@@ -119,6 +135,8 @@ public class Tokenizer
         setCharType('/', CharacterType.COMMENT);        
         setCharType('"', CharacterType.QUOTE);        
         setCharType('\'', CharacterType.QUOTE);
+        setCharType('\n', CharacterType.EOL);
+        setCharType('\r', CharacterType.EOL);
     }
     
     public Tokenizer(InputStream inputStream)
@@ -280,10 +298,18 @@ public class Tokenizer
                 }
             }
             
+            int charType = currentChar < 256 ? characterTypes[currentChar] : CharacterType.ALPHA.mask;
+            
             //check for EOL
-            if(currentChar == TokenType.EOL.value)
+            if((charType & CharacterType.EOL.mask) != 0)
             {
-                if(isEOLSignificant) //check to see if we care about EOL chars
+                //check to see if this is the second EOL in a row, and whether or not it's the same char as last time.
+                //because eol chars can be paired up like on windows, if it's two different eol chars in a row, consume them, making them appear as a single EOL char.
+                if(internalTokenTypeHolder.tokenType == TokenType.EOL && internalTokenTypeHolder.tokenValue != currentChar)
+                {
+                    continue;
+                }
+                else if(isEOLSignificant) //check to see if we care about EOL chars
                 {
                     //if we do, and we have no data, just return it.
                     if(stringBuffer.length() == 0)
@@ -311,7 +337,7 @@ public class Tokenizer
             }
             
              
-            int charType = currentChar < 256 ? characterTypes[currentChar] : CharacterType.ALPHA.mask;
+            
             
             //check for an escape symbol
             //There are two kinds of escapes, one that turns a TOKEN into an ALPHA
@@ -398,7 +424,15 @@ public class Tokenizer
             //if were a comment, then read until EOL or EOF
             if ((charType & CharacterType.COMMENT.mask) != 0)
             {
-                while ((currentChar = reader.read()) != TokenType.EOL.value && currentChar >= 0);
+                               
+                while(currentChar >= 0)
+                {
+                    currentChar = reader.read();
+                    if ((currentChar < 256 ? characterTypes[currentChar] : CharacterType.ALPHA.mask & CharacterType.EOL.mask) != 0)
+                    {
+                        break;
+                    }
+                }
                 //only push back if we've got some data, and EOL is Significant. Otherwise we just need to act like just a new token. 
                 if(internalTokenTypeHolder.tokenType == TokenType.EOL && stringBuffer.length() == 0)
                 {
