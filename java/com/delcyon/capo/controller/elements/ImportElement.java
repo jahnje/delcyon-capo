@@ -27,6 +27,7 @@ import com.delcyon.capo.Configuration.PREFERENCE;
 import com.delcyon.capo.controller.AbstractControl;
 import com.delcyon.capo.controller.ControlElementProvider;
 import com.delcyon.capo.datastream.StreamUtil;
+import com.delcyon.capo.parsers.GrammarParser;
 import com.delcyon.capo.resourcemanager.ResourceDescriptor;
 import com.delcyon.capo.resourcemanager.ResourceParameter;
 import com.delcyon.capo.resourcemanager.ResourceParameterBuilder;
@@ -53,7 +54,7 @@ public class ImportElement extends AbstractControl implements XPathFunctionProce
 	
 	private enum Attributes
 	{
-		name,src,type,ref,contentOnly
+		name,src,type,ref,contentOnly,grammar
 	}
 	
 	
@@ -109,7 +110,8 @@ public class ImportElement extends AbstractControl implements XPathFunctionProce
 		ResourceParameter[] resourceParameters = ResourceParameterBuilder.getResourceParameters(getControlElementDeclaration());
 		String src = getAttributeValue(Attributes.src);		
 		String type = getAttributeValue(Attributes.type);		
-		String ref = getAttributeValue(Attributes.ref);		
+		String ref = getAttributeValue(Attributes.ref);
+		String grammar = getAttributeValue(Attributes.grammar);
 		boolean contentOnly = getAttributeBooleanValue(Attributes.contentOnly);
 		
 		ResourceDescriptor resourceDescriptor = getParentGroup().getResourceDescriptor(this, src);
@@ -132,6 +134,31 @@ public class ImportElement extends AbstractControl implements XPathFunctionProce
 		        type = "text";
 		    }
         }
+		
+		
+		GrammarParser grammarParser = null;
+		
+		if(grammar.isEmpty() == false)
+		{
+			if(type.equalsIgnoreCase("text") == false)
+			{
+				throw new Exception("grammars can only be used on text files, not "+type);
+			}
+			
+			ResourceDescriptor grammarResourceDescriptor = getParentGroup().getResourceDescriptor(this, grammar);
+			if (grammarResourceDescriptor == null)
+			{
+				throw new Exception("grammar="+grammar+" not found");
+			}
+			grammarResourceDescriptor.addResourceParameters(getParentGroup(), new ResourceParameter(FileResourceType.Parameters.PARENT_PROVIDED_DIRECTORY,PREFERENCE.RESOURCE_DIR,Source.CALL));
+			grammarResourceDescriptor.open(getParentGroup());
+			if(grammarResourceDescriptor.getResourceMetaData(getParentGroup()).exists() == false)
+			{
+				throw new Exception("no grammar found at "+grammarResourceDescriptor.getResourceURI().getResourceURIString());
+			}
+			grammarParser = new GrammarParser();
+			grammarParser.loadGrammer(grammarResourceDescriptor.getInputStream(getParentGroup()));
+		}
 		
 		Document importedDocument = null;
 
@@ -164,11 +191,24 @@ public class ImportElement extends AbstractControl implements XPathFunctionProce
 		}
 		else if (type.equalsIgnoreCase("text"))
 		{
-		    importedDocument = CapoApplication.getDocumentBuilder().newDocument();
-		    importedDocument.appendChild(importedDocument.createElement("text"));
-		    ByteArrayOutputStream bufferByteArrayOutputStream = new ByteArrayOutputStream(resourceDescriptor.getResourceMetaData(getParentGroup(),resourceParameters).getLength().intValue());
-		    StreamUtil.readInputStreamIntoOutputStream(resourceDescriptor.getInputStream(getParentGroup(),resourceParameters), bufferByteArrayOutputStream);
-		    importedDocument.getDocumentElement().setTextContent(bufferByteArrayOutputStream.toString());
+		    
+		    if(grammarParser == null)
+		    {
+		    	importedDocument = CapoApplication.getDocumentBuilder().newDocument();
+		    	importedDocument.appendChild(importedDocument.createElement("text"));
+		    	ByteArrayOutputStream bufferByteArrayOutputStream = new ByteArrayOutputStream(resourceDescriptor.getResourceMetaData(getParentGroup(),resourceParameters).getLength().intValue());
+		    	StreamUtil.readInputStreamIntoOutputStream(resourceDescriptor.getInputStream(getParentGroup(),resourceParameters), bufferByteArrayOutputStream);
+		    	importedDocument.getDocumentElement().setTextContent(bufferByteArrayOutputStream.toString());
+		    }
+		    else
+		    {
+		    	
+		    	importedDocument =  grammarParser.parse(resourceDescriptor.getInputStream(getParentGroup(),resourceParameters));
+				if(importedDocument == null)
+				{
+					throw new Exception("Couldn't parse "+resourceDescriptor.getResourceURI().getResourceURIString()+" with "+grammar);
+				}
+		    }
 		}
 		//cleanup and parameters we added when calling this.
 		//resourceDescriptor.close(this);
