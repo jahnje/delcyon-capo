@@ -16,10 +16,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 package com.delcyon.capo.resourcemanager;
 
-import java.util.Arrays;
 import java.util.HashMap;
-
-import com.delcyon.capo.util.ReflectionUtility;
+import java.util.regex.Pattern;
 
 /**
  * @author jeremiah
@@ -28,7 +26,15 @@ import com.delcyon.capo.util.ReflectionUtility;
  */
 public class ResourceURI
 {
-	
+	//Pattern.compile(regex).split(this, limit)
+    private static final Pattern parameterSplitPattern = Pattern.compile("&(?<!\\\\&)|;(?<!\\\\;)");
+    private static final Pattern avpSplitPattern = Pattern.compile("=(?<!\\\\=)");
+    private static final Pattern avpReplaceAllPattern = Pattern.compile("\\\\((?=&)|(?=;))");
+    private static final Pattern avpParameterNameReplaceAllPattern = Pattern.compile("\\\\(?==)");
+    private static final Pattern avpParameterValueReplaceAllPattern = Pattern.compile("\\\\(?==)");
+    
+    
+    
 	private String resourceURIString = null;
 	private String scheme = null;
 	private String schemeSpecificPart = null;
@@ -42,7 +48,7 @@ public class ResourceURI
 	private String query = null;
 	private String fragment = null;
 	private String path = null;
-	private HashMap<String, String> parameterMap = new HashMap<String, String>();
+	private HashMap<String, String> parameterMap = null;//new HashMap<String, String>(0);
 	private ResourceURI childResourceURI = null;
 	
 
@@ -74,15 +80,17 @@ public class ResourceURI
 		if (this.query != null)
 		{
 		
-			String[] parameterSplit = query.split("&(?<!\\\\&)|;(?<!\\\\;)");// now split off the parameters from parameter section
+			String[] parameterSplit = parameterSplitPattern.split(query);//, limit)query.split("&(?<!\\\\&)|;(?<!\\\\;)");// now split off the parameters from parameter section
+			parameterMap = new HashMap<String, String>(parameterSplit.length);
 			for (String parameter : parameterSplit)
-			{				
-				String[] avp = parameter.replaceAll("\\\\((?=&)|(?=;))", "").split("=(?<!\\\\=)");// now split off the parameters from parameter section
-				String parameterName = avp[0].replaceAll("\\\\(?==)", "");
+			{
+			    
+				String[] avp = avpSplitPattern.split(avpReplaceAllPattern.matcher(parameter).replaceAll(""));//parameter.replaceAll("\\\\((?=&)|(?=;))", "").split("=(?<!\\\\=)");// now split off the parameters from parameter section
+				String parameterName = avpParameterNameReplaceAllPattern.matcher(avp[0]).replaceAll("");//avp[0].replaceAll("\\\\(?==)", "");
 				String parameterValue = "";
 				if(avp.length > 1)
 				{
-					parameterValue = avp[1].replaceAll("\\\\(?==)", "");
+					parameterValue = avpParameterValueReplaceAllPattern.matcher(avp[1]).replaceAll("");//avp[1].replaceAll("\\\\(?==)", "");
 				}
 				parameterMap.put(parameterName, parameterValue);
 			
@@ -158,6 +166,10 @@ public class ResourceURI
 
 	public HashMap<String, String> getParameterMap()
 	{
+	    if(parameterMap == null)
+	    {
+	        parameterMap = new HashMap<String, String>(0);
+	    }
 		return parameterMap;
 	}
 
@@ -200,20 +212,28 @@ public class ResourceURI
 			{
 				scheme = null;
 			}
+			else
+			{
+			    scheme = scheme.intern();
+			}
 		}
 		return scheme;
 	}
 	
+	
+	//Pattern.compile(regex).split(this, limit)
+    private static final Pattern schemeSpecificPartMatchPattern = Pattern.compile("[a-z0-9+\\-\\.]+");
+    
 	public static String getSchemeSpecificPart(String resourceURI)
 	{
 		String scheme = null;
 		String uriRemainder = null;
-		int schemeDeliminatorIndex = resourceURI.indexOf(":");
+		int schemeDeliminatorIndex = resourceURI.indexOf(':');
 		if(schemeDeliminatorIndex > 0)
 		{			
 			scheme = resourceURI.substring(0, schemeDeliminatorIndex);
 			//verify that what we have is actually a scheme
-			if(scheme.toLowerCase().matches("[a-z0-9+\\-\\.]+") == false)
+			if(schemeSpecificPartMatchPattern.matcher(scheme.toLowerCase()).matches() == false)//scheme.toLowerCase().matches("[a-z0-9+\\-\\.]+") == false)
 			{
 				scheme = null;
 			}
@@ -301,6 +321,8 @@ public class ResourceURI
 		return port;
 	}
 	
+	
+	
 	/**
 	 * This returns the part of the URI with any sub/content URI's removed.
 	 * Content URI's are deliminated by a '!'. For example 'file:some.jar!something.class'
@@ -310,10 +332,14 @@ public class ResourceURI
 	public static String getBaseURI(String resourceURI)
 	{
 		//split on the '!' char
-		String baseURI = resourceURI.split("!(?<!\\\\!)")[0];
+		String baseURI = baseURISplitPattern.split(resourceURI)[0];//resourceURI.split("!(?<!\\\\!)")[0];
 		//remove any escape chars that were used in the URL
-		return baseURI.replaceAll("\\\\(?=!)", "");
+		return baseURIReplaceAllPattern.matcher(baseURI).replaceAll("");//baseURI.replaceAll("\\\\(?=!)", "");
 	}
+	
+
+    private static final Pattern baseURISplitPattern = Pattern.compile("!(?<!\\\\!)");
+    private static final Pattern baseURIReplaceAllPattern = Pattern.compile("\\\\(?=!)");
 	
 	public static String getChildURI(String resourceURI)
     {
@@ -332,10 +358,14 @@ public class ResourceURI
         return childURI.substring(0,childURI.length()-1);
     }
 	
+	
+    private static final Pattern hasHierarchySplitPattern = Pattern.compile("\\?(?<!\\\\\\?)");
+    private static final Pattern hasHierarchyMatchesPattern = Pattern.compile(".+://.+/.*");
+	
 	public static boolean hasHierarchy(String resourceURI)
 	{
-		String hierarchy = getBaseURI(resourceURI).split("\\?(?<!\\\\\\?)")[0];
-		if (hierarchy.matches(".+://.+/.*"))
+		String hierarchy = hasHierarchySplitPattern.split(getBaseURI(resourceURI))[0];//getBaseURI(resourceURI).split("\\?(?<!\\\\\\?)")[0];
+		if (hasHierarchyMatchesPattern.matcher(hierarchy).matches())//hierarchy.matches(".+://.+/.*"))
 		{
 			return true;
 		}
@@ -391,6 +421,10 @@ public class ResourceURI
 		return fragment;
 	}
 	
+	private static final Pattern pathSplitPattern = Pattern.compile("\\?(?<!\\\\\\?)");
+    private static final Pattern pathReplaceAllPattern1 = Pattern.compile(".+:(?<!\\\\:)(.+)");
+    private static final Pattern pathReplaceAllPattern2 = Pattern.compile("\\\\(?=:)");
+	
 	public static String getPath(String resourceURI)
 	{
 		String path = null;
@@ -407,10 +441,10 @@ public class ResourceURI
 		else
 		{
 			
-			path = getSchemeSpecificPart(getBaseURI(resourceURI).split("\\?(?<!\\\\\\?)")[0]);
-			if (path.matches(".*/.*")) //see if this path is a urn path or a conventional path
+			path = pathSplitPattern.split(getSchemeSpecificPart(getBaseURI(resourceURI)))[0];//getSchemeSpecificPart(getBaseURI(resourceURI).split("\\?(?<!\\\\\\?)")[0]);
+			if (path.indexOf('/') >= 0)//matches(".*/.*")) //see if this path is a urn path or a conventional path
 			{
-				path = path.replaceAll(".+:(?<!\\\\:)(.+)", "$1").replaceAll("\\\\(?=:)", "");
+				path = pathReplaceAllPattern2.matcher(pathReplaceAllPattern1.matcher(path).replaceAll("$1")).replaceAll("");//path.replaceAll(".+:(?<!\\\\:)(.+)", "$1").replaceAll("\\\\(?=:)", "");
 			}			
 		}
 		

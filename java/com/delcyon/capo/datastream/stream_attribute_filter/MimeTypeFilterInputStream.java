@@ -27,13 +27,13 @@ import eu.medsea.mimeutil.MimeUtil;
  * @author jeremiah
  *
  */
-@InputStreamAttributeFilterProvider(name=MimeTypeFilterInputStream.MIME_TYPE_ATTRIBUTE)
+//@InputStreamAttributeFilterProvider(name=MimeTypeFilterInputStream.MIME_TYPE_ATTRIBUTE)
 public class MimeTypeFilterInputStream extends AbstractFilterInputStream
 {
 
 	public static final String MIME_TYPE_ATTRIBUTE = "mimeType"; 
 	private static ConcurrentHashMap<String, String> mimeTypeConcurrentHashMap = new ConcurrentHashMap<String, String>();
-	private byte[] buffer = new byte[4096];
+	private byte[] buffer = new byte[32];
 	private int bufferPosition = 0; 
 	private String mimeType = null;
 	private boolean hasRead = false;
@@ -56,9 +56,15 @@ public class MimeTypeFilterInputStream extends AbstractFilterInputStream
 		        Collection mimeTypeColection = MimeUtil.getMimeTypes(buffer);         
 	            if (mimeTypeColection.isEmpty() == false)
 	            {
-	                 mimeType = mimeTypeColection.toArray()[0].toString(); 
-	                 mimeTypeConcurrentHashMap.put(key, mimeType);
-	            }    
+	                 mimeType = mimeTypeColection.toArray()[0].toString();
+	                 buffer = null;
+	                 //mimeTypeConcurrentHashMap.put(key, mimeType);
+	            }
+	            //System.out.println(mimeType +" length = "+buffer.length);
+		    }
+		    else
+		    {
+		        //System.out.println("HIT!!"+mimeType +" length = "+buffer.length);
 		    }
 			
 		}

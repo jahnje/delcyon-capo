@@ -18,10 +18,14 @@ package com.delcyon.capo.resourcemanager.types;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.IOException;
 import java.math.BigInteger;
 import java.net.URI;
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.logging.Level;
 
+import com.delcyon.capo.CapoApplication;
 import com.delcyon.capo.datastream.stream_attribute_filter.MD5FilterInputStream;
 import com.delcyon.capo.resourcemanager.ResourceParameter;
 import com.delcyon.capo.resourcemanager.ResourceParameterBuilder;
@@ -35,7 +39,7 @@ public class FileResourceContentMetaData extends AbstractContentMetaData
 {
 	public enum FileAttributes
 	{
-        absolutePath, canonicalPath
+        absolutePath, canonicalPath, symlink
 	    
 	}
     
@@ -59,7 +63,7 @@ public class FileResourceContentMetaData extends AbstractContentMetaData
     @Override
 	public Enum[] getAdditionalSupportedAttributes()
 	{
-		return new Enum[]{Attributes.exists,Attributes.executable,Attributes.readable,Attributes.writeable,Attributes.container,Attributes.lastModified,Attributes.MD5,FileAttributes.absolutePath,FileAttributes.canonicalPath};
+		return new Enum[]{Attributes.exists,Attributes.executable,Attributes.readable,Attributes.writeable,Attributes.container,Attributes.lastModified,Attributes.MD5,FileAttributes.absolutePath,FileAttributes.canonicalPath,FileAttributes.symlink};
 	}
 
 	
@@ -97,23 +101,30 @@ public class FileResourceContentMetaData extends AbstractContentMetaData
 		{
 			setResourceURI(new ResourceURI(file.toURI().toString()));
 		}
-		getAttributeMap().put(Attributes.exists.toString(), file.exists()+"");
-
-		getAttributeMap().put(Attributes.executable.toString(), file.canExecute()+"");
-
-		getAttributeMap().put(Attributes.readable.toString(), file.canRead()+"");
-
-		getAttributeMap().put(Attributes.writeable.toString(), file.canWrite()+"");
-
-		getAttributeMap().put(Attributes.container.toString(), file.isDirectory()+"");
-
-		getAttributeMap().put(Attributes.lastModified.toString(), file.lastModified()+"");
 		
-		getAttributeMap().put(Attributes.lastModified.toString(), file.lastModified()+"");
+		HashMap<String, String> attributeMap = getAttributeMap();
 		
-		getAttributeMap().put(FileAttributes.absolutePath.toString(), file.getAbsolutePath()+"");
+		attributeMap.put(Attributes.exists.toString(), file.exists()+"");
+
+		attributeMap.put(Attributes.executable.toString(), file.canExecute()+"");
+
+		attributeMap.put(Attributes.readable.toString(), file.canRead()+"");
+
+		attributeMap.put(Attributes.writeable.toString(), file.canWrite()+"");
+
+		attributeMap.put(Attributes.container.toString(), file.isDirectory()+"");
+
+		attributeMap.put(Attributes.lastModified.toString(), file.lastModified()+"");
 		
-		getAttributeMap().put(FileAttributes.canonicalPath.toString(), file.getCanonicalPath()+"");
+		attributeMap.put(Attributes.lastModified.toString(), file.lastModified()+"");
+		
+		attributeMap.put(FileAttributes.absolutePath.toString(), file.getAbsolutePath()+"");
+		
+		attributeMap.put(FileAttributes.canonicalPath.toString(), file.getCanonicalPath()+"");
+		
+		boolean isSymlink = isSymlink(file);
+		
+		attributeMap.put(FileAttributes.symlink.toString(), isSymlink+"");
 		
 		if (file.exists() == true && file.canRead() == true && file.isDirectory() == false)
 		{
@@ -121,10 +132,24 @@ public class FileResourceContentMetaData extends AbstractContentMetaData
 			readInputStream(fileInputStream,false);
 			fileInputStream.close();
 		}
-		else if (file.isDirectory() == true && getIntValue(com.delcyon.capo.controller.elements.ResourceMetaDataElement.Attributes.depth,1,resourceParameters) > currentDepth)
+		else if (file.isDirectory() == true && getIntValue(ContentMetaData.Parameters.DEPTH,1,resourceParameters) > currentDepth)
 		{	
 			BigInteger contentMD5 = new BigInteger(new byte[]{0});
-			String[] fileList = file.list(); 
+			String[] fileList = file.list();
+			
+			//check for permissions, cause if we can't read, well get a null list back
+			if(fileList == null && file.canRead() == false)
+			{
+			    CapoApplication.logger.log(Level.WARNING, "Can't read directory contents of "+file);
+			    fileList = new String[]{};
+			}
+			
+			if(isSymlink)
+			{
+			    CapoApplication.logger.log(Level.WARNING, "Symlink skipping directory contents of "+file);
+                fileList = new String[]{};
+			}
+			
 			Arrays.sort(fileList);
 			for (String childURI : fileList)
 			{
@@ -141,7 +166,7 @@ public class FileResourceContentMetaData extends AbstractContentMetaData
 				}
 				addContainedResource(contentMetaData);
 			}
-			getAttributeMap().put(MD5FilterInputStream.ATTRIBUTE_NAME, contentMD5.abs().toString(16));
+			attributeMap.put(MD5FilterInputStream.ATTRIBUTE_NAME, contentMD5.abs().toString(16));
 		}		
 		setInitialized(true);
 		
@@ -179,5 +204,32 @@ public class FileResourceContentMetaData extends AbstractContentMetaData
 	}
 
 	
+
+
+	private boolean isSymlink(File file) throws IOException 
+	{
+	    
+	    File canonicalFile = null;
+	    
+	    if (file.getParent() == null)
+	    {
+	        canonicalFile = file;
+	    } 
+	    else
+	    {
+	        File canonicalParentDirectory = file.getParentFile().getCanonicalFile();
+	        canonicalFile = new File(canonicalParentDirectory, file.getName());
+	    }
+
+	    if (canonicalFile.getCanonicalFile().equals(canonicalFile.getAbsoluteFile())) 
+	    {
+	        return false;
+	    }
+	    else 
+	    {
+	        return true;
+	    }
+	}
+
 
 }

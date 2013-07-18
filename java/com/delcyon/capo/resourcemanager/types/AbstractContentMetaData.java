@@ -23,6 +23,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.lang.reflect.Modifier;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 import java.util.Vector;
@@ -41,6 +42,7 @@ import com.delcyon.capo.resourcemanager.ResourceParameter;
 import com.delcyon.capo.resourcemanager.ResourceURI;
 import com.delcyon.capo.util.CloneControl;
 import com.delcyon.capo.util.CloneControl.Clone;
+import com.delcyon.capo.util.InternHashMap;
 import com.delcyon.capo.util.ReflectionUtility;
 import com.delcyon.capo.util.ToStringControl;
 import com.delcyon.capo.util.ToStringControl.Control;
@@ -53,7 +55,8 @@ import com.delcyon.capo.util.ToStringControl.Control;
 @ToStringControl(control=Control.exclude,modifiers=Modifier.STATIC)
 public abstract class AbstractContentMetaData implements ContentMetaData
 {
-
+    
+    
 	private static Vector<Class> inputStreamAttributeFilterVector = null;
 	static
 	{
@@ -125,11 +128,11 @@ public abstract class AbstractContentMetaData implements ContentMetaData
 	private boolean includeStreamAttributes = false;
 	private boolean isInitialized = false;
 	private ResourceURI resourceURI = null;
-	private HashMap<String, String> attributeHashMap = new HashMap<String, String>();
+	private HashMap<String, String> attributeHashMap = new InternHashMap();
 	
 	@CloneControl(filter=Clone.exclude)
-	private transient Vector<StreamAttributeFilter> streamAttributeFilterVector = new Vector<StreamAttributeFilter>();
-	private Vector<ContentMetaData> childContentMetaDataVector = new Vector<ContentMetaData>();
+	private transient LinkedList<StreamAttributeFilter> streamAttributeFilterLinkedList = new LinkedList<StreamAttributeFilter>();
+	private LinkedList<ContentMetaData> childContentMetaDataLinkedList = new LinkedList<ContentMetaData>();
 	
 	/**
 	 * this will try to initialize md5 and length fields by reading the input stream
@@ -174,11 +177,11 @@ public abstract class AbstractContentMetaData implements ContentMetaData
 	protected InputStream wrapInputStream(InputStream inputStream) throws Exception
 	{
 	    this.includeStreamAttributes = true;
-		streamAttributeFilterVector.clear();
+		streamAttributeFilterLinkedList.clear();
 		for (Class inputStreamAttributeFilterProviderClass : inputStreamAttributeFilterVector)
 		{			
 			inputStream = (FilterInputStream) inputStreamAttributeFilterProviderClass.getConstructor(InputStream.class).newInstance(inputStream);
-			streamAttributeFilterVector.add((StreamAttributeFilter) inputStream);
+			streamAttributeFilterLinkedList.add((StreamAttributeFilter) inputStream);
 		}		
 		return inputStream;
 	}
@@ -186,14 +189,14 @@ public abstract class AbstractContentMetaData implements ContentMetaData
 	protected OutputStream wrapOutputStream(OutputStream outputStream) throws Exception
 	{
 	    this.includeStreamAttributes = true;
-		streamAttributeFilterVector.clear();
+		streamAttributeFilterLinkedList.clear();
 		attributeHashMap.remove(MD5FilterInputStream.ATTRIBUTE_NAME);
 		attributeHashMap.remove(SizeFilterInputStream.ATTRIBUTE_NAME);
 		attributeHashMap.remove(ContentFormatType.ATTRIBUTE_NAME);
 		for (Class outputStreamAttributeFilterProviderClass : outputStreamAttributeFilterVector)
 		{			
 			outputStream = (FilterOutputStream) outputStreamAttributeFilterProviderClass.getConstructor(OutputStream.class).newInstance(outputStream);
-			streamAttributeFilterVector.add((StreamAttributeFilter) outputStream);
+			streamAttributeFilterLinkedList.add((StreamAttributeFilter) outputStream);
 		}		
 		return outputStream;
 	}
@@ -227,7 +230,7 @@ public abstract class AbstractContentMetaData implements ContentMetaData
 	@Override
 	public HashMap<String, String> getAttributeMap()
 	{
-		for (StreamAttributeFilter streamAttributeFilter : streamAttributeFilterVector)
+		for (StreamAttributeFilter streamAttributeFilter : streamAttributeFilterLinkedList)
 		{
 			if (attributeHashMap.containsKey(streamAttributeFilter.getName()) == false)
 			{
@@ -380,13 +383,13 @@ public abstract class AbstractContentMetaData implements ContentMetaData
 	@Override
 	public List<ContentMetaData> getContainedResources()
 	{
-		return childContentMetaDataVector;
+		return childContentMetaDataLinkedList;
 	}
 	
 	@Override
 	public void addContainedResource(ContentMetaData contentMetaData)
 	{
-		childContentMetaDataVector.add(contentMetaData);
+		childContentMetaDataLinkedList.add(contentMetaData);
 	}
 	
 	public abstract Enum[] getAdditionalSupportedAttributes();
