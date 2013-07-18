@@ -32,26 +32,26 @@ import com.delcyon.capo.xml.XPath;
  * @author jeremiah
  *
  */
-public class GrammerParserTest
+public class GrammarParserTest
 {
 
     @Test
     public void test() throws Exception
     {
-        GrammerParser grammerParser = new GrammerParser();
-        grammerParser.loadNotationGrammer(new FileInputStream("test-data/parser_test_data/SIMPLE.notation"));       
-        grammerParser.loadGrammer(new FileInputStream("test-data/parser_test_data/SIMPLE.grammer"));
-        grammerParser.parse(new FileInputStream("test-data/parser_test_data/SIMPLE.input"));
+        GrammarParser grammarParser = new GrammarParser();
+        grammarParser.loadNotationGrammer(new FileInputStream("test-data/parser_test_data/SIMPLE.notation"));       
+        grammarParser.loadGrammer(new FileInputStream("test-data/parser_test_data/SIMPLE.grammer"));
+        grammarParser.parse(new FileInputStream("test-data/parser_test_data/SIMPLE.input"));
     }
 
     @Test
     public void testZipcode() throws Exception
     {
-        GrammerParser grammerParser = new GrammerParser();
+        GrammarParser grammarParser = new GrammarParser();
                
-        grammerParser.loadGrammer(new FileInputStream("test-data/parser_test_data/ZIPCODE.grammer"));
+        grammarParser.loadGrammer(new FileInputStream("test-data/parser_test_data/ZIPCODE.grammer"));
         FileInputStream zipCodeFileInputStream = new FileInputStream("test-data/parser_test_data/ZIPCODE.input"); 
-        grammerParser.parse(zipCodeFileInputStream);
+        grammarParser.parse(zipCodeFileInputStream);
         System.out.println("==========REMAINDER============");
         while(true)
         {
@@ -72,11 +72,11 @@ public class GrammerParserTest
     @Test
     public void testDocumentUsage() throws Exception
     {
-        GrammerParser grammerParser = new GrammerParser();
+        GrammarParser grammarParser = new GrammarParser();
         //grammerParser.setNamespace("dt","gal/doctype");
-        grammerParser.loadGrammer(new FileInputStream("test-data/parser_test_data/document_usage.grammar"));
+        grammarParser.loadGrammer(new FileInputStream("test-data/parser_test_data/document_usage.grammar"));
         FileInputStream csvFileInputStream = new FileInputStream("test-data/parser_test_data/document_usage.csv"); 
-        Document parseResultDocument = grammerParser.parse(csvFileInputStream);
+        Document parseResultDocument = grammarParser.parse(csvFileInputStream);
         //XPath.dumpNode(parseResultDocument, System.out);
         System.out.println("==========REMAINDER============");
         while(true)

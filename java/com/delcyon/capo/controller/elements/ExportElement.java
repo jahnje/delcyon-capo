@@ -23,12 +23,14 @@ import javax.xml.transform.Transformer;
 import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
+import javax.xml.transform.stream.StreamSource;
 
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
 import com.delcyon.capo.CapoApplication;
+import com.delcyon.capo.Configuration.PREFERENCE;
 import com.delcyon.capo.controller.AbstractControl;
 import com.delcyon.capo.controller.ControlElementProvider;
 import com.delcyon.capo.datastream.NullOutputStream;
@@ -36,6 +38,8 @@ import com.delcyon.capo.datastream.stream_attribute_filter.MD5FilterOutputStream
 import com.delcyon.capo.resourcemanager.ResourceDescriptor;
 import com.delcyon.capo.resourcemanager.ResourceParameter;
 import com.delcyon.capo.resourcemanager.ResourceParameterBuilder;
+import com.delcyon.capo.resourcemanager.types.FileResourceType;
+import com.delcyon.capo.resourcemanager.types.RefResourceType;
 import com.delcyon.capo.xml.XPath;
 import com.delcyon.capo.xml.cdom.CDocument;
 
@@ -49,7 +53,7 @@ public class ExportElement extends AbstractControl
 	
 	private enum Attributes
 	{
-		name,dest,ref,nodeset,output,trim,type
+		name,dest,ref,nodeset,output,trim,type,xsl
 	}
 	
 	
@@ -91,6 +95,8 @@ public class ExportElement extends AbstractControl
 		String output = getAttributeValue(Attributes.output);
 		String trim = getAttributeValue(Attributes.trim);
 		String type = getAttributeValue(Attributes.type);
+		String xsl = getAttributeValue(Attributes.xsl);
+		
 		if (type.isEmpty())
 		{
 			type = "XML";
@@ -182,21 +188,31 @@ public class ExportElement extends AbstractControl
 		
 		TransformerFactory tFactory = TransformerFactory.newInstance();
 		Transformer transformer = tFactory.newTransformer();
-		transformer.setOutputProperty(OutputKeys.INDENT, "yes");
-		
-		//set any XSL output properties
-		if (output != null && output.trim().isEmpty() == false)
+		if(xsl.isEmpty())
 		{
-			String[] outputProperties = output.split(",");
-			for (String outputProperty : outputProperties)
+			transformer.setOutputProperty(OutputKeys.INDENT, "yes");
+
+			//set any XSL output properties
+			if (output != null && output.trim().isEmpty() == false)
 			{
-				String propertyName = outputProperty.substring(0,outputProperty.indexOf(":"));
-				String propertyValue = outputProperty.substring(outputProperty.indexOf(":")+1);				
-				transformer.setOutputProperty(propertyName, propertyValue);	
+				String[] outputProperties = output.split(",");
+				for (String outputProperty : outputProperties)
+				{
+					String propertyName = outputProperty.substring(0,outputProperty.indexOf(":"));
+					String propertyValue = outputProperty.substring(outputProperty.indexOf(":")+1);				
+					transformer.setOutputProperty(propertyName, propertyValue);	
+				}
+
 			}
-			
 		}
-		
+		else //load the user's xsl request in place of the default identity transform we use.
+		{
+			ResourceDescriptor xslResourceDescriptor = getParentGroup().getResourceDescriptor(this, xsl);
+			xslResourceDescriptor.addResourceParameters(getParentGroup(),new ResourceParameter(FileResourceType.Parameters.PARENT_PROVIDED_DIRECTORY,PREFERENCE.RESOURCE_DIR));
+			xslResourceDescriptor.addResourceParameters(getParentGroup(),new ResourceParameter(RefResourceType.Parameters.XMLNS,"xsl=http://www.w3.org/1999/XSL/Transform"));
+			transformer = tFactory.newTransformer(new StreamSource(xslResourceDescriptor.getInputStream(getParentGroup(),ResourceParameterBuilder.getResourceParameters(getControlElementDeclaration()))));
+			xslResourceDescriptor.close(getParentGroup());
+		}
 		//save the file 
 		ResourceDescriptor resourceDescriptor = getParentGroup().getResourceDescriptor(this, dest);		
 		ResourceParameter[] resourceParameters = ResourceParameterBuilder.getResourceParameters(getControlElementDeclaration());

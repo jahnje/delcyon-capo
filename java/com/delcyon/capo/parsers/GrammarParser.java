@@ -32,7 +32,7 @@ import com.delcyon.capo.xml.XPath;
 /**
  * @author jeremiah
  */
-public class GrammerParser
+public class GrammarParser
 {
 	public enum SymbolType
 	{
@@ -61,7 +61,7 @@ public class GrammerParser
 
     private String uri;
 
-	public GrammerParser()
+	public GrammarParser()
 	{
 
 		symbolHashMap.put(SymbolType.DELIMITER, new String[] { " ", "\t", "EOL" });

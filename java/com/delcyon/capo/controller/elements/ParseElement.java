@@ -26,7 +26,7 @@ import com.delcyon.capo.CapoApplication;
 import com.delcyon.capo.Configuration.PREFERENCE;
 import com.delcyon.capo.controller.AbstractControl;
 import com.delcyon.capo.controller.ControlElementProvider;
-import com.delcyon.capo.parsers.GrammerParser;
+import com.delcyon.capo.parsers.GrammarParser;
 import com.delcyon.capo.resourcemanager.ResourceDescriptor;
 import com.delcyon.capo.resourcemanager.ResourceParameter;
 import com.delcyon.capo.resourcemanager.ResourceParameter.Source;
@@ -111,8 +111,8 @@ public class ParseElement extends AbstractControl
 		
 		
 		
-		GrammerParser grammerParser = new GrammerParser();
-		grammerParser.loadGrammer(grammarResourceDescriptor.getInputStream(getParentGroup()));
+		GrammarParser grammarParser = new GrammarParser();
+		grammarParser.loadGrammer(grammarResourceDescriptor.getInputStream(getParentGroup()));
 		InputStream srcInputStream = null;
 		if(srcResourceDescriptor instanceof RefResourceDescriptor)
 		{
@@ -122,7 +122,7 @@ public class ParseElement extends AbstractControl
 		{
 		  srcInputStream = srcResourceDescriptor.getInputStream(getParentGroup());
 		}
-		Document parsedDocument =  grammerParser.parse(srcInputStream);
+		Document parsedDocument =  grammarParser.parse(srcInputStream);
 		
 		
 		if (parsedDocument != null)

@@ -28,7 +28,7 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 
-import com.delcyon.capo.parsers.GrammerParser.SymbolType;
+import com.delcyon.capo.parsers.GrammarParser.SymbolType;
 import com.delcyon.capo.parsers.Tokenizer.CharacterType;
 
 /**
