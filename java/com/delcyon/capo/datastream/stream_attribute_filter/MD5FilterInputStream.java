@@ -34,6 +34,7 @@ public class MD5FilterInputStream extends AbstractFilterInputStream
 	public static final String ATTRIBUTE_NAME = "MD5";
 	
 	private MessageDigest messageDigest;
+	private String md5 = null;
 	
 	public MD5FilterInputStream(InputStream inputStream) throws Exception
 	{
@@ -45,10 +46,15 @@ public class MD5FilterInputStream extends AbstractFilterInputStream
 	@Override
 	public String getValue()
 	{	
-    	 //TODO deal with leading zeros??
-         return new BigInteger(1, messageDigest.digest()).toString(16);
-     }
-	
+	    //TODO deal with leading zeros??
+	    //the message digest only lets us read from it once before it resets things, so persist the value incase we read more than once. 
+	    if(md5 == null)
+	    {
+	        md5 = new BigInteger(1, messageDigest.digest()).toString(16); 
+	    }
+	    return md5;
+	}
+
 	@Override
 	public int read(byte[] b, int off, int len) throws IOException
 	{

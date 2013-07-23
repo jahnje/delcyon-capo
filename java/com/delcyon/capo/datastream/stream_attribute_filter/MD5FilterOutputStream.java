@@ -33,7 +33,8 @@ import com.delcyon.capo.datastream.OutputStreamAttributeFilterProvider;
 public class MD5FilterOutputStream extends FilterOutputStream implements StreamAttributeFilter
 {
 	 private MessageDigest messageDigest;
-
+	 private String md5;
+	 
      public MD5FilterOutputStream(OutputStream out) throws NoSuchAlgorithmException
      {
          super(out);
@@ -67,13 +68,19 @@ public class MD5FilterOutputStream extends FilterOutputStream implements StreamA
      public void write(byte[] b) throws IOException
      {
     	 messageDigest.update(b);
-        super.write(b);
+    	 super.write(b);
      }
 
      public String getMD5()
      {
-    	 //TODO deal with leading zeros
-         return new BigInteger(1, messageDigest.digest()).toString(16);
+         //TODO deal with leading zeros
+
+         //the message digest only lets us read from it once before it resets things, so persist the value incase we read more than once. 
+         if(md5 == null)
+         {
+             md5 = new BigInteger(1, messageDigest.digest()).toString(16); 
+         }
+         return md5;
      }
 
 	public void write(String value) throws Exception
