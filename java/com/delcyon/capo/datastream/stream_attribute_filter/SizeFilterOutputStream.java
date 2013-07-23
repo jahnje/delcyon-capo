@@ -43,7 +43,7 @@ public class SizeFilterOutputStream extends FilterOutputStream implements Stream
 	@Override
 	public String getValue()
 	{
-		return size+"";
+		return String.valueOf(size);
 	}
 	
 	@Override

@@ -41,7 +41,7 @@ public class SizeFilterInputStream extends AbstractFilterInputStream
 	@Override
 	public String getValue()
 	{
-		return size+"";
+		return String.valueOf(size);
 	}
 	
 
