@@ -316,7 +316,7 @@ public class SyncElement extends AbstractControl
                     }
                     
                     //we'll wait here until this is done processing
-                    CapoApplication.logger.log(Level.INFO, "waiting here on output metadata");
+                    CapoApplication.logger.log(Level.FINE, "Waiting for confirmation.");
                     ContentMetaData outputMetaData = destinationResourceDescriptor.getOutputMetaData(getParentGroup());
                     if(outputMetaData != null && srcMD5.equals(outputMetaData.getMD5()))
                     {
@@ -362,7 +362,7 @@ public class SyncElement extends AbstractControl
         	Vector<ContentMetaData.Attributes> copyAttributesList = new Vector<ContentMetaData.Attributes>();
         	if (keepAttributesValue.equalsIgnoreCase("true"))
         	{
-        		Set<String> attributeSet = sourceContentMetaData.getAttributeMap().keySet();
+        		List<String> attributeSet = sourceContentMetaData.getSupportedAttributes();
         		for (String contentAttributeName : attributeSet)
 				{
         			try

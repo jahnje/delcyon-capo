@@ -234,13 +234,13 @@ public class FileResourceDescriptor extends AbstractResourceDescriptor implement
 		    tempFile = File.createTempFile(outputFile.getName(), "part");
 		    CapoApplication.logger.log(Level.INFO, "using temp file: "+tempFile+" for "+outputFile);
 		    outputMetaData = new FileResourceContentMetaData(tempFile.toURI().toString());
-		    outputMetaData.getAttributeMap().clear();
+		    outputMetaData.clearAttributes();
 		    outputStream = trackOutputStream(outputMetaData.wrapOutputStream(new FileOutputStream(tempFile)));
 		}
 		else
 		{
 		    outputMetaData = new FileResourceContentMetaData(getResourceURI().getBaseURI());
-		    outputMetaData.getAttributeMap().clear();
+		    outputMetaData.clearAttributes();
 		    outputStream = trackOutputStream(outputMetaData.wrapOutputStream(new FileOutputStream(outputFile)));
 		}
 		
@@ -260,7 +260,7 @@ public class FileResourceDescriptor extends AbstractResourceDescriptor implement
 	       Thread.sleep(500);
 	   }
 	   //call this so that the attribute vectors get processed
-	   outputMetaData.getAttributeMap();
+	   outputMetaData.getValue(ContentMetaData.Attributes.container);
 	   return outputMetaData;
 	}
 	

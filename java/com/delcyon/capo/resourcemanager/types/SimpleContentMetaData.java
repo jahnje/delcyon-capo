@@ -52,19 +52,19 @@ public class SimpleContentMetaData extends AbstractContentMetaData
 	
 	private void init()
 	{
-		getAttributeMap().put(Attributes.exists.toString(), false+"");
+		setValue(Attributes.exists, false);
 
-		getAttributeMap().put(Attributes.executable.toString(), false+"");
+		setValue(Attributes.executable, false);
 
-		getAttributeMap().put(Attributes.exists.toString(), false+"");
+		setValue(Attributes.exists, false);
 
-		getAttributeMap().put(Attributes.readable.toString(), false+"");
+		setValue(Attributes.readable, false);
 
-		getAttributeMap().put(Attributes.writeable.toString(), false+"");
+		setValue(Attributes.writeable, false);
 
-		getAttributeMap().put(Attributes.container.toString(), false+"");
+		setValue(Attributes.container, false);
 
-		getAttributeMap().put(Attributes.lastModified.toString(),null);
+		setValue(Attributes.lastModified,null);
 	}
 	
 	/* (non-Javadoc)
@@ -73,7 +73,7 @@ public class SimpleContentMetaData extends AbstractContentMetaData
 	@Override
 	public Boolean exists()
 	{
-		return Boolean.parseBoolean(getAttributeMap().get(Attributes.exists.toString()));
+		return Boolean.parseBoolean(getValue(Attributes.exists));
 	}
 
 	/* (non-Javadoc)
@@ -82,7 +82,7 @@ public class SimpleContentMetaData extends AbstractContentMetaData
 	@Override
 	public Long getLastModified()
 	{		
-		return Long.parseLong(getAttributeMap().get(Attributes.lastModified.toString()));
+		return Long.parseLong(getValue(Attributes.lastModified));
 	}
 
 	/* (non-Javadoc)
@@ -91,7 +91,7 @@ public class SimpleContentMetaData extends AbstractContentMetaData
 	@Override
 	public Boolean isContainer()
 	{
-		return Boolean.parseBoolean(getAttributeMap().get(Attributes.container.toString()));
+		return Boolean.parseBoolean(getValue(Attributes.container));
 	}
 
 	/* (non-Javadoc)
@@ -100,7 +100,7 @@ public class SimpleContentMetaData extends AbstractContentMetaData
 	@Override
 	public Boolean isReadable()
 	{
-		return Boolean.parseBoolean(getAttributeMap().get(Attributes.readable.toString()));
+		return Boolean.parseBoolean(getValue(Attributes.readable));
 	}
 
 	/* (non-Javadoc)
@@ -109,7 +109,7 @@ public class SimpleContentMetaData extends AbstractContentMetaData
 	@Override
 	public Boolean isWriteable()
 	{
-		return Boolean.parseBoolean(getAttributeMap().get(Attributes.writeable.toString()));
+		return Boolean.parseBoolean(getValue(Attributes.writeable));
 	}
 
 	

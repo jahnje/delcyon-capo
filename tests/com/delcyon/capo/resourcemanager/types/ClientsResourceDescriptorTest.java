@@ -19,6 +19,12 @@ public class ClientsResourceDescriptorTest extends ResourceDescriptorTest
 {
 
     @Override
+    protected String getCheckFile()
+    {
+        return "capo/server/clients/capo.client.1/identity.xml";
+    }
+    
+    @Override
     protected ResourceDescriptor getResourceDescriptor() throws Exception
     {        
         return TestServer.getServerInstance().getApplication().getDataManager().getResourceDescriptor(null, "clients:capo.client.1/identity.xml");

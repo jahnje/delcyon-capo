@@ -77,7 +77,7 @@ public interface ContentMetaData
 
 	public  Boolean isContainer();
 	
-	public  HashMap<String, String> getAttributeMap();
+	public void clearAttributes();
 
 	public Long getLastModified();
 	
@@ -103,6 +103,8 @@ public interface ContentMetaData
 	public String getValue(Enum name);
 	
 	public boolean isSupported(String attributeName);
+	
+	public boolean hasAttribute(String attributeName);
 	
 	public List<String> getSupportedAttributes();
 

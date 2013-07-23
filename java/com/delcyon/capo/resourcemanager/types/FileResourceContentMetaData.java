@@ -22,11 +22,11 @@ import java.io.IOException;
 import java.math.BigInteger;
 import java.net.URI;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.logging.Level;
 
 import com.delcyon.capo.CapoApplication;
 import com.delcyon.capo.datastream.stream_attribute_filter.MD5FilterInputStream;
+import com.delcyon.capo.datastream.stream_attribute_filter.SizeFilterInputStream;
 import com.delcyon.capo.resourcemanager.ResourceParameter;
 import com.delcyon.capo.resourcemanager.ResourceParameterBuilder;
 import com.delcyon.capo.resourcemanager.ResourceURI;
@@ -102,32 +102,32 @@ public class FileResourceContentMetaData extends AbstractContentMetaData
 			setResourceURI(new ResourceURI(file.toURI().toString()));
 		}
 		
-		HashMap<String, String> attributeMap = getAttributeMap();
 		
-		attributeMap.put(Attributes.exists.toString(), file.exists()+"");
-
-		attributeMap.put(Attributes.executable.toString(), file.canExecute()+"");
-
-		attributeMap.put(Attributes.readable.toString(), file.canRead()+"");
-
-		attributeMap.put(Attributes.writeable.toString(), file.canWrite()+"");
-
-		attributeMap.put(Attributes.container.toString(), file.isDirectory()+"");
-
-		attributeMap.put(Attributes.lastModified.toString(), file.lastModified()+"");
 		
-		attributeMap.put(Attributes.lastModified.toString(), file.lastModified()+"");
+		setValue(Attributes.exists, file.exists());
+
+		setValue(Attributes.executable, file.canExecute());
+
+		setValue(Attributes.readable, file.canRead());
+
+		setValue(Attributes.writeable, file.canWrite());
+
+		setValue(Attributes.container, file.isDirectory());
+
+		setValue(Attributes.lastModified, file.lastModified());
 		
-		attributeMap.put(FileAttributes.absolutePath.toString(), file.getAbsolutePath()+"");
+		setValue(SizeFilterInputStream.ATTRIBUTE_NAME, file.length());
 		
-		attributeMap.put(FileAttributes.canonicalPath.toString(), file.getCanonicalPath()+"");
+		setValue(FileAttributes.absolutePath, file.getAbsolutePath());
+		
+		setValue(FileAttributes.canonicalPath, file.getCanonicalPath());
 		
 		boolean isSymlink = isSymlink(file);
 		
-		attributeMap.put(FileAttributes.symlink.toString(), isSymlink+"");
+		setValue(FileAttributes.symlink, isSymlink+"");
 		
 		if (file.exists() == true && file.canRead() == true && file.isDirectory() == false)
-		{
+		{		    
 		    FileInputStream fileInputStream = new FileInputStream(file);
 			readInputStream(fileInputStream,false);
 			fileInputStream.close();
@@ -166,7 +166,7 @@ public class FileResourceContentMetaData extends AbstractContentMetaData
 				}
 				addContainedResource(contentMetaData);
 			}
-			attributeMap.put(MD5FilterInputStream.ATTRIBUTE_NAME, contentMD5.abs().toString(16));
+			setValue(MD5FilterInputStream.ATTRIBUTE_NAME, contentMD5.abs().toString(16));
 		}		
 		setInitialized(true);
 		
@@ -176,31 +176,31 @@ public class FileResourceContentMetaData extends AbstractContentMetaData
 	@Override
 	public Boolean exists()
 	{
-		return Boolean.parseBoolean(getAttributeMap().get(Attributes.exists.toString()));
+		return Boolean.parseBoolean(getValue(Attributes.exists));
 	}
 
 	@Override
 	public Long getLastModified()
 	{		
-		return Long.parseLong(getAttributeMap().get(Attributes.lastModified.toString()));
+		return Long.parseLong(getValue(Attributes.lastModified));
 	}
 
 	@Override
 	public Boolean isContainer()
 	{
-		return Boolean.parseBoolean(getAttributeMap().get(Attributes.container.toString()));
+		return Boolean.parseBoolean(getValue(Attributes.container));
 	}
 
 	@Override
 	public Boolean isReadable()
 	{
-		return Boolean.parseBoolean(getAttributeMap().get(Attributes.readable.toString()));
+		return Boolean.parseBoolean(getValue(Attributes.readable));
 	}
 
 	@Override
 	public Boolean isWriteable()
 	{
-		return Boolean.parseBoolean(getAttributeMap().get(Attributes.writeable.toString()));
+		return Boolean.parseBoolean(getValue(Attributes.writeable));
 	}
 
 	

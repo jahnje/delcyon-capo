@@ -1,6 +1,7 @@
 package com.delcyon.capo.resourcemanager;
 
 import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.List;
@@ -35,6 +36,16 @@ public abstract class ResourceDescriptorTest
 {
     protected ResourceDescriptor resourceDescriptor = null;
     
+    private void checkFile() 
+    {
+        if(getCheckFile() != null)
+        {
+            File identityFile = new File(getCheckFile());
+            Assert.assertTrue(identityFile.exists());
+            Assert.assertTrue(identityFile.length() > 0l);
+        }
+    }
+    
     @BeforeClass
     public static void setUpBeforeClass() throws Exception
     {
@@ -54,9 +65,12 @@ public abstract class ResourceDescriptorTest
     {
     	Util.copyTree("test-data/capo", "capo", true, true);
         this.resourceDescriptor = getResourceDescriptor();
+        checkFile();
     }
 
     protected abstract ResourceDescriptor getResourceDescriptor() throws Exception;
+    
+    protected String getCheckFile() {return null;};
 
     @After
     public void tearDown() throws Exception
@@ -65,6 +79,7 @@ public abstract class ResourceDescriptorTest
     	{
     		this.resourceDescriptor.release(null);
     	}
+    	//checkFile();
     }
 
     @Test

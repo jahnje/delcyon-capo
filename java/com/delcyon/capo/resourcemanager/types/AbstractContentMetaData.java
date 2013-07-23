@@ -22,7 +22,6 @@ import java.io.FilterOutputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.lang.reflect.Modifier;
-import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
@@ -42,7 +41,7 @@ import com.delcyon.capo.resourcemanager.ResourceParameter;
 import com.delcyon.capo.resourcemanager.ResourceURI;
 import com.delcyon.capo.util.CloneControl;
 import com.delcyon.capo.util.CloneControl.Clone;
-import com.delcyon.capo.util.InternHashMap;
+import com.delcyon.capo.util.ControlledClone;
 import com.delcyon.capo.util.ReflectionUtility;
 import com.delcyon.capo.util.ToStringControl;
 import com.delcyon.capo.util.ToStringControl.Control;
@@ -53,14 +52,15 @@ import com.delcyon.capo.util.ToStringControl.Control;
  */
 @SuppressWarnings("unchecked")
 @ToStringControl(control=Control.exclude,modifiers=Modifier.STATIC)
-public abstract class AbstractContentMetaData implements ContentMetaData
+public abstract class AbstractContentMetaData implements ContentMetaData, ControlledClone
 {
+    //this is to lower memory usage on common attribute values, slows things a bit, but can drastically reduce memory usage by using constants 
+    private static final String[] CommonStrings = new String[]{"0","false","true"};
     
-    
-	private static Vector<Class> inputStreamAttributeFilterVector = null;
+	private static LinkedList<Class> inputStreamAttributeFilterLinkedList = null;
 	static
 	{
-		inputStreamAttributeFilterVector = new Vector<Class>();
+		inputStreamAttributeFilterLinkedList = new LinkedList<Class>();
 		Set<String> inputStreamAttributeFilterProviderSet = CapoApplication.getAnnotationMap().get(InputStreamAttributeFilterProvider.class.getCanonicalName());
 		if (inputStreamAttributeFilterProviderSet != null) //this is only null during testing
 		{
@@ -80,7 +80,7 @@ public abstract class AbstractContentMetaData implements ContentMetaData
 					}
 					else
 					{
-						inputStreamAttributeFilterVector.add(inputStreamAttributeFilterProviderClass);
+						inputStreamAttributeFilterLinkedList.add(inputStreamAttributeFilterProviderClass);
 						CapoApplication.logger.log(Level.CONFIG, "Loaded InputStreamAttributeFilterProvider "+inputStreamAttributeFilterProvider.name()+" from "+className);
 					}
 				} catch (ClassNotFoundException classNotFoundException)
@@ -128,22 +128,79 @@ public abstract class AbstractContentMetaData implements ContentMetaData
 	private boolean includeStreamAttributes = false;
 	private boolean isInitialized = false;
 	private ResourceURI resourceURI = null;
-	private HashMap<String, String> attributeHashMap = new InternHashMap();
+	
 	
 	@CloneControl(filter=Clone.exclude)
 	private transient LinkedList<StreamAttributeFilter> streamAttributeFilterLinkedList = new LinkedList<StreamAttributeFilter>();
 	private LinkedList<ContentMetaData> childContentMetaDataLinkedList = new LinkedList<ContentMetaData>();
 	
+	
+	private String[] attributeKeys = null;
+	private String[] attributeValues = null;
+	
+    private boolean attributesLoaded = false;
+
+    @Override
+    public void preClone(Object parentClonedObject, Object clonedObject) throws Exception {};
+    @Override
+    public void postClone(Object parentClonedObject, Object clonedObject) throws Exception
+    {
+        internAttributes();
+    }
+	
+    //minimize memory by making sure attribute names, and common values are interned
+    private void internAttributes()
+    {
+        for (int index = 0; index < attributeKeys.length; index++)
+        {
+            attributeKeys[index] = attributeKeys[index].intern();
+        }
+        
+        
+        for (String commonString : CommonStrings)
+        {
+            for (int index = 0; index < attributeKeys.length; index++)
+            {                
+                if(commonString.equals(attributeValues[index]))
+                {
+                    attributeValues[index] = commonString;
+                    break;
+                }
+            }   
+            
+        }   
+    }
+    
+	private void initializeAttributeStorage()
+	{
+	    if(attributeKeys == null)
+	    {
+	        //make sure we include initial room for the stream attributes 
+	        boolean _includeStreamAttributes = includeStreamAttributes;
+	        includeStreamAttributes = true;
+	        List<String> attributes = getSupportedAttributes();
+	        includeStreamAttributes = _includeStreamAttributes;
+	        
+	        attributeKeys = new String[attributes.size()];
+	        attributeValues = new String[attributeKeys.length];
+	        for (int index = 0; index < attributeKeys.length; index++)
+	        {
+	            attributeKeys[index] = attributes.get(index).intern();
+	        }
+	    }
+	}
+	
 	/**
 	 * this will try to initialize md5 and length fields by reading the input stream
 	 * If you want to use a byte[] wrap it in a ByteArrayInputStream
-	 * This does WILL close the stream
+	 * This WILL close the stream
 	 * @param inputStream
 	 * @throws Exception 
 	 */
 	protected byte[] readInputStream(InputStream inputStream, boolean returnContent) throws Exception
 	{
 	    this.includeStreamAttributes = true;
+	    
 	    OutputStream outputStream = null;
 	    if(returnContent == true)
 	    {
@@ -155,7 +212,8 @@ public abstract class AbstractContentMetaData implements ContentMetaData
 	    }
 		inputStream =  wrapInputStream(inputStream);
 		StreamUtil.readInputStreamIntoOutputStream(inputStream, outputStream);
-		getAttributeMap(); //once we've read the file, load up he attribute map with any stream attributes.
+		inputStream.close();
+		loadAttributes(); //once we've read the file, load up he attribute map with any stream attributes.
 		this.isInitialized = true;
 		if (returnContent == true)
 		{
@@ -178,7 +236,7 @@ public abstract class AbstractContentMetaData implements ContentMetaData
 	{
 	    this.includeStreamAttributes = true;
 		streamAttributeFilterLinkedList.clear();
-		for (Class inputStreamAttributeFilterProviderClass : inputStreamAttributeFilterVector)
+		for (Class inputStreamAttributeFilterProviderClass : inputStreamAttributeFilterLinkedList)
 		{			
 			inputStream = (FilterInputStream) inputStreamAttributeFilterProviderClass.getConstructor(InputStream.class).newInstance(inputStream);
 			streamAttributeFilterLinkedList.add((StreamAttributeFilter) inputStream);
@@ -190,9 +248,9 @@ public abstract class AbstractContentMetaData implements ContentMetaData
 	{
 	    this.includeStreamAttributes = true;
 		streamAttributeFilterLinkedList.clear();
-		attributeHashMap.remove(MD5FilterInputStream.ATTRIBUTE_NAME);
-		attributeHashMap.remove(SizeFilterInputStream.ATTRIBUTE_NAME);
-		attributeHashMap.remove(ContentFormatType.ATTRIBUTE_NAME);
+		setValue(MD5FilterInputStream.ATTRIBUTE_NAME,null);
+		setValue(SizeFilterInputStream.ATTRIBUTE_NAME,null);
+		setValue(ContentFormatType.ATTRIBUTE_NAME,null);
 		for (Class outputStreamAttributeFilterProviderClass : outputStreamAttributeFilterVector)
 		{			
 			outputStream = (FilterOutputStream) outputStreamAttributeFilterProviderClass.getConstructor(OutputStream.class).newInstance(outputStream);
@@ -228,27 +286,81 @@ public abstract class AbstractContentMetaData implements ContentMetaData
 	}
 	
 	@Override
-	public HashMap<String, String> getAttributeMap()
+	public void clearAttributes()
 	{
-		for (StreamAttributeFilter streamAttributeFilter : streamAttributeFilterLinkedList)
-		{
-			if (attributeHashMap.containsKey(streamAttributeFilter.getName()) == false)
-			{
-				attributeHashMap.put(streamAttributeFilter.getName(), streamAttributeFilter.getValue());
-			}
-		}
+	    attributeValues = new String[attributeKeys.length];
+	    attributesLoaded = false;
+	}
+	
+	private int getAttributeIndex(String attributeName)
+	{
+	    initializeAttributeStorage();
+	    attributeName = attributeName.intern();
+        for (int index = 0; index < attributeKeys.length; index++)
+        {
+            if(attributeKeys[index] == attributeName)
+            {
+                return index;
+            }
+        }
+        
+        //somewhere, somehow it's possible for keys to be un-interned, so if we didn't find the attribute key, we use the slower code, and if we then find it, something has been messing with us and we intern everything  
+        for (int index = 0; index < attributeKeys.length; index++)
+        {
+            if(attributeKeys[index].equals(attributeName))
+            {
+                internAttributes();
+                return index;
+            }
+        }
+        
+        return -1;
+	}
+	
+	@Override
+	public boolean hasAttribute(String attributeName)
+	{
+	   if(getAttributeIndex(attributeName) >= 0)
+	   {
+	       return true;
+	   }
+	   else
+	   {
+	       return false;
+	   }
+	}
+	
+
+	private void loadAttributes()
+	{
+	    if (attributesLoaded  == false)
+	    {
+	        attributesLoaded = true;
+	        for (StreamAttributeFilter streamAttributeFilter : streamAttributeFilterLinkedList)
+	        {
+	            int attributeIndex = getAttributeIndex(streamAttributeFilter.getName());
+	            if (attributeIndex < 0 || (attributeValues[attributeIndex] == null && streamAttributeFilter.getValue() != null))
+	            {
+	                setValue(streamAttributeFilter.getName(), streamAttributeFilter.getValue());
+	            }
+	        }
+	        
+	        //once we've gotten the values, release the memory used by the list
+	        streamAttributeFilterLinkedList.clear();
+	        
+	        setValue(Attributes.path.toString(), getResourceURI().getPath());
+	        setValue(Attributes.uri.toString(), getResourceURI().getBaseURI());
+	        
+	    }
 		
-		attributeHashMap.put(Attributes.path.toString(), getResourceURI().getPath());
-		attributeHashMap.put(Attributes.uri.toString(), getResourceURI().getBaseURI());
-		return attributeHashMap;
 	}
 	
 	public ContentFormatType getContentFormatType()
 	{
-		attributeHashMap = getAttributeMap();
-		if (attributeHashMap.containsKey(ContentFormatType.ATTRIBUTE_NAME))
-		{
-			String contentFormatTypeString = attributeHashMap.get(ContentFormatType.ATTRIBUTE_NAME);
+	    loadAttributes();
+	    String contentFormatTypeString = getValue(ContentFormatType.ATTRIBUTE_NAME);
+		if (contentFormatTypeString != null)
+		{			
 			return ContentFormatType.valueOf(contentFormatTypeString);
 		}
 		else
@@ -259,24 +371,24 @@ public abstract class AbstractContentMetaData implements ContentMetaData
 
 	public void setContentFormatType(ContentFormatType contentFormatType)
 	{
-		attributeHashMap.put(ContentFormatType.ATTRIBUTE_NAME, contentFormatType.toString());
+		setValue(ContentFormatType.ATTRIBUTE_NAME, contentFormatType.toString());
 	}
 	
 	public String getMD5()
 	{
-		attributeHashMap = getAttributeMap();
-		return attributeHashMap.get(MD5FilterInputStream.ATTRIBUTE_NAME);		
+	    loadAttributes();
+		return getValue(MD5FilterInputStream.ATTRIBUTE_NAME);		
 	}
 	
 	public void setMD5(String md5)
 	{		
-		attributeHashMap.put(MD5FilterInputStream.ATTRIBUTE_NAME, md5);
+	    setValue(MD5FilterInputStream.ATTRIBUTE_NAME, md5);
 	}
 	
 	public Long getLength()
 	{
-		attributeHashMap = getAttributeMap();
-		String length = attributeHashMap.get(SizeFilterInputStream.ATTRIBUTE_NAME);
+	    loadAttributes();
+		String length = getValue(SizeFilterInputStream.ATTRIBUTE_NAME);
 		if (length.matches("\\d+"))
 		{
 			return Long.parseLong(length);
@@ -285,14 +397,21 @@ public abstract class AbstractContentMetaData implements ContentMetaData
 	}
 	public void setLength(Long length)
 	{
-		attributeHashMap.put(SizeFilterInputStream.ATTRIBUTE_NAME, length+"");
+	    setValue(SizeFilterInputStream.ATTRIBUTE_NAME, length+"");
 	}
 	
 	@Override
 	public String getValue(String name)
 	{
-		return getAttributeMap().get(name);
+	    initializeAttributeStorage();
+	    loadAttributes();
+	    int attributeIndex = getAttributeIndex(name);
+	    if(attributeIndex >= 0)
+	    {
+	        return attributeValues[attributeIndex];
+	    }
 		
+		return null;
 	}
 	
 	@Override
@@ -303,9 +422,68 @@ public abstract class AbstractContentMetaData implements ContentMetaData
 	
 	@Override
 	public void setValue(String name, String value)
-	{
-		attributeHashMap.put(name, value);
+	{		
+		name = name.intern();
 		
+		for (String commonString : CommonStrings)
+        {
+            if(commonString.equals(value))
+            {
+                value = commonString;
+                break;
+            }
+        }
+		
+		initializeAttributeStorage();
+		
+		boolean foundAttribute = false;
+        for (int index = 0; index < attributeKeys.length; index++)
+        {
+            if(attributeKeys[index] == name)
+            {
+                attributeValues[index] = value;
+                foundAttribute = true;
+                break;
+            }
+        }
+        
+        if (foundAttribute == false)
+        {
+            
+            
+            //expand attribute storage to handle new value 
+            String[] newAttributeKeys = new String[attributeKeys.length+1];
+            
+            for (int index = 0; index < attributeKeys.length; index++)
+            {
+                //check to see if we need to intern the attributes 
+                if(attributeKeys[index].intern() == name)
+                {
+                    //looks like we do, so intern them, then set our value, since we should have picked it up the first time, and just finish up.
+                    internAttributes();
+                    attributeValues[index] = value;
+                    newAttributeKeys = null;                    
+                    return;
+                }
+                newAttributeKeys[index] = attributeKeys[index];
+                
+            }
+            newAttributeKeys[attributeKeys.length] = name;
+            
+            String[] newAttributeValues = new String[attributeValues.length+1];
+            for (int index = 0; index < attributeValues.length; index++)
+            {
+                newAttributeValues[index] = attributeValues[index];
+            }
+            newAttributeValues[attributeValues.length] = value;
+            
+            //set new arrays into place
+            attributeValues = newAttributeValues;
+            attributeKeys = newAttributeKeys;
+            
+            
+            
+        }
 	}
 	
 	/**
@@ -351,7 +529,7 @@ public abstract class AbstractContentMetaData implements ContentMetaData
 		List<String> supportedAttributeList = getSupportedAttributes();
 		if(includeStreamAttributes == true)
 		{
-		    for (Class inputStreamAttributeFilterProviderClass : inputStreamAttributeFilterVector)
+		    for (Class inputStreamAttributeFilterProviderClass : inputStreamAttributeFilterLinkedList)
 		    {			
 		        supportedAttributeList.add(((InputStreamAttributeFilterProvider) inputStreamAttributeFilterProviderClass.getAnnotation(InputStreamAttributeFilterProvider.class)).name());
 		    }	
@@ -362,22 +540,26 @@ public abstract class AbstractContentMetaData implements ContentMetaData
 	@Override
 	public List<String> getSupportedAttributes()
 	{
-		Vector<String>  supportedAttributeVector = new Vector<String>();
+		LinkedList<String>  supportedAttributeLinkedList = new LinkedList<String>();
 		Enum[] supportedAttributeList = getAdditionalSupportedAttributes();
 		for (Enum attributeEnum : supportedAttributeList)
 		{
-			supportedAttributeVector.add(attributeEnum.toString());
+			supportedAttributeLinkedList.add(attributeEnum.toString());
 		}
 		
 		if(includeStreamAttributes == true)
 		{
-		    for (Class inputStreamAttributeFilterProviderClass : inputStreamAttributeFilterVector)
-		    {			
-		        supportedAttributeVector.add(((InputStreamAttributeFilterProvider) inputStreamAttributeFilterProviderClass.getAnnotation(InputStreamAttributeFilterProvider.class)).name());
+		    for (Class inputStreamAttributeFilterProviderClass : inputStreamAttributeFilterLinkedList)
+		    {	
+		        String streamAttributeName = ((InputStreamAttributeFilterProvider) inputStreamAttributeFilterProviderClass.getAnnotation(InputStreamAttributeFilterProvider.class)).name();
+		        if(supportedAttributeLinkedList.contains(streamAttributeName) == false)
+		        {
+		            supportedAttributeLinkedList.add(streamAttributeName);
+		        }
 		    }
 		}
-		supportedAttributeVector.add(Attributes.path.toString());
-		return supportedAttributeVector;
+		supportedAttributeLinkedList.add(Attributes.path.toString());
+		return supportedAttributeLinkedList;
 	}
 	
 	@Override
