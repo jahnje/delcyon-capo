@@ -7,4 +7,5 @@ ZERO_MORE	= '*' \/and some other
 ;this is just a lonely comment, but EOL is significant
 ONE_MORE	= '+'
 ZERO_ONE	= '?'
-TEST		= "~This is some crazy test\52\52\52\52\52\52\52\52  \x58  \x{000000F2} \x{0000F2}  \U00002050" \u2050 
+TEST		= "~This is some crazy test\52\52\52\52\52\52\52\52  \x58  \x{000000F2} \x{0000F2}  \U00002050" \u2050
+blah ;blah 

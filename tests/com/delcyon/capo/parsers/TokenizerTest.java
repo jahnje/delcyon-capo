@@ -52,7 +52,7 @@ public class TokenizerTest
         Vector<String> tokenVector = new Vector<String>();
         while(tokenizer.nextToken() != Tokenizer.TokenType.EOF)
         {
-            
+            //System.out.println(tokenizer.currentPosition);
             tokenCount++;            
             if(tokenizer.getValue() == null)
             {
@@ -61,6 +61,8 @@ public class TokenizerTest
             else
             {
                 tokenVector.add(tokenizer.getValue());
+                //System.out.println(tokenizer.getValue());
+                //System.out.println(tokenizer.getTokenType());
             }
             
             if(tokenizer.getTokenType() == TokenType.EOL)
@@ -73,7 +75,7 @@ public class TokenizerTest
             }
         }
         System.out.println(tokenVector);
-        Assert.assertEquals(49, tokenCount);
+        Assert.assertEquals(51, tokenCount);
     }
 
 }

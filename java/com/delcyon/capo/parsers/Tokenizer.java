@@ -116,7 +116,8 @@ public class Tokenizer
     int currentChar = -4;
     int currentQuoteChar = -1;
     private boolean pushedBack = false;
-
+    long currentPosition = -1l;
+    
     private InternalTokenType internalTokenTypeHolder = new InternalTokenType(TokenType.NOTHING);
     
     
@@ -283,6 +284,7 @@ public class Tokenizer
         while(true)
         {
             currentChar = reader.read();
+            currentPosition++;
             
             //check for EOF
             if(currentChar < 0)
@@ -345,6 +347,8 @@ public class Tokenizer
             if((charType & CharacterType.ESCAPE.mask) != 0)
             {
                 int nextChar = reader.read();
+                currentPosition++;
+                
                 if(nextChar != currentChar) //if there are the same, then we're just escaping our escape char
                 {
                     switch (nextChar)
@@ -379,6 +383,8 @@ public class Tokenizer
                             break; /* switch */
                         case 'c': //handle control chars
                             nextChar = reader.read();
+                            currentPosition++;
+                            
                             if(nextChar > 0x7f)
                             {
                                 throw new Exception("Expected ASCII after \\c");
@@ -428,7 +434,9 @@ public class Tokenizer
                 while(currentChar >= 0)
                 {
                     currentChar = reader.read();
-                    if ((currentChar < 256 ? characterTypes[currentChar] : CharacterType.ALPHA.mask & CharacterType.EOL.mask) != 0)
+                    currentPosition++;
+                    
+                    if (currentChar == TokenType.EOF.value || (characterTypes[currentChar] & CharacterType.EOL.mask) != 0)
                     {
                         break;
                     }
@@ -531,6 +539,8 @@ public class Tokenizer
         reader.mark(10);
         char[] buffer = null; 
         int firstChar = reader.read();
+        currentPosition++;
+        
         int count = 1;
         boolean braced = false;
         if(firstChar == '{')
@@ -547,6 +557,8 @@ public class Tokenizer
         for(;count <= buffer.length;count++)
         {
             int ch = reader.read();
+            currentPosition++;
+            
             if ((ch >= '0' && ch <= '9') || (ch >= 'A' && ch <= 'F') || (ch >= 'a' && ch <= 'f')) 
             {
                 buffer[count] = (char) ch;
@@ -559,6 +571,8 @@ public class Tokenizer
             else //not a valid hex, so reset
             {                
                 reader.reset();
+                currentPosition -= (long)count;
+                
                 break;
             }
         }
@@ -579,6 +593,8 @@ public class Tokenizer
         for(;count < buffer.length;count++)
         {
             int ch = reader.read();
+            currentPosition++;
+            
             if (ch >= '0' && ch <= '7') 
             {
                 buffer[count] = (char) ch;
@@ -587,6 +603,8 @@ public class Tokenizer
             else //not a valid octal, so reset
             {                
                 reader.reset();
+                currentPosition -= (long)count;
+                
                 break;
             }
         }
@@ -604,7 +622,10 @@ public class Tokenizer
     private char[] getUnicodeFromReader(int length) throws Exception
     {
         byte[] buffer = new byte[length];
+        
         int readLength = reader.read(buffer);
+        currentPosition += (long)readLength;
+        
         if(readLength < length) //check length
         {
             throw new Exception("value to short of unicode escape");
