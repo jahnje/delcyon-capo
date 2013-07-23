@@ -478,9 +478,9 @@ public class XMLSerializer
 							for (int elementIndex = 0; elementIndex < elementVector.size(); elementIndex++)
 							{
 								Element element = elementVector.get(elementIndex);
-								if (ReflectionUtility.isPrimitive(field.getType()) == true)
+								if (ReflectionUtility.isPrimitive(field.getType().getComponentType()) == true)
 								{
-									Object instanceObject = ReflectionUtility.getPrimitiveInstance(field.getType(), element.getTextContent());
+									Object instanceObject = ReflectionUtility.getPrimitiveInstance(field.getType().getComponentType(), element.getTextContent());
 									if (instanceObject != null)
 									{																				
 										Array.set(arrayObject, elementIndex, instanceObject);
