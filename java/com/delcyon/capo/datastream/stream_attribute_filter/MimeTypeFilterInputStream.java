@@ -27,7 +27,7 @@ import eu.medsea.mimeutil.MimeUtil;
  * @author jeremiah
  *
  */
-//@InputStreamAttributeFilterProvider(name=MimeTypeFilterInputStream.MIME_TYPE_ATTRIBUTE)
+@InputStreamAttributeFilterProvider(name=MimeTypeFilterInputStream.MIME_TYPE_ATTRIBUTE)
 public class MimeTypeFilterInputStream extends AbstractFilterInputStream
 {
 
