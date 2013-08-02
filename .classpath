@@ -6,12 +6,16 @@
 	<classpathentry kind="lib" path="lib/commons-cli-1.2.jar"/>
 	<classpathentry kind="lib" path="lib/scannotation-1.0.2.jar"/>
 	<classpathentry kind="lib" path="lib/javassist-3.8.0.GA.jar"/>
-	<classpathentry kind="lib" path="lib/saxon.jar" sourcepath="/Users/jeremiah/Downloads/saxon9-2-1-2source"/>
+	<classpathentry kind="lib" path="lib/saxon.jar"/>
 	<classpathentry kind="lib" path="lib-other/postgresql-8.3-604.jdbc3.jar"/>
 	<classpathentry kind="lib" path="lib/bcprov-jdk16-146.jar" sourcepath="/Users/jeremiah/Downloads/bcprov-jdk16-146/src.zip"/>
 	<classpathentry kind="lib" path="lib/bcmail-jdk16-146.jar"/>
 	<classpathentry kind="lib" path="lib/wrapper.jar"/>
 	<classpathentry kind="lib" path="lib-other/hsqldb.jar"/>
+	<classpathentry kind="lib" path="lib/org.eclipse.wst.xml.xpath2.processor_1.1.0.jar"/>
+	<classpathentry kind="lib" path="lib/cupv10k-runtime.jar"/>
+	<classpathentry kind="lib" path="lib/xml-apis.jar"/>
+	<classpathentry kind="lib" path="lib/schema11-xercesImpl.jar"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.junit.JUNIT_CONTAINER/4"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
 	<classpathentry kind="output" path="build"/>

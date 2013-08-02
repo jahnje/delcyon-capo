@@ -28,4 +28,5 @@
    <entry key="KEY_SIZE" value="1024"/>
    <entry key="CLIENT_ID" value="capo.client.1"/>
    <entry key="QUICK_SHUTDOW" value="true"/>
+   <entry key="LOGGING_LEVEL" value="FINER"/>
 </config>

@@ -1,0 +1,304 @@
+<?xml version="1.0"?>
+<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+    targetNamespace="http://www.delcyon.com/capo-server"
+    xmlns="http://www.delcyon.com/capo-server" 
+    xmlns:sch="http://purl.oclc.org/dsdl/schematron"
+    xmlns:client="http://www.delcyon.com/capo-client"
+    elementFormDefault="qualified">
+    <xsd:annotation>
+        <xsd:appinfo>
+            <sch:schema queryBinding="xslt2"/>
+            <sch:title>Schematron validation</sch:title>
+            <sch:ns prefix="server" uri="http://www.delcyon.com/capo-server"/>
+        </xsd:appinfo>
+    </xsd:annotation>
+
+
+
+    <xsd:simpleType name="xpath">
+        <xsd:restriction base="xsd:string">
+            <xsd:pattern value=".+"/>
+        </xsd:restriction>
+    </xsd:simpleType>
+
+    <xsd:element name="Capo">
+        <xsd:complexType>
+            <xsd:sequence>
+                <xsd:any minOccurs="1"  maxOccurs="unbounded"/>
+            </xsd:sequence>
+            <xsd:attribute name="name" use="required"/>
+            <xsd:attribute name="mainGroup" use="optional">
+                <xsd:annotation>
+                    <xsd:appinfo>
+                        <sch:pattern name="Verify group name">
+                            <sch:rule context="server:Capo/@mainGroup">
+                                <sch:let name="groupName" value="../@mainGroup"/>
+                                <sch:assert test="exists(//server:group[@name = $groupName])">
+                                    No Main Group '<sch:value-of select="$groupName"/>' Found.
+                                </sch:assert>                                
+                            </sch:rule>
+                        </sch:pattern>                        
+                    </xsd:appinfo>
+                </xsd:annotation>
+            </xsd:attribute>                            
+        </xsd:complexType>        
+    </xsd:element>
+    
+    <xsd:element name="include">
+        <xsd:complexType>                        
+            <xsd:attribute name="src" use="required"/>            
+        </xsd:complexType>
+    </xsd:element>
+    
+    
+    <xsd:element name="import">
+        <xsd:complexType>                        
+            <xsd:attribute name="name" use="required"/>
+            <xsd:attribute name="src" use="required"/>
+            <xsd:attribute name="type" use="optional"/>
+            <xsd:attribute name="ref" use="optional"/>
+            <xsd:attribute name="contentOnly" use="optional"/>
+            <xsd:attribute name="grammar" use="optional"/>                        
+        </xsd:complexType>
+    </xsd:element>
+    
+    
+    <xsd:element name="export">
+        <xsd:complexType>                        
+            <xsd:attribute name="name" use="optional"/>
+            <xsd:attribute name="dest" use="required"/>
+            <xsd:attribute name="ref" use="optional"/>
+            <xsd:attribute name="nodeset" use="optional"/>            
+            <xsd:attribute name="output" use="optional">
+                <xsd:annotation>
+                    <xsd:documentation>comma seperated list of standard xsl output properties where each property is as follows name:value. Example: "method:text,omit-xml-declaration:yes"</xsd:documentation>
+                </xsd:annotation>
+            </xsd:attribute>
+            <xsd:attribute name="trim" use="optional" default="false">
+                <xsd:simpleType>
+                    <xsd:restriction base="xsd:string">
+                        <xsd:enumeration value="true"></xsd:enumeration>
+                        <xsd:enumeration value="false"></xsd:enumeration>
+                    </xsd:restriction>
+                </xsd:simpleType>
+            </xsd:attribute>            
+            <xsd:attribute name="xsl" use="optional"/>
+            <xsd:assert test="(@ref and not(@nodeset)) or (not(@ref) and @nodeset) or (not(@ref) and not(@nodset))"/>
+            <xsd:assert test="(@xsl and not(@output)) or (not(@xsl) and @output) or (not(@xsl) and not(@output))"/>
+        </xsd:complexType>
+    </xsd:element>
+    
+     
+    <xsd:element name="task">
+        <xsd:complexType>
+            <xsd:all>
+                <xsd:any minOccurs="0" namespace="##targetNamespace" maxOccurs="unbounded" processContents="strict"/>
+                <xsd:any minOccurs="0" namespace="##other" maxOccurs="unbounded" processContents="lax"/>                    
+            </xsd:all>
+            <xsd:attribute name="name" use="required"/>
+            <xsd:attribute name="lastAccessTime" use="optional"/>
+            <xsd:attribute name="local" use="optional"/>
+            <xsd:attribute name="initialGroup" use="optional"/>
+            <xsd:attribute name="executionInterval" use="optional"/>
+            <xsd:attribute name="lastExecutionTime" use="optional"/>
+            <xsd:attribute name="lifeSpan" use="optional"/>
+            <xsd:attribute name="orpanAction" use="optional"/>
+            <xsd:attribute name="taskURI" use="optional"/>
+            <xsd:attribute name="MD5" use="optional"/>
+        </xsd:complexType>
+    </xsd:element>
+    
+    <xsd:element name="group">       
+        <xsd:complexType>            
+            <xsd:all>
+                <xsd:any minOccurs="0" namespace="##targetNamespace" maxOccurs="unbounded" processContents="strict"/>
+                <xsd:any minOccurs="0" namespace="##other" maxOccurs="unbounded" processContents="lax"/>                    
+            </xsd:all>
+            <xsd:attribute name="name" use="required"/>
+            <xsd:attribute name="returns" use="optional"/>
+        </xsd:complexType>
+    </xsd:element>
+    
+    <xsd:element name="log">
+        <xsd:complexType>
+            <xsd:attribute name="ref" use="optional" type="xpath"/>
+            <xsd:attribute name="eval" use="optional" type="xpath"/>
+            <xsd:attribute name="level" use="optional">
+                <xsd:simpleType>
+                    <xsd:union>
+                        <xsd:simpleType>                    
+                            <xsd:restriction base="xsd:string">
+                                <xsd:enumeration value="SEVERE"/>                            
+                                <xsd:enumeration value="WARNING"/>
+                                <xsd:enumeration value="INFO"/>
+                                <xsd:enumeration value="CONFIG"/>                            
+                                <xsd:enumeration value="FINE"/>
+                                <xsd:enumeration value="FINER"/>
+                                <xsd:enumeration value="FINEST"/>                        
+                            </xsd:restriction>
+                        </xsd:simpleType>
+                        <xsd:simpleType>
+                            <xsd:restriction base="xsd:integer"></xsd:restriction>
+                        </xsd:simpleType>
+                    </xsd:union>
+                </xsd:simpleType>
+                
+            </xsd:attribute>
+            <xsd:attribute name="message" use="optional"/>            
+            <xsd:attribute name="output" use="optional">
+                <xsd:simpleType>
+                    <xsd:restriction base="xsd:string">
+                        <xsd:enumeration value="STDOUT"/>                            
+                        <xsd:enumeration value="STDERR"/>
+                        <xsd:enumeration value="LOG"/>
+                    </xsd:restriction>
+                </xsd:simpleType>
+            </xsd:attribute>
+        </xsd:complexType>
+    </xsd:element>
+    
+    <xsd:element name="resource">
+        <xsd:complexType>
+            <xsd:attribute name="uri" use="required"/>            
+            <xsd:attribute name="name" use="required"/>
+        </xsd:complexType>
+    </xsd:element>
+    
+    <xsd:element name="resourceMetaData">
+        <xsd:complexType>
+            <xsd:attribute name="resource" use="required"/>            
+            <xsd:attribute name="name" use="optional"/>
+            <xsd:attribute name="attributes" use="optional"/>
+            <xsd:attribute name="requiredAttributes" use="optional"/>
+            <xsd:attribute name="useRelativePaths" use="optional"/>
+            <xsd:attribute name="depth" use="optional" default="1">
+                <xsd:simpleType>
+                    <xsd:union>
+                        <xsd:simpleType>
+                            <xsd:restriction base="xsd:integer"/>
+                        </xsd:simpleType>
+                        <xsd:simpleType>                    
+                            <xsd:restriction base="xsd:string">
+                                <xsd:enumeration value="MAX"/>                                                                                    
+                            </xsd:restriction>
+                        </xsd:simpleType>                        
+                    </xsd:union>
+                </xsd:simpleType>
+            </xsd:attribute>
+        </xsd:complexType>
+    </xsd:element>
+    
+    <xsd:element name="choose">
+        <xsd:complexType>
+            <xsd:sequence>
+                <xsd:element ref="when" minOccurs="0" maxOccurs="unbounded"/>
+                <xsd:element ref="otherwise" minOccurs="0" maxOccurs="1"/>
+            </xsd:sequence>
+        </xsd:complexType>
+    </xsd:element>
+    
+    <xsd:element name="when">
+        <xsd:complexType>
+            <xsd:complexContent>
+                <xsd:extension base="xsd:anyType">
+                    <xsd:sequence minOccurs="1"/>
+                    <xsd:attribute name="test" use="required" type="xpath"/>
+                </xsd:extension>
+            </xsd:complexContent>            
+        </xsd:complexType>        
+    </xsd:element>
+    
+    <xsd:element name="otherwise">
+        <xsd:complexType>
+            <xsd:sequence>
+                <xsd:any minOccurs="1"  maxOccurs="unbounded"/>
+            </xsd:sequence>
+        </xsd:complexType>
+    </xsd:element>
+    
+    <xsd:element name="call">
+        <xsd:complexType>
+            <xsd:attribute name="ref" use="required" type="xpath"/>            
+        </xsd:complexType>
+    </xsd:element>
+    
+    <xsd:element name="repeat">
+        <xsd:complexType>
+            <xsd:all>
+                <xsd:any minOccurs="0" namespace="##targetNamespace" maxOccurs="unbounded" processContents="strict"/>
+                <xsd:any minOccurs="0" namespace="##other" maxOccurs="unbounded" processContents="lax"/>                    
+            </xsd:all>
+            <xsd:attribute name="name" use="required" type="xsd:string"/>
+            <xsd:attribute name="nodeset" use="required" type="xpath"/>
+            <xsd:attribute name="indexVar" use="optional" type="xsd:string"/>
+        </xsd:complexType>
+    </xsd:element>
+    
+    <xsd:element name="var">
+        <xsd:complexType>
+            <xsd:simpleContent>                
+                <xsd:extension base="xsd:string">
+                    <xsd:attribute name="name" use="required" type="xsd:string"/>
+                    <xsd:attribute name="value" use="optional" type="xsd:string"/>
+                    <xsd:attribute name="eval" use="optional" type="xpath"/>
+                    <xsd:attribute name="scope" use="optional">
+                        <xsd:simpleType>
+                            <xsd:restriction base="xsd:string">
+                                <xsd:enumeration value="APPLICATION"/>                                                    
+                            </xsd:restriction>
+                        </xsd:simpleType>
+                    </xsd:attribute>
+                </xsd:extension>
+            </xsd:simpleContent>
+                        
+        </xsd:complexType>
+    </xsd:element>
+    
+    <xsd:element name="diff">
+        <xsd:complexType>                        
+            <xsd:attribute name="name" use="optional"/>
+            <xsd:attribute name="base" use="required"/>
+            <xsd:attribute name="mod" use="required"/>
+        </xsd:complexType>
+    </xsd:element>
+    
+    <xsd:element name="sync">
+        
+    </xsd:element>
+    
+    <xsd:element name="setID">
+        <xsd:complexType>                        
+            <xsd:attribute name="name" use="required"/>
+            <xsd:attribute name="value" use="required"/>
+        </xsd:complexType>
+    </xsd:element>
+    
+    <xsd:element name="transform">
+        <xsd:complexType>
+            <xsd:all>                
+                <xsd:any minOccurs="0" namespace="http://www.w3.org/1999/XSL/Transform" maxOccurs="1" processContents="lax"/>            
+            </xsd:all>
+            <xsd:attribute name="name" use="required"/>
+            <xsd:attribute name="ref" use="required"/>
+            <xsd:attribute name="stylesheet" use="required"/>            
+        </xsd:complexType>
+    </xsd:element>
+    
+    <xsd:element name="create">
+        <xsd:complexType>            
+            <xsd:attribute name="elementName" use="required"/>
+            <xsd:attribute name="elementDstRef" use="optional"/>
+            <xsd:attribute name="elementNamespaceURI" use="optional"/>
+            <xsd:anyAttribute namespace="##any" processContents="lax"/>            
+        </xsd:complexType>
+    </xsd:element>
+    
+    <xsd:element name="remove">
+        <xsd:complexType>                        
+            <xsd:attribute name="ref" use="optional"/>
+            <xsd:attribute name="uri" use="optional"/>
+            <xsd:assert test="(@ref and not(@uri)) or (not(@ref) and @uri)"/>            
+        </xsd:complexType>
+    </xsd:element>
+    
+</xsd:schema>

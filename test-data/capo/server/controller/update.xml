@@ -42,7 +42,7 @@
                 </xsl:variable>
                 
                 <!-- now that we know what we need to do, repopulate all of the uris will the full path so that the sync elements will work  -->        
-                <server:group>
+                <server:group name="completeURIs">
                     <xsl:apply-templates mode="completeURIs" select="$final_sync_nodes">
                         <xsl:with-param name="localRootPath" select="$localRootPath"/>
                         <xsl:with-param name="remoteRootPath" select="$remoteRootPath"/>

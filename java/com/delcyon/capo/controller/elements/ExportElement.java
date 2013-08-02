@@ -53,7 +53,7 @@ public class ExportElement extends AbstractControl
 	
 	private enum Attributes
 	{
-		name,dest,ref,nodeset,output,trim,type,xsl
+		name,dest,ref,nodeset,output,trim,xsl
 	}
 	
 	
@@ -93,14 +93,10 @@ public class ExportElement extends AbstractControl
 		String dest = getAttributeValue(Attributes.dest);
 		String nodeset = getAttributeValue(Attributes.nodeset);
 		String output = getAttributeValue(Attributes.output);
-		String trim = getAttributeValue(Attributes.trim);
-		String type = getAttributeValue(Attributes.type);
+		String trim = getAttributeValue(Attributes.trim);		
 		String xsl = getAttributeValue(Attributes.xsl);
 		
-		if (type.isEmpty())
-		{
-			type = "XML";
-		}
+		
 		
 		//default the name to the element name
 		if (name == null || name.trim().isEmpty())

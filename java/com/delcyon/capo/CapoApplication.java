@@ -98,6 +98,7 @@ public abstract class CapoApplication extends ContextThread implements WrapperLi
 	
 	public static final String RESOURCE_NAMESPACE_URI = "http://www.delcyon.com/capo/resource";
 	public static final String CAPO_NAMESPACE_URI = "http://www.delcyon.com/capo";
+	public static final String XSD11_SCHEMA_LANGUAGE = "http://www.w3.org/XML/XMLSchema/v1.1";
 	
 	protected static CapoApplication capoApplication;
 	public static Level LOGGING_LEVEL = Level.INFO;
@@ -177,7 +178,7 @@ public abstract class CapoApplication extends ContextThread implements WrapperLi
 		System.setProperty("java.util.prefs.syncInterval", "2000000");
 		System.setProperty("javax.xml.xpath.XPathFactory", "net.sf.saxon.xpath.XPathFactoryImpl");
 		System.setProperty("javax.xml.transform.TransformerFactory", "net.sf.saxon.TransformerFactoryImpl");
-		System.setProperty("javax.xml.parsers.DocumentBuilderFactory", "com.delcyon.capo.xml.cdom.CDocumentBuilderFactory");
+		System.setProperty("javax.xml.parsers.DocumentBuilderFactory", "com.delcyon.capo.xml.cdom.CDocumentBuilderFactory");		
 		//System.setProperty("javax.net.debug","all");		
 		System.setProperty("sun.security.ssl.allowUnsafeRenegotiation", "true");
 		System.setProperty("sun.security.ssl.allowLegacyHelloMessages", "true");

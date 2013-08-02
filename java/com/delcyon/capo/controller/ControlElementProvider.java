@@ -29,5 +29,6 @@ import java.lang.annotation.Target;
 @Target({ElementType.TYPE})
 public @interface ControlElementProvider
 {	
-	String name();	
+	String name();
+	String schema() default "capo.xsd";
 }

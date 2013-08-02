@@ -3,6 +3,11 @@ package com.delcyon.capo.controller.server;
 import java.util.HashMap;
 import java.util.logging.Level;
 
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.validation.Schema;
+import javax.xml.validation.SchemaFactory;
+import javax.xml.validation.Validator;
+
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
@@ -382,7 +387,27 @@ public class ControllerClientRequestProcessor  extends AbstractClientRequestProc
 		    CapoApplication.logger.log(Level.WARNING,"Couldn't find a controller named "+controlerName);
 		    return null;
 		}
-					
+
+		SchemaFactory schemaFactory = SchemaFactory.newInstance(CapoApplication.XSD11_SCHEMA_LANGUAGE);
+		Schema schema = schemaFactory.newSchema(new DOMSource(CapoApplication.getDefaultDocument("capo.xsd")));
+		
+		Validator validator = schema.newValidator();
+		try
+		{
+		    validator.validate(new DOMSource(localCapoDocument));
+		} catch (Exception exception)
+		{
+		    Node node = (Node) validator.getProperty("http://apache.org/xml/properties/dom/current-element-node");
+		    if (node != null)
+		    {
+		        XPath.dumpNode(localCapoDocument, System.err);
+		        throw new Exception(exception.getMessage() +" on node "+ XPath.getXPath(node) +" in "+controlerName);
+		    }
+		    else
+		    {
+		        throw new Exception(exception.getMessage() +" in "+controlerName);
+		    }
+		}
 		//load includes
 		
 		NodeList includeObjectList = XPath.selectNodes(localCapoDocument, "//server:include");
@@ -403,7 +428,23 @@ public class ControllerClientRequestProcessor  extends AbstractClientRequestProc
 					includeResourceDescriptor.addResourceParameters(null, new ResourceParameter(FileResourceType.Parameters.PARENT_PROVIDED_DIRECTORY,PREFERENCE.CONTROLLER_DIR));
 					if (includeResourceDescriptor.getResourceMetaData(null).exists() == true)
 					{
-					    Document importDocument = CapoApplication.getDocumentBuilder().parse(includeResourceDescriptor.getInputStream(null));					
+					    Document importDocument = CapoApplication.getDocumentBuilder().parse(includeResourceDescriptor.getInputStream(null));
+					    //validate included XML
+				        try
+				        {
+				            validator.validate(new DOMSource(localCapoDocument));
+				        } catch (Exception exception)
+				        {
+				            Node node = (Node) validator.getProperty("http://apache.org/xml/properties/dom/current-element-node");
+				            if (node != null)
+				            {
+				                throw new Exception(exception.getMessage() +" on node "+ XPath.getXPath(node) +" in "+includeResourceDescriptor.getResourceURI().getResourceURIString());
+				            }
+				            else
+				            {
+				                throw new Exception(exception.getMessage() +" in "+includeResourceDescriptor.getResourceURI().getResourceURIString());
+				            }
+				        }
 					    includeElement.getParentNode().replaceChild(includeElement.getOwnerDocument().importNode(importDocument.getDocumentElement(), true), includeElement);
 					}
 					else
@@ -426,6 +467,7 @@ public class ControllerClientRequestProcessor  extends AbstractClientRequestProc
         return this.sessionHashMap ;
     }
 
-	
+    
+   
 	
 }

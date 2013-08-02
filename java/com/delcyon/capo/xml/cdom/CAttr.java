@@ -37,7 +37,8 @@ public class CAttr extends CNode implements Attr
 {
     
     private boolean isConstructing = true;
-
+    private boolean isSpecified = true;
+    
 	@SuppressWarnings("unused")
     protected CAttr(){}//reflection
     
@@ -110,8 +111,7 @@ public class CAttr extends CNode implements Attr
     @Override
     public boolean getSpecified()
     {
-        Thread.dumpStack();
-        throw new UnsupportedOperationException();
+       return isSpecified;
     }
 
     /* (non-Javadoc)

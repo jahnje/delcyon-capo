@@ -7,7 +7,7 @@
     
     
     <server:group name="default">
-        <server:log message="clientID = ${clientID}" output="STDERR"/>
+        <server:log message="clientID = ${clientID}" output="STDERR" />
         <server:resource uri="clients:${clientID}" name="client" />
         <server:resourceMetaData resource="client"/>
        
