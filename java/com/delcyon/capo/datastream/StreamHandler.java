@@ -203,6 +203,7 @@ public class StreamHandler implements InterruptibleRunnable
 	public void interrupt()
 	{	
 		Thread.dumpStack();
+		interruptAttempt = true; //TODO just need to watch this for now, Apparent change in ThreadPool behavior from java 1.6 to 1.7. 1.7 doesn't seem to double tap workers anymore. 
 		if (interruptAttempt == true)
 		{
 			CapoApplication.logger.log(Level.WARNING,"Insistant Interrupt attempt, forcing shutdown");
