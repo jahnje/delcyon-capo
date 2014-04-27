@@ -94,91 +94,96 @@ public class CapoConnection implements StreamEventListener
 	public Socket open() throws Exception
 	{
 		callerStackTraceElements = new Exception().getStackTrace();
-		
-		while (this.socket == null || socket.isClosed())
+	
+		while(true)
 		{
-			
-			
-			try
+		
+			while (this.socket == null || socket.isClosed())
 			{
-			    
-			    if (CapoApplication.getSslSocketFactory() != null)
-			    {
-			        CapoClient.logger.log(Level.FINE, "Opening Secure Socket to "+serverAddress+":"+port);
-			        this.socket = CapoApplication.getSslSocketFactory().createSocket(serverAddress, port);			        
-			        this.socket.setSendBufferSize(CapoApplication.getConfiguration().getIntValue(PREFERENCE.BUFFER_SIZE)+728);
-			        this.socket.setReceiveBufferSize(CapoApplication.getConfiguration().getIntValue(PREFERENCE.BUFFER_SIZE)+728);
-			    }
-			    else
-			    {
-			        CapoClient.logger.log(Level.FINE, "Opening Socket to "+serverAddress+":"+port);
-			        this.socket = new Socket(serverAddress, port);    
-			    }
-			} 
-			catch (ConnectException connectException)
-			{
-			    if(CapoApplication.getApplication().getApplicationState().ordinal() >= ApplicationState.STOPPING.ordinal())
-			    {
-			        throw new Exception("Application Shutting Down, ABORTING connection attempt.");
-			    }
-			    CapoApplication.logger.log(Level.WARNING, "Error opening socket, sleeping "+CapoApplication.getConfiguration().getLongValue(CapoClient.Preferences.CONNECTION_RETRY_INTERVAL)+"ms");
-			    Thread.sleep(CapoApplication.getConfiguration().getLongValue(CapoClient.Preferences.CONNECTION_RETRY_INTERVAL));
+
+
+				try
+				{
+
+					if (CapoApplication.getSslSocketFactory() != null)
+					{
+						CapoClient.logger.log(Level.FINE, "Opening Secure Socket to "+serverAddress+":"+port);
+						this.socket = CapoApplication.getSslSocketFactory().createSocket(serverAddress, port);			        
+						this.socket.setSendBufferSize(CapoApplication.getConfiguration().getIntValue(PREFERENCE.BUFFER_SIZE)+728);
+						this.socket.setReceiveBufferSize(CapoApplication.getConfiguration().getIntValue(PREFERENCE.BUFFER_SIZE)+728);
+					}
+					else
+					{
+						CapoClient.logger.log(Level.FINE, "Opening Socket to "+serverAddress+":"+port);
+						this.socket = new Socket(serverAddress, port);    
+					}
+				} 
+				catch (ConnectException connectException)
+				{
+					if(CapoApplication.getApplication().getApplicationState().ordinal() >= ApplicationState.STOPPING.ordinal())
+					{
+						throw new Exception("Application Shutting Down, ABORTING connection attempt.");
+					}
+					CapoApplication.logger.log(Level.WARNING, "Error opening socket, sleeping "+CapoApplication.getConfiguration().getLongValue(CapoClient.Preferences.CONNECTION_RETRY_INTERVAL)+"ms");
+					Thread.sleep(CapoApplication.getConfiguration().getLongValue(CapoClient.Preferences.CONNECTION_RETRY_INTERVAL));
+				}
 			}
-		}
-		socket.setKeepAlive(true);
-		socket.setTcpNoDelay(true);
-		socket.setSoLinger(false, 0);
-		
-		this.outputStream = socket.getOutputStream();
+			socket.setKeepAlive(true);
+			socket.setTcpNoDelay(true);
+			socket.setSoLinger(false, 0);
 
-		//This is just for debugging when needed. 
-		InputStream tempInputStream = socket.getInputStream();		
-		if(CapoApplication.logger.isLoggable(Level.FINE))
-		{
-		    inputStreamcallerStackTraceElements = new Exception().getStackTrace();
-		    tempInputStream = new StreamEventFilterInputStream(tempInputStream);
-		    ((StreamEventFilterInputStream) tempInputStream).addStreamEventListener(this);		    
-		}
+			this.outputStream = socket.getOutputStream();
 
-		this.inputStream = new BufferedInputStream(tempInputStream);
-		
-		if (CapoApplication.getKeyStore() != null && CapoApplication.getSslSocketFactory() != null)
-		{
-		    sslSID = DatatypeConverter.printHexBinary(((SSLSocket)socket).getSession().getId());		    
-			CapoApplication.logger.fine("SSL SID:"+sslSID);
-			String clientID = CapoApplication.getConfiguration().getValue(CapoClient.Preferences.CLIENT_ID);
-			char[] password = CapoApplication.getConfiguration().getValue(PREFERENCE.KEYSTORE_PASSWORD).toCharArray();
-			String authMessage = "AUTH:CID="+clientID;
+			//This is just for debugging when needed. 
+			InputStream tempInputStream = socket.getInputStream();		
+			if(CapoApplication.logger.isLoggable(Level.FINE))
+			{
+				inputStreamcallerStackTraceElements = new Exception().getStackTrace();
+				tempInputStream = new StreamEventFilterInputStream(tempInputStream);
+				((StreamEventFilterInputStream) tempInputStream).addStreamEventListener(this);		    
+			}
 
-			PrivateKey privateKey = (PrivateKey) CapoApplication.getKeyStore().getKey(clientID+".private", password);
-			Signature signature = Signature.getInstance("SHA256withRSA");        
-			signature.initSign(privateKey);
-			signature.update(clientID.getBytes());
-			signature.update(((SSLSocket)socket).getSession().getId());
-			authMessage += ":SIG="+DatatypeConverter.printHexBinary(signature.sign())+":";			
-			this.outputStream.write(authMessage.getBytes());
+			this.inputStream = new BufferedInputStream(tempInputStream);
+
+			if (CapoApplication.getKeyStore() != null && CapoApplication.getSslSocketFactory() != null)
+			{
+				sslSID = DatatypeConverter.printHexBinary(((SSLSocket)socket).getSession().getId());		    
+				CapoApplication.logger.fine("SSL SID:"+sslSID);
+				String clientID = CapoApplication.getConfiguration().getValue(CapoClient.Preferences.CLIENT_ID);
+				char[] password = CapoApplication.getConfiguration().getValue(PREFERENCE.KEYSTORE_PASSWORD).toCharArray();
+				String authMessage = "AUTH:CID="+clientID;
+
+				PrivateKey privateKey = (PrivateKey) CapoApplication.getKeyStore().getKey(clientID+".private", password);
+				Signature signature = Signature.getInstance("SHA256withRSA");        
+				signature.initSign(privateKey);
+				signature.update(clientID.getBytes());
+				signature.update(((SSLSocket)socket).getSession().getId());
+				authMessage += ":SIG="+DatatypeConverter.printHexBinary(signature.sign())+":";			
+				this.outputStream.write(authMessage.getBytes());
+				this.outputStream.flush();
+				this.inputStream.read();
+			}
+			//check for a busy signal
+			this.outputStream.write(ConnectionTypes.CAPO_REQUEST.toString().getBytes());
 			this.outputStream.flush();
-			this.inputStream.read();
-		}
-		//check for a busy signal
-		this.outputStream.write(ConnectionTypes.CAPO_REQUEST.toString().getBytes());
-		this.outputStream.flush();
-		byte[] buffer = new byte[256];		
-		StreamUtil.fullyReadIntoBufferUntilPattern(inputStream, buffer, (byte)0);
-		String message = new String(buffer).trim();
-		
-		//check to see if this is a busy message
-		if (message.matches(ConnectionResponses.BUSY+" \\d+"))
-		{
-			long delaytime = Long.parseLong(message.replaceAll(ConnectionResponses.BUSY+" (\\d+)", "$1"));
-			close();
-			CapoApplication.logger.log(Level.WARNING, "Server Busy. Retrying connection in "+delaytime+"ms.");
-			Thread.sleep(delaytime);
-			open();				
-		}
-		else if (message.matches(ConnectionResponses.OK.toString()) == false)
-		{				
-			throw new Exception("Unknown message from server: '"+message+"'");				
+			byte[] buffer = new byte[256];		
+			StreamUtil.fullyReadIntoBufferUntilPattern(inputStream, buffer, (byte)0);
+			String message = new String(buffer).trim();
+
+			//check to see if this is a busy message
+			if (message.matches(ConnectionResponses.BUSY+" \\d+"))
+			{
+				long delaytime = Long.parseLong(message.replaceAll(ConnectionResponses.BUSY+" (\\d+)", "$1"));
+				close();
+				CapoApplication.logger.log(Level.WARNING, "Server Busy. Retrying connection in "+delaytime+"ms.");
+				Thread.sleep(delaytime);
+				continue;				
+			}
+			else if (message.matches(ConnectionResponses.OK.toString()) == false)
+			{				
+				throw new Exception("Unknown message from server: '"+message+"'");				
+			}
+			break;
 		}
 		CapoApplication.logger.log(Level.INFO, "Opened Socket: "+socket);
 		return socket;
