@@ -46,7 +46,7 @@
         <xsl:variable name="devindex">
             <devindex>
                 <xsl:for-each select="lines/line">
-                    <xsl:if test="matches(.,'^[a-z]+\d+:.*')">
+                    <xsl:if test="matches(.,'^[a-z\d]+\d+:.*')">
                         <dev>
                             <xsl:attribute name="index" select="position()"/>
                         </dev>
