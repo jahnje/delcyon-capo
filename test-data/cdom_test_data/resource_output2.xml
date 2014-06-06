@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<resource:testdb xmlns:resource="http://www.delcyon.com/capo/resource"
+    uri="jdbc:hsqldb:file:testdb/testdb?user=user"
+    exists="true"
+    readable="true"
+    writeable="true"
+    container="true"
+    path="testdb/testdb">
+    <resource:resource uri="jdbc:hsqldb:file:testdb/testdb?user=user" exists="true" readable="true"
+        writeable="true"
+        container="true"
+        path="testdb/testdb"
+        name="jdbcTestResource">
+        <testdb TABLE_NAME="SYSTEMS"/>
+        <resource:resource uri="jdbc:hsqldb:file:testdb/testdb?user=user!SYSTEMS" exists="true"
+            readable="true"
+            writeable="true"
+            container="true"
+            path="testdb/testdb"
+            name="systems">
+            <SYSTEMS ID="capo.client.1" NAME="host1.local" OS="OSX"/>
+            <resource:resource uri="file:/home/jeremiah/java-work/delcyon-capo/capo/server/clients/capo.client.1/status.xml"
+                exists="true"
+                executable="false"
+                readable="true"
+                writeable="true"
+                container="false"
+                lastModified="1351084371000"
+                mimeType="text/xml"
+                MD5="b7c9a648e0070fa021a7cf18d843d6df"
+                size="80"
+                contentFormatType="XML"
+                path="/home/jeremiah/java-work/delcyon-capo/capo/server/clients/capo.client.1/status.xml"
+                name="status">
+                <status lastConnectTime="1335193042006"/>
+            </resource:resource>
+            <resource:resource uri="file:/home/jeremiah/java-work/delcyon-capo/capo/server/clients/capo.client.1/identity.xml"
+                exists="true"
+                executable="false"
+                readable="true"
+                writeable="true"
+                container="false"
+                lastModified="1351084371000"
+                mimeType="text/xml"
+                MD5="f38746da26ed4de157f199b885815972"
+                size="247"
+                contentFormatType="XML"
+                path="/home/jeremiah/java-work/delcyon-capo/capo/server/clients/capo.client.1/identity.xml"
+                name="identity">
+                <server:identity xmlns:server="http://www.delcyon.com/capo-server">
+                    <server:id name="MAC" value="00:e0:81:b0:14:7f"/>
+                    <server:id name="hostname" value="bluejay.goodinassociates.com"/>
+                </server:identity>
+            </resource:resource>
+            <resource:resource uri="jdbc:hsqldb:file:testdb/testdb?user=user!system_service_asc" exists="true"
+                readable="true"
+                writeable="true"
+                container="true"
+                path="testdb/testdb"
+                name="asc">
+                <system_service_asc SYSTEM_ID="capo.client.1" SERVICE_ID="1"/>
+                <resource:resource uri="jdbc:hsqldb:file:testdb/testdb?user=user!services" exists="true"
+                    readable="true"
+                    writeable="true"
+                    container="true"
+                    path="testdb/testdb"
+                    name="services">
+                    <services ID="1" NAME="ssh"/>
+                </resource:resource>
+            </resource:resource>
+            <resource:resource uri="jdbc:hsqldb:file:testdb/testdb?user=user!system_service_asc" exists="true"
+                readable="true"
+                writeable="true"
+                container="true"
+                path="testdb/testdb"
+                name="asc">
+                <system_service_asc SYSTEM_ID="capo.client.1" SERVICE_ID="2"/>
+                <resource:resource uri="jdbc:hsqldb:file:testdb/testdb?user=user!services" exists="true"
+                    readable="true"
+                    writeable="true"
+                    container="true"
+                    path="testdb/testdb"
+                    name="services">
+                    <services ID="2" NAME="syslog"/>
+                </resource:resource>
+            </resource:resource>
+            <resource:resource uri="jdbc:hsqldb:file:testdb/testdb?user=user!INTERFACES" exists="true"
+                readable="true"
+                writeable="true"
+                container="true"
+                path="testdb/testdb"
+                name="interfaces">
+                <INTERFACES SYSTEM_ID="capo.client.1" IP="10.10.4.242" MAC="00:e0:81:b0:14:7f"/>
+            </resource:resource>
+        </resource:resource>
+    </resource:resource>
+</resource:testdb>

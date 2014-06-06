@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<resource:testdb xmlns:resource="http://www.delcyon.com/capo/resource">
+    <testdb TABLE_NAME="SYSTEMS">
+        <SYSTEMS ID="capo.client.1" NAME="host1.local" OS="OSX">
+            <status lastConnectTime="1335193042006"/>
+            <server:identity xmlns:server="http://www.delcyon.com/capo-server">
+                <server:id name="MAC" value="00:e0:81:b0:14:7f"/>
+                <server:id name="hostname" value="bluejay.goodinassociates.com"/>
+            </server:identity>
+            <system_service_asc SYSTEM_ID="capo.client.1" SERVICE_ID="1">
+                <services ID="1" NAME="ssh"/>
+            </system_service_asc>
+            <system_service_asc SYSTEM_ID="capo.client.1" SERVICE_ID="2">
+                <services ID="2" NAME="syslog"/>
+            </system_service_asc>
+            <INTERFACES SYSTEM_ID="capo.client.1" IP="10.10.4.242" MAC="00:e0:81:b0:14:7f"/>
+        </SYSTEMS>
+    </testdb>
+</resource:testdb>
