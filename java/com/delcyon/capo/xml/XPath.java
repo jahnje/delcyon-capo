@@ -363,7 +363,7 @@ public class XPath
 		DocumentBuilderFactory documentBuilderFactory = DocumentBuilderFactory.newInstance();
 		documentBuilderFactory.setNamespaceAware(true);
 		DocumentBuilder documentBuilder = documentBuilderFactory.newDocumentBuilder();		
-		Document indentityTransforDocument = documentBuilder.parse(ClassLoader.getSystemResource("defaults/identity_transform.xsl").openStream());
+		Document indentityTransforDocument = documentBuilder.parse(XPath.class.getClassLoader().getResourceAsStream("defaults/identity_transform.xsl"));
 		Transformer transformer = tFactory.newTransformer(new DOMSource(indentityTransforDocument));
 		transformer.setOutputProperty(OutputKeys.INDENT, "yes");
 		//transformer.setOutputProperty(SaxonOutputKeys.INDENT_SPACES,"4");
