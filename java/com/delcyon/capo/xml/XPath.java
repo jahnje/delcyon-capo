@@ -30,6 +30,7 @@ import javax.xml.transform.stream.StreamResult;
 import javax.xml.xpath.XPathConstants;
 import javax.xml.xpath.XPathExpression;
 import javax.xml.xpath.XPathFactory;
+import javax.xml.xpath.XPathFactoryConfigurationException;
 import javax.xml.xpath.XPathFunctionResolver;
 
 import org.w3c.dom.Attr;
@@ -54,7 +55,21 @@ import com.delcyon.capo.xml.cdom.CDocument;
 public class XPath
 {
 
-	private static final XPathFactory xPathFactory = XPathFactory.newInstance();
+	private static XPathFactory xPathFactory = null;;
+	static
+	{
+		try
+		{
+			xPathFactory = XPathFactory.newInstance(XPathFactory.DEFAULT_OBJECT_MODEL_URI, "net.sf.saxon.xpath.XPathFactoryImpl", XPath.class.getClassLoader());
+		} catch (XPathFactoryConfigurationException e)
+		{	
+			e.printStackTrace();
+			xPathFactory = XPathFactory.newInstance();
+		}
+	}
+	
+	
+	
 	
 	public static void setXPathFunctionResolver(XPathFunctionResolver xPathFunctionResolver)
 	{
