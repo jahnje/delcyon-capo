@@ -91,6 +91,7 @@ import com.delcyon.capo.resourcemanager.ResourceDescriptor;
 import com.delcyon.capo.resourcemanager.ResourceDescriptor.Action;
 import com.delcyon.capo.resourcemanager.ResourceParameter;
 import com.delcyon.capo.resourcemanager.types.FileResourceType;
+import com.delcyon.capo.server.jetty.CapoJettyServer;
 import com.delcyon.capo.tasks.TaskManagerThread;
 import com.delcyon.capo.xml.XPath;
 
@@ -121,7 +122,11 @@ public class CapoServer extends CapoApplication
 		@PreferenceInfo(arguments={"months"}, defaultValue="36", description="Number of Months before key expires", longOption="KEY_MONTHS_VALID", option="KEY_MONTHS_VALID")
 		KEY_MONTHS_VALID,
 		@PreferenceInfo(arguments={"dir"}, defaultValue="clients", description="resource where client information is stored", longOption="CLIENTS_DIR", option="CLIENTS_DIR")
-        CLIENTS_DIR;
+        CLIENTS_DIR,
+		@PreferenceInfo(arguments={"webPort"}, defaultValue="8443", description="port to start webserver on", longOption="WEB_PORT", option="WEB_PORT")
+        WEB_PORT,
+		@PreferenceInfo(arguments={"webSessionTimeout"}, defaultValue="1800", description="number of seconds before an inactive web session is logged out automatically", longOption="WEB_SESSION_TIMEOUT", option="WEB_SESSION_TIMEOUT")
+        WEB_SESSION_TIMEOUT;
 		@Override
 		public String[] getArguments()
 		{
@@ -275,6 +280,9 @@ public class CapoServer extends CapoApplication
         
 		runStartupScript(getConfiguration().getValue(PREFERENCE.STARTUP_SCRIPT));
 		
+		//Start jetty
+		CapoJettyServer capoJettyServer = new CapoJettyServer(keyStore, getConfiguration().getValue(PREFERENCE.KEYSTORE_PASSWORD), getConfiguration().getIntValue(Preferences.WEB_PORT));
+		capoJettyServer.start();
 		setApplicationState(ApplicationState.INITIALIZED);
 		
 	}

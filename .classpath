@@ -16,7 +16,20 @@
 	<classpathentry kind="lib" path="lib/cupv10k-runtime.jar"/>
 	<classpathentry kind="lib" path="lib/xml-apis.jar"/>
 	<classpathentry kind="lib" path="lib/schema11-xercesImpl.jar"/>
+	<classpathentry kind="lib" path="lib/jetty-server-9.2.2.v20140723.jar" sourcepath="/Users/jeremiah/.m2/repository/org/eclipse/jetty/jetty-server/9.2.2.v20140723/jetty-server-9.2.2.v20140723-sources.jar"/>
+	<classpathentry kind="lib" path="lib/jetty-webapp-9.2.2.v20140723.jar" sourcepath="/Users/jeremiah/.m2/repository/org/eclipse/jetty/jetty-webapp/9.2.2.v20140723/jetty-webapp-9.2.2.v20140723-sources.jar"/>
+	<classpathentry kind="lib" path="lib/jetty-util-9.2.2.v20140723.jar" sourcepath="/Users/jeremiah/.m2/repository/org/eclipse/jetty/jetty-util/9.2.2.v20140723/jetty-util-9.2.2.v20140723-sources.jar"/>
+	<classpathentry kind="lib" path="lib/servlet-api-3.1.jar"/>
+	<classpathentry kind="lib" path="lib/jetty-http-9.2.2.v20140723.jar"/>
+	<classpathentry kind="lib" path="lib/jetty-io-9.2.2.v20140723.jar" sourcepath="/Users/jeremiah/.m2/repository/org/eclipse/jetty/jetty-io/9.2.2.v20140723/jetty-io-9.2.2.v20140723-sources.jar"/>
+	<classpathentry kind="lib" path="lib/jwt-3.3.3.jar"/>
+	<classpathentry kind="lib" path="lib/jetty-servlet-9.2.2.v20140723.jar" sourcepath="/Users/jeremiah/.m2/repository/org/eclipse/jetty/jetty-servlet/9.2.2.v20140723/jetty-servlet-9.2.2.v20140723-sources.jar"/>
+	<classpathentry kind="lib" path="lib/jetty-security-9.2.2.v20140723.jar"/>
+	<classpathentry kind="lib" path="lib/jetty-xml-9.2.2.v20140723.jar"/>
+	<classpathentry kind="lib" path="lib/slf4j-api-1.7.7.jar"/>
+	<classpathentry kind="lib" path="lib/slf4j-simple-1.7.7.jar"/>
+	<classpathentry kind="lib" path="lib/commons-fileupload-1.3.1.jar"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.junit.JUNIT_CONTAINER/4"/>
-	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JDK 7"/>
 	<classpathentry kind="output" path="build"/>
 </classpath>
