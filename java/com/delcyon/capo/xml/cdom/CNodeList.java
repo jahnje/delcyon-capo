@@ -23,7 +23,7 @@ import org.w3c.dom.NodeList;
 
 /**
  * @author jeremiah
- *
+ * WARNING, this is NOT a live list. It will only return a snapshot from the time of creation
  */
 public class CNodeList extends ArrayList<Node> implements NodeList
 {
@@ -31,14 +31,14 @@ public class CNodeList extends ArrayList<Node> implements NodeList
     @Override
     public Node item(int index)
     {
-    	cleanRemoved();
+    	//cleanRemoved();
         return get(index);
     }
 
     @Override
     public int getLength()
     {
-    	cleanRemoved();
+    	//cleanRemoved();
         return size();
     }
     
@@ -55,18 +55,18 @@ public class CNodeList extends ArrayList<Node> implements NodeList
      * Unfortunately the dom spec requires that nodeLists be 'live' 
      * so we need to check the list each time, and remove and nodes that no longer have a parent
      */
-    private void cleanRemoved()
-    {
-    	
-    	for (int index = 0; index < size(); index++)
-    	{
-    		if (get(index).getParentNode() == null)
-    		{
-    			remove(index);
-    			index--;
-    		}
-    	}
-    }
+//    private void cleanRemoved()
+//    {
+//    	
+//    	for (int index = 0; index < size(); index++)
+//    	{
+//    		if (get(index).getParentNode() == null)// && get(index).getOwnerDocument() == null)
+//    		{
+//    			remove(index);
+//    			index--;
+//    		}
+//    	}
+//    }
     
     
 }
