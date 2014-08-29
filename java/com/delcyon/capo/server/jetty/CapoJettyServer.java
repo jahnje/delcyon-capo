@@ -29,6 +29,7 @@ import org.eclipse.jetty.server.ServerConnector;
 import org.eclipse.jetty.server.SslConnectionFactory;
 import org.eclipse.jetty.server.handler.HandlerCollection;
 import org.eclipse.jetty.server.handler.RequestLogHandler;
+import org.eclipse.jetty.servlet.DefaultServlet;
 import org.eclipse.jetty.util.ssl.SslContextFactory;
 import org.eclipse.jetty.util.thread.QueuedThreadPool;
 import org.eclipse.jetty.webapp.WebAppContext;
@@ -137,6 +138,7 @@ public class CapoJettyServer implements Runnable
         // PlusConfiguration) to choosing where the webapp will unpack itself.
         WebAppContext webapp = new WebAppContext();//"capo/server/webapp","/");
         webapp.setContextPath("/");
+        webapp.addServlet(DefaultServlet.class, "/img/*");
         webapp.addServlet(CapoWebWTServlet.class, "/*");        
         webapp.setResourceBase(CapoApplication.getDataManager().getResourceDirectory(PREFERENCE.WEB_DIR.toString()).getResourceURI().getResourceURIString());
         webapp.getSessionHandler().getSessionManager().setMaxInactiveInterval(CapoApplication.getConfiguration().getIntValue(CapoServer.Preferences.WEB_SESSION_TIMEOUT));        
@@ -170,6 +172,13 @@ public class CapoJettyServer implements Runnable
 			Thread.sleep(1000);
 		}
 		CapoApplication.logger.log(Level.INFO, "Jetty Started on port "+port);
+	}
+
+
+	public void shutdown() throws Exception
+	{
+		server.stop();
+		
 	}
 	
 }

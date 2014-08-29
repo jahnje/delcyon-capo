@@ -180,6 +180,7 @@ public class CapoServer extends CapoApplication
     private KeyManagerFactory keyManagerFactory;
     //private SecureSocketListener secureSocketListener;
     //private SocketListener socketListener;
+	private CapoJettyServer capoJettyServer;
 
 	public CapoServer() throws Exception
 	{
@@ -280,8 +281,7 @@ public class CapoServer extends CapoApplication
         
 		runStartupScript(getConfiguration().getValue(PREFERENCE.STARTUP_SCRIPT));
 		
-		//Start jetty
-		CapoJettyServer capoJettyServer = new CapoJettyServer(keyStore, getConfiguration().getValue(PREFERENCE.KEYSTORE_PASSWORD), getConfiguration().getIntValue(Preferences.WEB_PORT));
+		capoJettyServer = new CapoJettyServer(keyStore, getConfiguration().getValue(PREFERENCE.KEYSTORE_PASSWORD), getConfiguration().getIntValue(Preferences.WEB_PORT));
 		capoJettyServer.start();
 		setApplicationState(ApplicationState.INITIALIZED);
 		
@@ -320,6 +320,7 @@ public class CapoServer extends CapoApplication
 		long maxWaitTime = 30000;
 		long totalWaitTime = 0;
 		logger.log(Level.INFO, "Shuting Down Server");
+		capoJettyServer.shutdown();
 		while(getApplicationState().ordinal() < ApplicationState.READY.ordinal())
         {
             logger.log(Level.INFO, "Waiting for final shutdown...");
