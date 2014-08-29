@@ -30,6 +30,7 @@ public class Util
     
     public static void startMinimalCapoApplication() throws Exception
     {        
+    	System.setProperty("jaxp.debug", "true");
     	if (minmalApplication == null)
     	{
     	    minmalApplication = new TestCapoApplication();
