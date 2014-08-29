@@ -19,11 +19,14 @@ package com.delcyon.capo.util;
 import java.util.HashMap;
 import java.util.Vector;
 
+import com.delcyon.capo.annotations.XmlMappedArrays;
+
 /**
  * @author jeremiah
  *
  */
 @SuppressWarnings("unused")
+@XmlMappedArrays(name="mappedArray",keys="keyArray",values="valueArray")
 public class XMLSerializerTestData implements TestInterface
 {
 	private int primInt = 0;
@@ -54,6 +57,8 @@ public class XMLSerializerTestData implements TestInterface
 	private Boolean objBoolean = null;	
 	private Boolean[] objBooleanArray = null;
 	
+	private String[] keyArray = null;
+	private String[] valueArray = null;
 	
 	
 	private String objString = null;	
@@ -357,6 +362,26 @@ public class XMLSerializerTestData implements TestInterface
 		return xmlSerializerTestData;
 	}
 
+	public String[] getKeyArray()
+	{
+		return keyArray;
+	}
+	
+	public void setKeyArray(String[] keyArray)
+	{
+		this.keyArray = keyArray;
+	}
+	
+	public String[] getValueArray()
+	{
+		return valueArray;
+	}
+	
+	public void setValueArray(String[] valueArray)
+	{
+		this.valueArray = valueArray;
+	}
+	
 	@Override
 	public String toString()
 	{		

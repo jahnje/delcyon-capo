@@ -153,10 +153,19 @@ public class CElement extends CNode implements Element
     }
 
     /* (non-Javadoc)
+     * @see org.w3c.dom.Element#getElementsByTagNameNS(java.lang.String, java.lang.String)
+     */
+    @Override
+    public NodeList getElementsByTagName(String localName) throws DOMException
+    {
+        return getElementsByTagNameNS(null, localName);
+    }
+    
+    /* (non-Javadoc)
      * @see org.w3c.dom.Element#getElementsByTagName(java.lang.String)
      */
     @Override
-    public NodeList getElementsByTagName(final String name)
+    public NodeList getElementsByTagNameNS(final String namespaceURI,final String name)
     {
         final CNodeList nodeList = new CNodeList();
         
@@ -167,13 +176,13 @@ public class CElement extends CNode implements Element
             {
                 if(node instanceof Element)
                 {
-                    if(name.equals("*"))
+                    if(name.equals("*") && (namespaceURI == null || namespaceURI.equals(node.getNamespaceURI())))
                     {
                         nodeList.add(node);
                     }
                     else
                     {
-                        if(((Element) node).getTagName().equals(name) == true)
+                        if(((Element) node).getTagName().equals(name) == true && (namespaceURI == null || namespaceURI.equals(node.getNamespaceURI())))
                         {
                         	nodeList.add(node);
                         }
@@ -271,15 +280,7 @@ public class CElement extends CNode implements Element
         
     }
 
-    /* (non-Javadoc)
-     * @see org.w3c.dom.Element#getElementsByTagNameNS(java.lang.String, java.lang.String)
-     */
-    @Override
-    public NodeList getElementsByTagNameNS(String namespaceURI, String localName) throws DOMException
-    {
-        Thread.dumpStack();
-        throw new UnsupportedOperationException();
-    }
+    
 
     /* (non-Javadoc)
      * @see org.w3c.dom.Element#hasAttribute(java.lang.String)

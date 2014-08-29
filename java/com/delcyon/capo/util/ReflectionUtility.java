@@ -455,7 +455,14 @@ public class ReflectionUtility
 							{
 								arrayStringBuilder.append(',');
 							}
-							arrayStringBuilder.append(Array.get(fieldValue, index).toString());
+							if (Array.get(fieldValue, index) != null)
+							{
+								arrayStringBuilder.append(Array.get(fieldValue, index).toString());
+							}
+							else
+							{
+								arrayStringBuilder.append("");
+							}
 						}
 						arrayStringBuilder.append('}');
 						value = arrayStringBuilder.toString();

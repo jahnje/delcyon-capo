@@ -31,12 +31,14 @@ public class CNodeList extends ArrayList<Node> implements NodeList
     @Override
     public Node item(int index)
     {
+    	cleanRemoved();
         return get(index);
     }
 
     @Override
     public int getLength()
     {
+    	cleanRemoved();
         return size();
     }
     
@@ -49,7 +51,22 @@ public class CNodeList extends ArrayList<Node> implements NodeList
         
     }
     
-    
+    /**
+     * Unfortunately the dom spec requires that nodeLists be 'live' 
+     * so we need to check the list each time, and remove and nodes that no longer have a parent
+     */
+    private void cleanRemoved()
+    {
+    	
+    	for (int index = 0; index < size(); index++)
+    	{
+    		if (get(index).getParentNode() == null)
+    		{
+    			remove(index);
+    			index--;
+    		}
+    	}
+    }
     
     
 }

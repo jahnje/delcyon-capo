@@ -29,10 +29,14 @@ import java.util.Vector;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import org.w3c.dom.Attr;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
+import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
+
+import com.delcyon.capo.annotations.XmlMappedArrays;
 
 /**
  * @author jeremiah
@@ -110,6 +114,24 @@ public class XMLSerializer
 		
 		Vector<Field> fieldVector = ReflectionUtility.getFieldVector(rootObject);
 		
+		//process mapped arrays
+		XmlMappedArrays xmlMappedArrays = null;		
+		String[] mappedArrayKeyField = null;
+		String[] mappedArrayValueField = null;
+		
+		Class searchClass = rootObject.getClass();
+		while(searchClass != null)
+		{
+			if (searchClass.isAnnotationPresent(XmlMappedArrays.class))
+			{
+				xmlMappedArrays = (XmlMappedArrays) searchClass.getAnnotation(XmlMappedArrays.class);
+				break;
+			}
+			searchClass = searchClass.getSuperclass();
+		}
+		//end mapped array processing 
+		
+		//start main field loop
 		for (Field field : fieldVector)
 		{
 			
@@ -124,7 +146,7 @@ public class XMLSerializer
 				{
 					continue;
 				}
-				//can't deal with crazy $ char in class names, shouldn't mater any way,
+				//can't deal with crazy $ char in class names, shouldn't matter any way,
 				if (fieldName.contains("$") && Modifier.isFinal(field.getModifiers()))
 				{
 					continue;
@@ -136,6 +158,21 @@ public class XMLSerializer
 					continue;
 				}
 				
+				//skip any fields used by mapped arrays, they should have been handled already
+				if (xmlMappedArrays != null)
+				{
+					if (fieldName.equals(xmlMappedArrays.keys()))
+					{
+						mappedArrayKeyField = (String[]) field.get(rootObject);
+						continue;
+					}
+					if (fieldName.equals(xmlMappedArrays.values()))
+					{
+						mappedArrayValueField = (String[]) field.get(rootObject);
+						continue;
+					}
+					
+				}
 				
 				if (field.isAnnotationPresent(XMLElement.class) == true)
 				{
@@ -185,6 +222,17 @@ public class XMLSerializer
 
 			}
 
+		}
+		if (xmlMappedArrays != null && mappedArrayKeyField != null && mappedArrayValueField != null)
+		{
+			Element mappedArrayElement = (Element) rootElement.appendChild(rootElement.getOwnerDocument().createElementNS(namespaceURI,prefix == null ? xmlMappedArrays.name() : prefix+":"+xmlMappedArrays.name()));
+			for (int currentKey = 0 ; currentKey < mappedArrayKeyField.length; currentKey++)
+			{
+				if (mappedArrayValueField[currentKey] != null )
+				{
+					mappedArrayElement.setAttributeNS(namespaceURI,prefix == null ? mappedArrayKeyField[currentKey] : prefix+":"+mappedArrayKeyField[currentKey], mappedArrayValueField[currentKey]);
+				}
+			}
 		}
 
 	}
@@ -354,6 +402,23 @@ public class XMLSerializer
 	{
 		Vector<Field> fieldVector = ReflectionUtility.getFieldVector(rootObject);
 		
+		//process mapped arrays
+		XmlMappedArrays xmlMappedArrays = null;		
+		Field mappedArrayKeyField = null;
+		Field mappedArrayValueField = null;
+
+		Class searchClass = rootObject.getClass();
+		while(searchClass != null)
+		{
+			if (searchClass.isAnnotationPresent(XmlMappedArrays.class))
+			{
+				xmlMappedArrays = (XmlMappedArrays) searchClass.getAnnotation(XmlMappedArrays.class);
+				break;
+			}
+			searchClass = searchClass.getSuperclass();
+		}
+		//end mapped array processing 
+		
 		for (Field field : fieldVector)
 		{
 			Class type = null;
@@ -380,6 +445,22 @@ public class XMLSerializer
 					{
 						fieldName = xmlAnnotation.name();
 					}
+				}
+				
+				//skip any fields used by mapped arrays, they should have been handled already
+				if (xmlMappedArrays != null)
+				{
+					if (fieldName.equals(xmlMappedArrays.keys()))
+					{
+						mappedArrayKeyField = field;
+						continue;
+					}
+					if (fieldName.equals(xmlMappedArrays.values()))
+					{
+						mappedArrayValueField = field;
+						continue;
+					}
+					
 				}
 				
 				//START PRIMITIVE PROCESSING
@@ -657,6 +738,30 @@ public class XMLSerializer
 					}
 					
 					
+				}
+			}
+		}
+		if (xmlMappedArrays != null)
+		{
+			NodeList mappedArrayNodeList = rootElement.getElementsByTagNameNS(namespaceURI, prefix == null ? xmlMappedArrays.name() : prefix+":"+xmlMappedArrays.name());
+			if (mappedArrayNodeList.getLength() > 0)
+			{
+				Element mappedArrayElement = (Element) mappedArrayNodeList.item(0);
+				if (mappedArrayElement.getParentNode().equals(rootElement))
+				{
+					NamedNodeMap namedNodeMap = mappedArrayElement.getAttributes();
+					String[] keyField = new String[namedNodeMap.getLength()];
+					String[] valueField = new String[namedNodeMap.getLength()];
+
+					for (int currentKey = 0 ; currentKey < namedNodeMap.getLength(); currentKey++)
+					{
+						Attr attribute = (Attr) namedNodeMap.item(currentKey);
+						keyField[currentKey] = attribute.getLocalName();
+						valueField[currentKey] = attribute.getValue();				
+					}
+
+					mappedArrayKeyField.set(rootObject, keyField);
+					mappedArrayValueField.set(rootObject, valueField);
 				}
 			}
 		}

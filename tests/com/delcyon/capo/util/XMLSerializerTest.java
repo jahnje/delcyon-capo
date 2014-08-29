@@ -79,6 +79,8 @@ public class XMLSerializerTest
 	public void testExport() throws Exception
 	{
 		XMLSerializerTestData xmlSerializerTestData = new XMLSerializerTestData(new XMLSerializerTestData(null));
+		xmlSerializerTestData.setKeyArray(new String[]{"key1","key2","NullKey3"});
+		xmlSerializerTestData.setValueArray(new String[]{"value1","value2",""});
 		Document document = documentBuilder.newDocument();
 		Element rootElement = document.createElement("root");
 		XMLSerializer serializer = new XMLSerializer();
@@ -128,6 +130,8 @@ public class XMLSerializerTest
 			serializer.marshall(getSerializedRootElement(xmlSerializerTestData), xmlSerializerTestDataMarshalled);
 			Assert.assertEquals("not equals:", xmlSerializerTestData.toString(), xmlSerializerTestDataMarshalled.toString());
 			
+			
+			
 			xmlSerializerTestData.setXmlSerializerTestData(new XMLSerializerTestData(null));
 			serializer.marshall(getSerializedRootElement(xmlSerializerTestData), xmlSerializerTestDataMarshalled);
 			Assert.assertEquals("not equals:", xmlSerializerTestData.toString(), xmlSerializerTestDataMarshalled.toString());
@@ -161,6 +165,36 @@ public class XMLSerializerTest
 			xmlSerializerTestData.setXmlSerializerTestDataHashMap(xmlSerializerTestDataHashMap);
 			serializer.marshall(getSerializedRootElement(xmlSerializerTestData), xmlSerializerTestDataMarshalled);
 			Assert.assertEquals("not equals:", xmlSerializerTestData.toString(), xmlSerializerTestDataMarshalled.toString());
+			
+			//keep these last, as the array order can become different, but it's not relevant to array maps
+			
+			xmlSerializerTestData.setKeyArray(new String[]{"key1","key2","NullKey3"});
+			xmlSerializerTestData.setValueArray(new String[]{"value1","value2",""});
+			System.out.println(xmlSerializerTestData.toString());
+			serializer.marshall(getSerializedRootElement(xmlSerializerTestData), xmlSerializerTestDataMarshalled);
+			
+			Assert.assertEquals("not equals:", xmlSerializerTestData.getKeyArray().length, xmlSerializerTestDataMarshalled.getKeyArray().length);
+			Assert.assertEquals("not equals:", xmlSerializerTestData.getValueArray().length, xmlSerializerTestDataMarshalled.getValueArray().length);
+			for (int index = 0; index < xmlSerializerTestData.getKeyArray().length; index++)
+			{
+				String key = xmlSerializerTestData.getKeyArray()[index];
+				String value = xmlSerializerTestData.getValueArray()[index];
+				String marshalledKey = null;
+				String marshalledValue = null;
+				boolean foundKey = false;
+				for(int marshalIndex = 0; marshalIndex < xmlSerializerTestData.getKeyArray().length; marshalIndex++)
+				{
+					if (key.equals(xmlSerializerTestDataMarshalled.getKeyArray()[marshalIndex]))
+					{
+						marshalledKey = xmlSerializerTestDataMarshalled.getKeyArray()[marshalIndex];
+						marshalledValue = xmlSerializerTestDataMarshalled.getValueArray()[marshalIndex];
+						foundKey = true;
+						break;
+					}
+				}
+				Assert.assertTrue("didn't find key: "+key,foundKey);
+				Assert.assertEquals(value,marshalledValue);
+			}
 			
 		}
 		catch (AssertionError e) {

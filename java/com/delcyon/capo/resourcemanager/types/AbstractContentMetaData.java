@@ -24,11 +24,13 @@ import java.io.OutputStream;
 import java.lang.reflect.Modifier;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.Vector;
 import java.util.logging.Level;
 
 import com.delcyon.capo.CapoApplication;
+import com.delcyon.capo.annotations.XmlMappedArrays;
 import com.delcyon.capo.datastream.NullOutputStream;
 import com.delcyon.capo.datastream.OutputStreamAttributeFilterProvider;
 import com.delcyon.capo.datastream.StreamUtil;
@@ -52,6 +54,7 @@ import com.delcyon.capo.util.ToStringControl.Control;
  */
 @SuppressWarnings("unchecked")
 @ToStringControl(control=Control.exclude,modifiers=Modifier.STATIC)
+@XmlMappedArrays(name="MetaDataAttributes",keys="attributeKeys", values="attributeValues")
 public abstract class AbstractContentMetaData implements ContentMetaData, ControlledClone
 {
     //this is to lower memory usage on common attribute values, slows things a bit, but can drastically reduce memory usage by using constants 
@@ -485,6 +488,8 @@ public abstract class AbstractContentMetaData implements ContentMetaData, Contro
             
         }
 	}
+	
+	
 	
 	/**
 	 * Convince Method
