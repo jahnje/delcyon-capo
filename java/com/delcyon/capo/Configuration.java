@@ -278,20 +278,35 @@ public class Configuration
 		
 		
 		Preferences systemPreferences = Preferences.systemNodeForPackage(CapoApplication.getApplication().getClass());
-		
-		String capoDirString = systemPreferences.get(PREFERENCE.CAPO_DIR.longOption,null);
-		if (capoDirString == null)
+		String capoDirString = null;
+		while(true)
 		{
-			
-			systemPreferences.put(PREFERENCE.CAPO_DIR.longOption, PREFERENCE.CAPO_DIR.defaultValue);
-			capoDirString = PREFERENCE.CAPO_DIR.defaultValue;
-			try
+			capoDirString = systemPreferences.get(PREFERENCE.CAPO_DIR.longOption,null);
+			if (capoDirString == null)
 			{
-				systemPreferences.sync();
-			} catch (BackingStoreException e)
-			{						
-				e.printStackTrace();
-			}				
+
+				systemPreferences.put(PREFERENCE.CAPO_DIR.longOption, PREFERENCE.CAPO_DIR.defaultValue);
+				capoDirString = PREFERENCE.CAPO_DIR.defaultValue;
+				try
+				{
+					systemPreferences.sync();
+				} catch (BackingStoreException e)
+				{								
+					//e.printStackTrace();				
+					if (systemPreferences.isUserNode() == false)
+					{
+						System.err.println("Problem with System preferences, trying user's");
+						systemPreferences = Preferences.userNodeForPackage(CapoApplication.getApplication().getClass());
+						continue;
+					}
+					else //just bail out
+					{
+						throw e;
+					}
+
+				}				
+			}
+			break;
 		}
 		
 		disableAutoSync = hasOption(PREFERENCE.DISABLE_CONFIG_AUTOSYNC);
