@@ -60,11 +60,26 @@ public class XPath
 	{
 		try
 		{
+		    //try local class loader first, then downgrade to system, then do it the old way... 
 			xPathFactory = XPathFactory.newInstance(XPathFactory.DEFAULT_OBJECT_MODEL_URI, "net.sf.saxon.xpath.XPathFactoryImpl", XPath.class.getClassLoader());
-		} catch (XPathFactoryConfigurationException e)
+		} 
+		catch (Throwable e)
 		{	
-			e.printStackTrace();
-			xPathFactory = XPathFactory.newInstance();
+		    System.err.println(e);
+		    try
+	        {
+	            xPathFactory = XPathFactory.newInstance(XPathFactory.DEFAULT_OBJECT_MODEL_URI, "net.sf.saxon.xpath.XPathFactoryImpl", ClassLoader.getSystemClassLoader());
+	        } catch (Throwable e2)
+	        {
+	            System.err.println(e);
+	            try
+	            {
+	                xPathFactory = XPathFactory.newInstance();
+	            } catch (Exception e3)
+	            {   	               	                
+	                e3.printStackTrace();
+	            }
+	        }
 		}
 	}
 	
