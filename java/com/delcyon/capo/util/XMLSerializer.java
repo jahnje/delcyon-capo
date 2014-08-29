@@ -746,23 +746,27 @@ public class XMLSerializer
 			NodeList mappedArrayNodeList = rootElement.getElementsByTagNameNS(namespaceURI, prefix == null ? xmlMappedArrays.name() : prefix+":"+xmlMappedArrays.name());
 			if (mappedArrayNodeList.getLength() > 0)
 			{
-				Element mappedArrayElement = (Element) mappedArrayNodeList.item(0);
-				if (mappedArrayElement.getParentNode().equals(rootElement))
-				{
-					NamedNodeMap namedNodeMap = mappedArrayElement.getAttributes();
-					String[] keyField = new String[namedNodeMap.getLength()];
-					String[] valueField = new String[namedNodeMap.getLength()];
+			    for(int currentNode = 0; currentNode < mappedArrayNodeList.getLength(); currentNode++)
+			    {
+			        Element mappedArrayElement = (Element) mappedArrayNodeList.item(currentNode);
+			        if (mappedArrayElement.getParentNode().equals(rootElement))
+			        {
+			            NamedNodeMap namedNodeMap = mappedArrayElement.getAttributes();
+			            String[] keyField = new String[namedNodeMap.getLength()];
+			            String[] valueField = new String[namedNodeMap.getLength()];
 
-					for (int currentKey = 0 ; currentKey < namedNodeMap.getLength(); currentKey++)
-					{
-						Attr attribute = (Attr) namedNodeMap.item(currentKey);
-						keyField[currentKey] = attribute.getLocalName();
-						valueField[currentKey] = attribute.getValue();				
-					}
+			            for (int currentKey = 0 ; currentKey < namedNodeMap.getLength(); currentKey++)
+			            {
+			                Attr attribute = (Attr) namedNodeMap.item(currentKey);
+			                keyField[currentKey] = attribute.getLocalName();
+			                valueField[currentKey] = attribute.getValue();				
+			            }
 
-					mappedArrayKeyField.set(rootObject, keyField);
-					mappedArrayValueField.set(rootObject, valueField);
-				}
+			            mappedArrayKeyField.set(rootObject, keyField);
+			            mappedArrayValueField.set(rootObject, valueField);
+			            break;
+			        }
+			    }
 			}
 		}
 
