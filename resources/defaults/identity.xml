@@ -27,7 +27,7 @@
     
     <server:group name="osx_group" returns="MAC,hostname">
         <server:log message="Processing OSX Group" output="STDOUT"/>    
-        <client:command exec="/sbin/ifconfig" name="osx_ifconfig"/>       
+        <client:command exec="/sbin/ifconfig en0" name="osx_ifconfig"/>       
         <server:transform name="osx_ifconfig_transform" ref="${osx_ifconfig}"
             stylesheet="osx_ifconfig_command_stdout_parser.xsl"/>        
         <server:var eval="${osx_ifconfig_transform}/link[@dev = 'en0']/@ether" name="localMAC"/>    
