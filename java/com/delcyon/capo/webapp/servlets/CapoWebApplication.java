@@ -5,9 +5,16 @@
  */
 package com.delcyon.capo.webapp.servlets;
 
+import java.util.SortedSet;
+
+import org.w3c.dom.Element;
+import org.w3c.dom.NamedNodeMap;
+
 import com.delcyon.capo.CapoApplication;
 import com.delcyon.capo.resourcemanager.ResourceDescriptor;
 import com.delcyon.capo.util.XMLSerializer;
+import com.delcyon.capo.webapp.models.DomItemModel;
+import com.delcyon.capo.webapp.models.DomItemModel.DomUse;
 import com.delcyon.capo.xml.XPath;
 import com.delcyon.capo.xml.cdom.CElement;
 
@@ -23,6 +30,7 @@ import eu.webtoolkit.jwt.WBoxLayout.Direction;
 import eu.webtoolkit.jwt.WContainerWidget;
 import eu.webtoolkit.jwt.WEnvironment;
 import eu.webtoolkit.jwt.WGridLayout;
+import eu.webtoolkit.jwt.WLabel;
 import eu.webtoolkit.jwt.WLength;
 import eu.webtoolkit.jwt.WModelIndex;
 import eu.webtoolkit.jwt.WMouseEvent;
@@ -32,6 +40,7 @@ import eu.webtoolkit.jwt.WPushButton;
 import eu.webtoolkit.jwt.WStackedWidget;
 import eu.webtoolkit.jwt.WStandardItemModel;
 import eu.webtoolkit.jwt.WTabWidget;
+import eu.webtoolkit.jwt.WTableView;
 import eu.webtoolkit.jwt.WText;
 import eu.webtoolkit.jwt.WTreeView;
 import eu.webtoolkit.jwt.WVBoxLayout;
@@ -48,6 +57,7 @@ public class CapoWebApplication extends WApplication {
 	private WVBoxLayout detailsPaneLayout;
 	private WTabWidget detailsPane;
 	private WTabWidget subDetailsPane;
+	private WTreeView treeView;
 
 	public CapoWebApplication(WEnvironment env, boolean embedded) {
         super(env);
@@ -68,8 +78,19 @@ public class CapoWebApplication extends WApplication {
         
         getRootLayout().addWidget(getNavigationContainer(),0,0);              
         getRootLayout().addWidget(getContentPane(),1,0);
-
-        getContentPaneLayout().addWidget(getTreeView(), 0, 0,1,0);
+        try
+		{
+			ResourceDescriptor clientsResourceDescriptor = CapoApplication.getDataManager().getResourceDescriptor(null,"file:clients");
+			CElement e = clientsResourceDescriptor.readXML(null);
+			getContentPaneLayout().addWidget(getTreeView(e), 0, 0,1,0);	
+			
+			XPath.dumpNode(e, System.out);
+		} catch (Exception e)
+		{
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+        
         getContentPaneLayout().addLayout(getDetailsPaneLayout(), 0, 1);
         getContentPaneLayout().addWidget(createTitle("Legend"), 2, 0, 1, 1, AlignmentFlag.AlignTop); 
         
@@ -86,18 +107,7 @@ public class CapoWebApplication extends WApplication {
         getSubDetailsPane().addTab(createTitle("Title"), "details");
         getSubDetailsPane().getWidget(1).setAttributeValue("style", "background-color: lightgrey;");
         
-        try
-		{
-			ResourceDescriptor clientsResourceDescriptor = CapoApplication.getDataManager().getResourceDescriptor(null, "clients:capo.client.1");
-			CElement e = clientsResourceDescriptor.readXML(null);
-			
-			
-			XPath.dumpNode(e, System.out);
-		} catch (Exception e)
-		{
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+        
        
             
     }
@@ -172,8 +182,8 @@ public class CapoWebApplication extends WApplication {
         return result;
     }
     
-    private  WTreeView getTreeView() {
-        WTreeView treeView = new WTreeView();
+    private  WTreeView getTreeView(Element element) {
+    	treeView = new WTreeView();
 
         /*
          * To support right-click, we need to disable the built-in browser
@@ -183,13 +193,13 @@ public class CapoWebApplication extends WApplication {
          * does not work reliably on all browsers.
          */
         treeView.setAttributeValue("oncontextmenu","event.cancelBubble = true; event.returnValue = false; return false;");
-        treeView.setModel(new WStandardItemModel(0, 1, this));
+        treeView.setModel(new DomItemModel(element,DomUse.NAVIGATION));
         treeView.resize(new WLength(200), WLength.Auto);
         treeView.setSelectionMode(SelectionMode.SingleSelection);
         treeView.expandToDepth(1);
         treeView.selectionChanged().addListener(this, new Signal.Listener() {
             public void trigger() {
-         //       folderChanged();
+            	selectedItemChanged();
             }
         });
         treeView.clicked().addListener(this, new Signal2.Listener<WModelIndex, WMouseEvent>() {
@@ -223,6 +233,28 @@ public class CapoWebApplication extends WApplication {
         return treeView;
     }
     
+    private void selectedItemChanged()
+    {
+    	SortedSet<WModelIndex> selectedIndexes = treeView.getSelectedIndexes();
+    	if(selectedIndexes.size() == 0)
+    	{
+    		return;
+    	}
+    	else if (selectedIndexes.size() == 1)
+    	{
+    		WModelIndex modelIndex = selectedIndexes.first();
+    		Element selectedItem = (Element) modelIndex.getInternalPointer();
+    		while(getDetailsPane().getCount() > 0)
+    		{    			
+    			getDetailsPane().removeTab(getDetailsPane().getWidget(0));    			
+    		}
+    		WTableView tableView = new WTableView();
+    		tableView.setModel(new DomItemModel(selectedItem, DomUse.ATTRIBUTES));    		
+    		getDetailsPane().addTab(tableView, "Details");
+    		
+    		
+    	}
+    }
     
     private WWidget getNavigationContainer()
     {
