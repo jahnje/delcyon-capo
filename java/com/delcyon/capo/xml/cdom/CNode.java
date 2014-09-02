@@ -277,6 +277,10 @@ public abstract class CNode implements Node, ControlledClone
     @Override
     public Node getPreviousSibling()
     {
+    	if (parentNode == null)
+    	{
+    		return null;
+    	}
         NodeList siblingList = parentNode.getChildNodes();
         int myPosition = getPosition();
         if (myPosition > 0)
