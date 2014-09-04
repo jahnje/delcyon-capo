@@ -106,6 +106,8 @@ public interface ResourceDescriptor
         
         
     }
+    
+    
 	
 	
 	
@@ -203,8 +205,8 @@ public interface ResourceDescriptor
 	public abstract void addResourceParameters(VariableContainer variableContainer, ResourceParameter... resourceParameters) throws Exception;
 	
     public abstract ResourceDescriptor getChildResourceDescriptor(ControlElement callingControlElement, String relativeURI) throws Exception;
-    
-	
+    public abstract ResourceDescriptor getParentResourceDescriptor() throws Exception;
+    public abstract void setParentResourceDescriptor(ResourceDescriptor parentResourceDescriptor) throws Exception;
 	
 //	/** processes any resource parameters found, and populates any variables found from the current context
 //	 * If we are in the initialization phase any declared variables marked as NOW (the default) in the in the declaration will be processed, using any previously declared parameters, and then working up the scoped group variables. 

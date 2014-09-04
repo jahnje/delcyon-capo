@@ -8,13 +8,14 @@ package com.delcyon.capo.webapp.servlets;
 import java.util.SortedSet;
 
 import org.w3c.dom.Element;
-import org.w3c.dom.NamedNodeMap;
 
 import com.delcyon.capo.CapoApplication;
+import com.delcyon.capo.resourcemanager.ContentFormatType;
 import com.delcyon.capo.resourcemanager.ResourceDescriptor;
-import com.delcyon.capo.util.XMLSerializer;
+import com.delcyon.capo.resourcemanager.types.FileResourceDescriptor;
 import com.delcyon.capo.webapp.models.DomItemModel;
 import com.delcyon.capo.webapp.models.DomItemModel.DomUse;
+import com.delcyon.capo.webapp.models.FileResourceDescriptorItemModel;
 import com.delcyon.capo.xml.XPath;
 import com.delcyon.capo.xml.cdom.CElement;
 
@@ -23,6 +24,9 @@ import eu.webtoolkit.jwt.PositionScheme;
 import eu.webtoolkit.jwt.SelectionMode;
 import eu.webtoolkit.jwt.Signal;
 import eu.webtoolkit.jwt.Signal2;
+import eu.webtoolkit.jwt.TextFormat;
+import eu.webtoolkit.jwt.Utils;
+import eu.webtoolkit.jwt.Utils.HtmlEncodingFlag;
 import eu.webtoolkit.jwt.WApplication;
 import eu.webtoolkit.jwt.WBootstrapTheme;
 import eu.webtoolkit.jwt.WBoxLayout;
@@ -30,7 +34,6 @@ import eu.webtoolkit.jwt.WBoxLayout.Direction;
 import eu.webtoolkit.jwt.WContainerWidget;
 import eu.webtoolkit.jwt.WEnvironment;
 import eu.webtoolkit.jwt.WGridLayout;
-import eu.webtoolkit.jwt.WLabel;
 import eu.webtoolkit.jwt.WLength;
 import eu.webtoolkit.jwt.WModelIndex;
 import eu.webtoolkit.jwt.WMouseEvent;
@@ -38,10 +41,11 @@ import eu.webtoolkit.jwt.WNavigationBar;
 import eu.webtoolkit.jwt.WPopupMenu;
 import eu.webtoolkit.jwt.WPushButton;
 import eu.webtoolkit.jwt.WStackedWidget;
-import eu.webtoolkit.jwt.WStandardItemModel;
 import eu.webtoolkit.jwt.WTabWidget;
 import eu.webtoolkit.jwt.WTableView;
 import eu.webtoolkit.jwt.WText;
+import eu.webtoolkit.jwt.WTextArea;
+import eu.webtoolkit.jwt.WTextEdit;
 import eu.webtoolkit.jwt.WTreeView;
 import eu.webtoolkit.jwt.WVBoxLayout;
 import eu.webtoolkit.jwt.WWidget;
@@ -64,7 +68,7 @@ public class CapoWebApplication extends WApplication {
         WBootstrapTheme bootstrapTheme = new WBootstrapTheme();
         setTheme(bootstrapTheme);
         //setCssTheme("polished");
-        setTitle("Delcyon Capo");
+        setTitle("Capo");
         createUI();
     }
 
@@ -80,11 +84,11 @@ public class CapoWebApplication extends WApplication {
         getRootLayout().addWidget(getContentPane(),1,0);
         try
 		{
-			ResourceDescriptor clientsResourceDescriptor = CapoApplication.getDataManager().getResourceDescriptor(null,"file:clients");
-			CElement e = clientsResourceDescriptor.readXML(null);
-			getContentPaneLayout().addWidget(getTreeView(e), 0, 0,1,0);	
+			ResourceDescriptor clientsResourceDescriptor = CapoApplication.getDataManager().getResourceDescriptor(null,"file:/home/jeremiah/java-work/delcyon-capo/capo/server");
+			//CElement e = clientsResourceDescriptor.readXML(null);
+			getContentPaneLayout().addWidget(getTreeView(clientsResourceDescriptor), 0, 0,1,0);	
 			
-			XPath.dumpNode(e, System.out);
+			//XPath.dumpNode(e, System.out);
 		} catch (Exception e)
 		{
 			// TODO Auto-generated catch block
@@ -94,18 +98,18 @@ public class CapoWebApplication extends WApplication {
         getContentPaneLayout().addLayout(getDetailsPaneLayout(), 0, 1);
         getContentPaneLayout().addWidget(createTitle("Legend"), 2, 0, 1, 1, AlignmentFlag.AlignTop); 
         
-        getDetailsPane().addTab(createTitle("Title"), "results");
-        getDetailsPane().addTab(getMenu(), "details");
-        getDetailsPane().getWidget(1).setAttributeValue("style", "background-color: lightgrey;");
-        
+//        getDetailsPane().addTab(createTitle("Title"), "results");
+//        getDetailsPane().addTab(getMenu(), "details");
+//        getDetailsPane().getWidget(1).setAttributeValue("style", "background-color: lightgrey;");
+//        
         
         getDetailsPaneLayout().addWidget(getDetailsPane(), 0);
-        getDetailsPaneLayout().addWidget(getSubDetailsPane(), 0);
+        //getDetailsPaneLayout().addWidget(getSubDetailsPane(), 0);
         getDetailsPaneLayout().setResizable(0);
         
-        getSubDetailsPane().addTab(createTitle("Title"), "properties");
-        getSubDetailsPane().addTab(createTitle("Title"), "details");
-        getSubDetailsPane().getWidget(1).setAttributeValue("style", "background-color: lightgrey;");
+//        getSubDetailsPane().addTab(createTitle("Title"), "properties");
+//        getSubDetailsPane().addTab(createTitle("Title"), "details");
+//        getSubDetailsPane().getWidget(1).setAttributeValue("style", "background-color: lightgrey;");
         
         
        
@@ -182,9 +186,9 @@ public class CapoWebApplication extends WApplication {
         return result;
     }
     
-    private  WTreeView getTreeView(Element element) {
+    private  WTreeView getTreeView(Object data) {
     	treeView = new WTreeView();
-
+    	
         /*
          * To support right-click, we need to disable the built-in browser
          * context menu.
@@ -193,12 +197,20 @@ public class CapoWebApplication extends WApplication {
          * does not work reliably on all browsers.
          */
         treeView.setAttributeValue("oncontextmenu","event.cancelBubble = true; event.returnValue = false; return false;");
-        treeView.setModel(new DomItemModel(element,DomUse.NAVIGATION));
+        if (data instanceof Element)
+        {
+            treeView.setModel(new DomItemModel((Element) data,DomUse.NAVIGATION));            
+        }
+        else if (data instanceof ResourceDescriptor)
+        {
+            treeView.setModel(new FileResourceDescriptorItemModel((FileResourceDescriptor)data,DomUse.NAVIGATION));
+        }
         treeView.resize(new WLength(200), WLength.Auto);
         treeView.setSelectionMode(SelectionMode.SingleSelection);
         treeView.expandToDepth(1);
+        treeView.setAlternatingRowColors(true);
         treeView.selectionChanged().addListener(this, new Signal.Listener() {
-            public void trigger() {
+            public void trigger() {                
             	selectedItemChanged();
             }
         });
@@ -243,13 +255,53 @@ public class CapoWebApplication extends WApplication {
     	else if (selectedIndexes.size() == 1)
     	{
     		WModelIndex modelIndex = selectedIndexes.first();
-    		Element selectedItem = (Element) modelIndex.getInternalPointer();
+    		Object selectedItem =  modelIndex.getInternalPointer();
     		while(getDetailsPane().getCount() > 0)
     		{    			
     			getDetailsPane().removeTab(getDetailsPane().getWidget(0));    			
     		}
     		WTableView tableView = new WTableView();
-    		tableView.setModel(new DomItemModel(selectedItem, DomUse.ATTRIBUTES));    		
+    		tableView.setAlternatingRowColors(true);
+    		tableView.setSortingEnabled(true);
+    		tableView.setSelectable(true);
+    		String content = null;
+    		if (selectedItem instanceof Element)
+    		{
+    		    tableView.setModel(new DomItemModel((Element) selectedItem, DomUse.ATTRIBUTES));
+    		    content = ((Element) selectedItem).getTextContent();
+    		}
+    		else if (selectedItem instanceof ResourceDescriptor)
+    		{
+    		    tableView.setModel(new FileResourceDescriptorItemModel((FileResourceDescriptor) selectedItem, DomUse.ATTRIBUTES));
+    		    try
+    		    {
+    		        if(((FileResourceDescriptor) selectedItem).getResourceMetaData(null).isContainer() == false)
+    		        {
+    		            if(((FileResourceDescriptor) selectedItem).getResourceMetaData(null).getContentFormatType() != ContentFormatType.BINARY)
+    		            {
+    		                content = new String(((FileResourceDescriptor) selectedItem).readBlock(null));
+    		            }
+    		            else
+    		            {
+    		                ((FileResourceDescriptor) selectedItem).readBlock(null);
+    		            }
+    		        }
+    		    } catch (Exception e)
+    		    {
+    		        e.printStackTrace();
+    		    }
+    		}
+    		
+    		if (content != null && content.trim().isEmpty() == false)
+            {               
+               
+                WTextArea textEdit = new WTextArea(Utils.htmlEncode(content));
+                WText wText = new WText("<pre>"+Utils.htmlEncode(content)+"</pre>", TextFormat.XHTMLUnsafeText);
+                System.out.println(textEdit.getText());
+                getDetailsPane().addTab(wText, "Content");
+                
+            }
+    		
     		getDetailsPane().addTab(tableView, "Details");
     		
     		

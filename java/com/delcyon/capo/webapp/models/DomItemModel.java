@@ -7,6 +7,7 @@ import org.w3c.dom.Node;
 import com.delcyon.capo.xml.XPath;
 
 import eu.webtoolkit.jwt.ItemDataRole;
+import eu.webtoolkit.jwt.Orientation;
 import eu.webtoolkit.jwt.WAbstractItemModel;
 import eu.webtoolkit.jwt.WLink;
 import eu.webtoolkit.jwt.WModelIndex;
@@ -36,6 +37,13 @@ public class DomItemModel extends WAbstractItemModel
 	{
 		this.rootElement = rootElement;
 		this.domUse = domUse;
+	}
+	
+	@Override
+	public Object getHeaderData(int section, Orientation orientation, int role)
+	{
+	    
+	    return rootElement.getLocalName();
 	}
 	
 	@Override
@@ -85,6 +93,8 @@ public class DomItemModel extends WAbstractItemModel
 		}
 	}
 
+	//this is really about what happens when given a child, trying to figure out it's parents index
+	//column will ALWAYS be 0
 	@Override
 	public WModelIndex getParent(WModelIndex index)
 	{

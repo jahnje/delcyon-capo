@@ -94,6 +94,19 @@ public class ResourceElementResourceDescriptor implements ResourceDescriptor
 	}
 	
 	@Override
+	public ResourceDescriptor getParentResourceDescriptor() throws Exception
+	{
+	    return proxyedResourceDescriptor.getParentResourceDescriptor();
+	}
+	
+	@Override
+	public void setParentResourceDescriptor(ResourceDescriptor parentResourceDescriptor) throws Exception
+	{
+	    proxyedResourceDescriptor.setParentResourceDescriptor(parentResourceDescriptor);
+	    
+	}
+	
+	@Override
 	public InputStream getInputStream(VariableContainer variableContainer, ResourceParameter... resourceParameters) throws Exception
 	{
 		return proxyedResourceDescriptor.getInputStream(variableContainer, resourceParameters);

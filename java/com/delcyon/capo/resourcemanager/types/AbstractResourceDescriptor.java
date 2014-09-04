@@ -79,6 +79,7 @@ public abstract class AbstractResourceDescriptor implements ResourceDescriptor
 	private String localName = null;
     private ResourceDeclarationElement declaringResourceElement;
     private ContentMetaData resourceMetaData;
+    private transient ResourceDescriptor parentResourceDescriptor;
    
 	
 	@Override
@@ -872,9 +873,14 @@ public abstract class AbstractResourceDescriptor implements ResourceDescriptor
 		
 	}
 	
+	public ResourceDescriptor getParentResourceDescriptor()
+	{
+	    return this.parentResourceDescriptor;
+	}
+	
 	@Override
     public ResourceDescriptor getChildResourceDescriptor(ControlElement callingControlElement, String relativeURI) throws Exception
-    {
+    {	    
 	    advanceState(State.OPEN, null);
         ContentMetaData contentMetaData = getResourceMetaData(null);
         if ( contentMetaData.isContainer() == true)
@@ -886,22 +892,44 @@ public abstract class AbstractResourceDescriptor implements ResourceDescriptor
                 {   
                 	if(callingControlElement == null)
                 	{
-                		return CapoApplication.getDataManager().getResourceDescriptor(callingControlElement, childContentMetaData.getResourceURI().getBaseURI());
+                	    ResourceDescriptor childResourceDescriptor = CapoApplication.getDataManager().getResourceDescriptor(callingControlElement, childContentMetaData.getResourceURI().getBaseURI());
+                	    if(childResourceDescriptor != null)
+                	    {
+                	        childResourceDescriptor.setParentResourceDescriptor(this);
+                	    }
+                		return childResourceDescriptor;
                 	}
                 	else
                 	{
-                		return callingControlElement.getParentGroup().getResourceDescriptor(callingControlElement, childContentMetaData.getResourceURI().getBaseURI());
+                	    ResourceDescriptor childResourceDescriptor = callingControlElement.getParentGroup().getResourceDescriptor(callingControlElement, childContentMetaData.getResourceURI().getBaseURI());
+                        if(childResourceDescriptor != null)
+                        {
+                            childResourceDescriptor.setParentResourceDescriptor(this);
+                        }
+                        return childResourceDescriptor;                		
                 	}
                 }
             }
             //return CapoApplication.getDataManager().getResourceDescriptor(callingControlElement, getResourceURI()+(relativeURI.startsWith("/") ? relativeURI : "/"+relativeURI));
             if(callingControlElement == null)
             {
-            	return CapoApplication.getDataManager().getResourceDescriptor(callingControlElement, getResourceURI().getBaseURI()+ (relativeURI.startsWith("/") ? relativeURI : "/"+ relativeURI) );
+ 
+            	 ResourceDescriptor childResourceDescriptor = CapoApplication.getDataManager().getResourceDescriptor(callingControlElement, getResourceURI().getBaseURI()+ (relativeURI.startsWith("/") ? relativeURI : "/"+ relativeURI) );
+                 if(childResourceDescriptor != null)
+                 {
+                     childResourceDescriptor.setParentResourceDescriptor(this);
+                 }
+                 return childResourceDescriptor;
             }
             else
             {
-            	return callingControlElement.getParentGroup().getResourceDescriptor(callingControlElement, getResourceURI().getBaseURI()+(relativeURI.startsWith("/") ? relativeURI : "/"+ relativeURI));
+ 
+            	 ResourceDescriptor childResourceDescriptor = callingControlElement.getParentGroup().getResourceDescriptor(callingControlElement, getResourceURI().getBaseURI()+(relativeURI.startsWith("/") ? relativeURI : "/"+ relativeURI));
+                 if(childResourceDescriptor != null)
+                 {
+                     childResourceDescriptor.setParentResourceDescriptor(this);
+                 }
+                 return childResourceDescriptor;
             }
         }
         else
@@ -910,6 +938,11 @@ public abstract class AbstractResourceDescriptor implements ResourceDescriptor
         }
     }
 	
+	@Override
+	public void setParentResourceDescriptor(ResourceDescriptor parentResourceDescriptor) throws Exception
+	{
+	   this.parentResourceDescriptor = parentResourceDescriptor;
+	}
 	
 	private class OutputStreamTranslater implements StreamEventListener
 	{

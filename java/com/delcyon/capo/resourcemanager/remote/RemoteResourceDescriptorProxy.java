@@ -63,6 +63,7 @@ public class RemoteResourceDescriptorProxy extends AbstractClientRequestProcesso
 	private ResourceType resourceType;
 	private LifeCycle lifeCycle;
     private boolean isStreamProcessor = false;
+    private ResourceDescriptor parentResourceDescriptor = null;
 	
 	public RemoteResourceDescriptorProxy(ControllerClientRequestProcessor controllerClientRequestProcessor)
 	{
@@ -153,15 +154,38 @@ public class RemoteResourceDescriptorProxy extends AbstractClientRequestProcesso
             {
                 if(childContentMetaData.getResourceURI().getPath().endsWith(relativeURI))
                 {
-                    return CapoApplication.getDataManager().getResourceDescriptor(callingControlElement, "remote:"+childContentMetaData.getResourceURI().getResourceURIString());
+                    ResourceDescriptor childResourceDescriptor = CapoApplication.getDataManager().getResourceDescriptor(callingControlElement, "remote:"+childContentMetaData.getResourceURI().getResourceURIString());
+                    if (childResourceDescriptor != null)
+                    {
+                        childResourceDescriptor.setParentResourceDescriptor(this);
+                    }
+                    return childResourceDescriptor;
                 }
             }
-            return CapoApplication.getDataManager().getResourceDescriptor(callingControlElement, "remote:"+getResourceURI().getResourceURIString()+"/"+relativeURI);
+            ResourceDescriptor childResourceDescriptor = CapoApplication.getDataManager().getResourceDescriptor(callingControlElement, "remote:"+getResourceURI().getResourceURIString()+"/"+relativeURI);
+            if (childResourceDescriptor != null)
+            {
+                childResourceDescriptor.setParentResourceDescriptor(this);
+            }
+            return childResourceDescriptor;            
         }
         else
         {
             return null;
         }
+	}
+	
+	@Override
+	public ResourceDescriptor getParentResourceDescriptor() throws Exception
+	{
+	    return this.parentResourceDescriptor ;
+	}
+	
+	@Override
+	public void setParentResourceDescriptor(ResourceDescriptor parentResourceDescriptor) throws Exception
+	{
+	    this.parentResourceDescriptor = parentResourceDescriptor;
+	    
 	}
 	
 	@Override
