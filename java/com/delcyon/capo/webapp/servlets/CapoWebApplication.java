@@ -16,6 +16,7 @@ import com.delcyon.capo.resourcemanager.types.FileResourceDescriptor;
 import com.delcyon.capo.webapp.models.DomItemModel;
 import com.delcyon.capo.webapp.models.DomItemModel.DomUse;
 import com.delcyon.capo.webapp.models.FileResourceDescriptorItemModel;
+import com.delcyon.capo.webapp.widgets.CapoWTreeView;
 import com.delcyon.capo.xml.XPath;
 import com.delcyon.capo.xml.cdom.CElement;
 
@@ -29,12 +30,15 @@ import eu.webtoolkit.jwt.Utils;
 import eu.webtoolkit.jwt.Utils.HtmlEncodingFlag;
 import eu.webtoolkit.jwt.WApplication;
 import eu.webtoolkit.jwt.WBootstrapTheme;
+import eu.webtoolkit.jwt.WBorderLayout;
+import eu.webtoolkit.jwt.WBorderLayout.Position;
 import eu.webtoolkit.jwt.WBoxLayout;
 import eu.webtoolkit.jwt.WBoxLayout.Direction;
 import eu.webtoolkit.jwt.WContainerWidget;
 import eu.webtoolkit.jwt.WEnvironment;
 import eu.webtoolkit.jwt.WGridLayout;
 import eu.webtoolkit.jwt.WLength;
+import eu.webtoolkit.jwt.WLength.Unit;
 import eu.webtoolkit.jwt.WModelIndex;
 import eu.webtoolkit.jwt.WMouseEvent;
 import eu.webtoolkit.jwt.WNavigationBar;
@@ -61,7 +65,7 @@ public class CapoWebApplication extends WApplication {
 	private WVBoxLayout detailsPaneLayout;
 	private WTabWidget detailsPane;
 	private WTabWidget subDetailsPane;
-	private WTreeView treeView;
+	private CapoWTreeView treeView;
 
 	public CapoWebApplication(WEnvironment env, boolean embedded) {
         super(env);
@@ -75,7 +79,7 @@ public class CapoWebApplication extends WApplication {
     private void createUI() 
     {
         rootContainerWidget = getRoot();
-        rootContainerWidget.setStyleClass("maindiv");
+        //rootContainerWidget.setStyleClass("maindiv");
         rootContainerWidget.setPadding(new WLength(0));
         rootContainerWidget.setLayout(getRootLayout());
        
@@ -84,8 +88,9 @@ public class CapoWebApplication extends WApplication {
         getRootLayout().addWidget(getContentPane(),1,0);
         try
 		{
-			ResourceDescriptor clientsResourceDescriptor = CapoApplication.getDataManager().getResourceDescriptor(null,"file:/home/jeremiah/java-work/delcyon-capo/capo/server");
+			ResourceDescriptor clientsResourceDescriptor = CapoApplication.getDataManager().getResourceDescriptor(null,"file:/Users/jeremiah/git/delcyon-capo/capo");
 			//CElement e = clientsResourceDescriptor.readXML(null);
+			
 			getContentPaneLayout().addWidget(getTreeView(clientsResourceDescriptor), 0, 0,1,0);	
 			
 			//XPath.dumpNode(e, System.out);
@@ -187,8 +192,10 @@ public class CapoWebApplication extends WApplication {
     }
     
     private  WTreeView getTreeView(Object data) {
-    	treeView = new WTreeView();
-    	
+    	treeView = new CapoWTreeView();
+    	treeView.setLayoutSizeAware(true);
+    	treeView.setColumnResizeEnabled(false);
+    	//treeView.
         /*
          * To support right-click, we need to disable the built-in browser
          * context menu.
@@ -196,7 +203,7 @@ public class CapoWebApplication extends WApplication {
          * Note that disabling the context menu and catching the right-click
          * does not work reliably on all browsers.
          */
-        treeView.setAttributeValue("oncontextmenu","event.cancelBubble = true; event.returnValue = false; return false;");
+//        treeView.setAttributeValue("oncontextmenu","event.cancelBubble = true; event.returnValue = false; return false;");
         if (data instanceof Element)
         {
             treeView.setModel(new DomItemModel((Element) data,DomUse.NAVIGATION));            
@@ -205,10 +212,14 @@ public class CapoWebApplication extends WApplication {
         {
             treeView.setModel(new FileResourceDescriptorItemModel((FileResourceDescriptor)data,DomUse.NAVIGATION));
         }
-        treeView.resize(new WLength(200), WLength.Auto);
+        //tree
+        //treeView.resize(new WLength(200,Unit.Pixel), WLength.Auto);
+        
+        treeView.setAttributeValue("bob", "bobby");
+       // treeView.setWidth(new WLength("100%"));
         treeView.setSelectionMode(SelectionMode.SingleSelection);
         treeView.expandToDepth(1);
-        treeView.setAlternatingRowColors(true);
+       // treeView.setAlternatingRowColors(true);
         treeView.selectionChanged().addListener(this, new Signal.Listener() {
             public void trigger() {                
             	selectedItemChanged();
@@ -261,8 +272,13 @@ public class CapoWebApplication extends WApplication {
     			getDetailsPane().removeTab(getDetailsPane().getWidget(0));    			
     		}
     		WTableView tableView = new WTableView();
-    		tableView.setAlternatingRowColors(true);
+    		
     		tableView.setSortingEnabled(true);
+    		tableView.setSelectable(true);
+    		tableView.setAlternatingRowColors(true);
+    		tableView.setColumnResizeEnabled(true);
+    		tableView.setColumnAlignment(0, AlignmentFlag.AlignRight);
+    		tableView.setColumnWidth(1, new WLength(500));
     		tableView.setSelectable(true);
     		String content = null;
     		if (selectedItem instanceof Element)

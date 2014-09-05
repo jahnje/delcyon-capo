@@ -35,6 +35,8 @@ public class FileResourceDescriptorItemModel extends WAbstractItemModel
 		this.domUse = navigation;
 	}
 	
+	
+	
 	@Override
     public Object getHeaderData(int section, Orientation orientation, int role)
     {
