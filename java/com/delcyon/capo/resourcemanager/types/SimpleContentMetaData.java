@@ -50,7 +50,7 @@ public class SimpleContentMetaData extends AbstractContentMetaData
 		init();
 	}
 	
-	private void init()
+	protected void init()
 	{
 		setValue(Attributes.exists, false);
 

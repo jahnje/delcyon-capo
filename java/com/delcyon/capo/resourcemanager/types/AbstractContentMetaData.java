@@ -24,7 +24,6 @@ import java.io.OutputStream;
 import java.lang.reflect.Modifier;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.Vector;
 import java.util.logging.Level;
@@ -135,7 +134,7 @@ public abstract class AbstractContentMetaData implements ContentMetaData, Contro
 	
 	@CloneControl(filter=Clone.exclude)
 	private transient LinkedList<StreamAttributeFilter> streamAttributeFilterLinkedList = new LinkedList<StreamAttributeFilter>();
-	private LinkedList<ContentMetaData> childContentMetaDataLinkedList = new LinkedList<ContentMetaData>();
+	protected LinkedList<ContentMetaData> childContentMetaDataLinkedList = new LinkedList<ContentMetaData>();
 	
 	
 	private String[] attributeKeys = null;
@@ -291,8 +290,11 @@ public abstract class AbstractContentMetaData implements ContentMetaData, Contro
 	@Override
 	public void clearAttributes()
 	{
-	    attributeValues = new String[attributeKeys.length];
-	    attributesLoaded = false;
+	    if(attributesLoaded != false)
+	    {
+	        attributeValues = new String[attributeKeys.length];
+	        attributesLoaded = false;
+	    }
 	}
 	
 	private int getAttributeIndex(String attributeName)
@@ -334,6 +336,12 @@ public abstract class AbstractContentMetaData implements ContentMetaData, Contro
 	}
 	
 
+	@Override
+	public boolean areDynamicAttributeLoaded()
+	{
+	    return attributesLoaded;
+	}
+	
 	private void loadAttributes()
 	{
 	    if (attributesLoaded  == false)
@@ -404,8 +412,12 @@ public abstract class AbstractContentMetaData implements ContentMetaData, Contro
 	}
 	
 	@Override
-	public String getValue(String name)
+	public String getValue(String name) throws RuntimeException
 	{
+	    if (isInitialized == false)
+	    {
+	        init();
+	    }
 	    initializeAttributeStorage();
 	    loadAttributes();
 	    int attributeIndex = getAttributeIndex(name);
@@ -417,8 +429,10 @@ public abstract class AbstractContentMetaData implements ContentMetaData, Contro
 		return null;
 	}
 	
-	@Override
-	public String getValue(Enum name)
+	abstract protected void init() throws RuntimeException;
+	
+    @Override
+	public String getValue(Enum name) throws RuntimeException
 	{
 	    return getValue(name.toString());
 	}
@@ -570,6 +584,10 @@ public abstract class AbstractContentMetaData implements ContentMetaData, Contro
 	@Override
 	public List<ContentMetaData> getContainedResources()
 	{
+	    if(isInitialized == false)
+	    {
+	        init();
+	    }
 		return childContentMetaDataLinkedList;
 	}
 	

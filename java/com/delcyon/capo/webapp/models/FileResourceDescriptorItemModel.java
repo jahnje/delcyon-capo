@@ -25,11 +25,11 @@ optionally, getFlags() to indicate data options
 public class FileResourceDescriptorItemModel extends WAbstractItemModel
 {
 
-	
+	int indexCounter = 0;
 	private FileResourceDescriptor topLevelResourceDescriptor;
 	private DomUse domUse = null;
 	public FileResourceDescriptorItemModel(FileResourceDescriptor resourceDescriptor,DomItemModel.DomUse navigation)
-	{
+	{	    
 		this.topLevelResourceDescriptor = resourceDescriptor;
 		this.domUse = navigation;
 	}
@@ -276,6 +276,13 @@ public class FileResourceDescriptorItemModel extends WAbstractItemModel
 	        exception.printStackTrace();
 	        return null;
 	    }
+	}
+
+	@Override
+	protected WModelIndex createIndex(int row, int column, Object ptr)
+	{
+	    
+	    return super.createIndex(row, column, ptr);
 	}
 
 }

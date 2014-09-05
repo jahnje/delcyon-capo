@@ -281,7 +281,7 @@ public class FileResourceDescriptor extends AbstractResourceDescriptor implement
 		super.close(variableContainer,resourceParameters);
 		if (contentMetaData != null)
 		{
-			contentMetaData.refresh(getResourceURI().getBaseURI());
+			contentMetaData.refresh();
 		}
 		if(contentInputStream != null)
 		{

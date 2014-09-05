@@ -149,14 +149,14 @@ public abstract class AbstractResourceDescriptor implements ResourceDescriptor
 
 		if (resourceState == State.OPEN)
 		{
-		    this.resourceMetaData = buildResourceMetaData(variableContainer,resourceParameters);
+		    refreshResourceMetaData(variableContainer,resourceParameters);
 	        clearContent();
 		    return ; 
 		}
 
 		addResourceParameters(variableContainer,resourceParameters);
 
-		this.resourceMetaData = buildResourceMetaData(variableContainer,resourceParameters);
+		refreshResourceMetaData(variableContainer,resourceParameters);
 		clearContent();
 		this.resourceState = State.OPEN;
 		this.stateParametersHashMap.put(State.OPEN, new StateParameters(resourceParameters, variableContainer));
@@ -166,8 +166,16 @@ public abstract class AbstractResourceDescriptor implements ResourceDescriptor
 	protected abstract ContentMetaData buildResourceMetaData(VariableContainer variableContainer, ResourceParameter... resourceParameters) throws Exception;
 	
 	protected void refreshResourceMetaData(VariableContainer variableContainer, ResourceParameter... resourceParameters) throws Exception
-    {
-	    this.resourceMetaData = buildResourceMetaData(variableContainer,resourceParameters);        
+    {	    
+	    if(this.resourceMetaData != null)
+	    {
+	        this.resourceMetaData.refresh();
+	    }
+	    else
+	    {
+	        this.resourceMetaData = buildResourceMetaData(variableContainer,resourceParameters);    
+	    }
+	            
     }
 
 

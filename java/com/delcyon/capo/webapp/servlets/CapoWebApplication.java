@@ -20,6 +20,7 @@ import com.delcyon.capo.webapp.widgets.CapoWTreeView;
 
 import eu.webtoolkit.jwt.AlignmentFlag;
 import eu.webtoolkit.jwt.PositionScheme;
+import eu.webtoolkit.jwt.SelectionBehavior;
 import eu.webtoolkit.jwt.SelectionMode;
 import eu.webtoolkit.jwt.Signal;
 import eu.webtoolkit.jwt.Signal2;
@@ -213,11 +214,14 @@ public class CapoWebApplication extends WApplication {
         
        // treeView.setWidth(new WLength("100%"));
         treeView.setSelectionMode(SelectionMode.SingleSelection);
+        treeView.setSelectionBehavior(SelectionBehavior.SelectItems);
+        treeView.setSelectable(true);
         treeView.expandToDepth(1);
-       // treeView.setAlternatingRowColors(true);
+        treeView.setAlternatingRowColors(true);
         treeView.selectionChanged().addListener(this, new Signal.Listener() {
             public void trigger() {                
             	selectedItemChanged();
+            	treeView.refresh();
             }
         });
         treeView.clicked().addListener(this, new Signal2.Listener<WModelIndex, WMouseEvent>() {
