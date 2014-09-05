@@ -9,7 +9,6 @@ import com.delcyon.capo.webapp.models.DomItemModel.DomUse;
 
 import eu.webtoolkit.jwt.ItemDataRole;
 import eu.webtoolkit.jwt.Orientation;
-import eu.webtoolkit.jwt.ViewItemRenderFlag;
 import eu.webtoolkit.jwt.WAbstractItemModel;
 import eu.webtoolkit.jwt.WModelIndex;
 /**
@@ -176,30 +175,49 @@ public class FileResourceDescriptorItemModel extends WAbstractItemModel
 	@Override
 	public Object getData(WModelIndex index, int role)
 	{
-		if (role == ItemDataRole.DisplayRole)
-		{	
-			if (domUse == DomUse.ATTRIBUTES)
-			{
-			    ContentMetaData attr = (ContentMetaData) index.getInternalPointer();
-				if (index.getColumn() == 0)
-				{
-					return attr.getSupportedAttributes().get(index.getRow());
-				}
-				else
-				{
-					return attr.getValue(attr.getSupportedAttributes().get(index.getRow()));
-				}
-			}
-			else
-			{
-				
-				return ((ResourceDescriptor)index.getInternalPointer()).getLocalName();
-			}
-		}
-		else
-		{
-			return null;
-		}
+	    if (role == ItemDataRole.DisplayRole)
+	    {	
+	        if (domUse == DomUse.ATTRIBUTES)
+	        {
+	            ContentMetaData attr = (ContentMetaData) index.getInternalPointer();
+	            if (index.getColumn() == 0)
+	            {
+	                return attr.getSupportedAttributes().get(index.getRow());
+	            }
+	            else
+	            {
+	                return attr.getValue(attr.getSupportedAttributes().get(index.getRow()));
+	            }
+	        }
+	        else
+	        {
+
+	            return ((ResourceDescriptor)index.getInternalPointer()).getLocalName();
+	        }
+	    }
+	    else if (role == ItemDataRole.MimeTypeRole)
+	    {
+	        if (domUse == DomUse.ATTRIBUTES)
+	        {
+	            return null;
+	        }
+	        else
+	        {
+	            try
+	            {
+	                if (((ResourceDescriptor)index.getInternalPointer()).getResourceMetaData(null).isContainer() == false)
+	                {
+	                    return ((ResourceDescriptor)index.getInternalPointer()).getContentMetaData(null).getValue("mimeType");
+	                }
+	            }catch (Exception exception)
+	            {
+	                exception.printStackTrace();
+
+	            }                
+	        }
+	    }		
+	    return null;
+
 	}
 
 	@Override

@@ -38,6 +38,7 @@ import com.delcyon.capo.CapoApplication;
 import com.delcyon.capo.Configuration.PREFERENCE;
 import com.delcyon.capo.server.CapoServer;
 import com.delcyon.capo.webapp.servlets.CapoWebWTServlet;
+import com.delcyon.capo.webapp.servlets.resource.WebResourcesServlet;
 
 import eu.webtoolkit.jwt.ServletInit;
 
@@ -138,7 +139,8 @@ public class CapoJettyServer implements Runnable
         // PlusConfiguration) to choosing where the webapp will unpack itself.
         WebAppContext webapp = new WebAppContext();//"capo/server/webapp","/");
         webapp.setContextPath("/");
-        webapp.addServlet(DefaultServlet.class, "/img/*");
+        webapp.addServlet(WebResourcesServlet.class, "/wr/*");
+        webapp.addServlet(DefaultServlet.class, "/public/*");
         webapp.addServlet(CapoWebWTServlet.class, "/*");        
         webapp.setResourceBase(CapoApplication.getDataManager().getResourceDirectory(PREFERENCE.WEB_DIR.toString()).getResourceURI().getResourceURIString());
         webapp.getSessionHandler().getSessionManager().setMaxInactiveInterval(CapoApplication.getConfiguration().getIntValue(CapoServer.Preferences.WEB_SESSION_TIMEOUT));        

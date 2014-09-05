@@ -3,6 +3,7 @@
 	<classpathentry kind="src" path="java"/>
 	<classpathentry kind="src" path="tests"/>
 	<classpathentry kind="src" path="resources"/>
+	<classpathentry kind="src" path="web_resources"/>
 	<classpathentry kind="lib" path="lib/commons-cli-1.2.jar"/>
 	<classpathentry kind="lib" path="lib/scannotation-1.0.2.jar"/>
 	<classpathentry kind="lib" path="lib/javassist-3.8.0.GA.jar"/>

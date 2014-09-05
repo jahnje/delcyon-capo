@@ -17,8 +17,6 @@ import com.delcyon.capo.webapp.models.DomItemModel;
 import com.delcyon.capo.webapp.models.DomItemModel.DomUse;
 import com.delcyon.capo.webapp.models.FileResourceDescriptorItemModel;
 import com.delcyon.capo.webapp.widgets.CapoWTreeView;
-import com.delcyon.capo.xml.XPath;
-import com.delcyon.capo.xml.cdom.CElement;
 
 import eu.webtoolkit.jwt.AlignmentFlag;
 import eu.webtoolkit.jwt.PositionScheme;
@@ -27,18 +25,15 @@ import eu.webtoolkit.jwt.Signal;
 import eu.webtoolkit.jwt.Signal2;
 import eu.webtoolkit.jwt.TextFormat;
 import eu.webtoolkit.jwt.Utils;
-import eu.webtoolkit.jwt.Utils.HtmlEncodingFlag;
 import eu.webtoolkit.jwt.WApplication;
 import eu.webtoolkit.jwt.WBootstrapTheme;
-import eu.webtoolkit.jwt.WBorderLayout;
-import eu.webtoolkit.jwt.WBorderLayout.Position;
 import eu.webtoolkit.jwt.WBoxLayout;
 import eu.webtoolkit.jwt.WBoxLayout.Direction;
 import eu.webtoolkit.jwt.WContainerWidget;
 import eu.webtoolkit.jwt.WEnvironment;
 import eu.webtoolkit.jwt.WGridLayout;
 import eu.webtoolkit.jwt.WLength;
-import eu.webtoolkit.jwt.WLength.Unit;
+import eu.webtoolkit.jwt.WLink;
 import eu.webtoolkit.jwt.WModelIndex;
 import eu.webtoolkit.jwt.WMouseEvent;
 import eu.webtoolkit.jwt.WNavigationBar;
@@ -49,7 +44,6 @@ import eu.webtoolkit.jwt.WTabWidget;
 import eu.webtoolkit.jwt.WTableView;
 import eu.webtoolkit.jwt.WText;
 import eu.webtoolkit.jwt.WTextArea;
-import eu.webtoolkit.jwt.WTextEdit;
 import eu.webtoolkit.jwt.WTreeView;
 import eu.webtoolkit.jwt.WVBoxLayout;
 import eu.webtoolkit.jwt.WWidget;
@@ -73,6 +67,8 @@ public class CapoWebApplication extends WApplication {
         setTheme(bootstrapTheme);
         //setCssTheme("polished");
         setTitle("Capo");
+        useStyleSheet(new WLink("/wr/source/sh_style.css"));
+        require("/wr/source/sh_main.js");
         createUI();
     }
 
@@ -88,15 +84,14 @@ public class CapoWebApplication extends WApplication {
         getRootLayout().addWidget(getContentPane(),1,0);
         try
 		{
-			ResourceDescriptor clientsResourceDescriptor = CapoApplication.getDataManager().getResourceDescriptor(null,"file:/Users/jeremiah/git/delcyon-capo/capo");
-			//CElement e = clientsResourceDescriptor.readXML(null);
+			ResourceDescriptor clientsResourceDescriptor = CapoApplication.getDataManager().getResourceDirectory("CAPO_DIR");
+			
 			
 			getContentPaneLayout().addWidget(getTreeView(clientsResourceDescriptor), 0, 0,1,0);	
 			
-			//XPath.dumpNode(e, System.out);
+			
 		} catch (Exception e)
-		{
-			// TODO Auto-generated catch block
+		{			
 			e.printStackTrace();
 		}
         
@@ -155,7 +150,7 @@ public class CapoWebApplication extends WApplication {
     		contentPane = new WContainerWidget();
     		contentPane.setMargin(0);
     		contentPane.setLayout(getContentPaneLayout());
-    		contentPane.setAttributeValue("style", "background-image: url('/img/Konachan.com - 181934 animal_ears black_hair breasts catgirl cleavage green_eyes kerasu original tail thighhighs.png'); background-repeat: no-repeat; background-position: bottom right;");
+    		contentPane.setAttributeValue("style", "background-image: url('/wr/images/background.png'); background-repeat: no-repeat; background-position: bottom right;");
     	}
     	return contentPane;
 	}
@@ -213,9 +208,9 @@ public class CapoWebApplication extends WApplication {
             treeView.setModel(new FileResourceDescriptorItemModel((FileResourceDescriptor)data,DomUse.NAVIGATION));
         }
         //tree
-        //treeView.resize(new WLength(200,Unit.Pixel), WLength.Auto);
+        treeView.setWidth(new WLength(250));//, WLength.Auto);
         
-        treeView.setAttributeValue("bob", "bobby");
+        
        // treeView.setWidth(new WLength("100%"));
         treeView.setSelectionMode(SelectionMode.SingleSelection);
         treeView.expandToDepth(1);
@@ -311,9 +306,12 @@ public class CapoWebApplication extends WApplication {
     		if (content != null && content.trim().isEmpty() == false)
             {               
                
-                WTextArea textEdit = new WTextArea(Utils.htmlEncode(content));
-                WText wText = new WText("<pre>"+Utils.htmlEncode(content)+"</pre>", TextFormat.XHTMLUnsafeText);
-                System.out.println(textEdit.getText());
+               // WTextArea textEdit = new WTextArea(Utils.htmlEncode(content));
+    		    
+                WText wText = new WText("<pre class='sh_xml'>"+Utils.htmlEncode(content)+"</pre>", TextFormat.XHTMLUnsafeText);
+                WApplication.getInstance().require("/wr/source/lang/sh_xml.js");
+                wText.doJavaScript("sh_highlightDocument();");
+               // System.out.println(textEdit.getText());
                 getDetailsPane().addTab(wText, "Content");
                 
             }
