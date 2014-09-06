@@ -20,7 +20,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.math.BigInteger;
+import java.lang.reflect.Modifier;
 import java.net.URI;
 import java.util.Arrays;
 import java.util.logging.Level;
@@ -32,18 +32,21 @@ import com.delcyon.capo.datastream.stream_attribute_filter.SizeFilterInputStream
 import com.delcyon.capo.resourcemanager.ResourceParameter;
 import com.delcyon.capo.resourcemanager.ResourceParameterBuilder;
 import com.delcyon.capo.resourcemanager.ResourceURI;
+import com.delcyon.capo.util.CloneControl;
+import com.delcyon.capo.util.CloneControl.Clone;
 
 /**
  * @author jeremiah
  *
  */
+@CloneControl(filter=Clone.exclude, modifiers=Modifier.TRANSIENT)
 public class FileResourceContentMetaData extends AbstractContentMetaData
 {
     
     private String uri = null; 
     private int currentDepth = 0; 
     private ResourceParameter[] resourceParameters = null;
-    private File file;
+    private transient File file;
     
     
 	public enum FileAttributes
@@ -136,6 +139,7 @@ public class FileResourceContentMetaData extends AbstractContentMetaData
 	        }
 	        catch (Exception e)
 	        {
+	        	e.printStackTrace();
 	            throw new RuntimeException(e);
 	        }
 	    }
@@ -193,10 +197,11 @@ public class FileResourceContentMetaData extends AbstractContentMetaData
 			
 			MD5FilterOutputStream md5FilterOutputStream = new MD5FilterOutputStream(new ByteArrayOutputStream());
 			Arrays.sort(fileList);
-			childContentMetaDataLinkedList.clear();
+			//childContentMetaDataLinkedList.clear();
 			int currentPreviousChildIndex = 0;
-			for (String childURI : fileList)
+			for (int currentChildURIIndex =0; currentChildURIIndex <  fileList.length; currentChildURIIndex++)
 			{
+				String childURI = fileList[currentChildURIIndex];
 				File childFile = new File(file,childURI);				
 				String tempChildURI = childFile.toURI().toString();
 				if (tempChildURI.endsWith(File.separator))
@@ -227,12 +232,20 @@ public class FileResourceContentMetaData extends AbstractContentMetaData
                             childContentMetaDataLinkedList.add(currentPreviousChildIndex, contentMetaData);
                             addedChild = true;
                         }
-                        currentPreviousChildIndex--;
+                        //currentPreviousChildIndex--;
                         break;
                     }
                     else if (compare == 0) //previous before newChild
                     {
                         addedChild = true;
+                        if(currentPreviousChildFile.lastModified() != childFile.lastModified())
+                        {
+                        	System.out.println("XXXXXXXXXXXXXXXX");
+                        }
+                        else if(currentPreviousChildFile.length() != childFile.length())
+                        {
+                        	System.out.println("XXXXXXXXXXXXXXXX");
+                        }
                         break;
                     }                    
                 }
@@ -240,9 +253,16 @@ public class FileResourceContentMetaData extends AbstractContentMetaData
 				{
 				    addContainedResource(contentMetaData);
 				}
+				
+				while(childFile.getName().equals(((FileResourceContentMetaData)childContentMetaDataLinkedList.get(currentChildURIIndex)).file.getName()) == false)
+				{
+					childContentMetaDataLinkedList.remove(currentChildURIIndex);
+				}
 			}
+			
 			setValue(MD5FilterInputStream.ATTRIBUTE_NAME, md5FilterOutputStream.getMD5());
 			md5FilterOutputStream.close();
+			System.out.println(childContentMetaDataLinkedList.size() +":"+ fileList.length);
 		}		
 		
 		setInitialized(true);

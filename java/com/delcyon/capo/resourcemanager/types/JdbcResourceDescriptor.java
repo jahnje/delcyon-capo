@@ -88,6 +88,7 @@ public class JdbcResourceDescriptor extends AbstractResourceDescriptor
 		simpleContentMetaData.setValue("MD5","");
 		simpleContentMetaData.setValue("contentFormatType",ContentFormatType.XML);
 		simpleContentMetaData.setValue("size","0");
+		simpleContentMetaData.setInitialized(true);
 		return simpleContentMetaData;
 	}
 	

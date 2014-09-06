@@ -368,6 +368,11 @@ public abstract class AbstractContentMetaData implements ContentMetaData, Contro
 	
 	public ContentFormatType getContentFormatType()
 	{
+    	if(isInitialized() == false)
+    	{
+    		init();
+    	}
+
 	    loadAttributes();
 	    String contentFormatTypeString = getValue(ContentFormatType.ATTRIBUTE_NAME);
 		if (contentFormatTypeString != null)
@@ -387,6 +392,11 @@ public abstract class AbstractContentMetaData implements ContentMetaData, Contro
 	
 	public String getMD5()
 	{
+    	if(isInitialized() == false)
+    	{
+    		init();
+    	}
+
 	    loadAttributes();
 		return getValue(MD5FilterInputStream.ATTRIBUTE_NAME);		
 	}
@@ -398,6 +408,11 @@ public abstract class AbstractContentMetaData implements ContentMetaData, Contro
 	
 	public Long getLength()
 	{
+    	if(isInitialized() == false)
+    	{
+    		init();
+    	}
+
 	    loadAttributes();
 		String length = getValue(SizeFilterInputStream.ATTRIBUTE_NAME);
 		if (length.matches("\\d+"))

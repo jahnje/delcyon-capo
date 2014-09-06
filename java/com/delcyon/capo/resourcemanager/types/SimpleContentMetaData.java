@@ -47,7 +47,7 @@ public class SimpleContentMetaData extends AbstractContentMetaData
 	
 	public void refresh()
 	{
-		init();
+		//init();
 	}
 	
 	protected void init()

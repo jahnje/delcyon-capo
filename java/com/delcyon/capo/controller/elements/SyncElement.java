@@ -262,6 +262,7 @@ public class SyncElement extends AbstractControl
         }
         else
         {
+        	System.out.println("file comparison: "+sourceResourceDescriptor.getResourceURI());
             String srcMD5 = sourceResourceDescriptor.getResourceMetaData(getParentGroup(), ResourceParameterBuilder.getResourceParameters(getControlElementDeclaration())).getMD5();
             String destMD5 = destinationResourceDescriptor.getResourceMetaData(getParentGroup(), ResourceParameterBuilder.getResourceParameters(getControlElementDeclaration())).getMD5();
             if (destMD5 == null || destMD5.equals(srcMD5) == false)

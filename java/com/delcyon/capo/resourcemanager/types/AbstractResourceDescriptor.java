@@ -167,7 +167,7 @@ public abstract class AbstractResourceDescriptor implements ResourceDescriptor
 	
 	protected void refreshResourceMetaData(VariableContainer variableContainer, ResourceParameter... resourceParameters) throws Exception
     {	    
-	    if(this.resourceMetaData != null)
+	    if(this.resourceMetaData != null && this.resourceMetaData instanceof SimpleContentMetaData == false)
 	    {
 	        this.resourceMetaData.refresh();
 	    }
