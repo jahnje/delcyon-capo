@@ -169,7 +169,7 @@ public abstract class AbstractResourceDescriptor implements ResourceDescriptor
     {	    
 	    if(this.resourceMetaData != null && this.resourceMetaData instanceof SimpleContentMetaData == false)
 	    {
-	        this.resourceMetaData.refresh();
+	        this.resourceMetaData.refresh(resourceParameters);
 	    }
 	    else
 	    {
@@ -189,6 +189,10 @@ public abstract class AbstractResourceDescriptor implements ResourceDescriptor
 	        {
 	            refreshResourceMetaData(variableContainer,resourceParameters);
 	        }
+	    }
+	    if(resourceMetaData.isInitialized() == false)
+	    {
+	        resourceMetaData.init();
 	    }
 	    return resourceMetaData;
 	}

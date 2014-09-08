@@ -19,6 +19,7 @@ package com.delcyon.capo.resourcemanager.types;
 import java.util.List;
 
 import com.delcyon.capo.resourcemanager.ContentFormatType;
+import com.delcyon.capo.resourcemanager.ResourceParameter;
 import com.delcyon.capo.resourcemanager.ResourceURI;
 
 /**
@@ -62,7 +63,7 @@ public interface ContentMetaData
 	 */
 	public boolean areDynamicAttributeLoaded();
 	
-	public void refresh() throws Exception;
+	public void refresh(ResourceParameter... resourceParameters) throws Exception;
 	
 	public boolean isInitialized();
 	
@@ -120,5 +121,7 @@ public interface ContentMetaData
 	public void addContainedResource(ContentMetaData contentMetaData);
 
 	public ResourceURI getResourceURI();
+
+    public void init();
 	
 }

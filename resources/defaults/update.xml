@@ -110,7 +110,7 @@
             <xsl:template match="server:sync" mode="completeURIs">
                 <xsl:param name="localRootPath"/>
                 <xsl:param name="remoteRootPath"/>
-                <server:sync onCopy="$update:requiresRestart">
+                <server:sync onCopy="$update:requiresRestart"  syncAttributes="true">
                     <!-- copy over any delete information -->
                     <xsl:if test="exists(@prune)">
                         <xsl:copy-of select="@prune"/>

@@ -153,6 +153,7 @@ public abstract class AbstractContentMetaData implements ContentMetaData, Contro
     //minimize memory by making sure attribute names, and common values are interned
     private void internAttributes()
     {
+        initializeAttributeStorage();
         for (int index = 0; index < attributeKeys.length; index++)
         {
             attributeKeys[index] = attributeKeys[index].intern();
@@ -444,7 +445,7 @@ public abstract class AbstractContentMetaData implements ContentMetaData, Contro
 		return null;
 	}
 	
-	abstract protected void init() throws RuntimeException;
+	abstract public void init() throws RuntimeException;
 	
     @Override
 	public String getValue(Enum name) throws RuntimeException

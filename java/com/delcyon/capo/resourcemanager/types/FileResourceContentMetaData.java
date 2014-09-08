@@ -45,7 +45,7 @@ public class FileResourceContentMetaData extends AbstractContentMetaData
     
     private String uri = null; 
     private int currentDepth = 0; 
-    private ResourceParameter[] resourceParameters = null;
+    private ResourceParameter[] resourceParameters = new ResourceParameter[0];
     private transient File file;
     
     
@@ -88,17 +88,27 @@ public class FileResourceContentMetaData extends AbstractContentMetaData
 
 	
 	
-	public void refresh() throws Exception
+	public void refresh(ResourceParameter... resourceParameters) throws Exception
 	{	    
 	    clearAttributes();
 	    setInitialized(false);
-		init(uri,currentDepth,resourceParameters);
+	    if (resourceParameters != null)
+	    {
+	        init(uri,currentDepth,resourceParameters);    
+	    }
+	    else
+	    {
+	        init(uri,currentDepth,this.resourceParameters);
+	    }
 	}
 	
 	//just initialize anything about ourselves, BUT NOTHING ABOUT OUR CHILDREN
 	private void init(String uri,int currentDepth, ResourceParameter... resourceParameters) throws Exception
 	{
-	    
+	    if(uri.contains("libfile:"))
+	    {
+	        System.out.println("oops");
+	    }
 		if (getBoolean(Parameters.USE_RELATIVE_PATHS,false,resourceParameters))
 		{
 			if (getString(Attributes.path,null,resourceParameters) == null)
@@ -106,7 +116,7 @@ public class FileResourceContentMetaData extends AbstractContentMetaData
 				ResourceParameterBuilder resourceParameterBuilder = new ResourceParameterBuilder();
 				resourceParameterBuilder.addAll(resourceParameters);
 				resourceParameterBuilder.addParameter(Attributes.path, uri.toString());
-				resourceParameters = resourceParameterBuilder.getParameters();
+				this.resourceParameters = resourceParameterBuilder.getParameters();
 			}
 			else
 			{
@@ -129,7 +139,7 @@ public class FileResourceContentMetaData extends AbstractContentMetaData
 	}
 	
 	@Override
-	protected void init() throws RuntimeException
+	public void init() throws RuntimeException
 	{
 	    if(isInitialized() == false)
 	    {
@@ -148,6 +158,10 @@ public class FileResourceContentMetaData extends AbstractContentMetaData
 
 	protected void load() throws Exception
     {
+	    if(file == null)
+	    {
+	        refresh();
+	    }
 	    setValue(Attributes.exists, file.exists());
 
         setValue(Attributes.executable, file.canExecute());
@@ -177,8 +191,7 @@ public class FileResourceContentMetaData extends AbstractContentMetaData
 			fileInputStream.close();
 		}
 		else if (file.isDirectory() == true && getIntValue(ContentMetaData.Parameters.DEPTH,1,resourceParameters) > currentDepth)
-		{	
-			
+		{				
 			String[] fileList = file.list();
 			
 			//check for permissions, cause if we can't read, well get a null list back
@@ -196,6 +209,16 @@ public class FileResourceContentMetaData extends AbstractContentMetaData
 			
 			
 			MD5FilterOutputStream md5FilterOutputStream = new MD5FilterOutputStream(new ByteArrayOutputStream());
+			if(file != null && file.exists())
+            {
+                md5FilterOutputStream.write(file.getName());
+                md5FilterOutputStream.write(file.length()+"");
+                md5FilterOutputStream.write(file.lastModified()+"");
+            }
+			else
+			{
+			    md5FilterOutputStream.write("");
+			}
 			Arrays.sort(fileList);
 			//childContentMetaDataLinkedList.clear();
 			int currentPreviousChildIndex = 0;
@@ -260,9 +283,26 @@ public class FileResourceContentMetaData extends AbstractContentMetaData
 				}
 			}
 			
+			//This may not be needed as it should effectively does again, what the removale of any non matches against the entire list  
+//			for(int currentNewFileIndex =0 ; currentNewFileIndex < fileList.length; currentNewFileIndex++)
+//			{
+//			    while(new File(file,fileList[currentNewFileIndex]).getName().equals(((FileResourceContentMetaData)childContentMetaDataLinkedList.get(currentNewFileIndex)).file.getName()) == false)
+//			    {
+//			        childContentMetaDataLinkedList.remove(currentNewFileIndex);
+//			    }
+//			        
+//			}
+			
+			//this truncates any files that were not in the new list, but are sorted to the end of the list
+			while(childContentMetaDataLinkedList.size() != fileList.length)
+            {               
+                childContentMetaDataLinkedList.removeLast();
+            }
+			
+			System.out.println("MD5 "+file.getCanonicalPath()+" "+md5FilterOutputStream.getMD5());
 			setValue(MD5FilterInputStream.ATTRIBUTE_NAME, md5FilterOutputStream.getMD5());
 			md5FilterOutputStream.close();
-			System.out.println(childContentMetaDataLinkedList.size() +":"+ fileList.length);
+			
 		}		
 		
 		setInitialized(true);
