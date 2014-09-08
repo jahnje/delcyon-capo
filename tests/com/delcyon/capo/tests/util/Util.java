@@ -67,6 +67,7 @@ public class Util
         syncElement.setAttribute(SyncElement.Attributes.dest.toString(), dest);
         syncElement.setAttribute(SyncElement.Attributes.recursive.toString(), recursive+"");
         syncElement.setAttribute(SyncElement.Attributes.prune.toString(), prune+"");
+        syncElement.setAttribute(SyncElement.Attributes.syncAttributes.toString(), true+"");
         Element resourceParameterElement = document.createElementNS(CapoApplication.RESOURCE_NAMESPACE_URI, "resouce:parameter");
         resourceParameterElement.setAttribute("name", FileResourceType.Parameters.ROOT_DIR.toString());
         resourceParameterElement.setAttribute("value", new File(".").getCanonicalPath());
