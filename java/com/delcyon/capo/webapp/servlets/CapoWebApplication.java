@@ -12,6 +12,7 @@ import org.w3c.dom.Element;
 import com.delcyon.capo.CapoApplication;
 import com.delcyon.capo.resourcemanager.ContentFormatType;
 import com.delcyon.capo.resourcemanager.ResourceDescriptor;
+import com.delcyon.capo.resourcemanager.ResourceDescriptor.State;
 import com.delcyon.capo.resourcemanager.types.FileResourceDescriptor;
 import com.delcyon.capo.webapp.models.DomItemModel;
 import com.delcyon.capo.webapp.models.DomItemModel.DomUse;
@@ -66,6 +67,7 @@ public class CapoWebApplication extends WApplication {
         super(env);
         WBootstrapTheme bootstrapTheme = new WBootstrapTheme();
         setTheme(bootstrapTheme);
+        useStyleSheet(new WLink("/wr/css/local.css"));
         //setCssTheme("polished");
         setTitle("Capo");
         useStyleSheet(new WLink("/wr/source/sh_style.css"));
@@ -132,7 +134,8 @@ public class CapoWebApplication extends WApplication {
     {
     	if (detailsPane == null)
     	{
-    		detailsPane = new WTabWidget();		
+    		detailsPane = new WTabWidget();
+    	
     	}
     	return detailsPane;
 	}
@@ -151,7 +154,7 @@ public class CapoWebApplication extends WApplication {
     		contentPane = new WContainerWidget();
     		contentPane.setMargin(0);
     		contentPane.setLayout(getContentPaneLayout());
-    		contentPane.setAttributeValue("style", "background-image: url('/wr/images/background.png'); background-repeat: no-repeat; background-position: bottom right;");
+    		contentPane.setAttributeValue("style", "background-image: url('/wr/images/background.png'); background-repeat: no-repeat; background-position: bottom right; background-size: contain;");
     	}
     	return contentPane;
 	}
@@ -271,14 +274,15 @@ public class CapoWebApplication extends WApplication {
     			getDetailsPane().removeTab(getDetailsPane().getWidget(0));    			
     		}
     		WTableView tableView = new WTableView();
-    		
+    		tableView.addStyleClass("bg-transparent");
     		tableView.setSortingEnabled(true);
-    		tableView.setSelectable(true);
-    		tableView.setAlternatingRowColors(true);
+    		tableView.setSelectable(true);   		
+    		tableView.setAlternatingRowColors(true);    		
     		tableView.setColumnResizeEnabled(true);
     		tableView.setColumnAlignment(0, AlignmentFlag.AlignRight);
     		tableView.setColumnWidth(1, new WLength(500));
-    		tableView.setSelectable(true);
+    		tableView.setSelectionMode(SelectionMode.SingleSelection);
+    		
     		String content = null;
     		if (selectedItem instanceof Element)
     		{
@@ -294,11 +298,14 @@ public class CapoWebApplication extends WApplication {
     		        {
     		            if(((FileResourceDescriptor) selectedItem).getResourceMetaData(null).getContentFormatType() != ContentFormatType.BINARY)
     		            {
+    		                ((FileResourceDescriptor) selectedItem).getResourceState();
     		                content = new String(((FileResourceDescriptor) selectedItem).readBlock(null));
+    		                ((FileResourceDescriptor) selectedItem).reset(State.OPEN);
     		            }
     		            else
     		            {
     		                ((FileResourceDescriptor) selectedItem).readBlock(null);
+    		                ((FileResourceDescriptor) selectedItem).reset(State.OPEN);
     		            }
     		        }
     		    } catch (Exception e)
@@ -312,16 +319,17 @@ public class CapoWebApplication extends WApplication {
                
                // WTextArea textEdit = new WTextArea(Utils.htmlEncode(content));
     		    
-                WText wText = new WText("<pre class='sh_xml'>"+Utils.htmlEncode(content)+"</pre>", TextFormat.XHTMLUnsafeText);
+                WText wText = new WText("<pre class='sh_xml bg-transparent'>"+Utils.htmlEncode(content)+"</pre>", TextFormat.XHTMLUnsafeText);
                 WApplication.getInstance().require("/wr/source/lang/sh_xml.js");
                 wText.doJavaScript("sh_highlightDocument();");
+                wText.addStyleClass("bg-transparent");
                // System.out.println(textEdit.getText());
                 getDetailsPane().addTab(wText, "Content");
                 
             }
     		
     		getDetailsPane().addTab(tableView, "Details");
-    		
+    		getDetailsPane().getWidget(0).setAttributeValue("style", "background-color: rgba(255, 255, 255, 0.55);");
     		
     	}
     }

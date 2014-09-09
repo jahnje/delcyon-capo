@@ -38,9 +38,9 @@ import org.w3c.dom.NodeList;
 import org.xml.sax.SAXParseException;
 
 import com.delcyon.capo.CapoApplication;
-import com.delcyon.capo.ContextThread;
 import com.delcyon.capo.CapoApplication.ApplicationState;
 import com.delcyon.capo.CapoApplication.Location;
+import com.delcyon.capo.ContextThread;
 import com.delcyon.capo.annotations.DefaultDocumentProvider;
 import com.delcyon.capo.annotations.DirectoyProvider;
 import com.delcyon.capo.client.CapoClient;
@@ -353,12 +353,13 @@ public class TaskManagerThread extends ContextThread
 			    //===============================================BEGIN OVERALL TASK RUN===============================================================
 			    ResourceDescriptor taskDirResourceDescriptor = capoDataManager.getResourceDirectory(Preferences.TASK_DIR.toString());
 			    ResourceDescriptor taskStatusDocumentResourceDescriptor = taskDirResourceDescriptor.getChildResourceDescriptor(null, "task-status.xml");
+			    taskStatusDocumentResourceDescriptor.getResourceMetaData(null).exists();
 			    Document taskStatusDocument = null;
 			    try
 			    {
 			        taskStatusDocument = CapoApplication.getDocumentBuilder().parse(taskStatusDocumentResourceDescriptor.getInputStream(null));
 			    }
-			    catch (SAXParseException saxParseException) 
+			    catch (Exception saxParseException) 
 			    {
 			        taskStatusDocument = CapoApplication.getDefaultDocument("task-status.xml");
                 }

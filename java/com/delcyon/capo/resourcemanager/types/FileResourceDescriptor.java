@@ -136,7 +136,7 @@ public class FileResourceDescriptor extends AbstractResourceDescriptor implement
 		if (getResourceState() != State.OPEN && getResourceState() != State.STEPPING)
 		{
 			open(variableContainer,resourceParameters);
-		}
+		}		
 		return contentMetaData;
 	}
 	

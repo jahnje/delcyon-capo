@@ -27,18 +27,19 @@ public class CapoWTreeView extends WTreeView
 	@Override
 	public boolean isSelected(WModelIndex index)
 	{
-	    System.out.println(((ResourceDescriptor) index.getInternalPointer()).getResourceURI()+" check");
-	    if(getSelectionModel().getSelectedIndexes().size() > 0)
-	    {
-	        
-	        WModelIndex selectedModelIndex = getSelectionModel().getSelectedIndexes().first();
-	        System.out.println(((ResourceDescriptor) selectedModelIndex.getInternalPointer()).getResourceURI()+" int");
-	        return ((ResourceDescriptor)selectedModelIndex.getInternalPointer()).getResourceURI().toString().equals(((ResourceDescriptor)index.getInternalPointer()).getResourceURI().toString());
-	    }
-	    else
-	    {
-	        return false;
-	    }
+	    return super.isSelected(index);
+//	    System.out.println(((ResourceDescriptor) index.getInternalPointer()).getResourceURI()+" check");
+//	    if(getSelectionModel().getSelectedIndexes().size() > 0)
+//	    {
+//	        
+//	        WModelIndex selectedModelIndex = getSelectionModel().getSelectedIndexes().first();
+//	        System.out.println(((ResourceDescriptor) selectedModelIndex.getInternalPointer()).getResourceURI()+" int");
+//	        return ((ResourceDescriptor)selectedModelIndex.getInternalPointer()).getResourceURI().toString().equals(((ResourceDescriptor)index.getInternalPointer()).getResourceURI().toString());
+//	    }
+//	    else
+//	    {
+//	        return false;
+//	    }
 	}
 	
 	

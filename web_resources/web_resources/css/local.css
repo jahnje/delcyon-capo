@@ -1,0 +1,16 @@
+.bg-transparent
+{
+    background-color:transparent;
+}
+.Wt-tableview .Wt-tv-contents {
+  background-color: transparent;
+}
+.Wt-tableview .Wt-tv-contents.Wt-striped div.Wt-tv-c:nth-child(odd) {
+  background-color: rgba(200,200,200,0.55);
+}
+.Wt-tableview .Wt-tv-contents.Wt-striped div.active:nth-child(odd) {
+  background-color: #0088cc;
+}
+.Wt-itemview .Wt-spacer {
+  background: none;
+}

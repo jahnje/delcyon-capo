@@ -9,6 +9,7 @@ import com.delcyon.capo.webapp.models.DomItemModel.DomUse;
 
 import eu.webtoolkit.jwt.ItemDataRole;
 import eu.webtoolkit.jwt.Orientation;
+import eu.webtoolkit.jwt.SortOrder;
 import eu.webtoolkit.jwt.WAbstractItemModel;
 import eu.webtoolkit.jwt.WModelIndex;
 /**
@@ -96,7 +97,14 @@ public class FileResourceDescriptorItemModel extends WAbstractItemModel
                 {
 				    if (parentNode.getResourceMetaData(null).isContainer() == false)
 	                {
-				        return parentNode.getContentMetaData(null).getSupportedAttributes().size();
+				        if(parentNode.getContentMetaData(null) == null)
+				        {
+				            return parentNode.getResourceMetaData(null).getSupportedAttributes().size();
+				        }
+				        else
+				        {
+				            return parentNode.getContentMetaData(null).getSupportedAttributes().size();
+				        }
 	                }
                     return parentNode.getResourceMetaData(null).getSupportedAttributes().size();
                 }
@@ -132,11 +140,24 @@ public class FileResourceDescriptorItemModel extends WAbstractItemModel
 	}
 
 	@Override
+	public void sort(int column, SortOrder order)
+	{
+	    
+	    // TODO Auto-generated method stub
+	    super.sort(column, order);
+	}
+	
+	@Override
 	//Should be called get this index's parent index
 	public WModelIndex getParent(WModelIndex index)
 	{
 	    try
 	    {
+	        
+	        if(index.getInternalPointer() instanceof ContentMetaData)
+	        {
+	            return null;
+	        }
 	        FileResourceDescriptor node = (FileResourceDescriptor) index.getInternalPointer();
 	        if(node.getParentResourceDescriptor() == null)
 	        {

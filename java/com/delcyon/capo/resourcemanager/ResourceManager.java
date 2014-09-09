@@ -246,8 +246,17 @@ public class ResourceManager extends CapoDataManager
 	
 	@Override
 	public ResourceDescriptor getResourceDirectory(String resourceDirectoryPreferenceName)
-	{
-		return directoryHashMap.get(resourceDirectoryPreferenceName);
+	{   ResourceDescriptor resourceDescriptor = directoryHashMap.get(resourceDirectoryPreferenceName);
+	     
+		try
+        {
+            return getResourceDescriptor(null, resourceDescriptor.getResourceURI().getBaseURI());
+        }
+        catch (Exception e)
+        {
+            CapoApplication.logger.warning(e.getMessage());
+            return null;
+        } 
 	}
 		
 	/**
