@@ -63,8 +63,6 @@ public class FileResourceContentMetaData extends AbstractContentMetaData
 	
 	public FileResourceContentMetaData(String uri, ResourceParameter... resourceParameters) throws Exception
 	{
-//	    System.err.println("new "+uri);
-//        Thread.dumpStack();
 	    this.uri = uri;
 	    this.resourceParameters = resourceParameters;	    
 		init(uri,0,resourceParameters);
@@ -72,8 +70,6 @@ public class FileResourceContentMetaData extends AbstractContentMetaData
 	
 	public FileResourceContentMetaData(String uri, int currentDepth, ResourceParameter... resourceParameters) throws Exception
 	{
-//	    System.err.println("new "+uri);
-//        Thread.dumpStack();
 	    this.uri = uri;
         this.resourceParameters = resourceParameters;
 		init(uri,currentDepth,resourceParameters);
@@ -105,10 +101,7 @@ public class FileResourceContentMetaData extends AbstractContentMetaData
 	//just initialize anything about ourselves, BUT NOTHING ABOUT OUR CHILDREN
 	private void init(String uri,int currentDepth, ResourceParameter... resourceParameters) throws Exception
 	{
-	    if(uri.contains("libfile:"))
-	    {
-	        System.out.println("oops");
-	    }
+	   
 		if (getBoolean(Parameters.USE_RELATIVE_PATHS,false,resourceParameters))
 		{
 			if (getString(Attributes.path,null,resourceParameters) == null)
@@ -148,8 +141,7 @@ public class FileResourceContentMetaData extends AbstractContentMetaData
 	            load();
 	        }
 	        catch (Exception e)
-	        {
-	        	e.printStackTrace();
+	        {	        	
 	            throw new RuntimeException(e);
 	        }
 	    }
@@ -220,7 +212,7 @@ public class FileResourceContentMetaData extends AbstractContentMetaData
 			    md5FilterOutputStream.write("");
 			}
 			Arrays.sort(fileList);
-			//childContentMetaDataLinkedList.clear();
+
 			int currentPreviousChildIndex = 0;
 			for (int currentChildURIIndex =0; currentChildURIIndex <  fileList.length; currentChildURIIndex++)
 			{
@@ -255,20 +247,12 @@ public class FileResourceContentMetaData extends AbstractContentMetaData
                             childContentMetaDataLinkedList.add(currentPreviousChildIndex, contentMetaData);
                             addedChild = true;
                         }
-                        //currentPreviousChildIndex--;
+                     
                         break;
                     }
                     else if (compare == 0) //previous before newChild
                     {
                         addedChild = true;
-                        if(currentPreviousChildFile.lastModified() != childFile.lastModified())
-                        {
-                        	System.out.println("XXXXXXXXXXXXXXXX");
-                        }
-                        else if(currentPreviousChildFile.length() != childFile.length())
-                        {
-                        	System.out.println("XXXXXXXXXXXXXXXX");
-                        }
                         break;
                     }                    
                 }
@@ -298,8 +282,7 @@ public class FileResourceContentMetaData extends AbstractContentMetaData
             {               
                 childContentMetaDataLinkedList.removeLast();
             }
-			
-			System.out.println("MD5 "+file.getCanonicalPath()+" "+md5FilterOutputStream.getMD5());
+						
 			setValue(MD5FilterInputStream.ATTRIBUTE_NAME, md5FilterOutputStream.getMD5());
 			md5FilterOutputStream.close();
 			
