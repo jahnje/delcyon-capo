@@ -14,6 +14,7 @@ import com.delcyon.capo.resourcemanager.ContentFormatType;
 import com.delcyon.capo.resourcemanager.ResourceDescriptor;
 import com.delcyon.capo.resourcemanager.ResourceDescriptor.State;
 import com.delcyon.capo.resourcemanager.types.FileResourceDescriptor;
+import com.delcyon.capo.util.HexUtil;
 import com.delcyon.capo.webapp.models.DomItemModel;
 import com.delcyon.capo.webapp.models.DomItemModel.DomUse;
 import com.delcyon.capo.webapp.models.FileResourceDescriptorItemModel;
@@ -304,8 +305,26 @@ public class CapoWebApplication extends WApplication {
     		            }
     		            else
     		            {
-    		                ((FileResourceDescriptor) selectedItem).readBlock(null);
+    		                byte[] bytes = ((FileResourceDescriptor) selectedItem).readBlock(null);
     		                ((FileResourceDescriptor) selectedItem).reset(State.OPEN);
+//    		                char[] hexArray = "0123456789ABCDEF".toCharArray();
+//
+//    		                char[] hexChars = new char[(bytes.length * 3)+(bytes.length/16)];
+//    		                for ( int j = 0; j < bytes.length; j++ ) 
+//    		                {
+//    		                    int v = bytes[j] & 0xFF;
+//    		                    hexChars[j * 3] = hexArray[v >>> 4];
+//    		                    hexChars[j * 3 + 1] = hexArray[v & 0x0F];
+//    		                    hexChars[j * 3 + 2] = ' ';
+//    		                    if(j % 16 == 0)
+//    		                    {
+//    		                        
+//    		                    }
+//    		                }
+    		                
+    		                content = HexUtil.dump(bytes); 
+
+
     		            }
     		        }
     		    } catch (Exception e)
