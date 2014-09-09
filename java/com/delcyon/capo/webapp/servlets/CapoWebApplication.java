@@ -285,6 +285,7 @@ public class CapoWebApplication extends WApplication {
     		tableView.setSelectionMode(SelectionMode.SingleSelection);
     		
     		String content = null;
+    		String contentType = null;
     		if (selectedItem instanceof Element)
     		{
     		    tableView.setModel(new DomItemModel((Element) selectedItem, DomUse.ATTRIBUTES));
@@ -297,13 +298,21 @@ public class CapoWebApplication extends WApplication {
     		    {
     		        if(((FileResourceDescriptor) selectedItem).getResourceMetaData(null).isContainer() == false)
     		        {
-    		            if(((FileResourceDescriptor) selectedItem).getResourceMetaData(null).getContentFormatType() != ContentFormatType.BINARY)
+    		            ContentFormatType contentFormatType = ((FileResourceDescriptor) selectedItem).getResourceMetaData(null).getContentFormatType(); 
+    		            if(contentFormatType == ContentFormatType.TEXT)
     		            {
     		                ((FileResourceDescriptor) selectedItem).getResourceState();
     		                content = new String(((FileResourceDescriptor) selectedItem).readBlock(null));
     		                ((FileResourceDescriptor) selectedItem).reset(State.OPEN);
     		            }
-    		            else
+    		            else if (contentFormatType == ContentFormatType.XML)
+    		            {
+    		                ((FileResourceDescriptor) selectedItem).getResourceState();
+                            content = new String(((FileResourceDescriptor) selectedItem).readBlock(null));
+                            ((FileResourceDescriptor) selectedItem).reset(State.OPEN);
+                            contentType = "xml";
+    		            }
+    		            else if(contentFormatType == ContentFormatType.BINARY)
     		            {
     		                byte[] bytes = ((FileResourceDescriptor) selectedItem).readBlock(null);
     		                ((FileResourceDescriptor) selectedItem).reset(State.OPEN);
@@ -323,7 +332,7 @@ public class CapoWebApplication extends WApplication {
 //    		                }
     		                
     		                content = HexUtil.dump(bytes); 
-
+    		                contentType = "hex";
 
     		            }
     		        }
@@ -338,9 +347,13 @@ public class CapoWebApplication extends WApplication {
                
                // WTextArea textEdit = new WTextArea(Utils.htmlEncode(content));
     		    
-                WText wText = new WText("<pre class='sh_xml bg-transparent'>"+Utils.htmlEncode(content)+"</pre>", TextFormat.XHTMLUnsafeText);
-                WApplication.getInstance().require("/wr/source/lang/sh_xml.js");
-                wText.doJavaScript("sh_highlightDocument();");
+                WText wText = new WText("<pre class='sh_"+contentType+" bg-transparent'>"+Utils.htmlEncode(content)+"</pre>", TextFormat.XHTMLUnsafeText);
+                
+                if(contentType != null)
+                {
+                    WApplication.getInstance().require("/wr/source/lang/sh_"+contentType+".js");
+                    wText.doJavaScript("sh_highlightDocument();");
+                }
                 wText.addStyleClass("bg-transparent");
                // System.out.println(textEdit.getText());
                 getDetailsPane().addTab(wText, "Content");
