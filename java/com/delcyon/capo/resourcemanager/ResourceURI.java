@@ -422,7 +422,7 @@ public class ResourceURI
 	}
 	
 	private static final Pattern pathSplitPattern = Pattern.compile("\\?(?<!\\\\\\?)");
-    private static final Pattern pathReplaceAllPattern1 = Pattern.compile(".+:(?<!\\\\:)(.+)");
+    private static final Pattern pathReplaceAllPattern1 = Pattern.compile("([^/]*:)?(.+)");
     private static final Pattern pathReplaceAllPattern2 = Pattern.compile("\\\\(?=:)");
 	
 	public static String getPath(String resourceURI)
@@ -439,12 +439,11 @@ public class ResourceURI
 			}
 		}
 		else
-		{
-			
+		{			
 			path = pathSplitPattern.split(getSchemeSpecificPart(getBaseURI(resourceURI)))[0];//getSchemeSpecificPart(getBaseURI(resourceURI).split("\\?(?<!\\\\\\?)")[0]);
 			if (path.indexOf('/') >= 0)//matches(".*/.*")) //see if this path is a urn path or a conventional path
 			{
-				path = pathReplaceAllPattern2.matcher(pathReplaceAllPattern1.matcher(path).replaceAll("$1")).replaceAll("");//path.replaceAll(".+:(?<!\\\\:)(.+)", "$1").replaceAll("\\\\(?=:)", "");
+				path = pathReplaceAllPattern2.matcher(pathReplaceAllPattern1.matcher(path).replaceAll("$2")).replaceAll("");//path.replaceAll(".+:(?<!\\\\:)(.+)", "$1").replaceAll("\\\\(?=:)", "");
 			}			
 		}
 		
