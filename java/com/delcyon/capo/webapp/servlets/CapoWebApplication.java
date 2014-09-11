@@ -14,11 +14,14 @@ import com.delcyon.capo.resourcemanager.ContentFormatType;
 import com.delcyon.capo.resourcemanager.ResourceDescriptor;
 import com.delcyon.capo.resourcemanager.ResourceDescriptor.State;
 import com.delcyon.capo.resourcemanager.types.FileResourceDescriptor;
+import com.delcyon.capo.resourcemanager.types.FileResourceType;
 import com.delcyon.capo.util.HexUtil;
 import com.delcyon.capo.webapp.models.DomItemModel;
 import com.delcyon.capo.webapp.models.DomItemModel.DomUse;
 import com.delcyon.capo.webapp.models.FileResourceDescriptorItemModel;
 import com.delcyon.capo.webapp.widgets.CapoWTreeView;
+import com.delcyon.capo.xml.dom.ResourceDocument;
+import com.delcyon.capo.xml.dom.ResourceDocumentBuilder;
 
 import eu.webtoolkit.jwt.AlignmentFlag;
 import eu.webtoolkit.jwt.PositionScheme;
@@ -88,10 +91,14 @@ public class CapoWebApplication extends WApplication {
         getRootLayout().addWidget(getContentPane(),1,0);
         try
 		{
-			ResourceDescriptor clientsResourceDescriptor = CapoApplication.getDataManager().getResourceDirectory("CAPO_DIR");
+            FileResourceType fileResourceType = new FileResourceType();
+            ResourceDescriptor resourceDescriptor = fileResourceType.getResourceDescriptor("/");        
+            ResourceDocumentBuilder documentBuilder = new ResourceDocumentBuilder();
+            ResourceDocument document = (ResourceDocument) documentBuilder.buildDocument(resourceDescriptor);
+			//ResourceDescriptor clientsResourceDescriptor = CapoApplication.getDataManager().getResourceDirectory("CAPO_DIR");
 			
 			
-			getContentPaneLayout().addWidget(getTreeView(clientsResourceDescriptor), 0, 0,1,0);	
+			getContentPaneLayout().addWidget(getTreeView(document.getDocumentElement()), 0, 0,1,0);	
 			
 			
 		} catch (Exception e)
