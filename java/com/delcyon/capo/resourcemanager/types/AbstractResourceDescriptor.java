@@ -382,8 +382,15 @@ public abstract class AbstractResourceDescriptor implements ResourceDescriptor
         }
         else
         {
-            String[] splitURI = this.resourceURI.getPath().split("/");
-            return splitURI[splitURI.length - 1];
+            if(this.resourceURI.getPath().equals("/"))
+            {
+                return this.resourceURI.getPath();
+            }
+            else
+            {
+                String[] splitURI = this.resourceURI.getPath().split("/");
+                return splitURI[splitURI.length - 1];
+            }
         }
     }
 
