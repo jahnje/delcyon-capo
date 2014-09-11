@@ -42,8 +42,14 @@ public class DomItemModel extends WAbstractItemModel
 	@Override
 	public Object getHeaderData(int section, Orientation orientation, int role)
 	{
-	    
-	    return rootElement.getLocalName();
+	    if(ItemDataRole.DisplayRole == role)
+	    {
+	        return rootElement.getLocalName();
+	    }
+	    else
+	    {
+	        return null;
+	    }
 	}
 	
 	@Override
