@@ -180,13 +180,15 @@ public abstract class AbstractResourceDescriptor implements ResourceDescriptor
     public ContentMetaData getResourceMetaData(VariableContainer variableContainer, ResourceParameter... resourceParameters) throws Exception
     {
         advanceState(State.OPEN, variableContainer, resourceParameters);
-        if (resourceMetaData != null)
-        {
-            if (resourceMetaData.isDynamic())
-            {
-                refreshResourceMetaData(variableContainer, resourceParameters);
-            }
-        }
+        //System.out.println("hmmm");
+//This currently seems unneeded and is about as expensive a call as possible esp when reading a file system         
+//        if (resourceMetaData != null)
+//        {
+//            if (resourceMetaData.isDynamic())
+//            {
+//                refreshResourceMetaData(variableContainer, resourceParameters);
+//            }
+//        }
         if (resourceMetaData.isInitialized() == false)
         {
             resourceMetaData.init();
@@ -913,9 +915,15 @@ public abstract class AbstractResourceDescriptor implements ResourceDescriptor
                             }
                         }
                         ResourceDescriptor childResourceDescriptor = CapoApplication.getDataManager().getResourceDescriptor(callingControlElement, childContentMetaData.getResourceURI().getBaseURI());
+                        
                         if (childResourceDescriptor != null)
                         {
                             childResourceDescriptor.setParentResourceDescriptor(this);
+                            //TODO Hopefully this won't bite us in the butt, but keeps the number of calls way down
+                            if(childResourceDescriptor instanceof AbstractResourceDescriptor)
+                            {
+                                ((AbstractResourceDescriptor)childResourceDescriptor).resourceMetaData = childContentMetaData;
+                            }
                         }
                         childResourceDescriptorHashMap.put(childContentMetaData.getResourceURI().getBaseURI(), childResourceDescriptor);
                         return childResourceDescriptor;
@@ -934,6 +942,11 @@ public abstract class AbstractResourceDescriptor implements ResourceDescriptor
                         if (childResourceDescriptor != null)
                         {
                             childResourceDescriptor.setParentResourceDescriptor(this);
+                          //TODO Hopefully this won't bite us in the butt, but keeps the number of calls way down
+                            if(childResourceDescriptor instanceof AbstractResourceDescriptor)
+                            {
+                                ((AbstractResourceDescriptor)childResourceDescriptor).resourceMetaData = childContentMetaData;
+                            }
                         }
                         childResourceDescriptorHashMap.put(childContentMetaData.getResourceURI().getBaseURI(), childResourceDescriptor);
                         return childResourceDescriptor;

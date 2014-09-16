@@ -269,7 +269,8 @@ public class FileResourceContentMetaData extends AbstractContentMetaData
 				String childURI = fileList[currentChildURIIndex];
 				File childFile = new File(file,childURI);
 				
-				String tempChildURI = childFile.toURI().toString();
+				//we don't care if this is a directory, since we always just strip off the ending slash
+				String tempChildURI = toURI(childFile, false);//.toString();
 				if (tempChildURI.endsWith(File.separator))
 	            {
 				    tempChildURI = tempChildURI.substring(0, tempChildURI.length()-File.separator.length());
@@ -378,6 +379,59 @@ public class FileResourceContentMetaData extends AbstractContentMetaData
 		return Boolean.parseBoolean(getValue(Attributes.writeable));
 	}
 	
+	private static String slashify(String path, boolean isDirectory) {
+        String p = path;
+        if (File.separatorChar != '/')
+            p = p.replace(File.separatorChar, '/'); //replace separator chars with '/'
+        if (!p.startsWith("/")) //add slash to front of path
+            p = "/" + p;
+        if (!p.endsWith("/") && isDirectory) //add / to end of path if directory
+            p = p + "/";
+        return p;
+    }
+	
+	public String toURI(File file,boolean isDirectory) {
+        try {
+            File f = file.getAbsoluteFile();
+            String sp = slashify(f.getPath(), isDirectory);
+            if (sp.startsWith("//"))
+                sp = "//" + sp;
+            
+            String mine = "file:"+encode(sp);
+//            URI uri = new URI("file", null, sp, null);
+//            String theirs = uri.toString();
+//            if(mine.equals(theirs) == false)
+//            {
+//                System.out.println(mine);
+//                System.out.println(theirs);
+//            }
+            return mine; 
+        } catch (Exception x) {
+            throw new Error(x);         // Can't happen
+        }
+    }
 
+	public static String encode(String input) {
+        StringBuilder resultStr = new StringBuilder();
+        for (char ch : input.toCharArray()) {
+            if (isUnsafe(ch)) {
+                resultStr.append('%');
+                resultStr.append(toHex(ch / 16));
+                resultStr.append(toHex(ch % 16));
+            } else {
+                resultStr.append(ch);
+            }
+        }
+        return resultStr.toString();
+    }
 
+    private static char toHex(int ch) {
+        return (char) (ch < 10 ? '0' + ch : 'A' + ch - 10);
+    }
+
+    private static boolean isUnsafe(char ch) {
+//        if ((ch > 128 && ch < 256)|| ch < 0)
+//            return true;
+        return " %;?<>#|\\[]{}\"".indexOf(ch) >= 0;
+    }
 }
