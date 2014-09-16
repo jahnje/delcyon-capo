@@ -92,7 +92,7 @@ public class CapoWebApplication extends WApplication {
         try
 		{
             FileResourceType fileResourceType = new FileResourceType();
-            ResourceDescriptor resourceDescriptor = fileResourceType.getResourceDescriptor("/");        
+            ResourceDescriptor resourceDescriptor = fileResourceType.getResourceDescriptor("file:///Users");        
             ResourceDocumentBuilder documentBuilder = new ResourceDocumentBuilder();
             ResourceDocument document = (ResourceDocument) documentBuilder.buildDocument(resourceDescriptor);
 			//ResourceDescriptor clientsResourceDescriptor = CapoApplication.getDataManager().getResourceDirectory("CAPO_DIR");

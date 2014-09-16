@@ -189,7 +189,7 @@ public class DomItemModel extends WAbstractItemModel
 
 			if (parentElement.getChildNodes().getLength() > 0)
 			{
-				Element childElement = (Element) parentElement.getChildNodes().item(row);
+				Node childElement = parentElement.getChildNodes().item(row);
 				if (column > 0)
 				{
 					Attr attr = (Attr) childElement.getAttributes().item(column);
