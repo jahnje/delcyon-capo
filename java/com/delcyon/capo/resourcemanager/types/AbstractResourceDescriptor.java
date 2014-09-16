@@ -65,7 +65,7 @@ public abstract class AbstractResourceDescriptor implements ResourceDescriptor
     private ResourceParameter[] initialResourceParameters = null;
     private HashMap<State, StateParameters> stateParametersHashMap = new HashMap<State, StateParameters>();
     private HashMap<String, ResourceDescriptor> childResourceDescriptorHashMap = new HashMap<String, ResourceDescriptor>();
-
+    private List<ContentMetaData> childContentMetaDataList = null;
     private LifeCycle lifeCycle;
     private State resourceState = State.NONE;
     private boolean isIterating = false;
@@ -268,6 +268,7 @@ public abstract class AbstractResourceDescriptor implements ResourceDescriptor
         }
         // TODO cleanup metadata
         childResourceDescriptorHashMap.clear();
+        childContentMetaDataList = null;
         setResourceState(State.RELEASED);
         this.stateParametersHashMap.put(State.RELEASED, new StateParameters(resourceParameters, variableContainer));
     }
@@ -892,7 +893,11 @@ public abstract class AbstractResourceDescriptor implements ResourceDescriptor
         ContentMetaData contentMetaData = getResourceMetaData(null);
         if (contentMetaData.isContainer() == true)
         {
-            List<ContentMetaData> childContentMetaDataList = getResourceMetaData(null).getContainedResources();
+            //getResourceMetaData(null).getContainedResources();
+            if(childContentMetaDataList == null)
+            {
+            	childContentMetaDataList = getResourceMetaData(null).getContainedResources();
+            }
             for (ContentMetaData childContentMetaData : childContentMetaDataList)
             {
                 if (childContentMetaData.getResourceURI().getBaseURI().endsWith(relativeURI))
