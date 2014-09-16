@@ -17,7 +17,10 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 package com.delcyon.capo.controller.elements;
 
 
+import java.io.File;
 import java.io.FileInputStream;
+import java.util.ArrayDeque;
+import java.util.Arrays;
 
 import org.junit.After;
 import org.junit.Test;
@@ -48,6 +51,12 @@ public class SnapshotElementTest
     	Util.copyTree("test-data/testdb", "testdb", true, true);
     	//Util.copyTree("test-data/parser_test_data/SIMPLE.grammer", "capo/server/resources", true, true);
     	Util.copyTree("test-data/parser_test_data", "capo/server/resources", true, true);
+    	
+    	
+    	//File rootFile = new File(".");
+    	//walkTree(rootFile);
+    	
+    	
         TestServer.start();
         Document document = CapoApplication.getDocumentBuilder().parse(new FileInputStream("test-data/snapshot_element_testdata/snapshot-element-test.xml"));
         LocalRequestProcessor localRequestProcessor = new LocalRequestProcessor();
@@ -68,6 +77,75 @@ public class SnapshotElementTest
 //        Assert.assertEquals(XMLDiff.EQUALITY, xmlDiffDocument.getDocumentElement().getAttribute(XMLDiff.XDIFF_PREFIX+":"+XMLDiff.XDIFF_ELEMENT_ATTRIBUTE_NAME));
     }
     
+    private void walkTree(File rootFile) throws Exception
+    {
+    	ArrayDeque<File> stack = new ArrayDeque<File>(50);
+    	System.out.println(getIndentation(stack)+"<"+rootFile.getName()+">");
+    	stack.push(rootFile);
+    	File currentFile = null;
+    	
+    	while(stack.isEmpty() == false)
+    	{
+    		currentFile = getNextChild(stack.peek(),currentFile); 
+    		if(currentFile == null) //no more kids
+    		{
+    			currentFile = stack.pop();
+    			System.out.println(getIndentation(stack)+"</"+currentFile.getName()+">");
+    		}
+    		else if(getNextChild(currentFile, null) != null)//has more/next kids 
+    		{
+    			System.out.println(getIndentation(stack)+"<"+currentFile.getName()+">");
+    			stack.push(currentFile);
+    			currentFile = null;//getNextChild(currentFile, null);
+    		}
+    		else //no kids
+    		{
+    			System.out.println(getIndentation(stack)+"<"+currentFile.getName()+"/>");
+    		}
+    	}
+    }
    
+    private String getIndentation(ArrayDeque stack)
+    {
+    	StringBuilder builder = new StringBuilder(stack.size());
+    	for(int depth =0; depth < stack.size(); depth++)
+    	{
+    		builder.append("\t");
+    	}
+    	return builder.toString();
+    }
+    private File getNextChild(File parent, File child) throws Exception
+    {
+    	File[] children = parent.listFiles();
+    	if(children == null || children.length == 0)
+    	{
+    		return null;
+    	}
+    	else
+    	{
+    		Arrays.sort(children);
+    		if(child == null)
+    		{
+    			return children[0];
+    		}
+    		for(int index =0; index < children.length;index++)
+    		{
+    			if(children[index].getCanonicalPath().equals(child.getCanonicalPath()))
+    			{
+    				if(children.length > index+1)
+    				{
+    					return children[index+1];
+    				}
+    				else
+    				{
+    					return null;
+    				}
+    			}    					
+    		}
+    		return null;
+    	}
+    	
+    }
+    
     
 }

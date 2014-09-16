@@ -7,7 +7,7 @@
              name="main">
     
     <server:group name="default">
-        <server:snapshot name="test" startPath="."/>
+        <server:snapshot name="test" startPath="clients"/>
     </server:group>
     
 </server:Capo>
