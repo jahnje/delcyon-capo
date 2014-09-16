@@ -27,6 +27,8 @@ public class ContextThread extends Thread
 	private Object context = null;	
 	private InterruptibleRunnable interruptibleRunnable = null;
 	
+	public byte[] hugeBuffer = null;
+	
 	public ContextThread()
 	{
 

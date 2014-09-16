@@ -203,7 +203,7 @@ public abstract class AbstractContentMetaData implements ContentMetaData, Contro
 	protected byte[] readInputStream(InputStream inputStream, boolean returnContent) throws Exception
 	{
 	    this.includeStreamAttributes = true;
-	    
+	    boolean useHugeBuffer = false;
 	    OutputStream outputStream = null;
 	    if(returnContent == true)
 	    {
@@ -211,10 +211,18 @@ public abstract class AbstractContentMetaData implements ContentMetaData, Contro
 	    }
 	    else
 	    {
+	    	useHugeBuffer = true;
 	        outputStream = new NullOutputStream();
 	    }
 		inputStream =  wrapInputStream(inputStream);
-		StreamUtil.readInputStreamIntoOutputStream(inputStream, outputStream);
+		if(useHugeBuffer == false)
+		{
+			StreamUtil.readInputStreamIntoOutputStream(inputStream, outputStream);
+		}
+		else
+		{
+			StreamUtil.readInputStreamIntoOutputStream(inputStream, outputStream,1024000);
+		}
 		inputStream.close();
 		loadAttributes(); //once we've read the file, load up he attribute map with any stream attributes.
 		this.isInitialized = true;

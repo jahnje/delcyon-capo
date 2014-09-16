@@ -28,6 +28,7 @@ import java.util.Vector;
 
 import com.delcyon.capo.CapoApplication;
 import com.delcyon.capo.Configuration.PREFERENCE;
+import com.delcyon.capo.ContextThread;
 
 
 /**
@@ -190,7 +191,25 @@ public class StreamUtil
 		long totalBytesRead = 0l;
 		
 		int bytesRead = 0;
-		byte[] buffer = new byte[bufferSize];
+		byte[] buffer = null;
+		
+		if (Thread.currentThread() instanceof ContextThread)
+		{
+			ContextThread thread = (ContextThread) Thread.currentThread();			
+			if(bufferSize > CapoApplication.getConfiguration().getIntValue(PREFERENCE.BUFFER_SIZE)) //allocating huge buffer
+			{
+				if(thread.hugeBuffer == null || thread.hugeBuffer.length < bufferSize)
+				{
+					thread.hugeBuffer = new byte[bufferSize];
+				}
+				buffer = thread.hugeBuffer;
+			}
+			
+		}
+		if(buffer == null)
+		{
+			buffer = new byte[bufferSize];
+		}
 		while (bytesRead != -1)
 		{
 						
