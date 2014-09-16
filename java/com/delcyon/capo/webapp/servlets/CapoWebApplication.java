@@ -9,7 +9,6 @@ import java.util.SortedSet;
 
 import org.w3c.dom.Element;
 
-import com.delcyon.capo.CapoApplication;
 import com.delcyon.capo.resourcemanager.ContentFormatType;
 import com.delcyon.capo.resourcemanager.ResourceDescriptor;
 import com.delcyon.capo.resourcemanager.ResourceDescriptor.State;
@@ -40,6 +39,8 @@ import eu.webtoolkit.jwt.WEnvironment;
 import eu.webtoolkit.jwt.WGridLayout;
 import eu.webtoolkit.jwt.WLength;
 import eu.webtoolkit.jwt.WLink;
+import eu.webtoolkit.jwt.WLink.Type;
+import eu.webtoolkit.jwt.WMenuItem;
 import eu.webtoolkit.jwt.WModelIndex;
 import eu.webtoolkit.jwt.WMouseEvent;
 import eu.webtoolkit.jwt.WNavigationBar;
@@ -49,7 +50,6 @@ import eu.webtoolkit.jwt.WStackedWidget;
 import eu.webtoolkit.jwt.WTabWidget;
 import eu.webtoolkit.jwt.WTableView;
 import eu.webtoolkit.jwt.WText;
-import eu.webtoolkit.jwt.WTextArea;
 import eu.webtoolkit.jwt.WTreeView;
 import eu.webtoolkit.jwt.WVBoxLayout;
 import eu.webtoolkit.jwt.WWidget;
@@ -77,6 +77,17 @@ public class CapoWebApplication extends WApplication {
         useStyleSheet(new WLink("/wr/source/sh_style.css"));
         require("/wr/source/sh_main.js");
         createUI();
+        WApplication.getInstance().internalPathChanged().addListener(this, new Signal.Listener()
+                {
+
+                    @Override
+                    public void trigger()
+                    {
+                        System.out.println(WApplication.getInstance().getInternalPath());
+                        
+                    }
+            
+                });
     }
 
     private void createUI() 
@@ -92,13 +103,14 @@ public class CapoWebApplication extends WApplication {
         try
 		{
             FileResourceType fileResourceType = new FileResourceType();
-            ResourceDescriptor resourceDescriptor = fileResourceType.getResourceDescriptor("file:///Users");        
-            ResourceDocumentBuilder documentBuilder = new ResourceDocumentBuilder();
-            ResourceDocument document = (ResourceDocument) documentBuilder.buildDocument(resourceDescriptor);
-			//ResourceDescriptor clientsResourceDescriptor = CapoApplication.getDataManager().getResourceDirectory("CAPO_DIR");
+            ResourceDescriptor resourceDescriptor = fileResourceType.getResourceDescriptor("file:/");
+          //ResourceDescriptor resourceDescriptor = CapoApplication.getDataManager().getResourceDirectory("CAPO_DIR");
+//            ResourceDocumentBuilder documentBuilder = new ResourceDocumentBuilder();
+//            ResourceDocument document = (ResourceDocument) documentBuilder.buildDocument(resourceDescriptor);
 			
 			
-			getContentPaneLayout().addWidget(getTreeView(document.getDocumentElement()), 0, 0,1,0);	
+			
+			getContentPaneLayout().addWidget(getTreeView(resourceDescriptor), 0, 0,1,0);	
 			
 			
 		} catch (Exception e)
@@ -107,7 +119,13 @@ public class CapoWebApplication extends WApplication {
 		}
         
         getContentPaneLayout().addLayout(getDetailsPaneLayout(), 0, 1);
-        getContentPaneLayout().addWidget(createTitle("Legend"), 2, 0, 1, 1, AlignmentFlag.AlignTop); 
+        WPushButton pathButton = new WPushButton("test");
+        pathButton.setLink(new WLink(Type.InternalPath, "/legend"));
+        getContentPaneLayout().addWidget(pathButton, 2, 0, 1, 1, AlignmentFlag.AlignTop); 
+        
+        WPushButton pathButton2 = new WPushButton("test2");
+        pathButton2.setLink(new WLink(Type.InternalPath, "/legend2"));
+        getContentPaneLayout().addWidget(pathButton2, 3, 0, 1, 1, AlignmentFlag.AlignTop);
         
 //        getDetailsPane().addTab(createTitle("Title"), "results");
 //        getDetailsPane().addTab(getMenu(), "details");
@@ -163,6 +181,8 @@ public class CapoWebApplication extends WApplication {
     		contentPane.setMargin(0);
     		contentPane.setLayout(getContentPaneLayout());
     		contentPane.setAttributeValue("style", "background-image: url('/wr/images/background.png'); background-repeat: no-repeat; background-position: bottom right; background-size: contain;");
+    	
+    	
     	}
     	return contentPane;
 	}
@@ -227,7 +247,7 @@ public class CapoWebApplication extends WApplication {
         treeView.setSelectionMode(SelectionMode.SingleSelection);
         treeView.setSelectionBehavior(SelectionBehavior.SelectItems);
         treeView.setSelectable(true);
-        treeView.expandToDepth(1);
+        //treeView.expandToDepth();
         treeView.setAlternatingRowColors(true);
         treeView.selectionChanged().addListener(this, new Signal.Listener() {
             public void trigger() {                
@@ -457,17 +477,22 @@ public class CapoWebApplication extends WApplication {
         
         
         ///build menu system
+        
+        
         WPushButton systemsMenuButton = new WPushButton("Systems");
         systemsMenuButton.setStyleClass("btn btn-mini");
         WPopupMenu systemsSubMenu = new WPopupMenu();
+        systemsSubMenu.setInternalPathEnabled("/Systems");
         systemsMenuButton.setMenu(systemsSubMenu);
         systemsSubMenu.addItem("Tasks").triggered().addListener(this,
                 new Signal.Listener() {
                     public void trigger() {
-                        
+                        WApplication.getInstance().setInternalPath("/Tasks", true);
                     }
                 });
-        systemsSubMenu.addItem("Chores");
+        WMenuItem choresMenuItem = systemsSubMenu.addItem("Chores");
+        choresMenuItem.setInternalPathEnabled(true);
+        choresMenuItem.setPathComponent("taskitos");
         systemsSubMenu.addItem("Groups");
         systemsSubMenu.addItem("Scripts");
         navigation.addWidget(systemsMenuButton);
