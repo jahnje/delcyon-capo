@@ -325,7 +325,8 @@ public class CapoWebApplication extends WApplication {
     		    {
     		        if(((FileResourceDescriptor) selectedItem).getResourceMetaData(null).isContainer() == false)
     		        {
-    		            ContentFormatType contentFormatType = ((FileResourceDescriptor) selectedItem).getResourceMetaData(null).getContentFormatType(); 
+    		            ContentFormatType contentFormatType = ((FileResourceDescriptor) selectedItem).getResourceMetaData(null).getContentFormatType();
+    		            long length = ((FileResourceDescriptor) selectedItem).getResourceMetaData(null).getLength();
     		            if(contentFormatType == ContentFormatType.TEXT)
     		            {
     		                ((FileResourceDescriptor) selectedItem).getResourceState();
@@ -339,7 +340,7 @@ public class CapoWebApplication extends WApplication {
                             ((FileResourceDescriptor) selectedItem).reset(State.OPEN);
                             contentType = "xml";
     		            }
-    		            else if(contentFormatType == ContentFormatType.BINARY)
+    		            else if(contentFormatType == ContentFormatType.BINARY && length < 70000l)
     		            {
     		                byte[] bytes = ((FileResourceDescriptor) selectedItem).readBlock(null);
     		                ((FileResourceDescriptor) selectedItem).reset(State.OPEN);
