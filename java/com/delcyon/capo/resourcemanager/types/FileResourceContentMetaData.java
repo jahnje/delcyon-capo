@@ -126,8 +126,8 @@ public class FileResourceContentMetaData extends AbstractContentMetaData
 		{
 			setResourceURI(new ResourceURI(uri));
 		}
-		
-		file = new File(new URI(uri));
+				
+		file = new File(new URI(uri));		
 		if(getResourceURI() == null)
 		{
 			setResourceURI(new ResourceURI(file.toURI().toString()));
@@ -223,8 +223,18 @@ public class FileResourceContentMetaData extends AbstractContentMetaData
 				//System.out.println(Files.probeContentType(file.toPath()));
 				setValue(FileAttributes.regular, "true");
 				FileInputStream fileInputStream = new FileInputStream(file);
-				readInputStream(fileInputStream,false);
-				fileInputStream.close();
+				try //some files are not actually readable when we get here even though java says yes. 
+				{				
+				    readInputStream(fileInputStream,false);
+				} catch (IOException ioException)
+				{
+				    setValue(Attributes.readable, false);
+				}
+				finally
+				{
+				    fileInputStream.close();    
+				}
+				
 			}
 			else
 			{
