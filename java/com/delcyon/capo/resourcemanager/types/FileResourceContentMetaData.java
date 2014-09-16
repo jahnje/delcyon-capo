@@ -22,7 +22,11 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.lang.reflect.Modifier;
 import java.net.URI;
+import java.nio.file.Files;
+import java.nio.file.LinkOption;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.util.Arrays;
+import java.util.Map;
 import java.util.logging.Level;
 
 import com.delcyon.capo.CapoApplication;
@@ -51,7 +55,7 @@ public class FileResourceContentMetaData extends AbstractContentMetaData
     
 	public enum FileAttributes
 	{
-        absolutePath, canonicalPath, symlink
+        absolutePath, canonicalPath, symlink, regular
 	    
 	}
     
@@ -79,7 +83,7 @@ public class FileResourceContentMetaData extends AbstractContentMetaData
     @Override
 	public Enum[] getAdditionalSupportedAttributes()
 	{
-		return new Enum[]{Attributes.exists,Attributes.executable,Attributes.readable,Attributes.writeable,Attributes.container,Attributes.lastModified,Attributes.MD5,FileAttributes.absolutePath,FileAttributes.canonicalPath,FileAttributes.symlink};
+		return new Enum[]{Attributes.exists,Attributes.executable,Attributes.readable,Attributes.writeable,Attributes.container,Attributes.lastModified,Attributes.MD5,FileAttributes.absolutePath,FileAttributes.canonicalPath,FileAttributes.symlink,FileAttributes.regular};
 	}
 
 	
@@ -152,9 +156,44 @@ public class FileResourceContentMetaData extends AbstractContentMetaData
     {
 	    if(file == null)
 	    {
-	        refresh();
+	    	refresh();
 	    }
-	    setValue(Attributes.exists, file.exists());
+
+	    boolean exists = false;
+	    Map fileAttributes = null;
+	    try //an exists() check on a file is more expensive than catching the IO exception 
+	    {
+	    	fileAttributes = Files.readAttributes(file.toPath(), "*", LinkOption.NOFOLLOW_LINKS);
+	    } catch(IOException ioe)
+	    {
+	    	setValue(Attributes.exists, exists+"");
+
+	    	setValue(Attributes.executable, file.canExecute());
+
+	    	setValue(Attributes.readable, file.canRead());
+
+	    	setValue(Attributes.writeable, file.canWrite());
+
+	    	setValue(Attributes.container, "false");
+
+	    	setValue(Attributes.lastModified,"");
+
+	    	setValue(SizeFilterInputStream.ATTRIBUTE_NAME, 0);
+
+	    	setValue(FileAttributes.absolutePath, file.getAbsolutePath());
+
+	    	setValue(FileAttributes.canonicalPath, file.getCanonicalPath());
+
+
+
+	    	setValue(FileAttributes.symlink, "false");
+	    	setInitialized(true);
+	    	return;
+	    }
+	    exists = true;
+	    
+	    
+	    setValue(Attributes.exists, exists);
 
         setValue(Attributes.executable, file.canExecute());
 
@@ -162,27 +201,37 @@ public class FileResourceContentMetaData extends AbstractContentMetaData
 
         setValue(Attributes.writeable, file.canWrite());
 
-        setValue(Attributes.container, file.isDirectory());
+        setValue(Attributes.container, fileAttributes.get("isDirectory"));
 
-        setValue(Attributes.lastModified, file.lastModified());
+        setValue(Attributes.lastModified,file.lastModified());
         
-        setValue(SizeFilterInputStream.ATTRIBUTE_NAME, file.length());
+        setValue(SizeFilterInputStream.ATTRIBUTE_NAME, fileAttributes.get("size"));
         
         setValue(FileAttributes.absolutePath, file.getAbsolutePath());
         
         setValue(FileAttributes.canonicalPath, file.getCanonicalPath());
         
-        boolean isSymlink = isSymlink(file);
-        
+        boolean isSymlink = Boolean.parseBoolean(fileAttributes.get("isSymbolicLink").toString());
+       // System.out.println(file+"attr="+Files.readAttributes(file.toPath(), "*",LinkOption.NOFOLLOW_LINKS));
         setValue(FileAttributes.symlink, isSymlink+"");
+         
     
-		if (file.exists() == true && file.canRead() == true && file.isDirectory() == false)
-		{		    
-		    FileInputStream fileInputStream = new FileInputStream(file);
-			readInputStream(fileInputStream,false);
-			fileInputStream.close();
+		if (exists == true && file.canRead() == true && (file.isDirectory() == false || isSymlink))
+		{	
+			if(Files.isRegularFile(file.toPath()))
+			{
+				//System.out.println(Files.probeContentType(file.toPath()));
+				setValue(FileAttributes.regular, "true");
+				FileInputStream fileInputStream = new FileInputStream(file);
+				readInputStream(fileInputStream,false);
+				fileInputStream.close();
+			}
+			else
+			{
+				setValue(FileAttributes.regular, "false");
+			}
 		}
-		else if (file.isDirectory() == true && getIntValue(ContentMetaData.Parameters.DEPTH,1,resourceParameters) > currentDepth)
+		else if (file.isDirectory() == true && getIntValue(ContentMetaData.Parameters.DEPTH,1,resourceParameters) > currentDepth && isSymlink == false)
 		{				
 			String[] fileList = file.list();
 			
@@ -201,11 +250,11 @@ public class FileResourceContentMetaData extends AbstractContentMetaData
 			
 			
 			MD5FilterOutputStream md5FilterOutputStream = new MD5FilterOutputStream(new ByteArrayOutputStream());
-			if(file != null && file.exists())
+			if(file != null && exists)
             {
                 md5FilterOutputStream.write(file.getName());
                 md5FilterOutputStream.write(file.length()+"");
-                md5FilterOutputStream.write(file.lastModified()+"");
+			    md5FilterOutputStream.write(file.lastModified()+"");
             }
 			else
 			{
@@ -216,19 +265,25 @@ public class FileResourceContentMetaData extends AbstractContentMetaData
 			int currentPreviousChildIndex = 0;
 			for (int currentChildURIIndex =0; currentChildURIIndex <  fileList.length; currentChildURIIndex++)
 			{
+				
 				String childURI = fileList[currentChildURIIndex];
-				File childFile = new File(file,childURI);				
+				File childFile = new File(file,childURI);
+				
 				String tempChildURI = childFile.toURI().toString();
 				if (tempChildURI.endsWith(File.separator))
 	            {
 				    tempChildURI = tempChildURI.substring(0, tempChildURI.length()-File.separator.length());
 	            }
 				FileResourceContentMetaData contentMetaData = new FileResourceContentMetaData(tempChildURI, currentDepth+1,resourceParameters);
-				if(contentMetaData.file != null && contentMetaData.file.exists())
+				if(contentMetaData.file != null) //XXX we just got this from out parent, and checks are expensive && contentMetaData.file.exists())
 				{
+					
+					BasicFileAttributes contentAttributes = Files.readAttributes(file.toPath(), BasicFileAttributes.class);
+					
 				    md5FilterOutputStream.write(contentMetaData.file.getName());
-				    md5FilterOutputStream.write(contentMetaData.file.length()+"");
-				    md5FilterOutputStream.write(contentMetaData.file.lastModified()+"");
+				    md5FilterOutputStream.write(contentAttributes.size()+"");
+				    md5FilterOutputStream.write(contentAttributes.lastModifiedTime().toMillis()+"");
+					
 				}
 				boolean addedChild = false;
 				for( ; currentPreviousChildIndex < childContentMetaDataLinkedList.size(); currentPreviousChildIndex++)
@@ -322,34 +377,7 @@ public class FileResourceContentMetaData extends AbstractContentMetaData
 	{
 		return Boolean.parseBoolean(getValue(Attributes.writeable));
 	}
-
 	
-
-
-	private boolean isSymlink(File file) throws IOException 
-	{
-	    
-	    File canonicalFile = null;
-	    
-	    if (file.getParent() == null)
-	    {
-	        canonicalFile = file;
-	    } 
-	    else
-	    {
-	        File canonicalParentDirectory = file.getParentFile().getCanonicalFile();
-	        canonicalFile = new File(canonicalParentDirectory, file.getName());
-	    }
-
-	    if (canonicalFile.getCanonicalFile().equals(canonicalFile.getAbsoluteFile())) 
-	    {
-	        return false;
-	    }
-	    else 
-	    {
-	        return true;
-	    }
-	}
 
 
 }
