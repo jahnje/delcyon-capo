@@ -46,11 +46,11 @@ public class MD5FilterInputStream extends AbstractFilterInputStream
 	@Override
 	public String getValue()
 	{	
-	    //TODO deal with leading zeros??
+
 	    //the message digest only lets us read from it once before it resets things, so persist the value incase we read more than once. 
 	    if(md5 == null)
 	    {
-	        md5 = new BigInteger(1, messageDigest.digest()).toString(16); 
+	        md5 = String.format("%032x", new BigInteger(1, messageDigest.digest())); 
 	    }
 	    return md5;
 	}
