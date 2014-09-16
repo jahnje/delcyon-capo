@@ -61,6 +61,7 @@ public class CDocument extends CNode implements Document
     private long documentID = incrementDocumentID();
 	private boolean silenceEvents = false;
     private VariableProcessor variableProcessor;
+	private boolean onlyAllowValidNodeNames = false;
     
     public CDocument()
     {
@@ -567,4 +568,16 @@ public class CDocument extends CNode implements Document
         return contextNode;
     }
 
+    
+    
+	public boolean onlyAllowValidNodeNames()
+	{
+		return this.onlyAllowValidNodeNames ;
+	}
+
+	public void setOnlyAllowValidNodeNames(boolean onlyAllowValidNodeNames)
+	{
+		this.onlyAllowValidNodeNames = onlyAllowValidNodeNames;
+	}
+	
 }
