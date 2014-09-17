@@ -14,3 +14,22 @@
 .Wt-itemview .Wt-spacer {
   background: none;
 }
+.Wt-itemview {
+  cursor: default;
+  white-space: nowrap;
+  background: transparent;
+  border: 1px solid;
+  border-color: transparent ;
+  /* header */
+
+  /* resize handles */
+
+  /* sort handles */
+
+  /* item drag & drop */
+
+}
+.Wt-tableview .Wt-header {
+  border-bottom: 1px ;
+  border-bottom-color: transparent ;
+}

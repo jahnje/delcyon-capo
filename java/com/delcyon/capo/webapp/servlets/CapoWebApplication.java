@@ -5,10 +5,15 @@
  */
 package com.delcyon.capo.webapp.servlets;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.util.List;
 import java.util.SortedSet;
 
 import org.w3c.dom.Element;
 
+import com.delcyon.capo.datastream.StreamUtil;
 import com.delcyon.capo.datastream.stream_attribute_filter.MimeTypeFilterInputStream;
 import com.delcyon.capo.resourcemanager.ContentFormatType;
 import com.delcyon.capo.resourcemanager.ResourceDescriptor;
@@ -19,12 +24,13 @@ import com.delcyon.capo.util.HexUtil;
 import com.delcyon.capo.webapp.models.DomItemModel;
 import com.delcyon.capo.webapp.models.DomItemModel.DomUse;
 import com.delcyon.capo.webapp.models.FileResourceDescriptorItemModel;
+import com.delcyon.capo.webapp.servlets.resource.AbstractResourceServlet;
 import com.delcyon.capo.webapp.servlets.resource.WResourceDescriptor;
 import com.delcyon.capo.webapp.widgets.CapoWTreeView;
-import com.delcyon.capo.xml.dom.ResourceDocument;
-import com.delcyon.capo.xml.dom.ResourceDocumentBuilder;
+import com.delcyon.capo.webapp.widgets.WCSSItemDelegate;
 
 import eu.webtoolkit.jwt.AlignmentFlag;
+import eu.webtoolkit.jwt.AnchorTarget;
 import eu.webtoolkit.jwt.PositionScheme;
 import eu.webtoolkit.jwt.SelectionBehavior;
 import eu.webtoolkit.jwt.SelectionMode;
@@ -32,13 +38,14 @@ import eu.webtoolkit.jwt.Signal;
 import eu.webtoolkit.jwt.Signal2;
 import eu.webtoolkit.jwt.TextFormat;
 import eu.webtoolkit.jwt.Utils;
+import eu.webtoolkit.jwt.WAnchor;
 import eu.webtoolkit.jwt.WApplication;
 import eu.webtoolkit.jwt.WBootstrapTheme;
 import eu.webtoolkit.jwt.WBoxLayout;
 import eu.webtoolkit.jwt.WBoxLayout.Direction;
 import eu.webtoolkit.jwt.WContainerWidget;
 import eu.webtoolkit.jwt.WEnvironment;
-import eu.webtoolkit.jwt.WFileResource;
+import eu.webtoolkit.jwt.WFileUpload;
 import eu.webtoolkit.jwt.WGridLayout;
 import eu.webtoolkit.jwt.WImage;
 import eu.webtoolkit.jwt.WLength;
@@ -49,6 +56,7 @@ import eu.webtoolkit.jwt.WModelIndex;
 import eu.webtoolkit.jwt.WMouseEvent;
 import eu.webtoolkit.jwt.WNavigationBar;
 import eu.webtoolkit.jwt.WPopupMenu;
+import eu.webtoolkit.jwt.WProgressBar;
 import eu.webtoolkit.jwt.WPushButton;
 import eu.webtoolkit.jwt.WStackedWidget;
 import eu.webtoolkit.jwt.WTabWidget;
@@ -57,6 +65,7 @@ import eu.webtoolkit.jwt.WText;
 import eu.webtoolkit.jwt.WTreeView;
 import eu.webtoolkit.jwt.WVBoxLayout;
 import eu.webtoolkit.jwt.WWidget;
+import eu.webtoolkit.jwt.servlet.UploadedFile;
 
 public class CapoWebApplication extends WApplication {
 	
@@ -300,13 +309,15 @@ public class CapoWebApplication extends WApplication {
     	else if (selectedIndexes.size() == 1)
     	{
     		WModelIndex modelIndex = selectedIndexes.first();
-    		Object selectedItem =  modelIndex.getInternalPointer();
+    		final Object selectedItem =  modelIndex.getInternalPointer();
     		while(getDetailsPane().getCount() > 0)
     		{    			
     			getDetailsPane().removeTab(getDetailsPane().getWidget(0));    			
     		}
-    		WTableView tableView = new WTableView();
+    		WContainerWidget detailsContainerWidget = new WContainerWidget();
+    		final WTableView tableView = new WTableView();
     		tableView.addStyleClass("bg-transparent");
+    		tableView.setItemDelegateForColumn(0,new WCSSItemDelegate("font-weight: bold;"));
     		tableView.setSortingEnabled(true);
     		tableView.setSelectable(true);   		
     		tableView.setAlternatingRowColors(true);    		
@@ -331,6 +342,49 @@ public class CapoWebApplication extends WApplication {
     		    {
     		        if(((FileResourceDescriptor) selectedItem).getResourceMetaData(null).isContainer() == false)
     		        {
+    		            WAnchor anchor = new WAnchor(new WLink(new WResourceDescriptor((ResourceDescriptor) selectedItem)),"Download");
+    		            anchor.setTarget(AnchorTarget.TargetNewWindow);
+    		            final WFileUpload upload = new WFileUpload();
+    		            upload.setFileTextSize(10000);
+    		            upload.setProgressBar(new WProgressBar());
+    		            upload.changed().addListener(this, new Signal.Listener() {
+    		                public void trigger() {
+    		                    upload.upload();    		                   
+    		                }
+    		            });
+    		            upload.uploaded().addListener(this, new Signal.Listener() {
+    		                public void trigger() {
+    		                    System.out.println("done");
+    		                    List<UploadedFile> uploadedFiles = upload.getUploadedFiles();
+    		                    String tempFileName = uploadedFiles.get(0).getSpoolFileName();
+    		                    File tempFile = new File(tempFileName);
+    		                    try
+                                {
+                                    StreamUtil.readInputStreamIntoOutputStream(new FileInputStream(tempFile),  ((FileResourceDescriptor) selectedItem).getOutputStream(null));
+                                    ((FileResourceDescriptor) selectedItem).getResourceMetaData(null).refresh();
+                                    ((FileResourceDescriptor) selectedItem).advanceState(State.CLOSED,null);
+                                    ((FileResourceDescriptor) selectedItem).reset(State.OPEN);
+                                    ((FileResourceDescriptorItemModel) tableView.getModel()).reload();
+                                    upload.setProgressBar(new WProgressBar());                                    
+                                    upload.show();
+                                    upload.enableAjax();
+                                    
+                                }                                
+                                catch (Exception e)
+                                {                                    
+                                    e.printStackTrace();
+                                }
+    		                    
+    		                }
+    		            });
+    		            upload.fileTooLarge().addListener(this, new Signal.Listener() {
+    		                public void trigger() {
+    		                    System.out.println("error, too large");
+    		                }
+    		            });
+    		            
+    		            detailsContainerWidget.addWidget(upload);
+    		            detailsContainerWidget.addWidget(anchor);
     		            ContentFormatType contentFormatType = ((FileResourceDescriptor) selectedItem).getResourceMetaData(null).getContentFormatType();
     		            mimeType = ((FileResourceDescriptor) selectedItem).getResourceMetaData(null).getValue(MimeTypeFilterInputStream.MIME_TYPE_ATTRIBUTE);
     		            fileURI = ((FileResourceDescriptor) selectedItem).getResourceMetaData(null).getResourceURI().getBaseURI();
@@ -344,6 +398,8 @@ public class CapoWebApplication extends WApplication {
     		                ((FileResourceDescriptor) selectedItem).getResourceState();
     		                content = new String(((FileResourceDescriptor) selectedItem).readBlock(null));
     		                ((FileResourceDescriptor) selectedItem).reset(State.OPEN);
+    		                String localName = ((FileResourceDescriptor) selectedItem).getLocalName();
+    		                contentType = localName.substring(localName.indexOf(".")+1);
     		            }
     		            else if (contentFormatType == ContentFormatType.XML)
     		            {
@@ -389,8 +445,9 @@ public class CapoWebApplication extends WApplication {
     		    
                 WText wText = new WText("<pre class='sh_"+contentType+" bg-transparent'>"+Utils.htmlEncode(content)+"</pre>", TextFormat.XHTMLUnsafeText);
                 
-                if(contentType != null)
+                if(contentType != null && AbstractResourceServlet.getResourceServletInstance().exists("/wr/source/lang/sh_"+contentType+".js"))
                 {
+                    
                     WApplication.getInstance().require("/wr/source/lang/sh_"+contentType+".js");
                     wText.doJavaScript("sh_highlightDocument();");
                 }
@@ -404,7 +461,9 @@ public class CapoWebApplication extends WApplication {
     			WResourceDescriptor wResourceDescriptor = new WResourceDescriptor((ResourceDescriptor) selectedItem);
     			getDetailsPane().addTab(new WImage(wResourceDescriptor, "Content"), "Content");
     		}
-    		getDetailsPane().addTab(tableView, "Details");
+    		
+    		detailsContainerWidget.addWidget(tableView);
+    		getDetailsPane().addTab(detailsContainerWidget, "Details");
     		getDetailsPane().getWidget(0).setAttributeValue("style", "background-color: rgba(255, 255, 255, 0.55);");
     		
     	}
