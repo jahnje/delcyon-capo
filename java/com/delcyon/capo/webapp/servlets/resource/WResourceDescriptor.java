@@ -16,13 +16,11 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 package com.delcyon.capo.webapp.servlets.resource;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 
 import com.delcyon.capo.datastream.stream_attribute_filter.MimeTypeFilterInputStream;
 import com.delcyon.capo.resourcemanager.ResourceDescriptor;
+import com.delcyon.capo.resourcemanager.ResourceDescriptor.State;
 
 import eu.webtoolkit.jwt.WResource;
 import eu.webtoolkit.jwt.servlet.WebRequest;
@@ -43,6 +41,7 @@ public class WResourceDescriptor extends WResource
 	public WResourceDescriptor(ResourceDescriptor resourceDescriptor)
 	{
 		this.resourceDescriptor = resourceDescriptor;
+		this.suggestFileName(resourceDescriptor.getLocalName());
 	}
 	
 	@Override
@@ -54,6 +53,7 @@ public class WResourceDescriptor extends WResource
 			response.setContentType(resourceDescriptor.getResourceMetaData(null).getValue(MimeTypeFilterInputStream.MIME_TYPE_ATTRIBUTE));	
 			
 			try {
+			    resourceDescriptor.reset(State.OPEN);
 				StreamUtils.copy(resourceDescriptor.getInputStream(null), response.getOutputStream());
 				response.getOutputStream().flush();
 			} catch (IOException e) {
@@ -62,6 +62,7 @@ public class WResourceDescriptor extends WResource
 				resourceDescriptor.close(null);
 			}
 		} catch (Exception e) {
+		    e.printStackTrace();
 			System.err.println("Could not find resource: " + resourceDescriptor.getResourceURI().getBaseURI());
 			response.setStatus(404);
 		}
