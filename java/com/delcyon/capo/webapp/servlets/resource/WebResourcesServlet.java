@@ -77,7 +77,7 @@ public class WebResourcesServlet extends AbstractResourceServlet
 	}
 	
 	@Override
-	protected String getResourcePath(String requestURI)
+	public String getResourcePath(String requestURI)
 	{
 		String path = null;
 		int queryIndex = requestURI.indexOf("?");
