@@ -9,6 +9,7 @@ import java.util.SortedSet;
 
 import org.w3c.dom.Element;
 
+import com.delcyon.capo.datastream.stream_attribute_filter.MimeTypeFilterInputStream;
 import com.delcyon.capo.resourcemanager.ContentFormatType;
 import com.delcyon.capo.resourcemanager.ResourceDescriptor;
 import com.delcyon.capo.resourcemanager.ResourceDescriptor.State;
@@ -18,6 +19,7 @@ import com.delcyon.capo.util.HexUtil;
 import com.delcyon.capo.webapp.models.DomItemModel;
 import com.delcyon.capo.webapp.models.DomItemModel.DomUse;
 import com.delcyon.capo.webapp.models.FileResourceDescriptorItemModel;
+import com.delcyon.capo.webapp.servlets.resource.WResourceDescriptor;
 import com.delcyon.capo.webapp.widgets.CapoWTreeView;
 import com.delcyon.capo.xml.dom.ResourceDocument;
 import com.delcyon.capo.xml.dom.ResourceDocumentBuilder;
@@ -36,7 +38,9 @@ import eu.webtoolkit.jwt.WBoxLayout;
 import eu.webtoolkit.jwt.WBoxLayout.Direction;
 import eu.webtoolkit.jwt.WContainerWidget;
 import eu.webtoolkit.jwt.WEnvironment;
+import eu.webtoolkit.jwt.WFileResource;
 import eu.webtoolkit.jwt.WGridLayout;
+import eu.webtoolkit.jwt.WImage;
 import eu.webtoolkit.jwt.WLength;
 import eu.webtoolkit.jwt.WLink;
 import eu.webtoolkit.jwt.WLink.Type;
@@ -313,6 +317,8 @@ public class CapoWebApplication extends WApplication {
     		
     		String content = null;
     		String contentType = null;
+    		String mimeType = null;
+    		String fileURI = null;
     		if (selectedItem instanceof Element)
     		{
     		    tableView.setModel(new DomItemModel((Element) selectedItem, DomUse.ATTRIBUTES));
@@ -326,6 +332,12 @@ public class CapoWebApplication extends WApplication {
     		        if(((FileResourceDescriptor) selectedItem).getResourceMetaData(null).isContainer() == false)
     		        {
     		            ContentFormatType contentFormatType = ((FileResourceDescriptor) selectedItem).getResourceMetaData(null).getContentFormatType();
+    		            mimeType = ((FileResourceDescriptor) selectedItem).getResourceMetaData(null).getValue(MimeTypeFilterInputStream.MIME_TYPE_ATTRIBUTE);
+    		            fileURI = ((FileResourceDescriptor) selectedItem).getResourceMetaData(null).getResourceURI().getBaseURI();
+    		            if(mimeType == null)
+    		            {
+    		            	mimeType = "";
+    		            }
     		            long length = ((FileResourceDescriptor) selectedItem).getResourceMetaData(null).getLength();
     		            if(contentFormatType == ContentFormatType.TEXT)
     		            {
@@ -340,7 +352,7 @@ public class CapoWebApplication extends WApplication {
                             ((FileResourceDescriptor) selectedItem).reset(State.OPEN);
                             contentType = "xml";
     		            }
-    		            else if(contentFormatType == ContentFormatType.BINARY && length < 70000l)
+    		            else if(contentFormatType == ContentFormatType.BINARY && length < 70000l && mimeType.startsWith("image/") == false)
     		            {
     		                byte[] bytes = ((FileResourceDescriptor) selectedItem).readBlock(null);
     		                ((FileResourceDescriptor) selectedItem).reset(State.OPEN);
@@ -387,7 +399,11 @@ public class CapoWebApplication extends WApplication {
                 getDetailsPane().addTab(wText, "Content");
                 
             }
-    		
+    		else if (mimeType != null && mimeType.startsWith("image/"))
+    		{
+    			WResourceDescriptor wResourceDescriptor = new WResourceDescriptor((ResourceDescriptor) selectedItem);
+    			getDetailsPane().addTab(new WImage(wResourceDescriptor, "Content"), "Content");
+    		}
     		getDetailsPane().addTab(tableView, "Details");
     		getDetailsPane().getWidget(0).setAttributeValue("style", "background-color: rgba(255, 255, 255, 0.55);");
     		
