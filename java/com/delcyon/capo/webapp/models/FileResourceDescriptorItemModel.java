@@ -35,6 +35,11 @@ public class FileResourceDescriptorItemModel extends WAbstractItemModel
 		this.domUse = navigation;
 	}
 	
+	public void reload()
+	{
+	    reset();
+	}
+	
 	
 	
 	@Override
