@@ -91,8 +91,8 @@ public class StreamEventFilterOutputStream extends FilterOutputStream
 	
 	@Override
 	public void write(byte[] b, int off, int len) throws IOException
-	{		
-		super.write(b, off, len);
+	{				
+		out.write(b, off, len);
 		if (processWrites == true)
 		{
 			processEvent(StreamEvent.WRITE);
