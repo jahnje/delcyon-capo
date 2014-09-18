@@ -126,7 +126,7 @@ public class FileResourceContentMetaData extends AbstractContentMetaData
 		{
 			setResourceURI(new ResourceURI(uri));
 		}
-				
+		
 		file = new File(new URI(uri));		
 		if(getResourceURI() == null)
 		{
@@ -289,6 +289,7 @@ public class FileResourceContentMetaData extends AbstractContentMetaData
 				if(contentMetaData.file != null) //XXX we just got this from out parent, and checks are expensive && contentMetaData.file.exists())
 				{
 					
+					contentMetaData.file = childFile; //always reuse our original file object since the uri encoding of names can be problematic esp with regards to non breaking spaces in file names. 
 					BasicFileAttributes contentAttributes = Files.readAttributes(file.toPath(), BasicFileAttributes.class);
 					
 				    md5FilterOutputStream.write(contentMetaData.file.getName());
@@ -408,13 +409,6 @@ public class FileResourceContentMetaData extends AbstractContentMetaData
                 sp = "//" + sp;
             
             String mine = "file:"+encode(sp);
-//            URI uri = new URI("file", null, sp, null);
-//            String theirs = uri.toString();
-//            if(mine.equals(theirs) == false)
-//            {
-//                System.out.println(mine);
-//                System.out.println(theirs);
-//            }
             return mine; 
         } catch (Exception x) {
             throw new Error(x);         // Can't happen
@@ -440,8 +434,10 @@ public class FileResourceContentMetaData extends AbstractContentMetaData
     }
 
     private static boolean isUnsafe(char ch) {
-//        if ((ch > 128 && ch < 256)|| ch < 0)
-//            return true;
-        return " %;?<>#|\\[]{}\"".indexOf(ch) >= 0;
+    	if((int)ch == 160) //nbsp
+    	{
+            return true;
+    	}
+        return " %;?<>#|\\[]{}\"\n\r\t".indexOf(ch) >= 0;
     }
 }
