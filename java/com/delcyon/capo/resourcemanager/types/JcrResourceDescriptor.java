@@ -51,7 +51,7 @@ public class JcrResourceDescriptor extends AbstractResourceDescriptor
 
 		super.init(declaringResourceElement, variableContainer, lifeCycle, iterate,resourceParameters);
 		this.session = CapoJcrServer.getRepository().login();
-		this.node = session.getNode(getResourceURI().getResourceURIString());
+		this.node = session.getNode(getResourceURI().getResourceURIString().replaceFirst("^repo:", ""));
 	}
 	
 	
