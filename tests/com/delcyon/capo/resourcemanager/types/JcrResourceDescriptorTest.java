@@ -23,6 +23,7 @@ import com.delcyon.capo.tests.util.TestServer;
 import com.delcyon.capo.tests.util.Util;
 import com.delcyon.capo.xml.XMLDiff;
 import com.delcyon.capo.xml.XPath;
+import com.delcyon.capo.xml.cdom.CElement;
 
 public class JcrResourceDescriptorTest extends ResourceDescriptorTest
 {
@@ -162,7 +163,11 @@ public class JcrResourceDescriptorTest extends ResourceDescriptorTest
     @Test
     public void testWriteXML() throws Exception
     {
-       //TODO write XML BLOCK TEST
+        resourceDescriptor.reset(State.NONE);
+        resourceDescriptor.init(null, null, LifeCycle.EXPLICIT, false);
+        resourceDescriptor.open(null);
+        Document baseDocument = TestServer.getServerInstance().getDocumentBuilder().parse(new File("test-data/main.xml"));
+        resourceDescriptor.writeXML(null, (CElement)baseDocument.getDocumentElement());
     }
     
     @Override

@@ -16,20 +16,25 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 package com.delcyon.capo.resourcemanager.types;
 
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
-import java.io.FileInputStream;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.util.Calendar;
 import java.util.EnumSet;
 
 import javax.jcr.Node;
+import javax.jcr.NodeIterator;
+import javax.jcr.Property;
+import javax.jcr.PropertyIterator;
+import javax.jcr.RepositoryException;
 import javax.jcr.Session;
-
-import org.apache.jackrabbit.value.BinaryValue;
+import javax.jcr.SimpleCredentials;
+import javax.jcr.Value;
+import javax.jcr.query.Query;
+import javax.jcr.query.QueryResult;
 
 import com.delcyon.capo.resourcemanager.ResourceParameter;
 import com.delcyon.capo.server.jackrabbit.CapoJcrServer;
+import com.delcyon.capo.xml.XPath;
+import com.delcyon.capo.xml.cdom.CElement;
 import com.delcyon.capo.xml.cdom.VariableContainer;
 import com.delcyon.capo.xml.dom.ResourceDeclarationElement;
 
@@ -44,27 +49,49 @@ public class JcrResourceDescriptor extends AbstractResourceDescriptor
 	
 	private Session session;
 	private Node node;
+	private String absPath = null;
 
 	@Override
 	public void init(ResourceDeclarationElement declaringResourceElement,VariableContainer variableContainer, LifeCycle lifeCycle,boolean iterate, ResourceParameter... resourceParameters) throws Exception
 	{
 
 		super.init(declaringResourceElement, variableContainer, lifeCycle, iterate,resourceParameters);
-		this.session = CapoJcrServer.getRepository().login();
-		this.node = session.getNode(getResourceURI().getResourceURIString().replaceFirst("^repo:", ""));
+		this.session = CapoJcrServer.getRepository().login(new SimpleCredentials("admin", "admin".toCharArray()));
+		this.absPath = getResourceURI().getResourceURIString().replaceFirst("^repo:", "");
+		if(session.nodeExists(absPath) == false)
+		{
+		    String[] relPath = absPath.split("/");
+		    Node currentNode = session.getRootNode();
+		    for (String nodeName : relPath)
+            {
+		        if(nodeName.isEmpty())
+		        {
+		            currentNode = session.getRootNode();
+		            continue;
+		        }
+                if(currentNode.hasNode(nodeName) == false)
+                {
+                    currentNode.addNode(nodeName);
+                }
+                currentNode = currentNode.getNode(nodeName);
+            }
+//		    session.getRootNode().addNode(getResourceURI().getResourceURIString().replaceFirst("^repo:/", ""));
+		}
+		
+		this.node = session.getNode(absPath);
 	}
 	
 	
 	@Override
 	public StreamType[] getSupportedStreamTypes() throws Exception
 	{
-		return (StreamType[]) EnumSet.of(StreamType.INPUT, StreamType.OUTPUT).toArray();
+		return  EnumSet.of(StreamType.INPUT, StreamType.OUTPUT).toArray(new StreamType[]{});
 	}
 
 	@Override
 	public StreamFormat[] getSupportedStreamFormats(StreamType streamType) throws Exception
 	{
-		return (StreamFormat[]) EnumSet.of(StreamFormat.XML_BLOCK).toArray();
+		return EnumSet.of(StreamFormat.XML_BLOCK).toArray(new StreamFormat[]{});
 	}
 
 	@Override
@@ -99,34 +126,63 @@ public class JcrResourceDescriptor extends AbstractResourceDescriptor
 		return new SimpleContentMetaData(getResourceURI(), resourceParameters);
 	}
 
-	@Override
-	public OutputStream getOutputStream(VariableContainer variableContainer,ResourceParameter... resourceParameters) throws Exception
-	{
-		//MimeTable mt = MimeTable.getDefaultTable();
-	    //String mimeType = mt.getContentTypeFor(file.getName());
-	    //if (mimeType == null) mimeType = "application/octet-stream";
-
-	    Node fileNode = node.addNode("<name>", "nt:file");
-
-	    System.out.println( fileNode.getName() );
-
-	    Node resNode = fileNode.addNode("jcr:content", "nt:resource");
-	    resNode.setProperty("jcr:mimeType", "<mimeType>");
-	    resNode.setProperty("jcr:encoding", "");
-	    resNode.setProperty("jcr:data",new BinaryValue( new FileInputStream("")));
-	    Calendar lastModified = Calendar.getInstance();
-	    //lastModified.setTimeInMillis(file.lastModified());
-	    resNode.setProperty("jcr:lastModified", lastModified);
-	    //Uti
-	    return new ByteArrayOutputStream();
-	}
+//	@Override
+//	public OutputStream getOutputStream(VariableContainer variableContainer,ResourceParameter... resourceParameters) throws Exception
+//	{
+//		//MimeTable mt = MimeTable.getDefaultTable();
+//	    //String mimeType = mt.getContentTypeFor(file.getName());
+//	    //if (mimeType == null) mimeType = "application/octet-stream";
+//
+//	    Node fileNode = node.addNode("<name>", "nt:file");
+//
+//	    System.out.println( fileNode.getName() );
+//
+//	    Node resNode = fileNode.addNode("jcr:content", "nt:resource");
+//	    resNode.setProperty("jcr:mimeType", "<mimeType>");
+//	    resNode.setProperty("jcr:encoding", "");
+//	    resNode.setProperty("jcr:data",new BinaryValue( new FileInputStream("")));
+//	    Calendar lastModified = Calendar.getInstance();
+//	    //lastModified.setTimeInMillis(file.lastModified());
+//	    resNode.setProperty("jcr:lastModified", lastModified);
+//	    //Uti
+//	    return new ByteArrayOutputStream();
+//	}
+	
+//	@Override
+//	public InputStream getInputStream(VariableContainer variableContainer,ResourceParameter... resourceParameters) throws Exception
+//	{
+//		Node jcrContent = node.getNode("jcr:content");
+//		String fileName = node.getName();
+//		return jcrContent.getProperty("jcr:data").getBinary().getStream();
+//	}
 	
 	@Override
-	public InputStream getInputStream(VariableContainer variableContainer,ResourceParameter... resourceParameters) throws Exception
+	public void writeXML(VariableContainer variableContainer, CElement element, ResourceParameter... resourceParameters) throws Exception
 	{
-		Node jcrContent = node.getNode("jcr:content");
-		String fileName = node.getName();
-		return jcrContent.getProperty("jcr:data").getBinary().getStream();
+	    ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+	    XPath.dumpNode(element, outputStream);
+	    session.importXML(getResourceURI().getResourceURIString().replaceFirst("^repo:", ""), new ByteArrayInputStream(outputStream.toByteArray()), 0);
+	    dump(session.getRootNode());
+	    session.save();
+	    String[] langs = session.getWorkspace().getQueryManager().getSupportedQueryLanguages();
+	    String[] prefixes = session.getNamespacePrefixes();
+	    
+	    Query query = session.getWorkspace().getQueryManager().createQuery("SELECT * FROM [nt:unstructured] where NAME([nt:unstructured]) = 'server:log' order by message", "JCR-SQL2");
+	    QueryResult result = query.execute();
+
+
+	    // Iterate over the nodes in the results ...
+
+	    NodeIterator nodeIter = result.getNodes();
+	    System.out.println("=============================");
+	    while ( nodeIter.hasNext() ) {
+
+	        Node _node = nodeIter.nextNode();
+	        System.out.println("===>"+_node.getName()+" type:"+_node.getPrimaryNodeType().getName());
+	        dump(_node);
+
+	    }
+	    System.out.println("=============================");
 	}
 	
 	@Override
@@ -135,4 +191,39 @@ public class JcrResourceDescriptor extends AbstractResourceDescriptor
 		return (Action[]) EnumSet.allOf(Action.class).toArray();
 	}
 
+	/** Recursively outputs the contents of the given node. */ 
+	private static void dump(Node node) throws RepositoryException { 
+	    // First output the node path 
+	    
+	    // Skip the virtual (and large!) jcr:system subtree 
+	    if (node.getPath().startsWith("/jcr:system")) { 
+	        return; 
+	    } 
+	    System.out.println(node.getPath()); 
+	    // Then output the properties 
+	    PropertyIterator properties = node.getProperties(); 
+	    while (properties.hasNext()) { 
+	        Property property = properties.nextProperty(); 
+	        if (property.getDefinition().isMultiple()) { 
+	            // A multi-valued property, print all values 
+	            Value[] values = property.getValues(); 
+	            for (int i = 0; i < values.length; i++) { 
+	                System.out.println( 
+	                        property.getPath() + " = " + values[i].getString()); 
+	            } 
+	        } else { 
+	            // A single-valued property 
+	            System.out.println( 
+	                    property.getPath() + " = " + property.getString()); 
+	        } 
+	    } 
+
+	    // Finally output all the child nodes recursively 
+	    NodeIterator nodes = node.getNodes(); 
+	    while (nodes.hasNext()) { 
+	        dump(nodes.nextNode()); 
+	    } 
+	} 
+
+ 
 }
