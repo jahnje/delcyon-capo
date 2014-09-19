@@ -57,7 +57,7 @@ import com.delcyon.capo.xml.cdom.CDocument;
  * @author jeremiah
  */
 @DirectoyProvider(preferenceName="CONFIG_DIR",preferences=Configuration.PREFERENCE.class)
-@DefaultDocumentProvider(directoryPreferenceName="CONFIG_DIR",preferences=Configuration.PREFERENCE.class,name="config.xml")
+@DefaultDocumentProvider(directoryPreferenceName="CONFIG_DIR",preferences=Configuration.PREFERENCE.class,name="config.xml,repository.xml")
 public class Configuration
 {
 

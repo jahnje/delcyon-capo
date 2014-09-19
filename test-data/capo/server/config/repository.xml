@@ -1,0 +1,292 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+   Licensed to the Apache Software Foundation (ASF) under one or more
+   contributor license agreements.  See the NOTICE file distributed with
+   this work for additional information regarding copyright ownership.
+   The ASF licenses this file to You under the Apache License, Version 2.0
+   (the "License"); you may not use this file except in compliance with
+   the License.  You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+--><!--
+   Licensed to the Apache Software Foundation (ASF) under one or more
+   contributor license agreements.  See the NOTICE file distributed with
+   this work for additional information regarding copyright ownership.
+   The ASF licenses this file to You under the Apache License, Version 2.0
+   (the "License"); you may not use this file except in compliance with
+   the License.  You may obtain a copy of the License at 
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+--><!--
+   Licensed to the Apache Software Foundation (ASF) under one or more
+   contributor license agreements.  See the NOTICE file distributed with
+   this work for additional information regarding copyright ownership.
+   The ASF licenses this file to You under the Apache License, Version 2.0
+   (the "License"); you may not use this file except in compliance with
+   the License.  You may obtain a copy of the License at 
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+--><!--
+    The DataSources element configures the data sources of the repository.
+--><!--
+    a virtual file system
+--><!--
+    the Security element specifies the name (appName attribute)
+    of the JAAS configuration app-entry for this repository. 
+
+    it also specifies various security related managers to be used.
+--><!--
+    the SecurityManager element configures the general security manager to be
+    used by this repository instance; the class attribute specifies the FQN of the
+    class implementing the JackrabbitSecurityManager interface
+--><!--
+    the AccessManager element configures the access manager to be used by
+    this repository instance; the class attribute specifies the FQN of the
+    class implementing the AccessManager interface
+--><!--
+    generic parameter (name/value pair)
+--><!--
+    the LoginModule element optionally specifies a JAAS login module to
+    authenticate users. This feature allows the use of Jackrabbit in a
+    non-JAAS environment.
+--><!--
+    the WorkspaceAccessManager element optionally configures the manager
+    to be used by this repository instance to determine if access to a specific
+    workspace is granted for a specific subject;
+    the class attribute specifies the FQN of the class implementing the
+    WorkspaceAccessManager interface
+--><!--
+    the Workspaces element specifies the physical workspaces root directory
+    (rootPath attribute), the name of the default workspace (defaultWorkspace 
+    attribute), the (optional) maximum amount of time in seconds before an idle 
+    workspace is automatically shutdown (maxIdleTime attribute) and the 
+    (optional) workspace configuration root directory within the virtual 
+    repository file system (configRootPath attribute).
+
+    individual workspaces are configured through individual workspace.xml files 
+    located in a subfolder each of either
+
+    a) the physical workspaces root directory
+
+    or, if configRootPath had been specified,
+
+    b) the configuration root directory within the virtual repository file 
+    system.
+--><!--
+    the Workspace element serves as a workspace configuration template;
+    it is used to create the initial workspace if there's no workspace yet
+    and for creating additional workspaces through the api
+--><!--
+    the PersistenceManager element configures the persistence manager
+    to be used for the workspace; the class attribute specifies the
+    FQN of the class implementing the PersistenceManager interface
+--><!--
+    the SearchIndex element specifies the locaction of the search index
+    (used by the QueryHandler); the class attribute specifies the
+    FQN of the class implementing the QueryHandler interface.
+--><!--
+    the WorkspaceSecurity element specifies the workspace specific security
+    configuration.
+--><!--
+    the AccessControlProvider element defines a class attribute specifying the
+    FQN of the class implementing the AccessControlProvider interface.
+    The param(s) define implementation specific parameters.
+--><!--
+    the Versioning element configures the persistence manager
+    to be used for persisting version state
+--><!--
+    the Cluster element configures the optional participation of this
+    repository in a clustered environment. a literal id may be
+    specified that uniquely identifies this node in a cluster, as well
+    as the delay in milliseconds before changes to the journal are
+    automatically detected.
+--><!--
+    the Journal element configures the journal used in clustering; the
+    class attribute specifies the FQN of the class implementing the
+    Journal interface.
+--><!--
+    the ISMLocking element configures the locking implementation
+    to be used for the workspace and version storage; the class
+    attribute specifies the FQN of the class implementing the
+    ISMLocking interface.
+--><!--
+    the RepositoryLockMechanism element configures the mechanism
+    that is used to ensure only one process writes to the 
+    backend (file system or database) at any time; the class
+    attribute specifies the FQN of the class implementing the
+    RepositoryLockMechanism interface.
+--><!--
+    the DataStore element configures the data store
+    to be used for the workspace; the class attribute specifies the
+    FQN of the class implementing the DataStore interface
+--><!--
+    The Import element configures how protected items are imported into a
+    workspace.
+--><!--
+    The ProtectedNodeImporter element configures an importer for protected
+    nodes. The class attribute specifies the FQN of the class implementing the
+    ProtectedNodeImporter interface.
+    The param(s) define implementation specific parameters.
+--><!--
+    The ProtectedPropertyImporter element configures an importer for protected
+    properties. The class attribute specifies the FQN of the class implementing
+    the ProtectedPropertyImporter interface.
+    The param(s) define implementation specific parameters.
+--><!--
+    The UserManager element configures the user manager implementation that is
+    used in Jackrabbit. The class attribute specifies the FQN of the class
+    implementing the UserManager interface.
+    The param(s) define implementation specific parameters.
+--><!--
+    The UserIdClass element specifies the class of principals used to retrieve
+    the userID out of a Subject. The class attribute specifies the FQN of a
+    class implementing the java.security.Principal interface.
+--><!--
+    the Repository element configures a repository instance; individual 
+    workspaces of the repository are configured through separate configuration 
+    files called workspace.xml which are located in a subfolder of the 
+    workspaces root directory (see Workspaces element).
+
+    it consists of
+
+      - an optional Cluster element that is used for configuring a
+        clustering node that synchronizes changes made in a cluster
+       
+      - a FileSystem element (the virtual file system
+        used by the repository to persist global state such as
+        registered namespaces, custom node types, etc.
+        
+      - an optional DataStore element to configure the component
+        to use for storing large binary objects
+
+      - a Security element that specifies the name of the app-entry
+        in the JAAS config and the access manager
+
+      - a Workspaces element that specifies the location of the 
+        workspaces root directory, the name of the default workspace,
+        the maximum idle time before a workspace is automatically
+        shutdown (optional) and the workspace configuration root directory
+        within the virtual repository file system (optional)
+
+      - a Workspace element that is used as a workspace configuration
+        template; it is used to create the initial workspace if there's
+        no workspace yet and for creating additional workspaces through
+        the API
+
+      - a Versioning element that is used for configuring
+        versioning-related settings
+
+      - an optional SearchIndex element that is used for configuring Indexing-related
+        settings on the /jcr:system tree.
+
+--><!-- Example Repository Configuration File
+     Used by
+     - org.apache.jackrabbit.core.config.RepositoryConfigTest.java
+     -
+--><Repository><!--
+        virtual file system where the repository stores global state
+        (e.g. registered namespaces, custom node types, etc.)
+    --><FileSystem class="org.apache.jackrabbit.core.fs.local.LocalFileSystem">
+      <param name="path" value="${rep.home}/repository"/>
+   </FileSystem>
+   <!--
+        data store configuration
+    --><DataStore class="org.apache.jackrabbit.core.data.FileDataStore"/>
+   <!--
+        security configuration
+    --><Security appName="Jackrabbit"><!--
+            security manager:
+            class: FQN of class implementing the JackrabbitSecurityManager interface
+        --><SecurityManager class="org.apache.jackrabbit.core.DefaultSecurityManager"
+                       workspaceName="security"><!--
+            workspace access:
+            class: FQN of class implementing the WorkspaceAccessManager interface
+            --><!-- <WorkspaceAccessManager class="..."/> --><!-- <param name="config" value="${rep.home}/security.xml"/> --></SecurityManager>
+      <!--
+            access manager:
+            class: FQN of class implementing the AccessManager interface
+        --><AccessManager class="org.apache.jackrabbit.core.security.DefaultAccessManager"><!-- <param name="config" value="${rep.home}/access.xml"/> --></AccessManager>
+      <LoginModule class="org.apache.jackrabbit.core.security.authentication.DefaultLoginModule"><!-- 
+              anonymous user name ('anonymous' is the default value)
+            --><param name="anonymousId" value="anonymous"/>
+         <!--
+              administrator user id (default value if param is missing is 'admin')
+            --><param name="adminId" value="admin"/>
+      </LoginModule>
+   </Security>
+   <!--
+        location of workspaces root directory and name of default workspace
+    --><Workspaces defaultWorkspace="default" rootPath="${rep.home}/workspaces"/>
+   <!--
+        workspace configuration template:
+        used to create the initial workspace if there's no workspace yet
+    --><Workspace name="${wsp.name}"><!--
+            virtual file system of the workspace:
+            class: FQN of class implementing the FileSystem interface
+        --><FileSystem class="org.apache.jackrabbit.core.fs.local.LocalFileSystem">
+         <param name="path" value="${wsp.home}"/>
+      </FileSystem>
+      <!--
+            persistence manager of the workspace:
+            class: FQN of class implementing the PersistenceManager interface
+        --><PersistenceManager class="org.apache.jackrabbit.core.persistence.pool.DerbyPersistenceManager">
+         <param name="url" value="jdbc:derby:${wsp.home}/db;create=true"/>
+         <param name="schemaObjectPrefix" value="${wsp.name}_"/>
+      </PersistenceManager>
+      <!--
+            Search index and the file system it uses.
+            class: FQN of class implementing the QueryHandler interface
+        --><SearchIndex class="org.apache.jackrabbit.core.query.lucene.SearchIndex">
+         <param name="path" value="${wsp.home}/index"/>
+         <param name="supportHighlighting" value="true"/>
+      </SearchIndex>
+   </Workspace>
+   <!--
+        Configures the versioning
+    --><Versioning rootPath="${rep.home}/version"><!--
+            Configures the filesystem to use for versioning for the respective
+            persistence manager
+        --><FileSystem class="org.apache.jackrabbit.core.fs.local.LocalFileSystem">
+         <param name="path" value="${rep.home}/version"/>
+      </FileSystem>
+      <!--
+            Configures the persistence manager to be used for persisting version state.
+            Please note that the current versioning implementation is based on
+            a 'normal' persistence manager, but this could change in future
+            implementations.
+        --><PersistenceManager class="org.apache.jackrabbit.core.persistence.pool.DerbyPersistenceManager">
+         <param name="url" value="jdbc:derby:${rep.home}/version/db;create=true"/>
+         <param name="schemaObjectPrefix" value="version_"/>
+      </PersistenceManager>
+   </Versioning>
+   <!--
+        Search index for content that is shared repository wide
+        (/jcr:system tree, contains mainly versions)
+    --><SearchIndex class="org.apache.jackrabbit.core.query.lucene.SearchIndex">
+      <param name="path" value="${rep.home}/repository/index"/>
+      <param name="supportHighlighting" value="true"/>
+   </SearchIndex>
+   <!--
+        Run with a cluster journal
+    --><Cluster id="node1">
+      <Journal class="org.apache.jackrabbit.core.journal.MemoryJournal"/>
+   </Cluster>
+</Repository>

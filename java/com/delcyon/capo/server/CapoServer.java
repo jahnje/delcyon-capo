@@ -91,6 +91,7 @@ import com.delcyon.capo.resourcemanager.ResourceDescriptor;
 import com.delcyon.capo.resourcemanager.ResourceDescriptor.Action;
 import com.delcyon.capo.resourcemanager.ResourceParameter;
 import com.delcyon.capo.resourcemanager.types.FileResourceType;
+import com.delcyon.capo.server.jackrabbit.CapoJcrServer;
 import com.delcyon.capo.server.jetty.CapoJettyServer;
 import com.delcyon.capo.tasks.TaskManagerThread;
 import com.delcyon.capo.xml.XPath;
@@ -181,6 +182,7 @@ public class CapoServer extends CapoApplication
     //private SecureSocketListener secureSocketListener;
     //private SocketListener socketListener;
 	private CapoJettyServer capoJettyServer;
+	private CapoJcrServer capoJcrServer;
 
 	public CapoServer() throws Exception
 	{
@@ -281,8 +283,13 @@ public class CapoServer extends CapoApplication
         
 		runStartupScript(getConfiguration().getValue(PREFERENCE.STARTUP_SCRIPT));
 		
-		capoJettyServer = new CapoJettyServer(keyStore, getConfiguration().getValue(PREFERENCE.KEYSTORE_PASSWORD), getConfiguration().getIntValue(Preferences.WEB_PORT));
+		capoJcrServer = new CapoJcrServer();
+		capoJcrServer.start();
+		
+		capoJettyServer = new CapoJettyServer(keyStore, getConfiguration().getValue(PREFERENCE.KEYSTORE_PASSWORD), getConfiguration().getIntValue(Preferences.WEB_PORT));		
 		capoJettyServer.start();
+		
+		
 		setApplicationState(ApplicationState.INITIALIZED);
 		
 	}
@@ -320,6 +327,7 @@ public class CapoServer extends CapoApplication
 		long maxWaitTime = 30000;
 		long totalWaitTime = 0;
 		logger.log(Level.INFO, "Shuting Down Server");
+		capoJcrServer.shutdown();
 		capoJettyServer.shutdown();
 		while(getApplicationState().ordinal() < ApplicationState.READY.ordinal())
         {
