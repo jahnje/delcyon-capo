@@ -376,7 +376,7 @@ public class SyncElement extends AbstractControl
         				copyAttributesList.add(ContentMetaData.Attributes.valueOf(contentAttributeName));
         			} catch (IllegalArgumentException illegalArgumentException)
         			{
-        				CapoApplication.logger.log(Level.WARNING, "Couldn't find attribte name of "+contentAttributeName+" in content metadata");
+        				CapoApplication.logger.log(Level.FINER, "Couldn't find attribte name of "+contentAttributeName+" in content metadata");
         			}
 				}
         	}
@@ -390,7 +390,7 @@ public class SyncElement extends AbstractControl
         				copyAttributesList.add(ContentMetaData.Attributes.valueOf(contentAttributeName));
         			} catch (IllegalArgumentException illegalArgumentException)
         			{
-        				CapoApplication.logger.log(Level.WARNING, "Couldn't find attribte name of "+contentAttributeName+" in content metadata");
+        				CapoApplication.logger.log(Level.FINER, "Couldn't find attribte name of "+contentAttributeName+" in content metadata");
         			}
 				}
         	}
