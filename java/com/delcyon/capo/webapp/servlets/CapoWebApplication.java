@@ -5,21 +5,27 @@
  */
 package com.delcyon.capo.webapp.servlets;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.util.List;
 import java.util.SortedSet;
 
+import javax.jcr.Session;
+import javax.jcr.SimpleCredentials;
+
 import org.w3c.dom.Element;
 
+import com.delcyon.capo.CapoApplication;
 import com.delcyon.capo.datastream.StreamUtil;
 import com.delcyon.capo.datastream.stream_attribute_filter.MimeTypeFilterInputStream;
 import com.delcyon.capo.resourcemanager.ContentFormatType;
 import com.delcyon.capo.resourcemanager.ResourceDescriptor;
+import com.delcyon.capo.resourcemanager.ResourceDescriptor.Action;
+import com.delcyon.capo.resourcemanager.ResourceDescriptor.LifeCycle;
 import com.delcyon.capo.resourcemanager.ResourceDescriptor.State;
-import com.delcyon.capo.resourcemanager.types.FileResourceDescriptor;
-import com.delcyon.capo.resourcemanager.types.FileResourceType;
+import com.delcyon.capo.server.jackrabbit.CapoJcrServer;
 import com.delcyon.capo.util.HexUtil;
 import com.delcyon.capo.webapp.models.DomItemModel;
 import com.delcyon.capo.webapp.models.DomItemModel.DomUse;
@@ -28,6 +34,9 @@ import com.delcyon.capo.webapp.servlets.resource.AbstractResourceServlet;
 import com.delcyon.capo.webapp.servlets.resource.WResourceDescriptor;
 import com.delcyon.capo.webapp.widgets.CapoWTreeView;
 import com.delcyon.capo.webapp.widgets.WCSSItemDelegate;
+import com.delcyon.capo.xml.XPath;
+import com.delcyon.capo.xml.dom.ResourceDocument;
+import com.delcyon.capo.xml.dom.ResourceDocumentBuilder;
 
 import eu.webtoolkit.jwt.AlignmentFlag;
 import eu.webtoolkit.jwt.AnchorTarget;
@@ -35,6 +44,7 @@ import eu.webtoolkit.jwt.PositionScheme;
 import eu.webtoolkit.jwt.SelectionBehavior;
 import eu.webtoolkit.jwt.SelectionMode;
 import eu.webtoolkit.jwt.Signal;
+import eu.webtoolkit.jwt.Signal1;
 import eu.webtoolkit.jwt.Signal2;
 import eu.webtoolkit.jwt.TextFormat;
 import eu.webtoolkit.jwt.Utils;
@@ -44,11 +54,14 @@ import eu.webtoolkit.jwt.WBootstrapTheme;
 import eu.webtoolkit.jwt.WBoxLayout;
 import eu.webtoolkit.jwt.WBoxLayout.Direction;
 import eu.webtoolkit.jwt.WContainerWidget;
+import eu.webtoolkit.jwt.WDialog;
 import eu.webtoolkit.jwt.WEnvironment;
 import eu.webtoolkit.jwt.WFileUpload;
 import eu.webtoolkit.jwt.WGridLayout;
 import eu.webtoolkit.jwt.WImage;
+import eu.webtoolkit.jwt.WLabel;
 import eu.webtoolkit.jwt.WLength;
+import eu.webtoolkit.jwt.WLineEdit;
 import eu.webtoolkit.jwt.WLink;
 import eu.webtoolkit.jwt.WLink.Type;
 import eu.webtoolkit.jwt.WMenuItem;
@@ -58,12 +71,14 @@ import eu.webtoolkit.jwt.WNavigationBar;
 import eu.webtoolkit.jwt.WPopupMenu;
 import eu.webtoolkit.jwt.WProgressBar;
 import eu.webtoolkit.jwt.WPushButton;
+import eu.webtoolkit.jwt.WRegExpValidator;
 import eu.webtoolkit.jwt.WStackedWidget;
 import eu.webtoolkit.jwt.WTabWidget;
 import eu.webtoolkit.jwt.WTableView;
 import eu.webtoolkit.jwt.WText;
 import eu.webtoolkit.jwt.WTreeView;
 import eu.webtoolkit.jwt.WVBoxLayout;
+import eu.webtoolkit.jwt.WValidator;
 import eu.webtoolkit.jwt.WWidget;
 import eu.webtoolkit.jwt.servlet.UploadedFile;
 
@@ -79,7 +94,9 @@ public class CapoWebApplication extends WApplication {
 	private WTabWidget detailsPane;
 	private WTabWidget subDetailsPane;
 	private CapoWTreeView treeView;
-
+    private ResourceDocument document;
+    private Session session;
+    
 	public CapoWebApplication(WEnvironment env, boolean embedded) {
         super(env);
         WBootstrapTheme bootstrapTheme = new WBootstrapTheme();
@@ -89,6 +106,16 @@ public class CapoWebApplication extends WApplication {
         setTitle("Capo");
         useStyleSheet(new WLink("/wr/source/sh_style.css"));
         require("/wr/source/sh_main.js");
+        try
+        {
+            session = CapoJcrServer.getRepository().login(new SimpleCredentials("admin", "admin".toCharArray()));
+        }
+        catch (Exception e)
+        {
+        
+            e.printStackTrace();
+        }
+        
         createUI();
         WApplication.getInstance().internalPathChanged().addListener(this, new Signal.Listener()
                 {
@@ -115,11 +142,12 @@ public class CapoWebApplication extends WApplication {
         getRootLayout().addWidget(getContentPane(),1,0);
         try
 		{
-            FileResourceType fileResourceType = new FileResourceType();
-            ResourceDescriptor resourceDescriptor = fileResourceType.getResourceDescriptor("file:/");
-          //ResourceDescriptor resourceDescriptor = CapoApplication.getDataManager().getResourceDirectory("CAPO_DIR");
-//            ResourceDocumentBuilder documentBuilder = new ResourceDocumentBuilder();
-//            ResourceDocument document = (ResourceDocument) documentBuilder.buildDocument(resourceDescriptor);
+//            FileResourceType fileResourceType = new FileResourceType();
+//            ResourceDescriptor resourceDescriptor = fileResourceType.getResourceDescriptor("file:/");
+            ResourceDescriptor resourceDescriptor = CapoApplication.getDataManager().getResourceDescriptor(null, "repo:/");
+          ResourceDescriptor resourceDescriptor2 = CapoApplication.getDataManager().getResourceDirectory("CLIENTS_DIR");
+            ResourceDocumentBuilder documentBuilder = new ResourceDocumentBuilder();
+             document = (ResourceDocument) documentBuilder.buildDocument(resourceDescriptor2);
 			
 			
 			
@@ -137,7 +165,28 @@ public class CapoWebApplication extends WApplication {
         getContentPaneLayout().addWidget(pathButton, 2, 0, 1, 1, AlignmentFlag.AlignTop); 
         
         WPushButton pathButton2 = new WPushButton("test2");
-        pathButton2.setLink(new WLink(Type.InternalPath, "/legend2"));
+        //pathButton2.setLink(new WLink(Type.InternalPath, "/legend2"));
+        pathButton2.clicked().addListener(this, new Signal.Listener()
+        {
+            
+            public void trigger()
+            {
+                try
+                {
+                    ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+
+                    XPath.dumpNode(document.getDocumentElement(), outputStream);
+                    XPath.dumpNode(document.getDocumentElement(), System.out);
+                    
+                    session.importXML("/", new ByteArrayInputStream(outputStream.toByteArray()), 0);
+                    //dump(session.getRootNode());
+                    session.save();
+                } catch (Exception e)
+                {
+                    e.printStackTrace();
+                }
+            }
+        });
         getContentPaneLayout().addWidget(pathButton2, 3, 0, 1, 1, AlignmentFlag.AlignTop);
         
 //        getDetailsPane().addTab(createTitle("Title"), "results");
@@ -243,14 +292,14 @@ public class CapoWebApplication extends WApplication {
          * Note that disabling the context menu and catching the right-click
          * does not work reliably on all browsers.
          */
-//        treeView.setAttributeValue("oncontextmenu","event.cancelBubble = true; event.returnValue = false; return false;");
+        treeView.setAttributeValue("oncontextmenu","event.cancelBubble = true; event.returnValue = false; return false;");
         if (data instanceof Element)
         {
             treeView.setModel(new DomItemModel((Element) data,DomUse.NAVIGATION));            
         }
         else if (data instanceof ResourceDescriptor)
         {
-            treeView.setModel(new FileResourceDescriptorItemModel((FileResourceDescriptor)data,DomUse.NAVIGATION));
+            treeView.setModel(new FileResourceDescriptorItemModel((ResourceDescriptor)data,DomUse.NAVIGATION));
         }
         //tree
         treeView.setWidth(new WLength(250));//, WLength.Auto);
@@ -286,7 +335,73 @@ public class CapoWebApplication extends WApplication {
 				WPopupMenu adminSubMenu = new WPopupMenu();
 		       
 
-		        adminSubMenu.addItem("Users");
+		        adminSubMenu.addItem("Create Dir").clicked().addListener(CapoWebApplication.this, new Signal.Listener()
+		        {
+		            public void trigger() {
+		                final WModelIndex index = treeView.getSelectedIndexes().first();
+		                if(index != null)
+		                {
+		                    System.out.println(((ResourceDescriptor)index.getInternalPointer()).getLocalName());
+		                    final WDialog dialog = new WDialog("Create Directory");
+		                    dialog.setClosable(true);
+		                    dialog.rejectWhenEscapePressed(true);
+		                    WLabel label = new WLabel("Enter a directory name", dialog.getContents());
+		                    final WLineEdit edit = new WLineEdit(dialog.getContents());
+		                    label.setBuddy(edit);
+		                    WRegExpValidator validator = new WRegExpValidator("[A-Za-z1-9 \\.]+");
+		                    validator.setMandatory(true);
+		                    final WPushButton ok = new WPushButton("OK", dialog.getFooter());
+		                    ok.setDefault(true);
+		                    ok.disable();
+		                    WPushButton cancel = new WPushButton("Cancel", dialog.getFooter());
+		                    
+		                    dialog.rejectWhenEscapePressed();
+		                    edit.keyWentUp().addListener(CapoWebApplication.this, new Signal.Listener() {
+		                        public void trigger() {
+		                            ok.setDisabled(edit.validate() != WValidator.State.Valid);
+		                        }
+		                    });
+		                    ok.clicked().addListener(CapoWebApplication.this, new Signal.Listener() {
+		                        public void trigger() {
+		                            if (edit.validate() != null) {
+		                                dialog.accept();
+		                            }
+		                        }
+		                    });
+		                    cancel.clicked().addListener(dialog,
+		                            new Signal1.Listener<WMouseEvent>() {
+		                                public void trigger(WMouseEvent e1) {
+		                                    dialog.reject();
+		                                }
+		                            });
+		                    dialog.finished().addListener(CapoWebApplication.this, new Signal.Listener() {
+		                        public void trigger() {
+		                            System.out.println(edit.getText());
+		                            ResourceDescriptor selectedResourceDescriptor = (ResourceDescriptor) index.getInternalPointer();
+		                           
+		                            try
+                                    {
+		                                ResourceDescriptor childResourceDescriptor = selectedResourceDescriptor.getChildResourceDescriptor(null, edit.getText());
+		                                childResourceDescriptor.init(null, null, LifeCycle.EXPLICIT, false);
+                                        childResourceDescriptor.performAction(null, Action.CREATE);                                        
+                                        session.save();
+                                        childResourceDescriptor.reset(State.INITIALIZED);
+                                        ((FileResourceDescriptorItemModel) treeView.getModel()).reload();
+                                    }
+                                    catch (Exception e)
+                                    {
+                                        // TODO Auto-generated catch block
+                                        e.printStackTrace();
+                                    }
+		                            if (dialog != null)
+		                                dialog.remove();
+		                        }
+		                    });
+		                    dialog.show();
+		                }
+		            };
+		        }
+		        );
 		        adminSubMenu.addItem("Roles");
 		        adminSubMenu.addItem("Configuration");
 		        adminSubMenu.popup(arg2);
@@ -337,10 +452,10 @@ public class CapoWebApplication extends WApplication {
     		}
     		else if (selectedItem instanceof ResourceDescriptor)
     		{
-    		    tableView.setModel(new FileResourceDescriptorItemModel((FileResourceDescriptor) selectedItem, DomUse.ATTRIBUTES));
+    		    tableView.setModel(new FileResourceDescriptorItemModel((ResourceDescriptor) selectedItem, DomUse.ATTRIBUTES));
     		    try
     		    {
-    		        if(((FileResourceDescriptor) selectedItem).getResourceMetaData(null).isContainer() == false)
+    		        if(((ResourceDescriptor) selectedItem).getResourceMetaData(null).isContainer() == false)
     		        {
     		            WAnchor anchor = new WAnchor(new WLink(new WResourceDescriptor((ResourceDescriptor) selectedItem)),"Download");
     		            anchor.setTarget(AnchorTarget.TargetNewWindow);
@@ -360,10 +475,10 @@ public class CapoWebApplication extends WApplication {
     		                    File tempFile = new File(tempFileName);
     		                    try
                                 {
-                                    StreamUtil.readInputStreamIntoOutputStream(new FileInputStream(tempFile),  ((FileResourceDescriptor) selectedItem).getOutputStream(null));
-                                    ((FileResourceDescriptor) selectedItem).getResourceMetaData(null).refresh();
-                                    ((FileResourceDescriptor) selectedItem).advanceState(State.CLOSED,null);
-                                    ((FileResourceDescriptor) selectedItem).reset(State.OPEN);
+                                    StreamUtil.readInputStreamIntoOutputStream(new FileInputStream(tempFile),  ((ResourceDescriptor) selectedItem).getOutputStream(null));
+                                    ((ResourceDescriptor) selectedItem).getResourceMetaData(null).refresh();
+                                    ((ResourceDescriptor) selectedItem).advanceState(State.CLOSED,null);
+                                    ((ResourceDescriptor) selectedItem).reset(State.OPEN);
                                     ((FileResourceDescriptorItemModel) tableView.getModel()).reload();
                                     upload.setProgressBar(new WProgressBar());                                    
                                     upload.show();
@@ -385,33 +500,33 @@ public class CapoWebApplication extends WApplication {
     		            
     		            detailsContainerWidget.addWidget(upload);
     		            detailsContainerWidget.addWidget(anchor);
-    		            ContentFormatType contentFormatType = ((FileResourceDescriptor) selectedItem).getResourceMetaData(null).getContentFormatType();
-    		            mimeType = ((FileResourceDescriptor) selectedItem).getResourceMetaData(null).getValue(MimeTypeFilterInputStream.MIME_TYPE_ATTRIBUTE);
-    		            fileURI = ((FileResourceDescriptor) selectedItem).getResourceMetaData(null).getResourceURI().getBaseURI();
+    		            ContentFormatType contentFormatType = ((ResourceDescriptor) selectedItem).getResourceMetaData(null).getContentFormatType();
+    		            mimeType = ((ResourceDescriptor) selectedItem).getResourceMetaData(null).getValue(MimeTypeFilterInputStream.MIME_TYPE_ATTRIBUTE);
+    		            fileURI = ((ResourceDescriptor) selectedItem).getResourceMetaData(null).getResourceURI().getBaseURI();
     		            if(mimeType == null)
     		            {
     		            	mimeType = "";
     		            }
-    		            long length = ((FileResourceDescriptor) selectedItem).getResourceMetaData(null).getLength();
+    		            long length = ((ResourceDescriptor) selectedItem).getResourceMetaData(null).getLength();
     		            if(contentFormatType == ContentFormatType.TEXT)
     		            {
-    		                ((FileResourceDescriptor) selectedItem).getResourceState();
-    		                content = new String(((FileResourceDescriptor) selectedItem).readBlock(null));
-    		                ((FileResourceDescriptor) selectedItem).reset(State.OPEN);
-    		                String localName = ((FileResourceDescriptor) selectedItem).getLocalName();
+    		                ((ResourceDescriptor) selectedItem).getResourceState();
+    		                content = new String(((ResourceDescriptor) selectedItem).readBlock(null));
+    		                ((ResourceDescriptor) selectedItem).reset(State.OPEN);
+    		                String localName = ((ResourceDescriptor) selectedItem).getLocalName();
     		                contentType = localName.substring(localName.indexOf(".")+1);
     		            }
     		            else if (contentFormatType == ContentFormatType.XML)
     		            {
-    		                ((FileResourceDescriptor) selectedItem).getResourceState();
-                            content = new String(((FileResourceDescriptor) selectedItem).readBlock(null));
-                            ((FileResourceDescriptor) selectedItem).reset(State.OPEN);
+    		                ((ResourceDescriptor) selectedItem).getResourceState();
+                            content = new String(((ResourceDescriptor) selectedItem).readBlock(null));
+                            ((ResourceDescriptor) selectedItem).reset(State.OPEN);
                             contentType = "xml";
     		            }
     		            else if(contentFormatType == ContentFormatType.BINARY && length < 70000l && mimeType.startsWith("image/") == false)
     		            {
-    		                byte[] bytes = ((FileResourceDescriptor) selectedItem).readBlock(null);
-    		                ((FileResourceDescriptor) selectedItem).reset(State.OPEN);
+    		                byte[] bytes = ((ResourceDescriptor) selectedItem).readBlock(null);
+    		                ((ResourceDescriptor) selectedItem).reset(State.OPEN);
 //    		                char[] hexArray = "0123456789ABCDEF".toCharArray();
 //
 //    		                char[] hexChars = new char[(bytes.length * 3)+(bytes.length/16)];

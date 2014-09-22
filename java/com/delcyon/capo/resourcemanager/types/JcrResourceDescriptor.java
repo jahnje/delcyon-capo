@@ -18,7 +18,10 @@ package com.delcyon.capo.resourcemanager.types;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.net.URI;
 import java.util.EnumSet;
+import java.util.logging.Level;
 
 import javax.jcr.Node;
 import javax.jcr.NodeIterator;
@@ -31,7 +34,9 @@ import javax.jcr.Value;
 import javax.jcr.query.Query;
 import javax.jcr.query.QueryResult;
 
+import com.delcyon.capo.CapoApplication;
 import com.delcyon.capo.resourcemanager.ResourceParameter;
+import com.delcyon.capo.resourcemanager.ResourceDescriptor.Action;
 import com.delcyon.capo.server.jackrabbit.CapoJcrServer;
 import com.delcyon.capo.xml.XPath;
 import com.delcyon.capo.xml.cdom.CElement;
@@ -49,15 +54,17 @@ public class JcrResourceDescriptor extends AbstractResourceDescriptor
 	
 	private Session session;
 	private Node node;
-	private String absPath = null;
+	private String absPath = null;	
 
 	@Override
 	public void init(ResourceDeclarationElement declaringResourceElement,VariableContainer variableContainer, LifeCycle lifeCycle,boolean iterate, ResourceParameter... resourceParameters) throws Exception
 	{
 
 		super.init(declaringResourceElement, variableContainer, lifeCycle, iterate,resourceParameters);
+		System.out.println("login");
 		this.session = CapoJcrServer.getRepository().login(new SimpleCredentials("admin", "admin".toCharArray()));
-		this.absPath = getResourceURI().getResourceURIString().replaceFirst("^repo:", "");
+		this.absPath = getResourceURI().getPath();
+		dump(session.getRootNode());		
 		if(session.nodeExists(absPath) == false)
 		{
 		    String[] relPath = absPath.split("/");
@@ -71,7 +78,7 @@ public class JcrResourceDescriptor extends AbstractResourceDescriptor
 		        }
                 if(currentNode.hasNode(nodeName) == false)
                 {
-                    currentNode.addNode(nodeName);
+                    currentNode.addNode(nodeName,"nt:folder");
                 }
                 currentNode = currentNode.getNode(nodeName);
             }
@@ -103,13 +110,13 @@ public class JcrResourceDescriptor extends AbstractResourceDescriptor
 	@Override
 	public ContentMetaData getContentMetaData(VariableContainer variableContainer,ResourceParameter... resourceParameters) throws Exception
 	{		
-		return new SimpleContentMetaData(getResourceURI(), resourceParameters);
+	    return new JcrContentMetaData(getResourceURI(), node);
 	}
 
 	@Override
 	public ContentMetaData getOutputMetaData(VariableContainer variableContainer,ResourceParameter... resourceParameters) throws Exception
 	{
-		return new SimpleContentMetaData(getResourceURI(), resourceParameters);
+	    return new JcrContentMetaData(getResourceURI(), node);
 	}
 
 	@Override
@@ -122,8 +129,8 @@ public class JcrResourceDescriptor extends AbstractResourceDescriptor
 	@Override
 	protected ContentMetaData buildResourceMetaData(VariableContainer variableContainer,ResourceParameter... resourceParameters) throws Exception
 	{
-		// TODO Auto-generated method stub
-		return new SimpleContentMetaData(getResourceURI(), resourceParameters);
+		
+		return new JcrContentMetaData(getResourceURI(), node);
 	}
 
 //	@Override
@@ -183,18 +190,41 @@ public class JcrResourceDescriptor extends AbstractResourceDescriptor
 
 	    }
 	    System.out.println("=============================");
+	    session.logout();
+	}
+	
+	
+	@Override
+	public boolean performAction(VariableContainer variableContainer,Action action,ResourceParameter... resourceParameters) throws Exception
+	{
+	    super.addResourceParameters(variableContainer, resourceParameters);
+	    
+        
+        boolean success = false;
+
+        if (action == Action.CREATE)
+        {
+           System.out.println(node.isNew());
+           node.setPrimaryType("nt:folder");
+           dump(node.getParent());
+           session.save();
+        }
+	    return success;
 	}
 	
 	@Override
 	protected Action[] getSupportedActions()
 	{
-		return (Action[]) EnumSet.allOf(Action.class).toArray();
+		return (Action[]) EnumSet.allOf(Action.class).toArray(new Action[]{});
 	}
 
 	/** Recursively outputs the contents of the given node. */ 
-	private static void dump(Node node) throws RepositoryException { 
+	public static void dump(Node node) throws RepositoryException { 
 	    // First output the node path 
-	    
+	    if(node == null)
+	    {
+	        return;
+	    }
 	    // Skip the virtual (and large!) jcr:system subtree 
 	    if (node.getPath().startsWith("/jcr:system")) { 
 	        return; 

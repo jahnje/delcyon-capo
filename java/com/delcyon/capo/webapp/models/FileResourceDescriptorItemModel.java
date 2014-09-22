@@ -4,7 +4,6 @@ import java.util.List;
 
 import com.delcyon.capo.resourcemanager.ResourceDescriptor;
 import com.delcyon.capo.resourcemanager.types.ContentMetaData;
-import com.delcyon.capo.resourcemanager.types.FileResourceDescriptor;
 import com.delcyon.capo.webapp.models.DomItemModel.DomUse;
 
 import eu.webtoolkit.jwt.ItemDataRole;
@@ -27,9 +26,9 @@ public class FileResourceDescriptorItemModel extends WAbstractItemModel
 {
 
 	int indexCounter = 0;
-	private FileResourceDescriptor topLevelResourceDescriptor;
+	private ResourceDescriptor topLevelResourceDescriptor;
 	private DomUse domUse = null;
-	public FileResourceDescriptorItemModel(FileResourceDescriptor resourceDescriptor,DomItemModel.DomUse navigation)
+	public FileResourceDescriptorItemModel(ResourceDescriptor resourceDescriptor,DomItemModel.DomUse navigation)
 	{	    
 		this.topLevelResourceDescriptor = resourceDescriptor;
 		this.domUse = navigation;
@@ -84,19 +83,19 @@ public class FileResourceDescriptorItemModel extends WAbstractItemModel
 	@Override
 	public int getRowCount(WModelIndex parent)
 	{
-		FileResourceDescriptor parentNode = null;
+		ResourceDescriptor parentNode = null;
 		if(parent == null)
 		{
 			parentNode = topLevelResourceDescriptor;						
 		}
 		else
 		{
-			parentNode = (FileResourceDescriptor) parent.getInternalPointer();
+			parentNode = (ResourceDescriptor) parent.getInternalPointer();
 		}
 		
 		if (domUse == DomUse.ATTRIBUTES)
 		{
-			if(parentNode instanceof FileResourceDescriptor)
+			if(parentNode instanceof ResourceDescriptor)
 			{
 				try
                 {
@@ -163,7 +162,7 @@ public class FileResourceDescriptorItemModel extends WAbstractItemModel
 	        {
 	            return null;
 	        }
-	        FileResourceDescriptor node = (FileResourceDescriptor) index.getInternalPointer();
+	        ResourceDescriptor node = (ResourceDescriptor) index.getInternalPointer();
 	        if(node.getParentResourceDescriptor() == null)
 	        {
 	            return null;
@@ -175,12 +174,12 @@ public class FileResourceDescriptorItemModel extends WAbstractItemModel
 	        }
 
 
-	        node = (FileResourceDescriptor) node.getParentResourceDescriptor();
+	        node = (ResourceDescriptor) node.getParentResourceDescriptor();
 
 
 
 
-	        FileResourceDescriptor grandParentNode = (FileResourceDescriptor) node.getParentResourceDescriptor();
+	        ResourceDescriptor grandParentNode = (ResourceDescriptor) node.getParentResourceDescriptor();
 	        List<ContentMetaData> children = grandParentNode.getResourceMetaData(null).getContainedResources();
 	        for(int currentChild = 0; currentChild < children.size(); currentChild++)
 	        {
@@ -266,10 +265,10 @@ public class FileResourceDescriptorItemModel extends WAbstractItemModel
 	        }
 	        else
 	        {
-	            FileResourceDescriptor parentResourceDescriptor = null;
+	            ResourceDescriptor parentResourceDescriptor = null;
 	            if (parent != null)
 	            {
-	                parentResourceDescriptor = (FileResourceDescriptor) parent.getInternalPointer();
+	                parentResourceDescriptor = (ResourceDescriptor) parent.getInternalPointer();
 	            }
 	            else
 	            {
@@ -281,7 +280,8 @@ public class FileResourceDescriptorItemModel extends WAbstractItemModel
 	            
 	            if (childResources.size() > 0)
 	            {
-	                FileResourceDescriptor childResourceDescriptor = (FileResourceDescriptor) parentResourceDescriptor.getChildResourceDescriptor(null, childResources.get(row).getResourceURI().getResourceURIString());
+	                System.out.println("blah");
+	                ResourceDescriptor childResourceDescriptor = (ResourceDescriptor) parentResourceDescriptor.getChildResourceDescriptor(null, childResources.get(row).getResourceURI().getResourceURIString());
 	                if (childResourceDescriptor == null || childResourceDescriptor.getResourceMetaData(null) == null)
 	                {
 	                    System.out.println("HMMMMMMMMMMM");
