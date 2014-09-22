@@ -1,8 +1,8 @@
 package com.delcyon.capo.tests.util;
 
 import java.io.File;
+import java.util.logging.Level;
 
-import org.junit.Assert;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
@@ -17,8 +17,9 @@ import com.delcyon.capo.resourcemanager.ResourceDescriptor.LifeCycle;
 import com.delcyon.capo.resourcemanager.ResourceManager;
 import com.delcyon.capo.resourcemanager.ResourceParameter;
 import com.delcyon.capo.resourcemanager.types.ContentMetaData;
-import com.delcyon.capo.resourcemanager.types.FileResourceType;
 import com.delcyon.capo.resourcemanager.types.FileResourceContentMetaData.FileAttributes;
+import com.delcyon.capo.resourcemanager.types.FileResourceType;
+import com.delcyon.capo.server.CapoServer.Preferences;
 import com.delcyon.capo.xml.XMLDiff;
 import com.delcyon.capo.xml.XPath;
 import com.delcyon.capo.xml.dom.ResourceDocument;
@@ -30,7 +31,7 @@ public class Util
     
     public static void startMinimalCapoApplication() throws Exception
     {        
-    	System.setProperty("jaxp.debug", "true");
+    	
     	if (minmalApplication == null)
     	{
     	    minmalApplication = new TestCapoApplication();
@@ -42,7 +43,12 @@ public class Util
     	}
     	if (CapoApplication.getConfiguration() == null)
     	{
-    	    CapoApplication.setConfiguration(new Configuration(new String[]{"-"+PREFERENCE.DISABLE_CONFIG_AUTOSYNC.toString()}));
+    	    CapoApplication.setConfiguration(new Configuration(new String[]{"-"+PREFERENCE.DISABLE_CONFIG_AUTOSYNC.toString(),"-"+Preferences.DISABLE_REPO.toString(),"true","-"+Preferences.DISABLE_WEBSERVER.toString(),"true"}));
+    	}
+    	
+    	if(CapoApplication.LOGGING_LEVEL.intValue() >= Level.FINER.intValue())
+    	{
+    	    System.setProperty("jaxp.debug", "true");
     	}
     	
     	if (CapoApplication.getDataManager() == null)

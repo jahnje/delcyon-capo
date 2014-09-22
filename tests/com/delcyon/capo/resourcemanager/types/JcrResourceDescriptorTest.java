@@ -20,7 +20,6 @@ import com.delcyon.capo.resourcemanager.ResourceDescriptor.StreamType;
 import com.delcyon.capo.resourcemanager.ResourceDescriptorTest;
 import com.delcyon.capo.resourcemanager.ResourceParameter;
 import com.delcyon.capo.tests.util.TestServer;
-import com.delcyon.capo.tests.util.Util;
 import com.delcyon.capo.xml.XMLDiff;
 import com.delcyon.capo.xml.XPath;
 import com.delcyon.capo.xml.cdom.CElement;
@@ -32,7 +31,7 @@ public class JcrResourceDescriptorTest extends ResourceDescriptorTest
     @Before
     public void setUp() throws Exception
     {
-        Util.copyTree("test-data/capo", "capo", true, true);
+        //Util.copyTree("test-data/capo", "capo", true, true);
         super.setUp();
     }
     

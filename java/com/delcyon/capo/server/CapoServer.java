@@ -127,7 +127,11 @@ public class CapoServer extends CapoApplication
 		@PreferenceInfo(arguments={"webPort"}, defaultValue="8443", description="port to start webserver on", longOption="WEB_PORT", option="WEB_PORT")
         WEB_PORT,
 		@PreferenceInfo(arguments={"webSessionTimeout"}, defaultValue="1800", description="number of seconds before an inactive web session is logged out automatically", longOption="WEB_SESSION_TIMEOUT", option="WEB_SESSION_TIMEOUT")
-        WEB_SESSION_TIMEOUT;
+        WEB_SESSION_TIMEOUT,
+		@PreferenceInfo(arguments={"disableRepo"}, defaultValue="false", description="prevent JCR repository from starting automatically", longOption="DISABLE_REPO", option="DISABLE_REPO")
+        DISABLE_REPO,
+		@PreferenceInfo(arguments={"disableWebServer"}, defaultValue="false", description="prevent webserver from starting automatically", longOption="DISABLE_WEBSERVER", option="DISABLE_WEBSERVER")
+		DISABLE_WEBSERVER;
 		@Override
 		public String[] getArguments()
 		{
@@ -283,12 +287,16 @@ public class CapoServer extends CapoApplication
         
 		runStartupScript(getConfiguration().getValue(PREFERENCE.STARTUP_SCRIPT));
 		
-		capoJcrServer = new CapoJcrServer();
-		capoJcrServer.start();
-		
-		capoJettyServer = new CapoJettyServer(keyStore, getConfiguration().getValue(PREFERENCE.KEYSTORE_PASSWORD), getConfiguration().getIntValue(Preferences.WEB_PORT));		
-		capoJettyServer.start();
-		
+		if(getConfiguration().getBooleanValue(Preferences.DISABLE_REPO) != true)
+		{
+		    capoJcrServer = new CapoJcrServer();
+		    capoJcrServer.start();
+		}
+		if(getConfiguration().getBooleanValue(Preferences.DISABLE_WEBSERVER) != true)
+		{
+		    capoJettyServer = new CapoJettyServer(keyStore, getConfiguration().getValue(PREFERENCE.KEYSTORE_PASSWORD), getConfiguration().getIntValue(Preferences.WEB_PORT));		
+		    capoJettyServer.start();
+		}
 		
 		setApplicationState(ApplicationState.INITIALIZED);
 		
