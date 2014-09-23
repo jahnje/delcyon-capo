@@ -18,10 +18,7 @@ package com.delcyon.capo.resourcemanager.types;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.net.URI;
 import java.util.EnumSet;
-import java.util.logging.Level;
 
 import javax.jcr.Node;
 import javax.jcr.NodeIterator;
@@ -29,19 +26,19 @@ import javax.jcr.Property;
 import javax.jcr.PropertyIterator;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
-import javax.jcr.SimpleCredentials;
 import javax.jcr.Value;
 import javax.jcr.query.Query;
 import javax.jcr.query.QueryResult;
 
-import com.delcyon.capo.CapoApplication;
+import com.delcyon.capo.ContextThread;
 import com.delcyon.capo.resourcemanager.ResourceParameter;
-import com.delcyon.capo.resourcemanager.ResourceDescriptor.Action;
-import com.delcyon.capo.server.jackrabbit.CapoJcrServer;
+import com.delcyon.capo.webapp.servlets.CapoWebApplication;
 import com.delcyon.capo.xml.XPath;
 import com.delcyon.capo.xml.cdom.CElement;
 import com.delcyon.capo.xml.cdom.VariableContainer;
 import com.delcyon.capo.xml.dom.ResourceDeclarationElement;
+
+import eu.webtoolkit.jwt.WApplication;
 
 /**
  * @author jeremiah
@@ -62,9 +59,23 @@ public class JcrResourceDescriptor extends AbstractResourceDescriptor
 
 		super.init(declaringResourceElement, variableContainer, lifeCycle, iterate,resourceParameters);
 		System.out.println("login");
-		this.session = CapoJcrServer.getRepository().login(new SimpleCredentials("admin", "admin".toCharArray()));
+		
+		if(Thread.currentThread() instanceof ContextThread)
+		{
+		    this.session = ((ContextThread)Thread.currentThread()).getSession();
+		}
+		else if(WApplication.getInstance() != null)
+		{
+		    this.session = ((CapoWebApplication)WApplication.getInstance()).getJcrSession();
+		}
+
+		if(this.session == null)
+		{
+		    throw new Exception("Can't use JCR resources without a Session");
+		}
+		
 		this.absPath = getResourceURI().getPath();
-		dump(session.getRootNode());		
+		//dump(session.getRootNode());		
 		if(session.nodeExists(absPath) == false)
 		{
 		    String[] relPath = absPath.split("/");
@@ -78,7 +89,7 @@ public class JcrResourceDescriptor extends AbstractResourceDescriptor
 		        }
                 if(currentNode.hasNode(nodeName) == false)
                 {
-                    currentNode.addNode(nodeName,"nt:folder");
+                    currentNode.addNode(nodeName);//,"nt:folder");
                 }
                 currentNode = currentNode.getNode(nodeName);
             }
@@ -104,7 +115,22 @@ public class JcrResourceDescriptor extends AbstractResourceDescriptor
 	@Override
 	public boolean next(VariableContainer variableContainer,ResourceParameter... resourceParameters) throws Exception
 	{		
-		return true;
+	    advanceState(State.OPEN, variableContainer, resourceParameters);
+        if(getResourceState() == State.OPEN)
+        {
+            
+           // contentMetaData = new SimpleContentMetaData(getResourceURI());
+//            URL url = new URL(getResourceURI().getBaseURI());   
+//            InputStream inputStream = contentMetaData.wrapInputStream(url.openConnection().getInputStream());
+//            content = contentMetaData.readInputStream(inputStream,true);
+            setResourceState(State.STEPPING);
+            return true;
+        }
+        else
+        {
+            setResourceState(State.OPEN);
+            return false;
+        }
 	}
 
 	@Override
@@ -205,9 +231,17 @@ public class JcrResourceDescriptor extends AbstractResourceDescriptor
         if (action == Action.CREATE)
         {
            System.out.println(node.isNew());
-           node.setPrimaryType("nt:folder");
-           dump(node.getParent());
-           session.save();
+           //node.setPrimaryType("nt:folder");
+           
+           
+        }
+        else if (action == Action.DELETE)
+        {
+            if (node != null)
+            {
+                node.remove();
+           
+            }
         }
 	    return success;
 	}

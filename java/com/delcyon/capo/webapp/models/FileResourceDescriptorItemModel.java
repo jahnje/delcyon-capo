@@ -39,7 +39,10 @@ public class FileResourceDescriptorItemModel extends WAbstractItemModel
 	    reset();
 	}
 	
-	
+	public ResourceDescriptor getTopLevelResourceDescriptor()
+    {
+        return topLevelResourceDescriptor;
+    }
 	
 	@Override
     public Object getHeaderData(int section, Orientation orientation, int role)
@@ -295,7 +298,11 @@ public class FileResourceDescriptorItemModel extends WAbstractItemModel
 	                    return createIndex(row, column, childResourceDescriptor);	
 	                }
 	            }
-	            return null;
+	            
+	            else
+	            {
+	                return null;
+	            }
 	        }
 	    }catch (Exception exception)
 	    {
@@ -310,5 +317,42 @@ public class FileResourceDescriptorItemModel extends WAbstractItemModel
 	    
 	    return super.createIndex(row, column, ptr);
 	}
+
+	@Override
+	public void beginRemoveRows(WModelIndex parent, int first, int last)
+	{
+	    // TODO Auto-generated method stub
+	    super.beginRemoveRows(parent, first, last);
+	}
+	
+    public void fireDataChanged(WModelIndex parentIndex,boolean append)
+    {
+        //reload();
+        if(append)
+        {
+            beginInsertRows(parentIndex, getRowCount(parentIndex)-1, getRowCount(parentIndex)-1);
+         //   dataChanged().trigger(parentIndex, parentIndex);
+            endInsertRows();
+        }
+        else
+        {            
+            endRemoveRows();
+        }
+        //int rowCount = getRowCount(parentIndex); //should be number of children
+        //WModelIndex childIndex = getIndex(rowCount-1, 0, parentIndex);
+//        if (rowCount > 0)
+//        {   
+//            beginInsertRows(index, getRowCount(index)-1, getRowCount(index));
+//            endInsertRows();
+//            //
+//        }
+//        else
+        //dataChanged().trigger(parentIndex,childIndex);
+//        {
+//            beginInsertRows(index, rowCount,rowCount);
+//            endInsertRows();
+//        }
+        
+    }
 
 }

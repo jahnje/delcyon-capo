@@ -73,6 +73,7 @@ import eu.webtoolkit.jwt.WProgressBar;
 import eu.webtoolkit.jwt.WPushButton;
 import eu.webtoolkit.jwt.WRegExpValidator;
 import eu.webtoolkit.jwt.WStackedWidget;
+import eu.webtoolkit.jwt.WStandardItemModel;
 import eu.webtoolkit.jwt.WTabWidget;
 import eu.webtoolkit.jwt.WTableView;
 import eu.webtoolkit.jwt.WText;
@@ -95,7 +96,7 @@ public class CapoWebApplication extends WApplication {
 	private WTabWidget subDetailsPane;
 	private CapoWTreeView treeView;
     private ResourceDocument document;
-    private Session session;
+    private Session jcrSession;
     
 	public CapoWebApplication(WEnvironment env, boolean embedded) {
         super(env);
@@ -108,7 +109,7 @@ public class CapoWebApplication extends WApplication {
         require("/wr/source/sh_main.js");
         try
         {
-            session = CapoJcrServer.getRepository().login(new SimpleCredentials("admin", "admin".toCharArray()));
+            jcrSession = CapoJcrServer.getRepository().login(new SimpleCredentials("admin", "admin".toCharArray()));
         }
         catch (Exception e)
         {
@@ -144,7 +145,7 @@ public class CapoWebApplication extends WApplication {
 		{
 //            FileResourceType fileResourceType = new FileResourceType();
 //            ResourceDescriptor resourceDescriptor = fileResourceType.getResourceDescriptor("file:/");
-            ResourceDescriptor resourceDescriptor = CapoApplication.getDataManager().getResourceDescriptor(null, "repo:/");
+            ResourceDescriptor resourceDescriptor = CapoApplication.getDataManager().getResourceDescriptor(null, "repo:/resource:clients");
           ResourceDescriptor resourceDescriptor2 = CapoApplication.getDataManager().getResourceDirectory("CLIENTS_DIR");
             ResourceDocumentBuilder documentBuilder = new ResourceDocumentBuilder();
              document = (ResourceDocument) documentBuilder.buildDocument(resourceDescriptor2);
@@ -160,11 +161,25 @@ public class CapoWebApplication extends WApplication {
 		}
         
         getContentPaneLayout().addLayout(getDetailsPaneLayout(), 0, 1);
-        WPushButton pathButton = new WPushButton("test");
+        WPushButton pathButton = new WPushButton("Save");
+        pathButton.clicked().addListener(this, new Signal.Listener()
+        {
+            
+            public void trigger()
+            {
+                try
+                {
+                    jcrSession.save();
+                } catch (Exception e)
+                {
+                    e.printStackTrace();
+                }
+            }
+        });
         pathButton.setLink(new WLink(Type.InternalPath, "/legend"));
         getContentPaneLayout().addWidget(pathButton, 2, 0, 1, 1, AlignmentFlag.AlignTop); 
         
-        WPushButton pathButton2 = new WPushButton("test2");
+        WPushButton pathButton2 = new WPushButton("Reset");
         //pathButton2.setLink(new WLink(Type.InternalPath, "/legend2"));
         pathButton2.clicked().addListener(this, new Signal.Listener()
         {
@@ -173,14 +188,8 @@ public class CapoWebApplication extends WApplication {
             {
                 try
                 {
-                    ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-
-                    XPath.dumpNode(document.getDocumentElement(), outputStream);
-                    XPath.dumpNode(document.getDocumentElement(), System.out);
-                    
-                    session.importXML("/", new ByteArrayInputStream(outputStream.toByteArray()), 0);
-                    //dump(session.getRootNode());
-                    session.save();
+                    jcrSession.refresh(false);
+                    ((FileResourceDescriptorItemModel) treeView.getModel()).reload();
                 } catch (Exception e)
                 {
                     e.printStackTrace();
@@ -335,17 +344,29 @@ public class CapoWebApplication extends WApplication {
 				WPopupMenu adminSubMenu = new WPopupMenu();
 		       
 
-		        adminSubMenu.addItem("Create Dir").clicked().addListener(CapoWebApplication.this, new Signal.Listener()
+		        adminSubMenu.addItem("Create Node...").clicked().addListener(CapoWebApplication.this, new Signal.Listener()
 		        {
 		            public void trigger() {
-		                final WModelIndex index = treeView.getSelectedIndexes().first();
-		                if(index != null)
+		                
+		                final WModelIndex index;
+		                final ResourceDescriptor selectedResourceDescriptor;
+		                if(treeView.getSelectedIndexes().isEmpty())
 		                {
-		                    System.out.println(((ResourceDescriptor)index.getInternalPointer()).getLocalName());
-		                    final WDialog dialog = new WDialog("Create Directory");
+		                    index = null;
+		                    selectedResourceDescriptor = ((FileResourceDescriptorItemModel)treeView.getModel()).getTopLevelResourceDescriptor();
+		                }
+		                else
+		                {
+		                  index = treeView.getSelectedIndexes().first();
+		                  selectedResourceDescriptor = (ResourceDescriptor) index.getInternalPointer();
+		                }
+		                if(selectedResourceDescriptor != null)
+		                {
+		                    System.out.println(selectedResourceDescriptor.getLocalName());
+		                    final WDialog dialog = new WDialog("Create Node");
 		                    dialog.setClosable(true);
 		                    dialog.rejectWhenEscapePressed(true);
-		                    WLabel label = new WLabel("Enter a directory name", dialog.getContents());
+		                    WLabel label = new WLabel("Enter a node name", dialog.getContents());
 		                    final WLineEdit edit = new WLineEdit(dialog.getContents());
 		                    label.setBuddy(edit);
 		                    WRegExpValidator validator = new WRegExpValidator("[A-Za-z1-9 \\.]+");
@@ -377,16 +398,26 @@ public class CapoWebApplication extends WApplication {
 		                    dialog.finished().addListener(CapoWebApplication.this, new Signal.Listener() {
 		                        public void trigger() {
 		                            System.out.println(edit.getText());
-		                            ResourceDescriptor selectedResourceDescriptor = (ResourceDescriptor) index.getInternalPointer();
+		                          
 		                           
 		                            try
                                     {
 		                                ResourceDescriptor childResourceDescriptor = selectedResourceDescriptor.getChildResourceDescriptor(null, edit.getText());
 		                                childResourceDescriptor.init(null, null, LifeCycle.EXPLICIT, false);
                                         childResourceDescriptor.performAction(null, Action.CREATE);                                        
-                                        session.save();
-                                        childResourceDescriptor.reset(State.INITIALIZED);
-                                        ((FileResourceDescriptorItemModel) treeView.getModel()).reload();
+                                        jcrSession.save();
+                                        selectedResourceDescriptor.reset(State.INITIALIZED);
+                                        if(index != null)
+                                        {
+                                            ((FileResourceDescriptorItemModel) treeView.getModel()).fireDataChanged(index,true);
+//                                            ((FileResourceDescriptorItemModel) treeView.getModel()).reload();                                           
+//                                            treeView.setExpanded(index, true);
+//                                            treeView.select(index);
+                                        }
+                                        else
+                                        {
+                                            ((FileResourceDescriptorItemModel) treeView.getModel()).reload();//TODO this is really heavy weight, when in reality, model needs to fire data changed event
+                                        }
                                     }
                                     catch (Exception e)
                                     {
@@ -402,7 +433,45 @@ public class CapoWebApplication extends WApplication {
 		            };
 		        }
 		        );
-		        adminSubMenu.addItem("Roles");
+		        adminSubMenu.addItem("Delete").clicked().addListener(CapoWebApplication.this, new Signal.Listener()
+                {
+                    
+                    @Override
+                    public void trigger()
+                    {
+                        final WModelIndex index = treeView.getSelectedIndexes().first();
+                        if(index != null)
+                        {
+                            ResourceDescriptor selectedResourceDescriptor = (ResourceDescriptor) index.getInternalPointer();
+                            try
+                            {
+                                ResourceDescriptor parentResourceDescriptor = selectedResourceDescriptor.getParentResourceDescriptor();
+                                WModelIndex parentIndex = ((FileResourceDescriptorItemModel) treeView.getModel()).getParent(index);
+                                ((FileResourceDescriptorItemModel) treeView.getModel()).beginRemoveRows(parentIndex, index.getRow(), index.getRow());
+                                selectedResourceDescriptor.performAction(null, Action.DELETE);
+                                if (parentResourceDescriptor != null)
+                                {
+                                    parentResourceDescriptor.reset(State.INITIALIZED);
+                                }
+                                if (parentIndex != null)
+                                {
+                                    ((FileResourceDescriptorItemModel) treeView.getModel()).fireDataChanged(parentIndex,false);
+                                }
+                                else
+                                {
+                                    ((FileResourceDescriptorItemModel) treeView.getModel()).reload();
+                                }
+                            }
+                            catch (Exception e)
+                            {
+                                // TODO Auto-generated catch block
+                                e.printStackTrace();
+                            }
+                            
+                        }
+                        
+                    }
+                });
 		        adminSubMenu.addItem("Configuration");
 		        adminSubMenu.popup(arg2);
 				}
@@ -756,5 +825,10 @@ public class CapoWebApplication extends WApplication {
         //menu.setHeight(new WLength(25));
         //.addWidget(menu);
         return container;
+    }
+
+    public Session getJcrSession()
+    {
+        return this.jcrSession;
     }
 }

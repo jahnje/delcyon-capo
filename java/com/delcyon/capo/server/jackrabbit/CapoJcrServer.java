@@ -1,13 +1,17 @@
 package com.delcyon.capo.server.jackrabbit;
 import java.util.logging.Level;
 
+import javax.jcr.NamespaceRegistry;
 import javax.jcr.Repository;
+import javax.jcr.Session;
+import javax.jcr.SimpleCredentials;
 
 import org.apache.jackrabbit.core.RepositoryImpl;
 import org.apache.jackrabbit.core.config.RepositoryConfig;
 
 import com.delcyon.capo.CapoApplication;
 import com.delcyon.capo.Configuration;
+import com.delcyon.capo.xml.XPath;
 
 public class CapoJcrServer implements Runnable
 {
@@ -36,7 +40,23 @@ public class CapoJcrServer implements Runnable
 		try
 		{
 			config = RepositoryConfig.create(xml, dir);
-			CapoJcrServer.repository = RepositoryImpl.create(config);
+			Repository repository = RepositoryImpl.create(config);
+			Session session = repository.login(new SimpleCredentials("admin", "admin".toCharArray()));
+			NamespaceRegistry namespaceRegistry = session.getWorkspace().getNamespaceRegistry();
+			if(namespaceRegistry.getPrefix(CapoApplication.SERVER_NAMESPACE_URI) == null)
+			{
+			    namespaceRegistry.registerNamespace("server", CapoApplication.SERVER_NAMESPACE_URI);
+			}
+			if(namespaceRegistry.getPrefix(CapoApplication.CLIENT_NAMESPACE_URI) == null)
+			{
+			    namespaceRegistry.registerNamespace("client", CapoApplication.CLIENT_NAMESPACE_URI);
+			}
+			if(namespaceRegistry.getPrefix(CapoApplication.RESOURCE_NAMESPACE_URI) == null)
+			{
+			    namespaceRegistry.registerNamespace("resource", CapoApplication.RESOURCE_NAMESPACE_URI);
+			}
+			session.logout();
+			CapoJcrServer.repository = repository;
 		} catch (Exception exception)
 		{
 			exception.printStackTrace();

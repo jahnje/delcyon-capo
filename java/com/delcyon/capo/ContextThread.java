@@ -16,6 +16,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 package com.delcyon.capo;
 
+import javax.jcr.Session;
+
 
 /**
  * @author jeremiah
@@ -28,6 +30,7 @@ public class ContextThread extends Thread
 	private InterruptibleRunnable interruptibleRunnable = null;
 	
 	public byte[] hugeBuffer = null;
+    private Session session;
 	
 	public ContextThread()
 	{
@@ -75,4 +78,14 @@ public class ContextThread extends Thread
 		this.interruptibleRunnable = interruptibleRunnable;
 		
 	}
+
+    public Session getSession()
+    {
+        return this.session;
+    }
+    
+    public void setSession(Session session)
+    {
+        this.session = session;
+    }
 }
