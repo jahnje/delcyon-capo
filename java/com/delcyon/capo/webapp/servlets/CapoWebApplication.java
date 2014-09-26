@@ -9,6 +9,7 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.OutputStream;
 import java.util.List;
 import java.util.SortedSet;
 
@@ -524,7 +525,7 @@ public class CapoWebApplication extends WApplication {
     		    tableView.setModel(new FileResourceDescriptorItemModel((ResourceDescriptor) selectedItem, DomUse.ATTRIBUTES));
     		    try
     		    {
-    		        if(((ResourceDescriptor) selectedItem).getResourceMetaData(null).isContainer() == false)
+    		        //if(((ResourceDescriptor) selectedItem).getResourceMetaData(null).isContainer() == false)
     		        {
     		            WAnchor anchor = new WAnchor(new WLink(new WResourceDescriptor((ResourceDescriptor) selectedItem)),"Download");
     		            anchor.setTarget(AnchorTarget.TargetNewWindow);
@@ -544,7 +545,9 @@ public class CapoWebApplication extends WApplication {
     		                    File tempFile = new File(tempFileName);
     		                    try
                                 {
-                                    StreamUtil.readInputStreamIntoOutputStream(new FileInputStream(tempFile),  ((ResourceDescriptor) selectedItem).getOutputStream(null));
+    		                        OutputStream outputStream = ((ResourceDescriptor) selectedItem).getOutputStream(null);
+                                    StreamUtil.readInputStreamIntoOutputStream(new FileInputStream(tempFile), outputStream );
+                                    outputStream.close();
                                     ((ResourceDescriptor) selectedItem).getResourceMetaData(null).refresh();
                                     ((ResourceDescriptor) selectedItem).advanceState(State.CLOSED,null);
                                     ((ResourceDescriptor) selectedItem).reset(State.OPEN);

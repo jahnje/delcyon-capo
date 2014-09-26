@@ -18,6 +18,10 @@ package com.delcyon.capo.resourcemanager.types;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.io.PipedInputStream;
+import java.io.PipedOutputStream;
 import java.util.EnumSet;
 
 import javax.jcr.Node;
@@ -26,12 +30,20 @@ import javax.jcr.Property;
 import javax.jcr.PropertyIterator;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
+import javax.jcr.SimpleCredentials;
 import javax.jcr.Value;
 import javax.jcr.query.Query;
 import javax.jcr.query.QueryResult;
 
+import org.apache.jackrabbit.value.BinaryValue;
+
 import com.delcyon.capo.ContextThread;
+import com.delcyon.capo.datastream.stream_attribute_filter.ContentFormatTypeFilterInputStream;
+import com.delcyon.capo.datastream.stream_attribute_filter.MD5FilterInputStream;
+import com.delcyon.capo.datastream.stream_attribute_filter.MimeTypeFilterInputStream;
+import com.delcyon.capo.datastream.stream_attribute_filter.SizeFilterInputStream;
 import com.delcyon.capo.resourcemanager.ResourceParameter;
+import com.delcyon.capo.server.jackrabbit.CapoJcrServer;
 import com.delcyon.capo.webapp.servlets.CapoWebApplication;
 import com.delcyon.capo.xml.XPath;
 import com.delcyon.capo.xml.cdom.CElement;
@@ -51,12 +63,15 @@ public class JcrResourceDescriptor extends AbstractResourceDescriptor
 	
 	private Session session;
 	private Node node;
-	private String absPath = null;	
+	private String absPath = null;
+	private JcrContentMetaData jcrResourceMetatData = null;
+	private boolean isLocalSession = false;
+	private boolean isWriting = false;
 
 	@Override
 	public void init(ResourceDeclarationElement declaringResourceElement,VariableContainer variableContainer, LifeCycle lifeCycle,boolean iterate, ResourceParameter... resourceParameters) throws Exception
 	{
-
+	    this.isLocalSession = false;
 		super.init(declaringResourceElement, variableContainer, lifeCycle, iterate,resourceParameters);
 		System.out.println("login");
 		
@@ -68,7 +83,11 @@ public class JcrResourceDescriptor extends AbstractResourceDescriptor
 		{
 		    this.session = ((CapoWebApplication)WApplication.getInstance()).getJcrSession();
 		}
-
+		else if(CapoJcrServer.getRepository() != null && lifeCycle == LifeCycle.EXPLICIT)
+        {
+            this.session = CapoJcrServer.getRepository().login(new SimpleCredentials("admin","admin".toCharArray()));
+            this.isLocalSession = true;
+        }
 		if(this.session == null)
 		{
 		    throw new Exception("Can't use JCR resources without a Session");
@@ -109,7 +128,14 @@ public class JcrResourceDescriptor extends AbstractResourceDescriptor
 	@Override
 	public StreamFormat[] getSupportedStreamFormats(StreamType streamType) throws Exception
 	{
-		return EnumSet.of(StreamFormat.XML_BLOCK).toArray(new StreamFormat[]{});
+	    if(streamType == StreamType.INPUT || streamType == StreamType.OUTPUT)
+	    {
+	        return EnumSet.of(StreamFormat.XML_BLOCK,StreamFormat.STREAM).toArray(new StreamFormat[]{});
+	    }
+	    else
+	    {
+	        return null;
+	    }
 	}
 
 	@Override
@@ -136,13 +162,13 @@ public class JcrResourceDescriptor extends AbstractResourceDescriptor
 	@Override
 	public ContentMetaData getContentMetaData(VariableContainer variableContainer,ResourceParameter... resourceParameters) throws Exception
 	{		
-	    return new JcrContentMetaData(getResourceURI(), node);
+	    return buildResourceMetaData(variableContainer, resourceParameters);
 	}
 
 	@Override
 	public ContentMetaData getOutputMetaData(VariableContainer variableContainer,ResourceParameter... resourceParameters) throws Exception
 	{
-	    return new JcrContentMetaData(getResourceURI(), node);
+	    return buildResourceMetaData(variableContainer, resourceParameters);
 	}
 
 	@Override
@@ -155,39 +181,84 @@ public class JcrResourceDescriptor extends AbstractResourceDescriptor
 	@Override
 	protected ContentMetaData buildResourceMetaData(VariableContainer variableContainer,ResourceParameter... resourceParameters) throws Exception
 	{
-		
-		return new JcrContentMetaData(getResourceURI(), node);
+		if(jcrResourceMetatData == null)
+		{
+		    this.jcrResourceMetatData = new JcrContentMetaData(getResourceURI(), node);; 
+		}
+		return this.jcrResourceMetatData;
 	}
 
-//	@Override
-//	public OutputStream getOutputStream(VariableContainer variableContainer,ResourceParameter... resourceParameters) throws Exception
-//	{
-//		//MimeTable mt = MimeTable.getDefaultTable();
-//	    //String mimeType = mt.getContentTypeFor(file.getName());
-//	    //if (mimeType == null) mimeType = "application/octet-stream";
-//
-//	    Node fileNode = node.addNode("<name>", "nt:file");
-//
-//	    System.out.println( fileNode.getName() );
-//
-//	    Node resNode = fileNode.addNode("jcr:content", "nt:resource");
-//	    resNode.setProperty("jcr:mimeType", "<mimeType>");
-//	    resNode.setProperty("jcr:encoding", "");
-//	    resNode.setProperty("jcr:data",new BinaryValue( new FileInputStream("")));
-//	    Calendar lastModified = Calendar.getInstance();
-//	    //lastModified.setTimeInMillis(file.lastModified());
-//	    resNode.setProperty("jcr:lastModified", lastModified);
-//	    //Uti
-//	    return new ByteArrayOutputStream();
-//	}
+	@Override
+	public OutputStream getOutputStream(VariableContainer variableContainer,ResourceParameter... resourceParameters) throws Exception
+	{
+	    
+	   
+	    final PipedInputStream pipedInputStream = new PipedInputStream();
+	    
+	    PipedOutputStream pipedOutputStream = new PipedOutputStream(pipedInputStream);
+	   
+	    
+		//MimeTable mt = MimeTable.getDefaultTable();
+	    //String mimeType = mt.getContentTypeFor(file.getName());
+	    //if (mimeType == null) mimeType = "application/octet-stream";
+
+	   // Node fileNode = node.addNode("<name>", "nt:file");
+
+	    //System.out.println( fileNode.getName() );
+
+	    //final Node resNode = fileNode.addNode("jcr:content", "nt:resource");
+	    //resNode.setProperty("jcr:mimeType", "<mimeType>");
+	    //resNode.setProperty("jcr:encoding", "");
+	    
+	    Runnable pipe = new Runnable()
+        {
+            
+            @Override
+            public void run()
+            {
+                try
+                {
+                    isWriting = true;
+                    MD5FilterInputStream md5FilterInputStream = new MD5FilterInputStream(pipedInputStream);
+                    ContentFormatTypeFilterInputStream contentFormatTypeFilterInputStream = new ContentFormatTypeFilterInputStream(md5FilterInputStream);
+                    MimeTypeFilterInputStream mimeTypeFilterInputStream = new MimeTypeFilterInputStream(contentFormatTypeFilterInputStream);
+                    SizeFilterInputStream sizeFilterInputStream = new SizeFilterInputStream(mimeTypeFilterInputStream);
+                    node.setProperty("jcr:data",new BinaryValue(sizeFilterInputStream));
+                    node.setProperty(contentFormatTypeFilterInputStream.getName(),contentFormatTypeFilterInputStream.getValue());
+                    node.setProperty(sizeFilterInputStream.getName(),sizeFilterInputStream.getValue());                    
+                    node.setProperty(mimeTypeFilterInputStream.getName(),mimeTypeFilterInputStream.getValue());
+                    node.setProperty(md5FilterInputStream.getName(),md5FilterInputStream.getValue());                    
+                    System.out.println("pipe thread done");
+                }
+                catch (Exception e)
+                {
+                    e.printStackTrace();
+                }
+                isWriting = false;
+                
+            }
+        };
+	   
+        new Thread(pipe, node.getName()+" pipeThread").start();
+	    //Calendar lastModified = Calendar.getInstance();
+	    //lastModified.setTimeInMillis(file.lastModified());
+	    //resNode.setProperty("jcr:lastModified", lastModified);
+	    //Uti
+	    return pipedOutputStream;
+	}
 	
-//	@Override
-//	public InputStream getInputStream(VariableContainer variableContainer,ResourceParameter... resourceParameters) throws Exception
-//	{
-//		Node jcrContent = node.getNode("jcr:content");
-//		String fileName = node.getName();
-//		return jcrContent.getProperty("jcr:data").getBinary().getStream();
-//	}
+	@Override
+	public InputStream getInputStream(VariableContainer variableContainer,ResourceParameter... resourceParameters) throws Exception
+	{	
+	    if(node.hasProperty("jcr:data"))
+	    {
+	        return node.getProperty("jcr:data").getBinary().getStream();
+	    }
+	    else
+	    {
+	        return new ByteArrayInputStream(new byte[]{});
+	    }
+	}
 	
 	@Override
 	public void writeXML(VariableContainer variableContainer, CElement element, ResourceParameter... resourceParameters) throws Exception
@@ -289,5 +360,21 @@ public class JcrResourceDescriptor extends AbstractResourceDescriptor
 	    } 
 	} 
 
+	@Override
+	public void close(VariableContainer variableContainer, ResourceParameter... resourceParameters) throws Exception
+	{	 
+	    //don't let this close while we're still dealing with threaded output
+	    while(isWriting == true)
+	    {
+	        Thread.sleep(10);
+	    }
+	    super.close(variableContainer, resourceParameters);
+	    if(isLocalSession == true && session.isLive())
+	    {
+	        session.logout();
+	    }
+	    
+	}
+	
  
 }
