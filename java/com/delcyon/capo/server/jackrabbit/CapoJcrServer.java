@@ -1,4 +1,5 @@
 package com.delcyon.capo.server.jackrabbit;
+import java.util.HashMap;
 import java.util.logging.Level;
 
 import javax.jcr.NamespaceRegistry;
@@ -43,15 +44,21 @@ public class CapoJcrServer implements Runnable
 			Repository repository = RepositoryImpl.create(config);
 			Session session = repository.login(new SimpleCredentials("admin", "admin".toCharArray()));
 			NamespaceRegistry namespaceRegistry = session.getWorkspace().getNamespaceRegistry();
-			if(namespaceRegistry.getPrefix(CapoApplication.SERVER_NAMESPACE_URI) == null)
+			String[] uris = namespaceRegistry.getURIs();
+			HashMap<String, String> uriHashMap = new HashMap<>(uris.length);
+			for (String uri : uris)
+            {
+                uriHashMap.put(uri, "");
+            }
+			if(uriHashMap.containsKey(CapoApplication.SERVER_NAMESPACE_URI) == false)
 			{
 			    namespaceRegistry.registerNamespace("server", CapoApplication.SERVER_NAMESPACE_URI);
 			}
-			if(namespaceRegistry.getPrefix(CapoApplication.CLIENT_NAMESPACE_URI) == null)
+			if(uriHashMap.containsKey(CapoApplication.CLIENT_NAMESPACE_URI) == false)
 			{
 			    namespaceRegistry.registerNamespace("client", CapoApplication.CLIENT_NAMESPACE_URI);
 			}
-			if(namespaceRegistry.getPrefix(CapoApplication.RESOURCE_NAMESPACE_URI) == null)
+			if(uriHashMap.containsKey(CapoApplication.RESOURCE_NAMESPACE_URI) == false)
 			{
 			    namespaceRegistry.registerNamespace("resource", CapoApplication.RESOURCE_NAMESPACE_URI);
 			}
