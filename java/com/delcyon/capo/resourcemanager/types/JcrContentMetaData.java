@@ -10,10 +10,9 @@ import javax.jcr.Property;
 import javax.jcr.PropertyIterator;
 import javax.jcr.RepositoryException;
 import javax.jcr.ValueFormatException;
-import javax.jcr.lock.LockException;
-import javax.jcr.nodetype.ConstraintViolationException;
-import javax.jcr.version.VersionException;
 
+import com.delcyon.capo.datastream.stream_attribute_filter.MD5FilterInputStream;
+import com.delcyon.capo.datastream.stream_attribute_filter.SizeFilterInputStream;
 import com.delcyon.capo.resourcemanager.ContentFormatType;
 import com.delcyon.capo.resourcemanager.ResourceParameter;
 import com.delcyon.capo.resourcemanager.ResourceURI;
@@ -99,11 +98,11 @@ public class JcrContentMetaData implements ContentMetaData
         try
         {
          
-            return ContentFormatType.valueOf(getValue("contentFormatType"));
+            return ContentFormatType.valueOf(getValue(ContentFormatType.ATTRIBUTE_NAME));
         }
         catch (Exception exception)
         {
-            exception.printStackTrace();
+            //exception.printStackTrace();
             return ContentFormatType.NO_CONTENT;
         }
     }
@@ -111,7 +110,8 @@ public class JcrContentMetaData implements ContentMetaData
     @Override
     public void setContentFormatType(ContentFormatType contentFormatType)
     {
-        setValue("contentFormatType", contentFormatType.toString());
+        
+        setValue(ContentFormatType.ATTRIBUTE_NAME, contentFormatType.toString());
     }
 
     @Override
@@ -129,7 +129,7 @@ public class JcrContentMetaData implements ContentMetaData
     @Override
     public Long getLength()
     {
-        return Long.parseLong(getValue("length"));
+        return Long.parseLong(getValue(SizeFilterInputStream.ATTRIBUTE_NAME));
     }
 
     @Override
@@ -141,7 +141,7 @@ public class JcrContentMetaData implements ContentMetaData
     @Override
     public String getMD5()
     {
-        return getValue("MD5");
+        return getValue(MD5FilterInputStream.ATTRIBUTE_NAME);
     }
 
     @Override
@@ -182,6 +182,10 @@ public class JcrContentMetaData implements ContentMetaData
     {
         try
         {
+            if(node.hasProperty(CAPO_METADATA_PREFIX+name) == false)
+            {
+                return null;
+            }
             Property property = node.getProperty(CAPO_METADATA_PREFIX+name);
             if(property.isMultiple() == false)
             {
