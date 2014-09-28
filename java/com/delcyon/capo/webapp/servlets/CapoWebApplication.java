@@ -146,7 +146,12 @@ public class CapoWebApplication extends WApplication {
 		{
 //            FileResourceType fileResourceType = new FileResourceType();
 //            ResourceDescriptor resourceDescriptor = fileResourceType.getResourceDescriptor("file:/");
-            ResourceDescriptor resourceDescriptor = CapoApplication.getDataManager().getResourceDescriptor(null, "repo:/resource:clients");
+            ResourceDescriptor resourceDescriptor = CapoApplication.getDataManager().getResourceDescriptor(null, "repo:"+WApplication.getInstance().getInternalPath());
+            if(resourceDescriptor.getResourceMetaData(null).exists() == false)
+            {
+            	resourceDescriptor.performAction(null, Action.CREATE);
+            	resourceDescriptor.reset(State.OPEN);
+            }
           ResourceDescriptor resourceDescriptor2 = CapoApplication.getDataManager().getResourceDirectory("CLIENTS_DIR");
             ResourceDocumentBuilder documentBuilder = new ResourceDocumentBuilder();
              document = (ResourceDocument) documentBuilder.buildDocument(resourceDescriptor2);
@@ -404,10 +409,11 @@ public class CapoWebApplication extends WApplication {
 		                            try
                                     {
 		                                ResourceDescriptor childResourceDescriptor = selectedResourceDescriptor.getChildResourceDescriptor(null, edit.getText());
-		                                childResourceDescriptor.init(null, null, LifeCycle.EXPLICIT, false);
+		                                System.out.println(childResourceDescriptor.getResourceURI());
+		                                childResourceDescriptor.init(null, null, null, false);
                                         childResourceDescriptor.performAction(null, Action.CREATE);                                        
-                                        jcrSession.save();
-                                        selectedResourceDescriptor.reset(State.INITIALIZED);
+                                        //jcrSession.save();
+                                        selectedResourceDescriptor.reset(State.OPEN);
                                         if(index != null)
                                         {
                                             ((FileResourceDescriptorItemModel) treeView.getModel()).fireDataChanged(index,true);
