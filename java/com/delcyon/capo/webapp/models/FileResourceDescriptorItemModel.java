@@ -213,8 +213,15 @@ public class FileResourceDescriptorItemModel extends WAbstractItemModel
 	                return attr.getSupportedAttributes().get(index.getRow());
 	            }
 	            else
-	            {
-	                return attr.getValue(attr.getSupportedAttributes().get(index.getRow()));
+	            {	
+	            	if(attr.getSupportedAttributes().get(index.getRow()).startsWith("jcr:data"))
+	            	{
+	            		return "DATA";
+	            	}
+	            	else
+	            	{
+	            		return attr.getValue(attr.getSupportedAttributes().get(index.getRow()));
+	            	}
 	            }
 	        }
 	        else
