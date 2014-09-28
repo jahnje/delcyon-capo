@@ -67,6 +67,7 @@ public abstract class AbstractResourceDescriptor implements ResourceDescriptor
     private HashMap<String, ResourceDescriptor> childResourceDescriptorHashMap = new HashMap<String, ResourceDescriptor>();
     private List<ContentMetaData> childContentMetaDataList = null;
     private LifeCycle lifeCycle;
+    private LifeCycle originallyDeclaredLifeCycle = null; //needed for re-initialization
     private State resourceState = State.NONE;
     private boolean isIterating = false;
 
@@ -101,6 +102,11 @@ public abstract class AbstractResourceDescriptor implements ResourceDescriptor
         if (lifeCycle == null)
         {
             this.lifeCycle = resourceType.getDefaultLifeCycle();
+        }
+        else
+        {
+        	this.originallyDeclaredLifeCycle = lifeCycle;
+        	this.lifeCycle = lifeCycle;
         }
 
         if (iterate == true)
@@ -336,7 +342,8 @@ public abstract class AbstractResourceDescriptor implements ResourceDescriptor
     {
         if (getResourceState() == State.NONE)
         {
-            init(null, variableContainer, lifeCycle, isIterating, resourceParameters);
+        	//if original is null, then init should just pick pick up the default
+            init(null, variableContainer, originallyDeclaredLifeCycle, isIterating, resourceParameters);
         }
         else if (getResourceState() == State.INITIALIZED)
         {
@@ -959,41 +966,48 @@ public abstract class AbstractResourceDescriptor implements ResourceDescriptor
                 }
             }
             // return CapoApplication.getDataManager().getResourceDescriptor(callingControlElement, getResourceURI()+(relativeURI.startsWith("/") ? relativeURI : "/"+relativeURI));
+            String path = getResourceURI().getBaseURI();
+        	if (path.endsWith("/"))
+        	{
+        		path = path.substring(0, path.length()-1);
+        	}
+        	path = path + (relativeURI.startsWith("/") ? relativeURI : "/" + relativeURI);
             if (callingControlElement == null)
             {
-                if (childResourceDescriptorHashMap.containsKey(getResourceURI().getBaseURI() + (relativeURI.startsWith("/") ? relativeURI : "/" + relativeURI)))
+            	
+                if (childResourceDescriptorHashMap.containsKey(path))
                 {
-                    ResourceDescriptor childResourceDescriptor = childResourceDescriptorHashMap.get(getResourceURI().getBaseURI() + (relativeURI.startsWith("/") ? relativeURI : "/" + relativeURI));
+                    ResourceDescriptor childResourceDescriptor = childResourceDescriptorHashMap.get(path);
                     if(childResourceDescriptor.getResourceState() != State.RELEASED)
                     {
                         return childResourceDescriptor;
                     }
                 }
-                ResourceDescriptor childResourceDescriptor = CapoApplication.getDataManager().getResourceDescriptor(callingControlElement, getResourceURI().getBaseURI() + (relativeURI.startsWith("/") ? relativeURI : "/" + relativeURI));
+                ResourceDescriptor childResourceDescriptor = CapoApplication.getDataManager().getResourceDescriptor(callingControlElement, path);
                 if (childResourceDescriptor != null)
                 {
                     childResourceDescriptor.setParentResourceDescriptor(this);
                 }
-                childResourceDescriptorHashMap.put(getResourceURI().getBaseURI() + (relativeURI.startsWith("/") ? relativeURI : "/" + relativeURI), childResourceDescriptor);
+                childResourceDescriptorHashMap.put(path, childResourceDescriptor);
                 return childResourceDescriptor;
             }
             else
             {
 
-                if (childResourceDescriptorHashMap.containsKey(getResourceURI().getBaseURI() + (relativeURI.startsWith("/") ? relativeURI : "/" + relativeURI)))
+                if (childResourceDescriptorHashMap.containsKey(path))
                 {
-                    ResourceDescriptor childResourceDescriptor =  childResourceDescriptorHashMap.get(getResourceURI().getBaseURI() + (relativeURI.startsWith("/") ? relativeURI : "/" + relativeURI));
+                    ResourceDescriptor childResourceDescriptor =  childResourceDescriptorHashMap.get(path);
                     if(childResourceDescriptor.getResourceState() != State.RELEASED)
                     {
                         return childResourceDescriptor;
                     }
                 }
-                ResourceDescriptor childResourceDescriptor = callingControlElement.getParentGroup().getResourceDescriptor(callingControlElement, getResourceURI().getBaseURI() + (relativeURI.startsWith("/") ? relativeURI : "/" + relativeURI));
+                ResourceDescriptor childResourceDescriptor = callingControlElement.getParentGroup().getResourceDescriptor(callingControlElement, path);
                 if (childResourceDescriptor != null)
                 {
                     childResourceDescriptor.setParentResourceDescriptor(this);
                 }
-                childResourceDescriptorHashMap.put(getResourceURI().getBaseURI() + (relativeURI.startsWith("/") ? relativeURI : "/" + relativeURI), childResourceDescriptor);
+                childResourceDescriptorHashMap.put(path, childResourceDescriptor);
                 return childResourceDescriptor;
             }
         }
