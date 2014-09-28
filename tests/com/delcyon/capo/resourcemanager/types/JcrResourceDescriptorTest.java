@@ -38,7 +38,13 @@ public class JcrResourceDescriptorTest extends ResourceDescriptorTest
 	@Override
     protected ResourceDescriptor getResourceDescriptor() throws Exception
     {        
-        ResourceDescriptor resourceDescriptor =  TestServer.getServerInstance().getApplication().getDataManager().getResourceDescriptor(null, "repo:/clients/identity");             
+        ResourceDescriptor resourceDescriptor =  TestServer.getServerInstance().getApplication().getDataManager().getResourceDescriptor(null, "repo:/clients/identity");
+        resourceDescriptor.init(null, null, LifeCycle.EXPLICIT, false);        
+        resourceDescriptor.performAction(null, Action.CREATE);
+        resourceDescriptor.writeBlock(null, "this is a test".getBytes());
+        resourceDescriptor.performAction(null, Action.COMMIT);
+        resourceDescriptor.close(null);
+        resourceDescriptor.reset(State.INITIALIZED);
         return resourceDescriptor;
         
     }
@@ -46,14 +52,14 @@ public class JcrResourceDescriptorTest extends ResourceDescriptorTest
     @Override
     protected String getExpectedResourceContentPrefix()
     {    	
-    	return "<?xml version=\"1.0\" encoding=\"UTF-8\"?>";
+    	return "this is a test";
     }
     
     
     @Override
     public void testGetSupportedStreamTypes() throws Exception
     {
-      Assert.assertTrue("Expected Stream types are not the same",Arrays.equals(new ResourceDescriptor.StreamType[]{StreamType.INPUT,StreamType.OUTPUT},this.resourceDescriptor.getSupportedStreamTypes()));
+      Assert.assertTrue("Expected Stream types are not the same",Arrays.equals(new ResourceDescriptor.StreamType[]{StreamType.OUTPUT,StreamType.INPUT},this.resourceDescriptor.getSupportedStreamTypes()));
     }
 
     @Override
@@ -81,7 +87,7 @@ public class JcrResourceDescriptorTest extends ResourceDescriptorTest
         Assert.assertTrue(this.resourceDescriptor.isSupportedStreamFormat(StreamType.INPUT, StreamFormat.XML_BLOCK) == true);
         
         Assert.assertTrue(this.resourceDescriptor.isSupportedStreamFormat(StreamType.OUTPUT, StreamFormat.BLOCK) == false);
-        Assert.assertTrue(this.resourceDescriptor.isSupportedStreamFormat(StreamType.OUTPUT, StreamFormat.PROCESS) == true);
+        Assert.assertTrue(this.resourceDescriptor.isSupportedStreamFormat(StreamType.OUTPUT, StreamFormat.PROCESS) == false);
         Assert.assertTrue(this.resourceDescriptor.isSupportedStreamFormat(StreamType.OUTPUT, StreamFormat.STREAM) == true);
         Assert.assertTrue(this.resourceDescriptor.isSupportedStreamFormat(StreamType.OUTPUT, StreamFormat.XML_BLOCK) == true);
         
@@ -91,58 +97,31 @@ public class JcrResourceDescriptorTest extends ResourceDescriptorTest
         Assert.assertTrue(this.resourceDescriptor.isSupportedStreamFormat(StreamType.ERROR, StreamFormat.XML_BLOCK) == false);
     }
 
-    @Override
-    @Test
-    public void testReadXML() throws Exception
-    {
-        resourceDescriptor.addResourceParameters(null, new ResourceParameter("query","select * from systems"));
-        super.testReadXML();
-    }
+//    @Override
+//    @Test
+//    public void testReadXML() throws Exception
+//    {
+//        resourceDescriptor.addResourceParameters(null, new ResourceParameter("query","select * from systems"));
+//        super.testReadXML();
+//    }
+//    
+//    @Override
+//    @Test
+//    public void testReadBlock() throws Exception
+//    {
+//        resourceDescriptor.addResourceParameters(null, new ResourceParameter("query","select * from systems"));
+//        super.testReadBlock();
+//    }
+//    
+//    @Override
+//    @Test
+//    public void testNext() throws Exception
+//    {
+//        resourceDescriptor.addResourceParameters(null, new ResourceParameter("query","select * from systems"));
+//        super.testNext();
+//    }
+//    
     
-    @Override
-    @Test
-    public void testReadBlock() throws Exception
-    {
-        resourceDescriptor.addResourceParameters(null, new ResourceParameter("query","select * from systems"));
-        super.testReadBlock();
-    }
-    
-    @Override
-    @Test
-    public void testNext() throws Exception
-    {
-        resourceDescriptor.addResourceParameters(null, new ResourceParameter("query","select * from systems"));
-        super.testNext();
-    }
-    
-    @Override
-    @Test
-    public void testProcessOutput() throws Exception
-    {
-        resourceDescriptor.addResourceParameters(null, new ResourceParameter("update","INSERT INTO SYSTEMS VALUES('BS-ID2','BS-NAME','2012-06-22 10:33:11.840000','BS-OS')"));
-        super.testProcessOutput();
-        resourceDescriptor.addResourceParameters(null, new ResourceParameter("query","select * from systems"));
-        Document modDocument = CapoApplication.getDocumentBuilder().newDocument();
-        Element resultSetElement = modDocument.createElement("ResultSet");
-        modDocument.appendChild(resultSetElement);
-        while(resourceDescriptor.next(null))
-        {
-            Element readElement = resourceDescriptor.readXML(null);
-            resultSetElement.appendChild(modDocument.adoptNode(readElement));
-        }
-        
-        
-        XMLDiff xmlDiff = new XMLDiff();
-        xmlDiff.setAllowNamespaceMismatches(true);
-        Document baseDocument = TestServer.getServerInstance().getDocumentBuilder().parse(new File("test-data/testdb/update_results.xml"));
-        Element diffElement = xmlDiff.getDifferences(baseDocument.getDocumentElement(), resultSetElement);
-        if(XMLDiff.EQUALITY.equals(diffElement.getAttribute(XMLDiff.XDIFF_PREFIX+":"+XMLDiff.XDIFF_ELEMENT_ATTRIBUTE_NAME)) == false)
-        {
-            XPath.dumpNode(diffElement, System.err);
-        }
-        Assert.assertEquals(XMLDiff.EQUALITY, diffElement.getAttribute(XMLDiff.XDIFF_PREFIX+":"+XMLDiff.XDIFF_ELEMENT_ATTRIBUTE_NAME));
-        
-    }
     
     @Test 
     @Override
@@ -150,10 +129,12 @@ public class JcrResourceDescriptorTest extends ResourceDescriptorTest
     {
         resourceDescriptor.reset(State.NONE);
         resourceDescriptor.init(null, null, LifeCycle.EXPLICIT, false);
+        
         if (resourceDescriptor.isSupportedAction(Action.DELETE))
         {
             Assert.assertTrue(resourceDescriptor.getResourceMetaData(null).exists());
-            Assert.assertFalse(resourceDescriptor.performAction(null, Action.DELETE));                    
+            Assert.assertTrue(resourceDescriptor.performAction(null, Action.DELETE));     
+            Assert.assertTrue(resourceDescriptor.getResourceMetaData(null).exists() == false);
         }
         
     }
@@ -164,16 +145,17 @@ public class JcrResourceDescriptorTest extends ResourceDescriptorTest
     {
         resourceDescriptor.reset(State.NONE);
         resourceDescriptor.init(null, null, LifeCycle.EXPLICIT, false);
-        resourceDescriptor.open(null);
+//        resourceDescriptor.open(null);
+//        resourceDescriptor.performAction(null, Action.CREATE);
         Document baseDocument = TestServer.getServerInstance().getDocumentBuilder().parse(new File("test-data/main.xml"));
-        resourceDescriptor.writeXML(null, (CElement)baseDocument.getDocumentElement());
+       resourceDescriptor.writeXML(null, (CElement)baseDocument.getDocumentElement());
     }
     
-    @Override
-    @Test
-    public void testGetContentMetaData() throws Exception
-    {
-        resourceDescriptor.addResourceParameters(null, new ResourceParameter("query","select * from systems"));
-        super.testGetContentMetaData();
-    }
+//    @Override
+//    @Test
+//    public void testGetContentMetaData() throws Exception
+//    {
+//        resourceDescriptor.addResourceParameters(null, new ResourceParameter("query","select * from systems"));
+//        super.testGetContentMetaData();
+//    }
 }
