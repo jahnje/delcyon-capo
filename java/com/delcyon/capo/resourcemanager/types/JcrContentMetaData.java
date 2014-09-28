@@ -33,21 +33,21 @@ public class JcrContentMetaData implements ContentMetaData
     public JcrContentMetaData(ResourceURI resourceURI, Node node)
     {
         this.node = node;
-        try
-        {
-            JcrResourceDescriptor.dump(node);
-        }
-        catch (RepositoryException e)
-        {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        }
+//        try
+//        {
+//            JcrResourceDescriptor.dump(node);
+//        }
+//        catch (RepositoryException e)
+//        {
+//            // TODO Auto-generated catch block
+//            e.printStackTrace();
+//        }
         this.resourceURI = resourceURI;
     }
     
     private JcrContentMetaData(Node node) throws ValueFormatException, PathNotFoundException, RepositoryException
     {
-        System.out.println(node.getName()+"==>"+node.getPath());
+       // System.out.println(node.getName()+"==>"+node.getPath());
         this.node = node;
         if(node.hasProperty(CAPO_METADATA_PREFIX+"resourceURI"))
         {
@@ -58,6 +58,12 @@ public class JcrContentMetaData implements ContentMetaData
             this.resourceURI = new ResourceURI("repo:"+node.getPath());
         }
     }
+    
+    protected void setNode(Node node)
+    {
+    	this.node = node;    	
+    }
+    
     @Override
     public boolean isDynamic()
     {
@@ -117,7 +123,14 @@ public class JcrContentMetaData implements ContentMetaData
     @Override
     public Boolean exists()
     {
-       return Boolean.parseBoolean(getValue("exists"));
+    	if(node == null)
+    	{
+    		return false;
+    	}
+    	else
+    	{
+    		return true;
+    	}
     }
 
     @Override
