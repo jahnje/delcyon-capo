@@ -52,6 +52,7 @@ public class ImportElementTest
     	Util.deleteTree("testdb");
     	Util.copyTree("test-data/testdb", "testdb", true, true);
         TestServer.start();
+        Util.copyTree("test-data/capo/server/clients", "repo:/clients", true, true);
         Document document = CapoApplication.getDocumentBuilder().parse(new FileInputStream("test-data/import_element_tests/import-element-test.xml"));
         LocalRequestProcessor localRequestProcessor = new LocalRequestProcessor();
         localRequestProcessor.process(document);

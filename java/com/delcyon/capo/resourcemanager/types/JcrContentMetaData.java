@@ -16,18 +16,30 @@ import com.delcyon.capo.datastream.stream_attribute_filter.SizeFilterInputStream
 import com.delcyon.capo.resourcemanager.ContentFormatType;
 import com.delcyon.capo.resourcemanager.ResourceParameter;
 import com.delcyon.capo.resourcemanager.ResourceURI;
+import com.delcyon.capo.util.CloneControl;
+import com.delcyon.capo.util.CloneControl.Clone;
+import com.delcyon.capo.util.ControlledClone;
 
-public class JcrContentMetaData implements ContentMetaData
+public class JcrContentMetaData implements ContentMetaData, ControlledClone
 {
 
     public static final String CAPO_METADATA_PREFIX = "";
-    
+    @CloneControl(filter = Clone.exclude)
     private Node node = null;
     private ResourceURI resourceURI = null;
     
     private JcrContentMetaData()
     {
         //Serialization
+    }
+
+    @Override
+    public void preClone(Object parentClonedObject, Object clonedObject) throws Exception {} //don't need to do anything
+    
+    @Override
+    public void postClone(Object parentClonedObject, Object clonedObject) throws Exception
+    {
+        ((JcrContentMetaData)clonedObject).node = this.node;        
     }
     
     public JcrContentMetaData(ResourceURI resourceURI, Node node)
@@ -142,7 +154,14 @@ public class JcrContentMetaData implements ContentMetaData
     @Override
     public Long getLength()
     {
-        return Long.parseLong(getValue(SizeFilterInputStream.ATTRIBUTE_NAME));
+        if(getValue(SizeFilterInputStream.ATTRIBUTE_NAME) != null)
+        {
+            return Long.parseLong(getValue(SizeFilterInputStream.ATTRIBUTE_NAME));
+        }
+        else
+        {
+            return 0L;
+        }
     }
 
     @Override
@@ -160,7 +179,25 @@ public class JcrContentMetaData implements ContentMetaData
     @Override
     public Boolean isContainer()
     {
-        return true;//Boolean.parseBoolean(getValue("container"));
+        if(node == null)
+        {
+            return true;
+        }
+        
+        //check for root node
+        try
+        {
+            if(node.getDepth() == 0)
+            {
+                return true;
+            }                        
+        }
+        catch (RepositoryException e)
+        {            
+            e.printStackTrace();
+        }
+        
+        return Boolean.parseBoolean(getValue("container"));
     }
 
     @Override
@@ -195,6 +232,10 @@ public class JcrContentMetaData implements ContentMetaData
     {
         try
         {
+            if(node == null)
+            {
+                return null;
+            }
             if(node.hasProperty(CAPO_METADATA_PREFIX+name) == false)
             {
                 return null;
@@ -256,6 +297,12 @@ public class JcrContentMetaData implements ContentMetaData
     public List<ContentMetaData> getContainedResources()
     {
         List<ContentMetaData> childNodeList = new Vector<ContentMetaData>();
+
+        if(node == null)
+        {
+            return childNodeList;
+        }
+        
         NodeIterator nodeIterator;
         try
         {
@@ -292,5 +339,7 @@ public class JcrContentMetaData implements ContentMetaData
         
 
     }
+
+   
 
 }

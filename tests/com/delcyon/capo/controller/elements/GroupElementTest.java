@@ -48,9 +48,9 @@ public class GroupElementTest
     public void testTableEntry() throws Exception
     {
     	
-    	Util.copyTree("test-data/capo", "capo", true, true);
-    	Util.copyTree("test-data/entry_test_data", "capo/server/resources", true, false);
+    	Util.copyTree("test-data/capo", "capo", true, true);    	
         TestServer.start();
+        Util.copyTree("test-data/entry_test_data", "repo:/resources", true, false);
         Document document = CapoApplication.getDocumentBuilder().parse(new FileInputStream("test-data/entry_test_data/entry_test.xml"));
         LocalRequestProcessor localRequestProcessor = new LocalRequestProcessor();
         localRequestProcessor.process(document);

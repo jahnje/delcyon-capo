@@ -17,12 +17,15 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 package com.delcyon.capo.resourcemanager.types;
 
 import java.io.ByteArrayInputStream;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.PipedInputStream;
 import java.io.PipedOutputStream;
+import java.net.URI;
 import java.util.EnumSet;
+import java.util.logging.Level;
 
 import javax.jcr.Binary;
 import javax.jcr.Node;
@@ -34,12 +37,18 @@ import javax.jcr.Session;
 import javax.jcr.SimpleCredentials;
 import javax.jcr.Value;
 
+import com.delcyon.capo.CapoApplication;
 import com.delcyon.capo.ContextThread;
+import com.delcyon.capo.controller.ControlElement;
 import com.delcyon.capo.datastream.stream_attribute_filter.ContentFormatTypeFilterInputStream;
 import com.delcyon.capo.datastream.stream_attribute_filter.MD5FilterInputStream;
 import com.delcyon.capo.datastream.stream_attribute_filter.MimeTypeFilterInputStream;
 import com.delcyon.capo.datastream.stream_attribute_filter.SizeFilterInputStream;
+import com.delcyon.capo.resourcemanager.ResourceDescriptor;
 import com.delcyon.capo.resourcemanager.ResourceParameter;
+import com.delcyon.capo.resourcemanager.ResourceDescriptor.DefaultParameters;
+import com.delcyon.capo.resourcemanager.ResourceDescriptor.State;
+import com.delcyon.capo.resourcemanager.types.FileResourceType.Parameters;
 import com.delcyon.capo.server.jackrabbit.CapoJcrServer;
 import com.delcyon.capo.webapp.servlets.CapoWebApplication;
 import com.delcyon.capo.xml.cdom.VariableContainer;
@@ -63,13 +72,25 @@ public class JcrResourceDescriptor extends AbstractResourceDescriptor
 	private boolean isLocalSession = false;
 	private volatile Boolean isWriting = false;
 	private Boolean hasPipeThreadStarted = false;
+    private PipedOutputStream pipedOutputStream;
 
 	 
 	
 	@Override
 	public void init(ResourceDeclarationElement declaringResourceElement,VariableContainer variableContainer, LifeCycle lifeCycle,boolean iterate, ResourceParameter... resourceParameters) throws Exception
 	{
-		this.absPath = getResourceURI().getPath();
+	    String parentDirParameter = getVarValue(variableContainer, Parameters.PARENT_PROVIDED_DIRECTORY);  
+        //String rootDirParameter = getVarValue(variableContainer, Parameters.ROOT_DIR);
+        
+        if (parentDirParameter != null && parentDirParameter.isEmpty() == false)
+        {
+            //append parent path to child
+            this.absPath = ((JcrResourceDescriptor)CapoApplication.getDataManager().getResourceDirectory(parentDirParameter)).getResourceURI().getPath()+"/"+getResourceURI().getPath();
+        }
+        else
+        {
+            this.absPath = getResourceURI().getPath();
+        }
 		super.init(declaringResourceElement, variableContainer, lifeCycle, iterate, resourceParameters);
 	}
 	
@@ -82,8 +103,6 @@ public class JcrResourceDescriptor extends AbstractResourceDescriptor
 	    {
 	    	
 	    	this.isLocalSession = false;
-			
-			System.out.println("login");
 			
 			if(Thread.currentThread() instanceof ContextThread)
 			{
@@ -100,9 +119,18 @@ public class JcrResourceDescriptor extends AbstractResourceDescriptor
 	        }
 			if(this.session == null)
 			{
-			    throw new Exception("Can't use JCR resources without a Session");
+			    if(CapoApplication.isServer()) //one last ditch effort
+			    {
+			        this.session = CapoJcrServer.getApplicationSession();			        
+			    }
+			    if(this.session == null)
+	            {
+			        throw new Exception("Can't use JCR resources without a Session");
+	            }
 			}
 			
+			CapoApplication.logger.log(Level.FINE, "JCRAssoc T="+Thread.currentThread()+" S="+session+" N="+absPath);
+			System.err.println( "JCRAssoc T="+Thread.currentThread()+" S="+session+" N="+absPath);
 			if(session.nodeExists(absPath) == true)
 			{
 				this.node = session.getNode(absPath);
@@ -185,18 +213,29 @@ public class JcrResourceDescriptor extends AbstractResourceDescriptor
 	@Override
 	public OutputStream getOutputStream(VariableContainer variableContainer,ResourceParameter... resourceParameters) throws Exception
 	{
+	    //return the output stream we have, if it's already open
+		if(this.pipedOutputStream != null)
+		{
+		    return this.pipedOutputStream;
+		}
 		
 	    synchronized (isWriting)
 		{
 	    	isWriting = true;
+	    	//If we're going to write. make sure we have a node to write to.
+	    	if(node == null)
+	    	{
+	    	    performAction(variableContainer, Action.CREATE, resourceParameters);
+	    	}
+	    	
 	    	final PipedInputStream pipedInputStream = new PipedInputStream(){
 	    		@Override
 	    		public void close() throws IOException
 	    		{
-	    			System.out.println("piped input close attempt: "+System.currentTimeMillis());
+	    			//System.out.println("piped input close attempt: "+System.currentTimeMillis());
 	    			// TODO Auto-generated method stub
 	    			super.close();
-	    			System.out.println("piped input closed: "+System.currentTimeMillis());
+	    			//System.out.println("piped input closed: "+System.currentTimeMillis());
 
 	    		}
 	    	};
@@ -205,23 +244,23 @@ public class JcrResourceDescriptor extends AbstractResourceDescriptor
 	    		@Override
 	    		public void close() throws IOException
 	    		{	
-	    			System.out.println("piped output close attempt: "+System.currentTimeMillis());
+	    			//System.out.println("piped output close attempt: "+System.currentTimeMillis());
 	    			
 	    			
 	    			super.close();
-	    			System.out.println("isWaiting = "+isWriting);
+	    			//System.out.println("isWaiting = "+isWriting);
 	    			Boolean _isWaiting = null;
 	    			synchronized (isWriting)
 	    			{
 	    				_isWaiting = isWriting;
 	    			}
 	    				//don't let this close while we're still dealing with threaded output
-	    				System.out.println("isWaiting = "+_isWaiting);
+	    				//System.out.println("isWaiting = "+_isWaiting);
 	    				while(_isWaiting == true )
 	    				{
 	    					try
 	    					{
-	    						System.out.println("waiting for pipe thread to finish");
+	    					//	System.out.println("waiting for pipe thread to finish");
 	    						Thread.sleep(100);
 	    						synchronized (isWriting)
 								{
@@ -233,8 +272,8 @@ public class JcrResourceDescriptor extends AbstractResourceDescriptor
 	    					}
 	    				}
 	    			
-	    			System.out.println("piped output closed: "+System.currentTimeMillis());
-	    			
+	    			//System.out.println("piped output closed: "+System.currentTimeMillis());
+	    			JcrResourceDescriptor.this.pipedOutputStream = null;
 	    			
 	    		}
 	    	};
@@ -268,7 +307,7 @@ public class JcrResourceDescriptor extends AbstractResourceDescriptor
 	    					ContentFormatTypeFilterInputStream contentFormatTypeFilterInputStream = new ContentFormatTypeFilterInputStream(md5FilterInputStream);
 	    					MimeTypeFilterInputStream mimeTypeFilterInputStream = new MimeTypeFilterInputStream(contentFormatTypeFilterInputStream);
 	    					SizeFilterInputStream sizeFilterInputStream = new SizeFilterInputStream(mimeTypeFilterInputStream);
-	    					System.out.println("pipe thread start read: "+System.currentTimeMillis());
+	    					//System.out.println("pipe thread start read: "+System.currentTimeMillis());
 	    					synchronized (hasPipeThreadStarted)
 							{
 	    						hasPipeThreadStarted.notify();
@@ -280,7 +319,11 @@ public class JcrResourceDescriptor extends AbstractResourceDescriptor
 	    					node.setProperty(sizeFilterInputStream.getName(),sizeFilterInputStream.getValue());                    
 	    					node.setProperty(mimeTypeFilterInputStream.getName(),mimeTypeFilterInputStream.getValue());
 	    					node.setProperty(md5FilterInputStream.getName(),md5FilterInputStream.getValue());                    
-	    					System.out.println("pipe thread done: "+System.currentTimeMillis());
+	    					//System.out.println("pipe thread done: "+System.currentTimeMillis());
+	    					if(session != null && session.isLive() && session.hasPendingChanges())
+                            {//TODO check for autocommit setting
+                                session.save();
+                            }
 	    				}
 	    				catch (Exception e)
 	    				{
@@ -291,6 +334,7 @@ public class JcrResourceDescriptor extends AbstractResourceDescriptor
 	    					//isWriting.notify();
 	    					synchronized (isWriting)
 	    	    			{
+	    					    
 	    						isWriting = false;
 	    	    			}
 	    				}
@@ -300,6 +344,7 @@ public class JcrResourceDescriptor extends AbstractResourceDescriptor
 
 	    	synchronized (hasPipeThreadStarted)
 			{
+	    	    //System.err.println( "PipeWrite T="+Thread.currentThread()+" S="+session+" N="+absPath);
 	    		new Thread(pipe, node.getName()+" pipeThread-"+System.currentTimeMillis()).start();
 	    		//Calendar lastModified = Calendar.getInstance();
 	    		//lastModified.setTimeInMillis(file.lastModified());
@@ -307,11 +352,11 @@ public class JcrResourceDescriptor extends AbstractResourceDescriptor
 	    		//Uti
 
 
-				System.out.println("waiting for pipe thread to start");
+				//System.out.println("waiting for pipe thread to start");
 				hasPipeThreadStarted.wait(1500);
 			}
 			
-			
+			this.pipedOutputStream = pipedOutputStream;
 	    	return pipedOutputStream;
 		}
 	}
@@ -319,6 +364,7 @@ public class JcrResourceDescriptor extends AbstractResourceDescriptor
 	@Override
 	public InputStream getInputStream(VariableContainer variableContainer,ResourceParameter... resourceParameters) throws Exception
 	{	
+	    advanceState(State.STEPPING, variableContainer, resourceParameters);
 	    if(node.hasProperty("jcr:data"))
 	    {
 	        return node.getProperty("jcr:data").getBinary().getStream();
@@ -384,14 +430,24 @@ public class JcrResourceDescriptor extends AbstractResourceDescriptor
                     if(currentNode.hasNode(nodeName) == false)
                     {
                         currentNode.addNode(nodeName);//,"nt:folder");
+                        if(currentNode.isNew())
+                        {
+                            currentNode.setProperty("container", "true");
+                        }
                     }
                     currentNode = currentNode.getNode(nodeName);
                 }
     		    //session.getRootNode().addNode(getResourceURI().getResourceURIString().replaceFirst("^repo:/", ""));
+    		    
     		    this.node = session.getNode(absPath);
+    		    String containerFlag = getVarValue(variableContainer, DefaultParameters.CONTAINER); 
+                if (containerFlag != null && containerFlag.equalsIgnoreCase("true"))
+                {
+                    this.node.setProperty("container", containerFlag);
+                }
     		    ((JcrContentMetaData) getResourceMetaData(variableContainer, resourceParameters)).setNode(this.node);
     		    refreshResourceMetaData(variableContainer, resourceParameters);
-    		    success = true;
+    		    success = true;    		    
     		}
         }
         else if (action == Action.DELETE)
@@ -399,6 +455,7 @@ public class JcrResourceDescriptor extends AbstractResourceDescriptor
             if (node != null)
             {
                 node.remove();
+                node.getSession().save();
                 this.node = null;
     		    ((JcrContentMetaData) getResourceMetaData(variableContainer, resourceParameters)).setNode(this.node);
     		    refreshResourceMetaData(variableContainer, resourceParameters);
@@ -407,6 +464,14 @@ public class JcrResourceDescriptor extends AbstractResourceDescriptor
         }
         else if (action == Action.COMMIT)
         {
+            if(pipedOutputStream != null)
+            {
+                try {
+                    pipedOutputStream.close();
+                    pipedOutputStream = null;
+                }
+                catch (Exception exception){}
+            }
             if (node != null)
             {
                 node.getSession().save();
@@ -463,14 +528,37 @@ public class JcrResourceDescriptor extends AbstractResourceDescriptor
 	public void close(VariableContainer variableContainer, ResourceParameter... resourceParameters) throws Exception
 	{	 
 		super.close(variableContainer, resourceParameters);
+		if(pipedOutputStream != null)
+		{
+		    try {
+		        pipedOutputStream.close();
+		        pipedOutputStream = null;
+		    }
+		    catch (Exception exception){}
+		}
+		if(session != null && session.isLive() && session.hasPendingChanges())
+		{//TODO check for autocommit setting
+		    session.save();
+		}
 	    if(isLocalSession == true && session != null && session.isLive())
 	    {
 	        session.logout();
 	        ((JcrContentMetaData) getResourceMetaData(variableContainer, resourceParameters)).setNode(null);
-		    this.session = null;
+		    
 	    }
+	    this.session = null;
 	    
-	    
+	}
+	
+	@Override
+	public ResourceDescriptor getChildResourceDescriptor(ControlElement callingControlElement, String relativeURI) throws Exception
+	{
+	    ResourceDescriptor childResourceDescriptor = super.getChildResourceDescriptor(callingControlElement, relativeURI);
+	    if(childResourceDescriptor instanceof JcrResourceDescriptor)
+	    {
+	        ((JcrResourceDescriptor) childResourceDescriptor).session = this.session;
+	    }
+	    return childResourceDescriptor;
 	}
 	
  

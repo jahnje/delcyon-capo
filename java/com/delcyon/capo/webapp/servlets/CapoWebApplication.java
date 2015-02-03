@@ -257,7 +257,7 @@ public class CapoWebApplication extends WApplication {
     		contentPane = new WContainerWidget();
     		contentPane.setMargin(0);
     		contentPane.setLayout(getContentPaneLayout());
-    		contentPane.setAttributeValue("style", "background-image: url('/wr/images/background.png'); background-repeat: no-repeat; background-position: bottom right; background-size: contain;");
+    		//contentPane.setAttributeValue("style", "background-image: url('/wr/images/background.png'); background-repeat: no-repeat; background-position: bottom right; background-size: contain;");
     	
     	
     	}

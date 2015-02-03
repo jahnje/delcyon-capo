@@ -21,6 +21,7 @@ public class CapoJcrServer implements Runnable
 	private String dir;
 	private RepositoryConfig config;
 	private static Repository repository;
+    private static Session applicationSession;
 	
 	public static Repository getRepository()
 	{
@@ -64,6 +65,7 @@ public class CapoJcrServer implements Runnable
 			}
 			session.logout();
 			CapoJcrServer.repository = repository;
+			CapoJcrServer.applicationSession = repository.login(new SimpleCredentials("admin", "admin".toCharArray()));
 		} catch (Exception exception)
 		{
 			exception.printStackTrace();
@@ -79,6 +81,10 @@ public class CapoJcrServer implements Runnable
 		{
 			Thread.sleep(1000);
 		}
+		while (applicationSession == null)
+        {
+            Thread.sleep(1000);
+        }
 		CapoApplication.logger.log(Level.INFO, "Apache Jackrabbit started");
 	}
 
@@ -86,7 +92,14 @@ public class CapoJcrServer implements Runnable
 	public void shutdown() throws Exception
 	{
 		((RepositoryImpl) repository).shutdown();
+		CapoJcrServer.repository = null;
+        CapoJcrServer.applicationSession = null;
 		
 	}
+
+    public static Session getApplicationSession()
+    {
+        return CapoJcrServer.applicationSession;
+    }
 	
 }

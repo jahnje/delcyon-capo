@@ -290,7 +290,7 @@ public class FileResourceDescriptorItemModel extends WAbstractItemModel
 	            
 	            if (childResources.size() > 0)
 	            {
-	                System.out.println("blah");
+	                
 	                ResourceDescriptor childResourceDescriptor = (ResourceDescriptor) parentResourceDescriptor.getChildResourceDescriptor(null, childResources.get(row).getResourceURI().getResourceURIString());
 	                if (childResourceDescriptor == null || childResourceDescriptor.getResourceMetaData(null) == null)
 	                {

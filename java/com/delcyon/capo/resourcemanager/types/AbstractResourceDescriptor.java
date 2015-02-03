@@ -756,6 +756,7 @@ public abstract class AbstractResourceDescriptor implements ResourceDescriptor
     @Override
     public void writeXML(VariableContainer variableContainer, CElement element, ResourceParameter... resourceParameters) throws Exception
     {
+        System.out.println("meh");
         advanceState(State.OPEN, variableContainer, resourceParameters);
         StreamFormat streamFormat = getSupportedStreamFormats(StreamType.OUTPUT)[0];
         if (streamFormat == StreamFormat.BLOCK)

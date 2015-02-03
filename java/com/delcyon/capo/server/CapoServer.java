@@ -43,6 +43,7 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 
+import javax.jcr.SimpleCredentials;
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLException;
@@ -72,6 +73,7 @@ import com.delcyon.capo.CapoApplication;
 import com.delcyon.capo.CapoThreadFactory;
 import com.delcyon.capo.Configuration;
 import com.delcyon.capo.Configuration.PREFERENCE;
+import com.delcyon.capo.ContextThread;
 import com.delcyon.capo.controller.LocalRequestProcessor;
 import com.delcyon.capo.datastream.BufferedSocket;
 import com.delcyon.capo.datastream.SocketFinalizer;
@@ -89,6 +91,7 @@ import com.delcyon.capo.protocol.server.ClientRequestProcessorSessionManager;
 import com.delcyon.capo.resourcemanager.CapoDataManager;
 import com.delcyon.capo.resourcemanager.ResourceDescriptor;
 import com.delcyon.capo.resourcemanager.ResourceDescriptor.Action;
+import com.delcyon.capo.resourcemanager.ResourceDescriptor.LifeCycle;
 import com.delcyon.capo.resourcemanager.ResourceParameter;
 import com.delcyon.capo.resourcemanager.types.FileResourceType;
 import com.delcyon.capo.server.jackrabbit.CapoJcrServer;
@@ -247,9 +250,23 @@ public class CapoServer extends CapoApplication
 		clientRequestProcessorSessionManager = new ClientRequestProcessorSessionManager();
 		clientRequestProcessorSessionManager.start();
 		
+		
+		
 		//setup resource manager
 		setDataManager(CapoDataManager.loadDataManager(getConfiguration().getValue(PREFERENCE.RESOURCE_MANAGER)));
-		getDataManager().init();
+		
+		
+		
+		getDataManager().init(true);
+		
+		if(getConfiguration().getBooleanValue(Preferences.DISABLE_REPO) != true)
+        {
+            capoJcrServer = new CapoJcrServer();            
+            capoJcrServer.start();
+            setSession(capoJcrServer.getRepository().login(new SimpleCredentials("admin", "admin".toCharArray())));
+        }
+		
+		getDataManager().init(false);
 		
 		TaskManagerThread.startTaskManagerThread();	
 		
@@ -285,13 +302,14 @@ public class CapoServer extends CapoApplication
 		
         logger.log(Level.INFO, "Listening on "+serverSocket);
         
-		runStartupScript(getConfiguration().getValue(PREFERENCE.STARTUP_SCRIPT));
+        try
+        {
+		runStartupScript("repo:"+getConfiguration().getValue(PREFERENCE.STARTUP_SCRIPT));
+        } catch (Exception exception)
+        {
+            exception.printStackTrace();
+        }
 		
-		if(getConfiguration().getBooleanValue(Preferences.DISABLE_REPO) != true)
-		{
-		    capoJcrServer = new CapoJcrServer();
-		    capoJcrServer.start();
-		}
 		if(getConfiguration().getBooleanValue(Preferences.DISABLE_WEBSERVER) != true)
 		{
 		    capoJettyServer = new CapoJettyServer(keyStore, getConfiguration().getValue(PREFERENCE.KEYSTORE_PASSWORD), getConfiguration().getIntValue(Preferences.WEB_PORT));		
@@ -306,16 +324,17 @@ public class CapoServer extends CapoApplication
 
 	private void runStartupScript(String startupScriptName) throws Exception
 	{
-	    ResourceDescriptor startupScriptFile = getDataManager().getResourceDescriptor(null,startupScriptName);
-	    startupScriptFile.addResourceParameters(null,new ResourceParameter(FileResourceType.Parameters.PARENT_PROVIDED_DIRECTORY,PREFERENCE.CONTROLLER_DIR));
-		if (startupScriptFile.getResourceMetaData(null).exists() == false)
+	    ResourceDescriptor startupScriptResourceDescriptor = getDataManager().getResourceDescriptor(null,startupScriptName);	    
+	    startupScriptResourceDescriptor.addResourceParameters(null,new ResourceParameter(FileResourceType.Parameters.PARENT_PROVIDED_DIRECTORY,PREFERENCE.CONTROLLER_DIR));
+	    startupScriptResourceDescriptor.init(null, null, LifeCycle.EXPLICIT, false);
+		if (startupScriptResourceDescriptor.getResourceMetaData(null).exists() == false)
 		{
-		    startupScriptFile.performAction(null, Action.CREATE);
-		    startupScriptFile.close(null);
-		    startupScriptFile.open(null);
+		    startupScriptResourceDescriptor.performAction(null, Action.CREATE);
+//		    startupScriptResourceDescriptor.close(null);
+//		    startupScriptResourceDescriptor.open(null);
 			
 			Document startupDocument = CapoApplication.getDefaultDocument("server_startup.xml");			
-			OutputStream startupFileOutputStream = startupScriptFile.getOutputStream(null);
+			OutputStream startupFileOutputStream = startupScriptResourceDescriptor.getOutputStream(null);
 			TransformerFactory tFactory = TransformerFactory.newInstance();
 			Transformer transformer = tFactory.newTransformer();
 			transformer.setOutputProperty(OutputKeys.INDENT, "yes");
@@ -324,8 +343,8 @@ public class CapoServer extends CapoApplication
 		}
 		
 		LocalRequestProcessor localRequestProcessor = new LocalRequestProcessor();
-		localRequestProcessor.process(CapoApplication.getDocumentBuilder().parse(startupScriptFile.getInputStream(null)));
-		
+		localRequestProcessor.process(CapoApplication.getDocumentBuilder().parse(startupScriptResourceDescriptor.getInputStream(null)));
+		startupScriptResourceDescriptor.close(null);
 	}
 
 	
@@ -335,7 +354,7 @@ public class CapoServer extends CapoApplication
 		long maxWaitTime = 30000;
 		long totalWaitTime = 0;
 		logger.log(Level.INFO, "Shuting Down Server");
-		capoJcrServer.shutdown();
+		
 		capoJettyServer.shutdown();
 		while(getApplicationState().ordinal() < ApplicationState.READY.ordinal())
         {
@@ -395,8 +414,8 @@ public class CapoServer extends CapoApplication
 		logger.log(Level.INFO, "Removing Resource Manager");
         setDataManager(null);
 		
-		
-		
+        logger.log(Level.INFO, "Shutting Down JCR");
+        capoJcrServer.shutdown();
 		
 		
 		logger.log(Level.INFO, "Server Shutdown");
@@ -432,9 +451,14 @@ public class CapoServer extends CapoApplication
 	@Override
 	public void run()
 	{
+	    
 	    setApplicationState(ApplicationState.READY);
 	    try
 	    {
+	        if(Thread.currentThread() instanceof ContextThread && capoJcrServer != null)
+	        {
+	            ((ContextThread)Thread.currentThread()).setSession(CapoJcrServer.getRepository().login(new SimpleCredentials("admin","admin".toCharArray())));
+	        }
 	        while (true)
 	        {
 	            Socket socket = null;
@@ -549,7 +573,7 @@ public class CapoServer extends CapoApplication
 	                            sessionHashMap.put("clientID", clientID);
 
 	                            //check for a local client directory
-	                            ResourceDescriptor clientResourceDescriptor = getDataManager().getResourceDescriptor(null, "clients:"+clientID);
+	                            ResourceDescriptor clientResourceDescriptor = getDataManager().getResourceDescriptor(null, "clients:"+clientID);	                            
 	                            if (clientResourceDescriptor.getResourceMetaData(null).exists() == false)
 	                            {
 	                                logger.log(Level.INFO, "Creating new clients resource for "+clientID);
@@ -593,6 +617,7 @@ public class CapoServer extends CapoApplication
 	                            statusRootElement.setAttribute("lastConnectTime", System.currentTimeMillis()+"");
 	                            XPath.dumpNode(statusRootElement, statusResourceDescriptor.getOutputStream(null));
 	                            statusResourceDescriptor.close(null);
+	                            
 	                        }
 
 

@@ -22,6 +22,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.logging.Level;
 
+import javax.jcr.SimpleCredentials;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.transform.OutputKeys;
@@ -58,6 +59,7 @@ import com.delcyon.capo.resourcemanager.CapoDataManager;
 import com.delcyon.capo.resourcemanager.ResourceDescriptor;
 import com.delcyon.capo.resourcemanager.ResourceDescriptor.Action;
 import com.delcyon.capo.server.CapoServer;
+import com.delcyon.capo.server.jackrabbit.CapoJcrServer;
 import com.delcyon.capo.xml.XPath;
 
 /**
@@ -236,12 +238,18 @@ public class TaskManagerThread extends ContextThread
 //			this.taskManagerDocument = CapoApplication.getDefaultDocument("tasks.xml");
 //		}
 		
+		if(CapoApplication.isServer())
+        {
+            setSession(CapoJcrServer.getRepository().login(new SimpleCredentials("admin","admin".toCharArray())));
+        }
+		
 		//go ahead and start things up
 		tasksDocumentUpdaterThread = new TaskManagerDocumentUpdaterThread(lock,runAsService);
 		if (runAsService == true) // TODO in theory if this is false, you can do a single pass of monitors, then it will exit, and not update anything
 		{
+		    tasksDocumentUpdaterThread.setSession(getSession());
 			tasksDocumentUpdaterThread.start();
-		}
+		}		
 		
 	}
 	

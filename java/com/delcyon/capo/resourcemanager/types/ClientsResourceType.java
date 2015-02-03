@@ -46,7 +46,8 @@ public class ClientsResourceType implements ResourceType
     @Override
     public ResourceDescriptor getResourceDescriptor(String resourceURI) throws Exception
     {
-        ResourceDescriptor clientResourceDescriptor = CapoApplication.getDataManager().getResourceDescriptor(null, CapoApplication.getDataManager().getResourceDirectory(Preferences.CLIENTS_DIR.toString()).getResourceURI().getResourceURIString()+"/"+ResourceURI.getSchemeSpecificPart(resourceURI));        
+        //repo:/clients
+        ResourceDescriptor clientResourceDescriptor = CapoApplication.getDataManager().getResourceDescriptor(null, "repo:/clients/"+ResourceURI.getSchemeSpecificPart(resourceURI));        
         return clientResourceDescriptor;
     }
 

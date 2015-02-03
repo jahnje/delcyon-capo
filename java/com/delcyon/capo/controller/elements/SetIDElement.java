@@ -180,7 +180,8 @@ public class SetIDElement extends AbstractControl
 		if (oldMD5.equals(newMD5) == false)
 		{
 		    CapoApplication.logger.log(Level.INFO, "Updating identity document for "+clientID);
-		    XPath.dumpNode(identityDocumentElement, clientResourceDescriptor.getOutputStream(null));        
+		    XPath.dumpNode(identityDocumentElement, clientResourceDescriptor.getOutputStream(null));
+		    clientResourceDescriptor.getOutputStream(null).close();
 		}                   
 
 

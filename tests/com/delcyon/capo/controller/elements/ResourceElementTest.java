@@ -51,6 +51,7 @@ public class ResourceElementTest
     	Util.copyTree("test-data/capo", "capo", true, true);
     	Util.copyTree("test-data/testdb", "testdb", true, true);
         TestServer.start();
+        Util.copyTree("test-data/capo/server/clients", "repo:/clients", true, false);
         Document document = CapoApplication.getDocumentBuilder().parse(new FileInputStream("test-data/resource_element_tests/resource-element-test.xml"));
         LocalRequestProcessor localRequestProcessor = new LocalRequestProcessor();
         localRequestProcessor.process(document);

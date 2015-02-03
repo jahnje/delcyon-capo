@@ -165,15 +165,62 @@ public class ResourceManager extends CapoDataManager
 	}
 	
 	@Override
-	public void init() throws Exception
+	public void init(Boolean... minimal) throws Exception
 	{
+	    boolean initMinimalOnly = false;
+	    HashMap<String, String> multiInitHashMap = null;
+	    if(minimal != null && minimal.length >= 1 )
+	    {
+	        initMinimalOnly = minimal[0];
+	        //load directory providers and see which ones correspond to directory preferences that are actionable this round
+	        multiInitHashMap = new HashMap<>();
+
+	        Set<String> directoryProvidersSet = CapoApplication.getAnnotationMap().get(DirectoyProvider.class.getCanonicalName());
+	        if (directoryProvidersSet != null)
+	        {
+	            for (String className : directoryProvidersSet)
+	            {
+	                try
+	                {
+	                    if(Class.forName(className).getAnnotation(DirectoyProvider.class).canUseRepository() != initMinimalOnly)
+	                    {
+	                        multiInitHashMap.put(Class.forName(className).getAnnotation(DirectoyProvider.class).preferenceName(),"");
+	                    }
+	                    else
+	                    {
+	                        System.out.println("skipping: "+className);
+	                    }
+	                } catch (Exception exception){
+	                    exception.printStackTrace();
+	                }
+	            }
+	        }
+	    }
+	    
+	    
 	    
 	  //build dynamic directories
         Preference[] directoryPreferences = CapoApplication.getConfiguration().getDirectoryPreferences();
         for (Preference preference : directoryPreferences)
         {
+            if(multiInitHashMap != null)
+            {
+                if(multiInitHashMap.containsKey(preference.toString()) == false)
+                {
+                    continue;
+                }
+            }
+            ResourceDescriptor dynamicDir = null;//dataDir.getChildResourceDescriptor(resourceManagerControlElement,CapoApplication.getConfiguration().getValue(preference));
             
-            ResourceDescriptor dynamicDir = dataDir.getChildResourceDescriptor(resourceManagerControlElement,CapoApplication.getConfiguration().getValue(preference));
+            if(multiInitHashMap != null && initMinimalOnly == false) //rewrite to use repo
+            {
+                dynamicDir = getResourceDescriptor(resourceManagerControlElement, "repo:/"+CapoApplication.getConfiguration().getValue(preference));
+                dynamicDir.init(null, null, LifeCycle.EXPLICIT, false);
+            }
+            else
+            {
+                dynamicDir = dataDir.getChildResourceDescriptor(resourceManagerControlElement,CapoApplication.getConfiguration().getValue(preference));
+            }
             
             ContentMetaData dynamicDirContentMetaData = dynamicDir.getResourceMetaData(null);
             if (dynamicDirContentMetaData.exists() == false)
@@ -205,6 +252,13 @@ public class ResourceManager extends CapoDataManager
             String[] fileNames = defaultDocumentProvider.name().split(",");
             for (String fileName : fileNames)
 			{
+                if(directoryHashMap.get(preference.toString()) == null)
+                {
+                    if(initMinimalOnly == true)
+                    {
+                        continue;
+                    }
+                }
             	ResourceDescriptor dynamicFile = directoryHashMap.get(preference.toString()).getChildResourceDescriptor(null,fileName);
                 if (dynamicFile.getResourceMetaData(null).exists() == false)
                 {
@@ -290,7 +344,7 @@ public class ResourceManager extends CapoDataManager
 				return remoteResourceType.getResourceDescriptor(callingControlElement.getControllerClientRequestProcessor(),resourceURI);
 			}
 			else
-			{
+			{			    
 				return resourceType.getResourceDescriptor(resourceURI);
 			}
 		}
@@ -431,7 +485,7 @@ public class ResourceManager extends CapoDataManager
         List<ContentMetaData> childResourceList = contentMetaData.getContainedResources();
         for (ContentMetaData childContentMetaData : childResourceList)
         {
-            if (childContentMetaData.isContainer() == false && childContentMetaData.getResourceURI().getPath().matches(".*/"+documentName+"\\.[Xx][MmSs][Ll]"))
+            if ((childContentMetaData.isContainer() == false  || childContentMetaData.getLength() > 0) && childContentMetaData.getResourceURI().getPath().matches(".*/"+documentName+"\\.[Xx][MmSs][Ll]"))
             {
                 return  CapoApplication.getDataManager().getResourceDescriptor(null, childContentMetaData.getResourceURI().getResourceURIString());
                 

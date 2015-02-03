@@ -86,6 +86,18 @@ public class ContextThread extends Thread
     
     public void setSession(Session session)
     {
+        if(session != null)
+        {
+            System.err.println("SetSession: T="+this+" S="+session);
+        }
+        else
+        {
+            if(this.session != null)
+            {
+                System.err.println("DropSession: T="+this+" S="+this.session);
+            }
+        }
+        //Thread.dumpStack();
         this.session = session;
     }
 }

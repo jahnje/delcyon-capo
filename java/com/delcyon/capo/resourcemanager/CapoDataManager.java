@@ -37,8 +37,7 @@ public abstract class CapoDataManager
 		return (CapoDataManager) Class.forName(className).newInstance();
 	}
 
-	public abstract void init() throws Exception;
-	
+	public abstract void init(Boolean... minimal) throws Exception;
 	
 	public abstract ResourceDescriptor getResourceDescriptor(ControlElement callingControlElement,String uri) throws Exception;
 
