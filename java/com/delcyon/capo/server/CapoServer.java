@@ -90,6 +90,7 @@ import com.delcyon.capo.protocol.client.CapoConnection.ConnectionTypes;
 import com.delcyon.capo.protocol.server.ClientRequestProcessorSessionManager;
 import com.delcyon.capo.resourcemanager.CapoDataManager;
 import com.delcyon.capo.resourcemanager.ResourceDescriptor;
+import com.delcyon.capo.resourcemanager.ResourceManager;
 import com.delcyon.capo.resourcemanager.ResourceDescriptor.Action;
 import com.delcyon.capo.resourcemanager.ResourceDescriptor.LifeCycle;
 import com.delcyon.capo.resourcemanager.ResourceParameter;
@@ -267,6 +268,8 @@ public class CapoServer extends CapoApplication
         }
 		
 		getDataManager().init(false);
+		//change over to using the repo by default once were up and running
+		//getDataManager().setDefaultResourceTypeScheme("repo");
 		
 		TaskManagerThread.startTaskManagerThread();	
 		
@@ -304,7 +307,7 @@ public class CapoServer extends CapoApplication
         
         try
         {
-		runStartupScript("repo:"+getConfiguration().getValue(PREFERENCE.STARTUP_SCRIPT));
+            runStartupScript("repo:"+getConfiguration().getValue(PREFERENCE.STARTUP_SCRIPT));
         } catch (Exception exception)
         {
             exception.printStackTrace();
@@ -457,7 +460,7 @@ public class CapoServer extends CapoApplication
 	    {
 	        if(Thread.currentThread() instanceof ContextThread && capoJcrServer != null)
 	        {
-	            ((ContextThread)Thread.currentThread()).setSession(CapoJcrServer.getRepository().login(new SimpleCredentials("admin","admin".toCharArray())));
+	            ((ContextThread)Thread.currentThread()).setSession(CapoJcrServer.createSession());
 	        }
 	        while (true)
 	        {

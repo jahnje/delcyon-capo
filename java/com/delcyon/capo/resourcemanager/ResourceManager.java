@@ -113,13 +113,8 @@ public class ResourceManager extends CapoDataManager
 	private transient Transformer transformer;	
 	private HashMap<String, ResourceDescriptor> directoryHashMap = new HashMap<String, ResourceDescriptor>();	
 	private HashMap<String,ResourceType> schemeResourceTypeHashMap = new HashMap<String, ResourceType>();
-
-
-
 	private ResourceControlElement resourceManagerControlElement;
-
-
-
+    private String defaultResourceTypeScheme;
 	
 	
 	
@@ -188,7 +183,7 @@ public class ResourceManager extends CapoDataManager
 	                    }
 	                    else
 	                    {
-	                        System.out.println("skipping: "+className);
+	                        CapoApplication.logger.log(Level.FINE, "Skipping: "+className+" until repo ready");	                        
 	                    }
 	                } catch (Exception exception){
 	                    exception.printStackTrace();
@@ -330,7 +325,7 @@ public class ResourceManager extends CapoDataManager
 		//if there is no scheme, and it didn't come from client request, assume it's a default resource type. Which unless overridden is a file:.
 		if (scheme == null) 
 		{
-			scheme = CapoApplication.getConfiguration().getValue(Preferences.DEFAULT_RESOURCE_TYPE);
+			scheme = getDefaultResourceTypeScheme();
 		}
 		
 		
@@ -360,6 +355,27 @@ public class ResourceManager extends CapoDataManager
 		return schemeResourceTypeHashMap.get(scheme.toLowerCase());
 	}
 	
+	
+	@Override
+	public String getDefaultResourceTypeScheme()
+	{
+	   if(defaultResourceTypeScheme == null)
+	   {
+	       return CapoApplication.getConfiguration().getValue(Preferences.DEFAULT_RESOURCE_TYPE);
+	   }
+	   else
+	   {
+	       return defaultResourceTypeScheme;
+	   }
+	}
+	
+	
+	@Override
+	public void setDefaultResourceTypeScheme(String defaultResourceTypeScheme)
+	{
+	    this.defaultResourceTypeScheme = defaultResourceTypeScheme;	    
+	}
+	
 	/**
 	 * This gets called from ResourceElement when we encounter a resource element declaration
 	 */
@@ -379,7 +395,7 @@ public class ResourceManager extends CapoDataManager
 		//if we don't know what this assume it's a default resource type. Which unless overridden is a file.
 		if (resourceURI != null && scheme == null && resourceControlElement == null)
 		{
-			scheme = CapoApplication.getConfiguration().getValue(Preferences.DEFAULT_RESOURCE_TYPE);
+			scheme = getDefaultResourceTypeScheme();
 		}
 		
 		ResourceType resourceType = schemeResourceTypeHashMap.get(scheme.toLowerCase());

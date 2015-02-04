@@ -21,16 +21,12 @@ import java.util.HashMap;
 import java.util.Set;
 import java.util.logging.Level;
 
-import javax.jcr.SimpleCredentials;
-
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
 import com.delcyon.capo.CapoApplication;
-import com.delcyon.capo.ContextThread;
 import com.delcyon.capo.controller.elements.GroupElement.Attributes;
 import com.delcyon.capo.server.CapoServer;
-import com.delcyon.capo.server.jackrabbit.CapoJcrServer;
 import com.delcyon.capo.xml.XMLProcessor;
 import com.delcyon.capo.xml.XMLProcessorProvider;
 import com.delcyon.capo.xml.XMLStreamProcessor;
@@ -183,15 +179,6 @@ public class ClientRequestXMLProcessor implements XMLProcessor
 	{
 	    try
 	    {
-	        boolean sessionOwner = false;
-//	        if (Thread.currentThread() instanceof ContextThread)
-//            {  
-//	            if(((ContextThread)Thread.currentThread()).getSession() == null)
-//	            {
-//	                ((ContextThread)Thread.currentThread()).setSession(CapoJcrServer.getRepository().login(new SimpleCredentials("admin","admin".toCharArray())));
-//	                sessionOwner = true;
-//	            }
-//            }
 	        clientRequestProcessor.process(clientRequest);
 	        if(isRegisteredSession == false)
 	        {
@@ -202,11 +189,6 @@ public class ClientRequestXMLProcessor implements XMLProcessor
 	            clientRequest.finish();
 	            //send finished indicator
 	        }
-//            if(sessionOwner && ((ContextThread)Thread.currentThread()).getSession() != null)
-//            {                   
-//                ((ContextThread)Thread.currentThread()).getSession().logout();
-//                ((ContextThread)Thread.currentThread()).setSession(null);
-//            }
 	    } catch (Exception exception)
 	    {
 	        CapoApplication.logger.log(Level.SEVERE, "Exception in  session:"+sessionId,exception);

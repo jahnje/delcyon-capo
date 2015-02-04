@@ -5,27 +5,23 @@ import java.util.Vector;
 
 import javax.jcr.Node;
 import javax.jcr.NodeIterator;
-import javax.jcr.PathNotFoundException;
 import javax.jcr.Property;
 import javax.jcr.PropertyIterator;
 import javax.jcr.RepositoryException;
-import javax.jcr.ValueFormatException;
 
 import com.delcyon.capo.datastream.stream_attribute_filter.MD5FilterInputStream;
 import com.delcyon.capo.datastream.stream_attribute_filter.SizeFilterInputStream;
 import com.delcyon.capo.resourcemanager.ContentFormatType;
 import com.delcyon.capo.resourcemanager.ResourceParameter;
 import com.delcyon.capo.resourcemanager.ResourceURI;
-import com.delcyon.capo.util.CloneControl;
-import com.delcyon.capo.util.CloneControl.Clone;
-import com.delcyon.capo.util.ControlledClone;
+import com.delcyon.capo.resourcemanager.types.FileResourceContentMetaData.FileAttributes;
+import com.delcyon.capo.server.jackrabbit.CapoJcrServer;
 
-public class JcrContentMetaData implements ContentMetaData, ControlledClone
+public class JcrContentMetaData implements ContentMetaData
 {
 
     public static final String CAPO_METADATA_PREFIX = "";
-    @CloneControl(filter = Clone.exclude)
-    private Node node = null;
+    
     private ResourceURI resourceURI = null;
     
     private JcrContentMetaData()
@@ -33,48 +29,38 @@ public class JcrContentMetaData implements ContentMetaData, ControlledClone
         //Serialization
     }
 
-    @Override
-    public void preClone(Object parentClonedObject, Object clonedObject) throws Exception {} //don't need to do anything
+//    @Override
+//    public void preClone(Object parentClonedObject, Object clonedObject) throws Exception {} //don't need to do anything
+//    
+//    @Override
+//    public void postClone(Object parentClonedObject, Object clonedObject) throws Exception
+//    {
+//        ((JcrContentMetaData)clonedObject).node = this.node;        
+//    }
     
-    @Override
-    public void postClone(Object parentClonedObject, Object clonedObject) throws Exception
+    public JcrContentMetaData(ResourceURI resourceURI)
     {
-        ((JcrContentMetaData)clonedObject).node = this.node;        
-    }
-    
-    public JcrContentMetaData(ResourceURI resourceURI, Node node)
-    {
-        this.node = node;
-//        try
-//        {
-//            JcrResourceDescriptor.dump(node);
-//        }
-//        catch (RepositoryException e)
-//        {
-//            // TODO Auto-generated catch block
-//            e.printStackTrace();
-//        }
         this.resourceURI = resourceURI;
     }
     
-    private JcrContentMetaData(Node node) throws ValueFormatException, PathNotFoundException, RepositoryException
-    {
-       // System.out.println(node.getName()+"==>"+node.getPath());
-        this.node = node;
-        if(node.hasProperty(CAPO_METADATA_PREFIX+"resourceURI"))
-        {
-            this.resourceURI = new ResourceURI(node.getProperty(CAPO_METADATA_PREFIX+"resourceURI").getString());
-        }
-        else
-        {
-            this.resourceURI = new ResourceURI("repo:"+node.getPath());
-        }
-    }
+//    private JcrContentMetaData(Node node) throws ValueFormatException, PathNotFoundException, RepositoryException
+//    {
+//       // System.out.println(node.getName()+"==>"+node.getPath());
+//        //this.node = node;
+//        if(node.hasProperty(CAPO_METADATA_PREFIX+"resourceURI"))
+//        {
+//            this.resourceURI = new ResourceURI(node.getProperty(CAPO_METADATA_PREFIX+"resourceURI").getString());
+//        }
+//        else
+//        {
+//            this.resourceURI = new ResourceURI("repo:"+node.getPath());
+//        }
+//    }
     
-    protected void setNode(Node node)
-    {
-    	this.node = node;    	
-    }
+//    protected void setNode(Node node)
+//    {
+//    	this.node = node;    	
+//    }
     
     @Override
     public boolean isDynamic()
@@ -135,7 +121,7 @@ public class JcrContentMetaData implements ContentMetaData, ControlledClone
     @Override
     public Boolean exists()
     {
-    	if(node == null)
+    	if(getNode() == null)
     	{
     		return false;
     	}
@@ -179,7 +165,7 @@ public class JcrContentMetaData implements ContentMetaData, ControlledClone
     @Override
     public Boolean isContainer()
     {
-        if(node == null)
+        if(getNode() == null)
         {
             return true;
         }
@@ -187,7 +173,7 @@ public class JcrContentMetaData implements ContentMetaData, ControlledClone
         //check for root node
         try
         {
-            if(node.getDepth() == 0)
+            if(getNode().getDepth() == 0)
             {
                 return true;
             }                        
@@ -218,7 +204,7 @@ public class JcrContentMetaData implements ContentMetaData, ControlledClone
     {
         try
         {
-            node.setProperty(name, value);
+            getNode().setProperty(name, value);
         }
         catch (RepositoryException e)
         {         
@@ -232,15 +218,15 @@ public class JcrContentMetaData implements ContentMetaData, ControlledClone
     {
         try
         {
-            if(node == null)
+            if(getNode() == null)
             {
                 return null;
             }
-            if(node.hasProperty(CAPO_METADATA_PREFIX+name) == false)
+            if(getNode().hasProperty(CAPO_METADATA_PREFIX+name) == false)
             {
                 return null;
             }
-            Property property = node.getProperty(CAPO_METADATA_PREFIX+name);
+            Property property = getNode().getProperty(CAPO_METADATA_PREFIX+name);
             if(property.isMultiple() == false)
             {
                 return property.getString().substring(CAPO_METADATA_PREFIX.length());
@@ -278,10 +264,19 @@ public class JcrContentMetaData implements ContentMetaData, ControlledClone
     @Override
     public List<String> getSupportedAttributes()
     {
-        List<String> properties = new Vector<String>();
+        List<String> properties = new Vector<String>();        
         try
         {
-            PropertyIterator propertyIterator = node.getProperties();
+            if(getNode() == null)
+            {
+                //default to file attributes
+                for (Enum attributeEnum : new Enum[]{Attributes.exists,Attributes.executable,Attributes.readable,Attributes.writeable,Attributes.container,Attributes.lastModified,Attributes.MD5,FileAttributes.absolutePath,FileAttributes.canonicalPath,FileAttributes.symlink,FileAttributes.regular})
+                {
+                    properties.add(attributeEnum.toString());
+                }
+                return properties;
+            }
+            PropertyIterator propertyIterator = getNode().getProperties();
             while(propertyIterator.hasNext())
             {
                 Property property = propertyIterator.nextProperty();
@@ -298,7 +293,7 @@ public class JcrContentMetaData implements ContentMetaData, ControlledClone
     {
         List<ContentMetaData> childNodeList = new Vector<ContentMetaData>();
 
-        if(node == null)
+        if(getNode() == null)
         {
             return childNodeList;
         }
@@ -306,12 +301,12 @@ public class JcrContentMetaData implements ContentMetaData, ControlledClone
         NodeIterator nodeIterator;
         try
         {
-            nodeIterator = node.getNodes();
+            nodeIterator = getNode().getNodes();
         
         while(nodeIterator.hasNext())
         {
             Node childNode = nodeIterator.nextNode();            
-            childNodeList.add(new JcrContentMetaData(childNode));
+            childNodeList.add(new JcrContentMetaData(new ResourceURI("repo:"+childNode.getPath())));
         }
         }
         catch (RepositoryException e)
@@ -320,6 +315,8 @@ public class JcrContentMetaData implements ContentMetaData, ControlledClone
         }
         return childNodeList;
     }
+
+   
 
     @Override
     public void addContainedResource(ContentMetaData contentMetaData)
@@ -340,6 +337,20 @@ public class JcrContentMetaData implements ContentMetaData, ControlledClone
 
     }
 
-   
+    private Node getNode()
+    {
+        try
+        {
+            if(CapoJcrServer.getSession().nodeExists(resourceURI.getPath()) == true)
+            {
+                return CapoJcrServer.getSession().getNode(resourceURI.getPath());
+            }
+        } catch (Exception exception)
+        {
+            exception.printStackTrace();
+        }
+        return null;
+        
+    }
 
 }

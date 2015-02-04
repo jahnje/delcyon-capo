@@ -20,6 +20,7 @@ import com.delcyon.capo.ContextThread;
 import com.delcyon.capo.controller.ControlElement;
 import com.delcyon.capo.resourcemanager.ContentFormatType;
 import com.delcyon.capo.resourcemanager.ResourceParameter;
+import com.delcyon.capo.resourcemanager.ResourceDescriptor.State;
 import com.delcyon.capo.resourcemanager.types.ContentMetaData.Attributes;
 import com.delcyon.capo.resourcemanager.types.RefResourceType.Parameters;
 import com.delcyon.capo.xml.XPath;
@@ -86,6 +87,18 @@ public class RefResourceDescriptor extends AbstractResourceDescriptor
 	{	 
 	    return null;
 	}
+	
+	@Override
+    public ContentMetaData getResourceMetaData(VariableContainer variableContainer, ResourceParameter... resourceParameters) throws Exception
+    {        
+        ContentMetaData contentMetaData = super.getResourceMetaData(variableContainer, resourceParameters); 
+        if(contentMetaData.exists() == false)
+        {            
+            contentMetaData.setValue(ContentMetaData.Attributes.exists.toString(), (readXML(variableContainer, resourceParameters) != null)+"");
+        }
+        contentMetaData.setInitialized(true);
+        return contentMetaData; 
+    }
 	
 	@Override
 	public StreamFormat[] getSupportedStreamFormats(StreamType streamType) throws Exception

@@ -240,7 +240,7 @@ public class TaskManagerThread extends ContextThread
 		
 		if(CapoApplication.isServer())
         {
-            setSession(CapoJcrServer.getRepository().login(new SimpleCredentials("admin","admin".toCharArray())));
+            setSession(CapoJcrServer.createSession());
         }
 		
 		//go ahead and start things up

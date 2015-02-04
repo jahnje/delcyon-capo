@@ -2,8 +2,10 @@ package com.delcyon.capo.server.jackrabbit;
 import java.util.HashMap;
 import java.util.logging.Level;
 
+import javax.jcr.LoginException;
 import javax.jcr.NamespaceRegistry;
 import javax.jcr.Repository;
+import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.SimpleCredentials;
 
@@ -12,7 +14,12 @@ import org.apache.jackrabbit.core.config.RepositoryConfig;
 
 import com.delcyon.capo.CapoApplication;
 import com.delcyon.capo.Configuration;
+import com.delcyon.capo.ContextThread;
+import com.delcyon.capo.resourcemanager.ResourceDescriptor.LifeCycle;
+import com.delcyon.capo.webapp.servlets.CapoWebApplication;
 import com.delcyon.capo.xml.XPath;
+
+import eu.webtoolkit.jwt.WApplication;
 
 public class CapoJcrServer implements Runnable
 {
@@ -102,4 +109,36 @@ public class CapoJcrServer implements Runnable
         return CapoJcrServer.applicationSession;
     }
 	
+    public static Session createSession() throws LoginException, RepositoryException
+    {
+        return repository.login(new SimpleCredentials("admin","admin".toCharArray()));
+    }
+    
+    public static Session getSession() throws Exception
+    {
+        Session localSession = null;
+        
+        if(Thread.currentThread() instanceof ContextThread)
+        {
+            localSession = ((ContextThread)Thread.currentThread()).getSession();
+        }
+        else if(WApplication.getInstance() != null)
+        {
+            localSession = ((CapoWebApplication)WApplication.getInstance()).getJcrSession();
+        }
+        
+        if(localSession == null)
+        {
+            if(CapoApplication.isServer()) //one last ditch effort
+            {
+                localSession = CapoJcrServer.getApplicationSession();                   
+            }
+            if(localSession == null)
+            {
+                throw new Exception("Can't use JCR resources without a Session");
+            }
+        }
+        return localSession;
+    }
+    
 }

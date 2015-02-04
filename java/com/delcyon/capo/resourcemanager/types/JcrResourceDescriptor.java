@@ -48,6 +48,7 @@ import com.delcyon.capo.resourcemanager.ResourceDescriptor;
 import com.delcyon.capo.resourcemanager.ResourceParameter;
 import com.delcyon.capo.resourcemanager.ResourceDescriptor.DefaultParameters;
 import com.delcyon.capo.resourcemanager.ResourceDescriptor.State;
+import com.delcyon.capo.resourcemanager.ResourceURI;
 import com.delcyon.capo.resourcemanager.types.FileResourceType.Parameters;
 import com.delcyon.capo.server.jackrabbit.CapoJcrServer;
 import com.delcyon.capo.webapp.servlets.CapoWebApplication;
@@ -65,11 +66,11 @@ public class JcrResourceDescriptor extends AbstractResourceDescriptor
 
 	
 	
-	private Session session;
-	private Node node;
+	//private Session session;
+	//private Node node;
 	private String absPath = null;
 	private JcrContentMetaData jcrResourceMetatData = null;
-	private boolean isLocalSession = false;
+	//private boolean isLocalSession = false;
 	private volatile Boolean isWriting = false;
 	private Boolean hasPipeThreadStarted = false;
     private PipedOutputStream pipedOutputStream;
@@ -86,6 +87,7 @@ public class JcrResourceDescriptor extends AbstractResourceDescriptor
         {
             //append parent path to child
             this.absPath = ((JcrResourceDescriptor)CapoApplication.getDataManager().getResourceDirectory(parentDirParameter)).getResourceURI().getPath()+"/"+getResourceURI().getPath();
+            setResourceURI(new ResourceURI(getResourceType().getName()+":"+this.absPath));
         }
         else
         {
@@ -102,41 +104,41 @@ public class JcrResourceDescriptor extends AbstractResourceDescriptor
 	    if (getResourceState().ordinal() < State.OPEN.ordinal())
 	    {
 	    	
-	    	this.isLocalSession = false;
-			
-			if(Thread.currentThread() instanceof ContextThread)
-			{
-			    this.session = ((ContextThread)Thread.currentThread()).getSession();
-			}
-			else if(WApplication.getInstance() != null)
-			{
-			    this.session = ((CapoWebApplication)WApplication.getInstance()).getJcrSession();
-			}
-			else if(CapoJcrServer.getRepository() != null && getLifeCycle() == LifeCycle.EXPLICIT)
-	        {
-	            this.session = CapoJcrServer.getRepository().login(new SimpleCredentials("admin","admin".toCharArray()));
-	            this.isLocalSession = true;
-	        }
-			if(this.session == null)
-			{
-			    if(CapoApplication.isServer()) //one last ditch effort
-			    {
-			        this.session = CapoJcrServer.getApplicationSession();			        
-			    }
-			    if(this.session == null)
-	            {
-			        throw new Exception("Can't use JCR resources without a Session");
-	            }
-			}
-			
-			CapoApplication.logger.log(Level.FINE, "JCRAssoc T="+Thread.currentThread()+" S="+session+" N="+absPath);
-			System.err.println( "JCRAssoc T="+Thread.currentThread()+" S="+session+" N="+absPath);
-			if(session.nodeExists(absPath) == true)
-			{
-				this.node = session.getNode(absPath);
-			}
+//	    	this.isLocalSession = false;
+//			
+//			if(Thread.currentThread() instanceof ContextThread)
+//			{
+//			    this.session = ((ContextThread)Thread.currentThread()).getSession();
+//			}
+//			else if(WApplication.getInstance() != null)
+//			{
+//			    this.session = ((CapoWebApplication)WApplication.getInstance()).getJcrSession();
+//			}
+//			else if(CapoJcrServer.getRepository() != null && getLifeCycle() == LifeCycle.EXPLICIT)
+//	        {
+//	            this.session = CapoJcrServer.getRepository().login(new SimpleCredentials("admin","admin".toCharArray()));
+//	            this.isLocalSession = true;
+//	        }
+//			if(this.session == null)
+//			{
+//			    if(CapoApplication.isServer()) //one last ditch effort
+//			    {
+//			        this.session = CapoJcrServer.getApplicationSession();			        
+//			    }
+//			    if(this.session == null)
+//	            {
+//			        throw new Exception("Can't use JCR resources without a Session");
+//	            }
+//			}
+//			
+			CapoApplication.logger.log(Level.FINE, "JCRAssoc T="+Thread.currentThread()+" S="+CapoJcrServer.getSession()+" N="+absPath);
+			System.err.println( "JCRAssoc T="+Thread.currentThread()+" S="+CapoJcrServer.getSession()+" N="+absPath);
+//			if(session.nodeExists(absPath) == true)
+//			{
+//				this.node = session.getNode(absPath);
+//			}
 	        super.open(variableContainer,resourceParameters);
-	        ((JcrContentMetaData) getResourceMetaData(variableContainer, resourceParameters)).setNode(this.node);
+	       // ((JcrContentMetaData) getResourceMetaData(variableContainer, resourceParameters)).setNode(this.node);
 	    }
 	}
 	
@@ -205,7 +207,7 @@ public class JcrResourceDescriptor extends AbstractResourceDescriptor
 	{
 		if(jcrResourceMetatData == null)
 		{
-		    this.jcrResourceMetatData = new JcrContentMetaData(getResourceURI(), node);; 
+		    this.jcrResourceMetatData = new JcrContentMetaData(getResourceURI()); 
 		}
 		return this.jcrResourceMetatData;
 	}
@@ -223,9 +225,10 @@ public class JcrResourceDescriptor extends AbstractResourceDescriptor
 		{
 	    	isWriting = true;
 	    	//If we're going to write. make sure we have a node to write to.
-	    	if(node == null)
+	    	if(getNode() == null)
 	    	{
 	    	    performAction(variableContainer, Action.CREATE, resourceParameters);
+	    	    performAction(variableContainer, Action.COMMIT, resourceParameters);
 	    	}
 	    	
 	    	final PipedInputStream pipedInputStream = new PipedInputStream(){
@@ -312,17 +315,17 @@ public class JcrResourceDescriptor extends AbstractResourceDescriptor
 							{
 	    						hasPipeThreadStarted.notify();
 							}	    					
-	    					Binary binary = node.getSession().getValueFactory().createBinary( sizeFilterInputStream );
-	    					node.setProperty("jcr:data",binary);
+	    					Binary binary = getNode().getSession().getValueFactory().createBinary( sizeFilterInputStream );
+	    					getNode().setProperty("jcr:data",binary);
 	    					binary.dispose();                    
-	    					node.setProperty(contentFormatTypeFilterInputStream.getName(),contentFormatTypeFilterInputStream.getValue());
-	    					node.setProperty(sizeFilterInputStream.getName(),sizeFilterInputStream.getValue());                    
-	    					node.setProperty(mimeTypeFilterInputStream.getName(),mimeTypeFilterInputStream.getValue());
-	    					node.setProperty(md5FilterInputStream.getName(),md5FilterInputStream.getValue());                    
+	    					getNode().setProperty(contentFormatTypeFilterInputStream.getName(),contentFormatTypeFilterInputStream.getValue());
+	    					getNode().setProperty(sizeFilterInputStream.getName(),sizeFilterInputStream.getValue());                    
+	    					getNode().setProperty(mimeTypeFilterInputStream.getName(),mimeTypeFilterInputStream.getValue());
+	    					getNode().setProperty(md5FilterInputStream.getName(),md5FilterInputStream.getValue());                    
 	    					//System.out.println("pipe thread done: "+System.currentTimeMillis());
-	    					if(session != null && session.isLive() && session.hasPendingChanges())
+	    					if(getNode().getSession() != null && getNode().getSession().isLive() && getNode().getSession().hasPendingChanges())
                             {//TODO check for autocommit setting
-                                session.save();
+	    					    getNode().getSession().save();
                             }
 	    				}
 	    				catch (Exception e)
@@ -337,6 +340,11 @@ public class JcrResourceDescriptor extends AbstractResourceDescriptor
 	    					    
 	    						isWriting = false;
 	    	    			}
+	    					//cleanup session out of thread
+	    					if(Thread.currentThread() instanceof ContextThread)
+	    					{
+	    					    ((ContextThread) Thread.currentThread()).setSession(null);
+	    					}
 	    				}
 	    			}
 	    		
@@ -345,7 +353,9 @@ public class JcrResourceDescriptor extends AbstractResourceDescriptor
 	    	synchronized (hasPipeThreadStarted)
 			{
 	    	    //System.err.println( "PipeWrite T="+Thread.currentThread()+" S="+session+" N="+absPath);
-	    		new Thread(pipe, node.getName()+" pipeThread-"+System.currentTimeMillis()).start();
+	    		ContextThread contextThread = new ContextThread(pipe, getNode().getName()+" pipeThread-"+System.currentTimeMillis());
+	    		contextThread.setSession(getNode().getSession());
+	    		contextThread.start();
 	    		//Calendar lastModified = Calendar.getInstance();
 	    		//lastModified.setTimeInMillis(file.lastModified());
 	    		//resNode.setProperty("jcr:lastModified", lastModified);
@@ -365,9 +375,9 @@ public class JcrResourceDescriptor extends AbstractResourceDescriptor
 	public InputStream getInputStream(VariableContainer variableContainer,ResourceParameter... resourceParameters) throws Exception
 	{	
 	    advanceState(State.STEPPING, variableContainer, resourceParameters);
-	    if(node.hasProperty("jcr:data"))
+	    if(getNode().hasProperty("jcr:data"))
 	    {
-	        return node.getProperty("jcr:data").getBinary().getStream();
+	        return getNode().getProperty("jcr:data").getBinary().getStream();
 	    }
 	    else
 	    {
@@ -416,15 +426,15 @@ public class JcrResourceDescriptor extends AbstractResourceDescriptor
 
         if (action == Action.CREATE)
         {
-        	if(session.nodeExists(absPath) == false)
+        	if(CapoJcrServer.getSession().nodeExists(absPath) == false)
     		{
     		    String[] relPath = absPath.split("/");
-    		    Node currentNode = session.getRootNode();
+    		    Node currentNode = CapoJcrServer.getSession().getRootNode();
     		    for (String nodeName : relPath)
                 {
     		        if(nodeName.isEmpty())
     		        {
-    		            currentNode = session.getRootNode();
+    		            currentNode = CapoJcrServer.getSession().getRootNode();
     		            continue;
     		        }
                     if(currentNode.hasNode(nodeName) == false)
@@ -439,25 +449,23 @@ public class JcrResourceDescriptor extends AbstractResourceDescriptor
                 }
     		    //session.getRootNode().addNode(getResourceURI().getResourceURIString().replaceFirst("^repo:/", ""));
     		    
-    		    this.node = session.getNode(absPath);
+    		    
     		    String containerFlag = getVarValue(variableContainer, DefaultParameters.CONTAINER); 
                 if (containerFlag != null && containerFlag.equalsIgnoreCase("true"))
                 {
-                    this.node.setProperty("container", containerFlag);
-                }
-    		    ((JcrContentMetaData) getResourceMetaData(variableContainer, resourceParameters)).setNode(this.node);
+                    getNode().setProperty("container", containerFlag);
+                }    		    
     		    refreshResourceMetaData(variableContainer, resourceParameters);
     		    success = true;    		    
     		}
         }
         else if (action == Action.DELETE)
         {
-            if (node != null)
+            if (getNode() != null)
             {
+                Node node = getNode();
                 node.remove();
                 node.getSession().save();
-                this.node = null;
-    		    ((JcrContentMetaData) getResourceMetaData(variableContainer, resourceParameters)).setNode(this.node);
     		    refreshResourceMetaData(variableContainer, resourceParameters);
     		    success = true;
             }
@@ -472,9 +480,9 @@ public class JcrResourceDescriptor extends AbstractResourceDescriptor
                 }
                 catch (Exception exception){}
             }
-            if (node != null)
+            if (getNode() != null)
             {
-                node.getSession().save();
+                getNode().getSession().save();
     		    success = true;
             }
         }
@@ -536,30 +544,42 @@ public class JcrResourceDescriptor extends AbstractResourceDescriptor
 		    }
 		    catch (Exception exception){}
 		}
-		if(session != null && session.isLive() && session.hasPendingChanges())
+		if(CapoJcrServer.getSession() != null && CapoJcrServer.getSession().isLive() && CapoJcrServer.getSession().hasPendingChanges())
 		{//TODO check for autocommit setting
-		    session.save();
+		    CapoJcrServer.getSession().save();
 		}
-	    if(isLocalSession == true && session != null && session.isLive())
-	    {
-	        session.logout();
-	        ((JcrContentMetaData) getResourceMetaData(variableContainer, resourceParameters)).setNode(null);
-		    
-	    }
-	    this.session = null;
+//	    if(isLocalSession == true && session != null && session.isLive())
+//	    {
+//	        session.logout();
+//	        ((JcrContentMetaData) getResourceMetaData(variableContainer, resourceParameters)).setNode(null);
+//		    
+//	    }
+	 //   this.session = null;
 	    
 	}
 	
-	@Override
-	public ResourceDescriptor getChildResourceDescriptor(ControlElement callingControlElement, String relativeURI) throws Exception
-	{
-	    ResourceDescriptor childResourceDescriptor = super.getChildResourceDescriptor(callingControlElement, relativeURI);
-	    if(childResourceDescriptor instanceof JcrResourceDescriptor)
-	    {
-	        ((JcrResourceDescriptor) childResourceDescriptor).session = this.session;
-	    }
-	    return childResourceDescriptor;
-	}
+//	@Override
+//	public ResourceDescriptor getChildResourceDescriptor(ControlElement callingControlElement, String relativeURI) throws Exception
+//	{
+//	    ResourceDescriptor childResourceDescriptor = super.getChildResourceDescriptor(callingControlElement, relativeURI);
+//	    if(childResourceDescriptor instanceof JcrResourceDescriptor)
+//	    {
+//	        ((JcrResourceDescriptor) childResourceDescriptor).session = this.session;
+//	    }
+//	    return childResourceDescriptor;
+//	}
 	
  
+	private Node getNode() throws Exception
+	{
+	    if(CapoJcrServer.getSession().nodeExists(absPath))
+	    {
+	        return CapoJcrServer.getSession().getNode(absPath);
+	    }
+	    else
+	    {
+	        return null;
+	    }
+	}
+	
 }

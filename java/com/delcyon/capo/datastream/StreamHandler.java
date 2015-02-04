@@ -127,7 +127,7 @@ public class StreamHandler implements InterruptibleRunnable
 				((ContextThread)Thread.currentThread()).setInterruptible(this);
 				try
                 {
-                    ((ContextThread)Thread.currentThread()).setSession(CapoJcrServer.getRepository().login(new SimpleCredentials("admin","admin".toCharArray())));
+                    ((ContextThread)Thread.currentThread()).setSession(CapoJcrServer.createSession());
                 }
                 catch (Exception exception)
                 {

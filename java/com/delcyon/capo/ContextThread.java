@@ -42,6 +42,11 @@ public class ContextThread extends Thread
 		super(threadName);
 	}
 	
+	public ContextThread(Runnable runnable,String threadName)
+    {
+        super(runnable,threadName);
+    }
+	
 	public ContextThread(ThreadGroup threadGroup, Runnable runnable)
 	{
 		super(threadGroup, runnable, "ContextThread - "+CapoApplication.getApplication().getApplicationDirectoryName().toUpperCase());		  
@@ -99,5 +104,12 @@ public class ContextThread extends Thread
         }
         //Thread.dumpStack();
         this.session = session;
+    }
+    
+    @Override
+    protected void finalize() throws Throwable
+    {
+        this.session = null;
+        super.finalize();
     }
 }
