@@ -44,6 +44,7 @@ import com.delcyon.capo.datastream.stream_attribute_filter.ContentFormatTypeFilt
 import com.delcyon.capo.datastream.stream_attribute_filter.MD5FilterInputStream;
 import com.delcyon.capo.datastream.stream_attribute_filter.MimeTypeFilterInputStream;
 import com.delcyon.capo.datastream.stream_attribute_filter.SizeFilterInputStream;
+import com.delcyon.capo.resourcemanager.ContentFormatType;
 import com.delcyon.capo.resourcemanager.ResourceDescriptor;
 import com.delcyon.capo.resourcemanager.ResourceParameter;
 import com.delcyon.capo.resourcemanager.ResourceDescriptor.DefaultParameters;
@@ -316,11 +317,23 @@ public class JcrResourceDescriptor extends AbstractResourceDescriptor
 							}	    					
 	    					Binary binary = getNode().getSession().getValueFactory().createBinary( sizeFilterInputStream );
 	    					getNode().setProperty("jcr:data",binary);
-	    					binary.dispose();                    
+	    						    					
 	    					getNode().setProperty(contentFormatTypeFilterInputStream.getName(),contentFormatTypeFilterInputStream.getValue());
+	    					if(contentFormatTypeFilterInputStream.getContentFormatType() != ContentFormatType.BINARY)
+	    					{
+	    					    byte[] buffer = new byte[(int) binary.getSize()];
+	    					    binary.read(buffer, 0);
+	    					    getNode().setProperty("content",new String(buffer));
+	    					}
+	    					else if(getNode().hasProperty("content"))
+	    					{
+	    					    getNode().getProperty("content").remove();
+	    					}
 	    					getNode().setProperty(sizeFilterInputStream.getName(),sizeFilterInputStream.getValue());                    
 	    					getNode().setProperty(mimeTypeFilterInputStream.getName(),mimeTypeFilterInputStream.getValue());
-	    					getNode().setProperty(md5FilterInputStream.getName(),md5FilterInputStream.getValue());                    
+	    					//getNode().setProperty("jcr:mimeType",mimeTypeFilterInputStream.getValue());
+	    					getNode().setProperty(md5FilterInputStream.getName(),md5FilterInputStream.getValue());
+	    					binary.dispose();
 	    					//System.out.println("pipe thread done: "+System.currentTimeMillis());
 	    					if(getNode().getSession() != null && getNode().getSession().isLive() && getNode().getSession().hasPendingChanges())
                             {//TODO check for autocommit setting

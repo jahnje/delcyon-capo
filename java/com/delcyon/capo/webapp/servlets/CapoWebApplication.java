@@ -11,7 +11,11 @@ import java.io.OutputStream;
 import java.util.List;
 import java.util.SortedSet;
 
+import javax.jcr.Node;
+import javax.jcr.NodeIterator;
 import javax.jcr.Session;
+import javax.jcr.query.Query;
+import javax.jcr.query.QueryResult;
 
 import org.w3c.dom.Element;
 
@@ -59,7 +63,6 @@ import eu.webtoolkit.jwt.WLabel;
 import eu.webtoolkit.jwt.WLength;
 import eu.webtoolkit.jwt.WLineEdit;
 import eu.webtoolkit.jwt.WLink;
-import eu.webtoolkit.jwt.WLink.Type;
 import eu.webtoolkit.jwt.WMenuItem;
 import eu.webtoolkit.jwt.WModelIndex;
 import eu.webtoolkit.jwt.WMouseEvent;
@@ -176,7 +179,7 @@ public class CapoWebApplication extends WApplication {
                 }
             }
         });
-        pathButton.setLink(new WLink(Type.InternalPath, "/legend"));
+        //pathButton.setLink(new WLink(Type.InternalPath, "/legend"));
         getContentPaneLayout().addWidget(pathButton, 2, 0, 1, 1, AlignmentFlag.AlignTop); 
         
         WPushButton pathButton2 = new WPushButton("Reset");
@@ -790,6 +793,52 @@ public class CapoWebApplication extends WApplication {
         adminSubMenu.addItem("Configuration");
         
         navigation.addWidget(adminMenuButton);
+        
+        final WLineEdit searchFieldTextEdit = new WLineEdit();
+        //searchFieldTextEdit.
+        navigation.addWidget(searchFieldTextEdit,AlignmentFlag.AlignRight);
+        WPushButton searchButton = new WPushButton("Search");
+        searchButton.clicked().addListener(this, new Signal.Listener()
+        {
+            
+            public void trigger()
+            {
+                try
+                {
+                  //element(*, nt:unstructured)[jcr:contains(., 'foo')]    
+                    
+                  //Query query = jcrSession.getWorkspace().getQueryManager().createQuery("SELECT * FROM [nt:unstructured] where NAME([nt:unstructured]) = 'server:log' order by message", "JCR-SQL2");
+                    String[] langs = jcrSession.getWorkspace().getQueryManager().getSupportedQueryLanguages();
+                    for (String lang : langs)
+                    {
+                        System.out.println(lang+"--"+searchFieldTextEdit.getText());
+                    }
+                  Query query = jcrSession.getWorkspace().getQueryManager().createQuery("//element(*, nt:unstructured)[jcr:contains(@content, '"+searchFieldTextEdit.getText()+"')]", Query.XPATH);
+                  QueryResult result = query.execute();
+            
+            
+                  // Iterate over the nodes in the results ...
+            
+                  NodeIterator nodeIter = result.getNodes();
+                  System.out.println("=============================");
+                  while ( nodeIter.hasNext() ) {
+            
+                      Node _node = nodeIter.nextNode();
+                      System.out.println("===>"+_node.getName()+" type:"+_node.getPrimaryNodeType().getName());
+                      //dump(_node);
+            
+                  }
+                  System.out.println("=============================");
+                } catch (Exception e)
+                {
+                    e.printStackTrace();
+                }
+            }
+        });
+        searchButton.setStyleClass("btn btn-mini");
+        navigation.addWidget(searchButton,AlignmentFlag.AlignRight);
+        
+        
         navigation.setResponsive(false);
         navigation.setTitle("Capo");
         navigation.setPopup(true);
