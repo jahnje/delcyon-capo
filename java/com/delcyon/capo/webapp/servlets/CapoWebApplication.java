@@ -5,8 +5,6 @@
  */
 package com.delcyon.capo.webapp.servlets;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.OutputStream;
@@ -14,7 +12,6 @@ import java.util.List;
 import java.util.SortedSet;
 
 import javax.jcr.Session;
-import javax.jcr.SimpleCredentials;
 
 import org.w3c.dom.Element;
 
@@ -24,7 +21,6 @@ import com.delcyon.capo.datastream.stream_attribute_filter.MimeTypeFilterInputSt
 import com.delcyon.capo.resourcemanager.ContentFormatType;
 import com.delcyon.capo.resourcemanager.ResourceDescriptor;
 import com.delcyon.capo.resourcemanager.ResourceDescriptor.Action;
-import com.delcyon.capo.resourcemanager.ResourceDescriptor.LifeCycle;
 import com.delcyon.capo.resourcemanager.ResourceDescriptor.State;
 import com.delcyon.capo.server.jackrabbit.CapoJcrServer;
 import com.delcyon.capo.util.HexUtil;
@@ -35,7 +31,6 @@ import com.delcyon.capo.webapp.servlets.resource.AbstractResourceServlet;
 import com.delcyon.capo.webapp.servlets.resource.WResourceDescriptor;
 import com.delcyon.capo.webapp.widgets.CapoWTreeView;
 import com.delcyon.capo.webapp.widgets.WCSSItemDelegate;
-import com.delcyon.capo.xml.XPath;
 import com.delcyon.capo.xml.dom.ResourceDocument;
 import com.delcyon.capo.xml.dom.ResourceDocumentBuilder;
 
@@ -74,7 +69,6 @@ import eu.webtoolkit.jwt.WProgressBar;
 import eu.webtoolkit.jwt.WPushButton;
 import eu.webtoolkit.jwt.WRegExpValidator;
 import eu.webtoolkit.jwt.WStackedWidget;
-import eu.webtoolkit.jwt.WStandardItemModel;
 import eu.webtoolkit.jwt.WTabWidget;
 import eu.webtoolkit.jwt.WTableView;
 import eu.webtoolkit.jwt.WText;
@@ -110,7 +104,7 @@ public class CapoWebApplication extends WApplication {
         require("/wr/source/sh_main.js");
         try
         {
-            jcrSession = CapoJcrServer.getRepository().login(new SimpleCredentials("admin", "admin".toCharArray()));
+            jcrSession = CapoJcrServer.createSession();
         }
         catch (Exception e)
         {

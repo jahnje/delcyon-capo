@@ -264,7 +264,7 @@ public class CapoServer extends CapoApplication
         {
             capoJcrServer = new CapoJcrServer();            
             capoJcrServer.start();
-            setSession(capoJcrServer.getRepository().login(new SimpleCredentials("admin", "admin".toCharArray())));
+            setSession(CapoJcrServer.createSession());
         }
 		
 		getDataManager().init(false);
@@ -458,10 +458,7 @@ public class CapoServer extends CapoApplication
 	    setApplicationState(ApplicationState.READY);
 	    try
 	    {
-	        if(Thread.currentThread() instanceof ContextThread && capoJcrServer != null)
-	        {
-	            ((ContextThread)Thread.currentThread()).setSession(CapoJcrServer.createSession());
-	        }
+
 	        while (true)
 	        {
 	            Socket socket = null;

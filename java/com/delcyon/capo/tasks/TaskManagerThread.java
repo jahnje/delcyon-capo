@@ -22,6 +22,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.logging.Level;
 
+import javax.jcr.LoginException;
+import javax.jcr.RepositoryException;
 import javax.jcr.SimpleCredentials;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -238,16 +240,11 @@ public class TaskManagerThread extends ContextThread
 //			this.taskManagerDocument = CapoApplication.getDefaultDocument("tasks.xml");
 //		}
 		
-		if(CapoApplication.isServer())
-        {
-            setSession(CapoJcrServer.createSession());
-        }
 		
 		//go ahead and start things up
 		tasksDocumentUpdaterThread = new TaskManagerDocumentUpdaterThread(lock,runAsService);
 		if (runAsService == true) // TODO in theory if this is false, you can do a single pass of monitors, then it will exit, and not update anything
-		{
-		    tasksDocumentUpdaterThread.setSession(getSession());
+		{		    
 			tasksDocumentUpdaterThread.start();
 		}		
 		
@@ -312,6 +309,22 @@ public class TaskManagerThread extends ContextThread
 	public void run()
 	{
 		taskManagerState = ApplicationState.READY;
+		if(CapoApplication.isServer())
+        {
+            try
+            {
+                setSession(CapoJcrServer.createSession());
+                tasksDocumentUpdaterThread.setSession(getSession());
+            }
+            catch (Exception exception)
+            {             
+                CapoServer.logger.log(Level.SEVERE, "Couldn't start TaskManager because of repository errors.",exception);
+                this.taskManagerState = ApplicationState.STOPPED;
+                WrapperManager.stopAndReturn(0);
+            }            
+            
+        }
+        
 		while(taskManagerState.ordinal() < ApplicationState.STOPPING.ordinal())
 		{
 			try

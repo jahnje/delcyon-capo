@@ -16,6 +16,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 package com.delcyon.capo;
 
+import java.util.logging.Level;
+
 import javax.jcr.Session;
 
 
@@ -93,13 +95,18 @@ public class ContextThread extends Thread
     {
         if(session != null)
         {
-            System.err.println("SetSession: T="+this+" S="+session);
+            if(this.session != null && this.session.isLive())
+            {                
+                Thread.dumpStack();                
+                CapoApplication.logger.log(Level.WARNING, "SetSession OVERLAP: T="+this+" S="+this.session+" with S="+session);
+            }
+            CapoApplication.logger.log(Level.FINE, "SetSession: T="+this+" S="+session);
         }
         else
         {
             if(this.session != null)
             {
-                System.err.println("DropSession: T="+this+" S="+this.session);
+                CapoApplication.logger.log(Level.FINER,"DropSession: T="+this+" S="+this.session);
             }
         }
         //Thread.dumpStack();

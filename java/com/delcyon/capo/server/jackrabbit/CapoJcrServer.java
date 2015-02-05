@@ -49,8 +49,8 @@ public class CapoJcrServer implements Runnable
 		try
 		{
 			config = RepositoryConfig.create(xml, dir);
-			Repository repository = RepositoryImpl.create(config);
-			Session session = repository.login(new SimpleCredentials("admin", "admin".toCharArray()));
+			repository = RepositoryImpl.create(config);
+			Session session = createSession();
 			NamespaceRegistry namespaceRegistry = session.getWorkspace().getNamespaceRegistry();
 			String[] uris = namespaceRegistry.getURIs();
 			HashMap<String, String> uriHashMap = new HashMap<>(uris.length);
@@ -70,9 +70,8 @@ public class CapoJcrServer implements Runnable
 			{
 			    namespaceRegistry.registerNamespace("resource", CapoApplication.RESOURCE_NAMESPACE_URI);
 			}
-			session.logout();
-			CapoJcrServer.repository = repository;
-			CapoJcrServer.applicationSession = repository.login(new SimpleCredentials("admin", "admin".toCharArray()));
+			session.logout();			
+			CapoJcrServer.applicationSession = createSession();
 		} catch (Exception exception)
 		{
 			exception.printStackTrace();
@@ -111,7 +110,9 @@ public class CapoJcrServer implements Runnable
 	
     public static Session createSession() throws LoginException, RepositoryException
     {
-        return repository.login(new SimpleCredentials("admin","admin".toCharArray()));
+        Session session = repository.login(new SimpleCredentials("admin","admin".toCharArray()));
+        CapoApplication.logger.log(Level.FINE, "Opened: T="+Thread.currentThread()+" S="+session);        
+        return session;
     }
     
     public static Session getSession() throws Exception

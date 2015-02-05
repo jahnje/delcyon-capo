@@ -131,8 +131,7 @@ public class JcrResourceDescriptor extends AbstractResourceDescriptor
 //	            }
 //			}
 //			
-			CapoApplication.logger.log(Level.FINE, "JCRAssoc T="+Thread.currentThread()+" S="+CapoJcrServer.getSession()+" N="+absPath);
-			System.err.println( "JCRAssoc T="+Thread.currentThread()+" S="+CapoJcrServer.getSession()+" N="+absPath);
+			CapoApplication.logger.log(Level.FINE, "JCRAssoc T="+Thread.currentThread()+" S="+CapoJcrServer.getSession()+" N="+absPath);			
 //			if(session.nodeExists(absPath) == true)
 //			{
 //				this.node = session.getNode(absPath);
