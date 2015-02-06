@@ -12,10 +12,11 @@ import java.util.List;
 import java.util.SortedSet;
 
 import javax.jcr.Node;
-import javax.jcr.NodeIterator;
 import javax.jcr.Session;
 import javax.jcr.query.Query;
 import javax.jcr.query.QueryResult;
+import javax.jcr.query.Row;
+import javax.jcr.query.RowIterator;
 
 import org.w3c.dom.Element;
 
@@ -796,7 +797,7 @@ public class CapoWebApplication extends WApplication {
         
         final WLineEdit searchFieldTextEdit = new WLineEdit();
         //searchFieldTextEdit.
-        navigation.addWidget(searchFieldTextEdit,AlignmentFlag.AlignRight);
+        
         WPushButton searchButton = new WPushButton("Search");
         searchButton.clicked().addListener(this, new Signal.Listener()
         {
@@ -813,18 +814,48 @@ public class CapoWebApplication extends WApplication {
                     {
                         System.out.println(lang+"--"+searchFieldTextEdit.getText());
                     }
-                  Query query = jcrSession.getWorkspace().getQueryManager().createQuery("//element(*, nt:unstructured)[jcr:contains(@content, '"+searchFieldTextEdit.getText()+"')]", Query.XPATH);
+                  //Query query = jcrSession.getWorkspace().getQueryManager().createQuery("//element(*, nt:unstructured)[jcr:contains(@content, '"+searchFieldTextEdit.getText()+"')/(@content)]", Query.XPATH);
+                  Query query = jcrSession.getWorkspace().getQueryManager().createQuery("SELECT * FROM [nt:unstructured] as n WHERE CONTAINS(n.content, '"+searchFieldTextEdit.getText()+"')", Query.JCR_SQL2);
                   QueryResult result = query.execute();
-            
+                  for (String lang : result.getColumnNames())
+                  {
+                      System.out.println(lang);
+                  }
             
                   // Iterate over the nodes in the results ...
-            
-                  NodeIterator nodeIter = result.getNodes();
+                  int excerptWidth = 30;
+                  RowIterator rows = result.getRows();
                   System.out.println("=============================");
-                  while ( nodeIter.hasNext() ) {
+                  while ( rows.hasNext() ) {
             
-                      Node _node = nodeIter.nextNode();
-                      System.out.println("===>"+_node.getName()+" type:"+_node.getPrimaryNodeType().getName());
+                      Row row = rows.nextRow();
+                      Node _node = row.getNode();
+                      String excerpt = _node.getProperty("content").getString().toLowerCase();
+                      String searchField = searchFieldTextEdit.getText();
+                      int excerptLocation = excerpt.indexOf(searchField.toLowerCase());
+                      int startExcerptLocation = excerptLocation -excerptWidth;
+                      if(startExcerptLocation < 0 )
+                      {
+                          startExcerptLocation = 0;
+                      }
+                      if(excerpt.substring(startExcerptLocation, excerptLocation).indexOf('\n') >= 0)
+                      {
+                          startExcerptLocation += excerpt.substring(startExcerptLocation, excerptLocation).indexOf('\n')+1;
+                      }
+                      int endExcerptLocation = excerptLocation+excerptWidth+searchField.length();
+                      if(endExcerptLocation >= excerpt.length())
+                      {
+                          endExcerptLocation = excerpt.length()-1;
+                      }
+                      if(excerpt.substring(excerptLocation+searchField.length(), endExcerptLocation).indexOf('\n') >= 0)
+                      {
+                          int crDistance = excerpt.substring(excerptLocation+searchField.length(), endExcerptLocation).indexOf('\n');
+                          endExcerptLocation -= (excerptWidth - crDistance);
+                      }
+                      excerpt = _node.getProperty("content").getString().substring(startExcerptLocation, endExcerptLocation);
+                      
+                      
+                      System.out.println("===>"+_node.getPath()+" type:"+_node.getPrimaryNodeType().getName()+" score="+row.getScore()+" exrp = '"+excerpt+"'");
                       //dump(_node);
             
                   }
@@ -835,9 +866,9 @@ public class CapoWebApplication extends WApplication {
                 }
             }
         });
-        searchButton.setStyleClass("btn btn-mini");
+        //searchButton.setStyleClass("btn btn-mini");
         navigation.addWidget(searchButton,AlignmentFlag.AlignRight);
-        
+        navigation.addWidget(searchFieldTextEdit,AlignmentFlag.AlignRight);
         
         navigation.setResponsive(false);
         navigation.setTitle("Capo");

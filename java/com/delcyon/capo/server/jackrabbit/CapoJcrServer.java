@@ -8,6 +8,8 @@ import javax.jcr.Repository;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.SimpleCredentials;
+import javax.jcr.nodetype.NodeTypeManager;
+import javax.jcr.nodetype.PropertyDefinitionTemplate;
 
 import org.apache.jackrabbit.core.RepositoryImpl;
 import org.apache.jackrabbit.core.config.RepositoryConfig;
@@ -15,9 +17,7 @@ import org.apache.jackrabbit.core.config.RepositoryConfig;
 import com.delcyon.capo.CapoApplication;
 import com.delcyon.capo.Configuration;
 import com.delcyon.capo.ContextThread;
-import com.delcyon.capo.resourcemanager.ResourceDescriptor.LifeCycle;
 import com.delcyon.capo.webapp.servlets.CapoWebApplication;
-import com.delcyon.capo.xml.XPath;
 
 import eu.webtoolkit.jwt.WApplication;
 
@@ -70,6 +70,21 @@ public class CapoJcrServer implements Runnable
 			{
 			    namespaceRegistry.registerNamespace("resource", CapoApplication.RESOURCE_NAMESPACE_URI);
 			}
+			
+//			NodeTypeManager nodeTypeManager = session.getWorkspace().getNodeTypeManager();
+//			
+//			// Create a template for the node type ...
+//			PropertyDefinitionTemplate type = nodeTypeManager.createPropertyDefinitionTemplate();
+//			type.setName("ns:NodeType");
+//			type.setDeclaredSuperTypeNames(new String[]{"nt:resource"});
+//			type.setAbstract(true);
+//			type.setOrderableChildNodes(true);
+//			type.setMixin(true);
+//			type.setQueryable(true);
+//			
+//			
+//			nodeTypeManager.registerNodeType(type, true);
+			
 			session.logout();			
 			CapoJcrServer.applicationSession = createSession();
 		} catch (Exception exception)
