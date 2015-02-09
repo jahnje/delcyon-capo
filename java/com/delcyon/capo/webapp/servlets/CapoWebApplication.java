@@ -27,6 +27,8 @@ import com.delcyon.capo.resourcemanager.ContentFormatType;
 import com.delcyon.capo.resourcemanager.ResourceDescriptor;
 import com.delcyon.capo.resourcemanager.ResourceDescriptor.Action;
 import com.delcyon.capo.resourcemanager.ResourceDescriptor.State;
+import com.delcyon.capo.resourcemanager.types.ContentMetaData;
+import com.delcyon.capo.resourcemanager.types.JcrResourceDescriptor;
 import com.delcyon.capo.server.jackrabbit.CapoJcrServer;
 import com.delcyon.capo.util.HexUtil;
 import com.delcyon.capo.webapp.models.DomItemModel;
@@ -406,6 +408,10 @@ public class CapoWebApplication extends WApplication {
 		                           
 		                            try
                                     {
+		                                if(selectedResourceDescriptor instanceof JcrResourceDescriptor && selectedResourceDescriptor.getResourceMetaData(null).isContainer() == false)
+		                                {
+		                                    selectedResourceDescriptor.getResourceMetaData(null).setValue(ContentMetaData.Attributes.container.toString(), true+"");
+		                                }
 		                                ResourceDescriptor childResourceDescriptor = selectedResourceDescriptor.getChildResourceDescriptor(null, edit.getText());
 		                                System.out.println(childResourceDescriptor.getResourceURI());
 		                                childResourceDescriptor.init(null, null, null, false);
@@ -556,10 +562,10 @@ public class CapoWebApplication extends WApplication {
                                     ((ResourceDescriptor) selectedItem).advanceState(State.CLOSED,null);
                                     ((ResourceDescriptor) selectedItem).reset(State.OPEN);
                                     ((FileResourceDescriptorItemModel) tableView.getModel()).reload();
-                                    upload.setProgressBar(new WProgressBar());                                    
-                                    upload.show();
-                                    upload.enableAjax();
-                                    
+//                                    upload.setProgressBar(new WProgressBar());                                    
+//                                    upload.show();
+//                                    upload.enableAjax();
+                                    selectedItemChanged();
                                 }                                
                                 catch (Exception e)
                                 {                                    
