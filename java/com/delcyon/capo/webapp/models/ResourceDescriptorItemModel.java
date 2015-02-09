@@ -22,13 +22,13 @@ getData() to return the data for an item
 optionally, getHeaderData() to return row and column header data
 optionally, getFlags() to indicate data options
  */
-public class FileResourceDescriptorItemModel extends WAbstractItemModel
+public class ResourceDescriptorItemModel extends WAbstractItemModel
 {
 
 	int indexCounter = 0;
 	private ResourceDescriptor topLevelResourceDescriptor;
 	private DomUse domUse = null;
-	public FileResourceDescriptorItemModel(ResourceDescriptor resourceDescriptor,DomItemModel.DomUse navigation)
+	public ResourceDescriptorItemModel(ResourceDescriptor resourceDescriptor,DomItemModel.DomUse navigation)
 	{	    
 		this.topLevelResourceDescriptor = resourceDescriptor;
 		this.domUse = navigation;

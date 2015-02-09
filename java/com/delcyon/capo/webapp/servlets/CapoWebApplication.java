@@ -33,7 +33,7 @@ import com.delcyon.capo.server.jackrabbit.CapoJcrServer;
 import com.delcyon.capo.util.HexUtil;
 import com.delcyon.capo.webapp.models.DomItemModel;
 import com.delcyon.capo.webapp.models.DomItemModel.DomUse;
-import com.delcyon.capo.webapp.models.FileResourceDescriptorItemModel;
+import com.delcyon.capo.webapp.models.ResourceDescriptorItemModel;
 import com.delcyon.capo.webapp.servlets.resource.AbstractResourceServlet;
 import com.delcyon.capo.webapp.servlets.resource.WResourceDescriptor;
 import com.delcyon.capo.webapp.widgets.CapoWTreeView;
@@ -232,8 +232,8 @@ public class CapoWebApplication extends WApplication {
                     try
                     {
                         jcrSession.refresh(false);
-                        ((FileResourceDescriptorItemModel) treeView.getModel()).reload();
-                        treeView.setModel(new FileResourceDescriptorItemModel(CapoApplication.getDataManager().getResourceDescriptor(null, "repo:/"),DomUse.NAVIGATION));
+                        ((ResourceDescriptorItemModel) treeView.getModel()).reload();
+                        treeView.setModel(new ResourceDescriptorItemModel(CapoApplication.getDataManager().getResourceDescriptor(null, "repo:/"),DomUse.NAVIGATION));
                     } catch (Exception e)
                     {
                         e.printStackTrace();
@@ -336,7 +336,7 @@ public class CapoWebApplication extends WApplication {
             }
             else if (data instanceof ResourceDescriptor)
             {
-                treeView.setModel(new FileResourceDescriptorItemModel((ResourceDescriptor)data,DomUse.NAVIGATION));
+                treeView.setModel(new ResourceDescriptorItemModel((ResourceDescriptor)data,DomUse.NAVIGATION));
             }
             //tree
             treeView.setWidth(new WLength(250));//, WLength.Auto);
@@ -363,7 +363,7 @@ public class CapoWebApplication extends WApplication {
                     System.out.println("DoubleClicked:");
                     
                     setInternalPath(((ResourceDescriptor)arg1.getInternalPointer()).getResourceURI().getPath(), false);
-                    treeView.setModel(new FileResourceDescriptorItemModel((ResourceDescriptor)arg1.getInternalPointer(),DomUse.NAVIGATION));
+                    treeView.setModel(new ResourceDescriptorItemModel((ResourceDescriptor)arg1.getInternalPointer(),DomUse.NAVIGATION));
                 }
             });
             
@@ -396,7 +396,7 @@ public class CapoWebApplication extends WApplication {
                                 if(treeView.getSelectedIndexes().isEmpty())
                                 {
                                     index = null;
-                                    selectedResourceDescriptor = ((FileResourceDescriptorItemModel)treeView.getModel()).getTopLevelResourceDescriptor();
+                                    selectedResourceDescriptor = ((ResourceDescriptorItemModel)treeView.getModel()).getTopLevelResourceDescriptor();
                                 }
                                 else
                                 {
@@ -457,14 +457,14 @@ public class CapoWebApplication extends WApplication {
                                                 selectedResourceDescriptor.reset(State.OPEN);
                                                 if(index != null)
                                                 {
-                                                    ((FileResourceDescriptorItemModel) treeView.getModel()).fireDataChanged(index,true);
+                                                    ((ResourceDescriptorItemModel) treeView.getModel()).fireDataChanged(index,true);
                                                     //                                            ((FileResourceDescriptorItemModel) treeView.getModel()).reload();                                           
                                                     //                                            treeView.setExpanded(index, true);
                                                     //                                            treeView.select(index);
                                                 }
                                                 else
                                                 {
-                                                    ((FileResourceDescriptorItemModel) treeView.getModel()).reload();//TODO this is really heavy weight, when in reality, model needs to fire data changed event
+                                                    ((ResourceDescriptorItemModel) treeView.getModel()).reload();//TODO this is really heavy weight, when in reality, model needs to fire data changed event
                                                 }
                                             }
                                             catch (Exception e)
@@ -494,8 +494,8 @@ public class CapoWebApplication extends WApplication {
                                     try
                                     {
                                         ResourceDescriptor parentResourceDescriptor = selectedResourceDescriptor.getParentResourceDescriptor();
-                                        WModelIndex parentIndex = ((FileResourceDescriptorItemModel) treeView.getModel()).getParent(index);
-                                        ((FileResourceDescriptorItemModel) treeView.getModel()).beginRemoveRows(parentIndex, index.getRow(), index.getRow());
+                                        WModelIndex parentIndex = ((ResourceDescriptorItemModel) treeView.getModel()).getParent(index);
+                                        ((ResourceDescriptorItemModel) treeView.getModel()).beginRemoveRows(parentIndex, index.getRow(), index.getRow());
                                         selectedResourceDescriptor.performAction(null, Action.DELETE);
                                         if (parentResourceDescriptor != null)
                                         {
@@ -503,11 +503,11 @@ public class CapoWebApplication extends WApplication {
                                         }
                                         if (parentIndex != null)
                                         {
-                                            ((FileResourceDescriptorItemModel) treeView.getModel()).fireDataChanged(parentIndex,false);
+                                            ((ResourceDescriptorItemModel) treeView.getModel()).fireDataChanged(parentIndex,false);
                                         }
                                         else
                                         {
-                                            ((FileResourceDescriptorItemModel) treeView.getModel()).reload();
+                                            ((ResourceDescriptorItemModel) treeView.getModel()).reload();
                                         }
                                     }
                                     catch (Exception e)
@@ -569,7 +569,7 @@ public class CapoWebApplication extends WApplication {
     		}
     		else if (selectedItem instanceof ResourceDescriptor)
     		{
-    		    tableView.setModel(new FileResourceDescriptorItemModel((ResourceDescriptor) selectedItem, DomUse.ATTRIBUTES));
+    		    tableView.setModel(new ResourceDescriptorItemModel((ResourceDescriptor) selectedItem, DomUse.ATTRIBUTES));
     		    try
     		    {
     		        //if(((ResourceDescriptor) selectedItem).getResourceMetaData(null).isContainer() == false)
@@ -598,7 +598,7 @@ public class CapoWebApplication extends WApplication {
                                     ((ResourceDescriptor) selectedItem).getResourceMetaData(null).refresh();
                                     ((ResourceDescriptor) selectedItem).advanceState(State.CLOSED,null);
                                     ((ResourceDescriptor) selectedItem).reset(State.OPEN);
-                                    ((FileResourceDescriptorItemModel) tableView.getModel()).reload();
+                                    ((ResourceDescriptorItemModel) tableView.getModel()).reload();
 //                                    upload.setProgressBar(new WProgressBar());                                    
 //                                    upload.show();
 //                                    upload.enableAjax();
