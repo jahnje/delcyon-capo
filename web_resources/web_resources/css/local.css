@@ -33,3 +33,13 @@
   border-bottom: 1px ;
   border-bottom-color: transparent ;
 }
+
+table {
+      max-width: 100%;
+      background-color: rgba(0,0,0,.25);
+  }
+  
+.table-full
+{
+    width: 100%;
+}

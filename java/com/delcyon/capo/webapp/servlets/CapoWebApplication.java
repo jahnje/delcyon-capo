@@ -27,6 +27,7 @@ import com.delcyon.capo.resourcemanager.ContentFormatType;
 import com.delcyon.capo.resourcemanager.ResourceDescriptor;
 import com.delcyon.capo.resourcemanager.ResourceDescriptor.Action;
 import com.delcyon.capo.resourcemanager.ResourceDescriptor.State;
+import com.delcyon.capo.resourcemanager.ResourceURI;
 import com.delcyon.capo.resourcemanager.types.ContentMetaData;
 import com.delcyon.capo.resourcemanager.types.JcrResourceDescriptor;
 import com.delcyon.capo.server.jackrabbit.CapoJcrServer;
@@ -43,6 +44,7 @@ import com.delcyon.capo.xml.dom.ResourceDocumentBuilder;
 
 import eu.webtoolkit.jwt.AlignmentFlag;
 import eu.webtoolkit.jwt.AnchorTarget;
+import eu.webtoolkit.jwt.MatchOptions;
 import eu.webtoolkit.jwt.PositionScheme;
 import eu.webtoolkit.jwt.SelectionBehavior;
 import eu.webtoolkit.jwt.SelectionMode;
@@ -51,6 +53,7 @@ import eu.webtoolkit.jwt.Signal1;
 import eu.webtoolkit.jwt.Signal2;
 import eu.webtoolkit.jwt.TextFormat;
 import eu.webtoolkit.jwt.Utils;
+import eu.webtoolkit.jwt.WAbstractItemModel;
 import eu.webtoolkit.jwt.WAnchor;
 import eu.webtoolkit.jwt.WApplication;
 import eu.webtoolkit.jwt.WBootstrapTheme;
@@ -66,7 +69,9 @@ import eu.webtoolkit.jwt.WLabel;
 import eu.webtoolkit.jwt.WLength;
 import eu.webtoolkit.jwt.WLineEdit;
 import eu.webtoolkit.jwt.WLink;
+import eu.webtoolkit.jwt.WLength.Unit;
 import eu.webtoolkit.jwt.WLink.Type;
+import eu.webtoolkit.jwt.ItemDataRole;
 import eu.webtoolkit.jwt.WMenuItem;
 import eu.webtoolkit.jwt.WModelIndex;
 import eu.webtoolkit.jwt.WMouseEvent;
@@ -77,6 +82,7 @@ import eu.webtoolkit.jwt.WPushButton;
 import eu.webtoolkit.jwt.WRegExpValidator;
 import eu.webtoolkit.jwt.WStackedWidget;
 import eu.webtoolkit.jwt.WTabWidget;
+import eu.webtoolkit.jwt.WTable;
 import eu.webtoolkit.jwt.WTableView;
 import eu.webtoolkit.jwt.WText;
 import eu.webtoolkit.jwt.WTreeView;
@@ -101,6 +107,7 @@ public class CapoWebApplication extends WApplication {
     private Session jcrSession;
     private WPushButton resetButton;
     private WPushButton saveButton;
+    private WDialog searchResultsDialog;
     
 	public CapoWebApplication(WEnvironment env, boolean embedded) {
         super(env);
@@ -129,7 +136,47 @@ public class CapoWebApplication extends WApplication {
                     public void trigger()
                     {
                         System.out.println(WApplication.getInstance().getInternalPath());
-                        
+                        try
+                        {
+                            if(searchResultsDialog != null && searchResultsDialog.isVisible())
+                            {
+                                searchResultsDialog.hide();
+                            }
+                            ResourceDescriptor resourceDescriptor = CapoApplication.getDataManager().getResourceDescriptor(null, "repo:"+WApplication.getInstance().getInternalPath());
+                            ResourceURI originalURI = resourceDescriptor.getResourceURI();
+                            if(resourceDescriptor.getResourceMetaData(null).isContainer() == false)
+                            {
+                                if(resourceDescriptor.getParentResourceDescriptor() != null)
+                                {
+                                    resourceDescriptor = resourceDescriptor.getParentResourceDescriptor();
+                                }
+                                else
+                                {
+                                    String parentURI = resourceDescriptor.getResourceURI().getResourceURIString().replaceAll("/"+resourceDescriptor.getLocalName(), "");
+                                    if(parentURI.equals("repo:")) //make sure we have a root for the repo
+                                    {
+                                        parentURI = "repo:/";
+                                    }
+                                    
+                                    resourceDescriptor = CapoApplication.getDataManager().getResourceDescriptor(null,parentURI);
+                                    setInternalPath(resourceDescriptor.getResourceURI().getPath());
+                                }
+                            }
+                            treeView.setModel(new ResourceDescriptorItemModel(resourceDescriptor,DomUse.NAVIGATION));
+                            if(originalURI != null)
+                            {
+                                List<WModelIndex> indexes = treeView.getModel().match(treeView.getModel().getIndex(0, 0), ResourceDescriptorItemModel.ResourceURI_ROLE, originalURI.toString(), 1, MatchOptions.defaultMatchOptions);
+                                if(indexes.size() > 0)
+                                {
+                                    treeView.select(indexes.get(0));
+                                }
+                            }
+                            treeView.selectionChanged();
+                        }
+                        catch (Exception e)
+                        {                         
+                            e.printStackTrace();
+                        }
                     }
             
                 });
@@ -147,20 +194,20 @@ public class CapoWebApplication extends WApplication {
         getRootLayout().addWidget(getContentPane(),1,0);
         try
 		{
-//            FileResourceType fileResourceType = new FileResourceType();
-//            ResourceDescriptor resourceDescriptor = fileResourceType.getResourceDescriptor("file:/");
+            //FileResourceType fileResourceType = new FileResourceType();
+            //ResourceDescriptor resourceDescriptor = fileResourceType.getResourceDescriptor("file:/");
             ResourceDescriptor resourceDescriptor = CapoApplication.getDataManager().getResourceDescriptor(null, "repo:"+WApplication.getInstance().getInternalPath());
             if(resourceDescriptor.getResourceMetaData(null).exists() == false)
             {
-            	resourceDescriptor.performAction(null, Action.CREATE);
-            	resourceDescriptor.reset(State.OPEN);
+                resourceDescriptor.performAction(null, Action.CREATE);
+                resourceDescriptor.reset(State.OPEN);
             }
-          ResourceDescriptor resourceDescriptor2 = CapoApplication.getDataManager().getResourceDirectory("CLIENTS_DIR");
+            ResourceDescriptor resourceDescriptor2 = CapoApplication.getDataManager().getResourceDirectory("CLIENTS_DIR");
             ResourceDocumentBuilder documentBuilder = new ResourceDocumentBuilder();
-             document = (ResourceDocument) documentBuilder.buildDocument(resourceDescriptor2);
-			
-			
-			
+            document = (ResourceDocument) documentBuilder.buildDocument(resourceDescriptor2);
+
+
+
 			getContentPaneLayout().addWidget(getTreeView(resourceDescriptor), 0, 0,1,0);	
 			
 			
@@ -845,6 +892,8 @@ public class CapoWebApplication extends WApplication {
         searchButton.clicked().addListener(this, new Signal.Listener()
         {
             
+           
+
             public void trigger()
             {
                 try
@@ -869,8 +918,38 @@ public class CapoWebApplication extends WApplication {
                   int excerptWidth = 30;
                   RowIterator rows = result.getRows();
                   System.out.println("=============================");
+
+                  searchResultsDialog = new WDialog("Search Results");
+                  searchResultsDialog.setWidth(new WLength(80d, Unit.Percentage));
+                  searchResultsDialog.setClosable(true);
+                  searchResultsDialog.rejectWhenEscapePressed(true);
+                  WTable table = new WTable(searchResultsDialog.getContents());
+                  //table.toggleStyleClass("table-hover", true);
+                  table.toggleStyleClass("table-condensed", true);
+                  table.toggleStyleClass("table-striped", true);
+                  table.toggleStyleClass("table-full", true);
+                  table.setHeaderCount(1);
+                  table.getElementAt(0, 0).addWidget(new WText("Path"));                  
+                  table.getElementAt(0, 1).addWidget(new WText("Excerpt"));
+                  table.getElementAt(0, 2).addWidget(new WText("Score"));
+                  table.getElementAt(0, 2).setContentAlignment(AlignmentFlag.AlignRight);
+
+                  table.doubleClicked().addListener(CapoWebApplication.this, new Signal1.Listener<WMouseEvent>()
+                  {
+                      @Override
+                      public void trigger(WMouseEvent arg1)
+                      {
+                          System.out.println(arg1);
+
+                      }
+
+                  });
+
+                  int rowNumber = 0;
                   while ( rows.hasNext() ) {
-            
+                      
+                      rowNumber++;
+                      
                       Row row = rows.nextRow();
                       Node _node = row.getNode();
                       String excerpt = _node.getProperty("content").getString().toLowerCase();
@@ -899,9 +978,16 @@ public class CapoWebApplication extends WApplication {
                       
                       
                       System.out.println("===>"+_node.getPath()+" type:"+_node.getPrimaryNodeType().getName()+" score="+row.getScore()+" exrp = '"+excerpt+"'");
-                      //dump(_node);
-            
+                      //dump(_node);new WLink(Type.InternalPath, "/legend")
+                      table.getElementAt(rowNumber, 0).addWidget(new WAnchor(new WLink(Type.InternalPath, _node.getPath()),_node.getPath(),CapoWebApplication.getInstance().getRoot()));
+                      table.getElementAt(rowNumber,1).addWidget(new WText(Utils.htmlEncode(excerpt)));
+                      table.getElementAt(rowNumber,1).setAttributeValue("width", "80%");
+                      table.getElementAt(rowNumber,1).setContentAlignment(AlignmentFlag.AlignCenter);
+                      table.getElementAt(rowNumber, 2).addWidget(new WText(row.getScore()+""));                      
+                      table.getElementAt(rowNumber,2).setContentAlignment(AlignmentFlag.AlignRight);                      
                   }
+                  
+                  searchResultsDialog.show();
                   System.out.println("=============================");
                 } catch (Exception e)
                 {

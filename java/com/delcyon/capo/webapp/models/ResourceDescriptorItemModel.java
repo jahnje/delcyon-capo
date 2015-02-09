@@ -24,7 +24,7 @@ optionally, getFlags() to indicate data options
  */
 public class ResourceDescriptorItemModel extends WAbstractItemModel
 {
-
+    public static int ResourceURI_ROLE = 64; 
 	int indexCounter = 0;
 	private ResourceDescriptor topLevelResourceDescriptor;
 	private DomUse domUse = null;
@@ -250,7 +250,11 @@ public class ResourceDescriptorItemModel extends WAbstractItemModel
 
 	            }                
 	        }
-	    }		
+	    }
+	    else if(role == ResourceURI_ROLE)
+	    {
+	        return ((ResourceDescriptor)index.getInternalPointer()).getResourceURI();
+	    }
 	    return null;
 
 	}
@@ -362,4 +366,5 @@ public class ResourceDescriptorItemModel extends WAbstractItemModel
         
     }
 
+   
 }
