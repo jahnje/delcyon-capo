@@ -49,6 +49,7 @@ import eu.webtoolkit.jwt.PositionScheme;
 import eu.webtoolkit.jwt.SelectionBehavior;
 import eu.webtoolkit.jwt.SelectionMode;
 import eu.webtoolkit.jwt.Signal;
+import eu.webtoolkit.jwt.Signal.Listener;
 import eu.webtoolkit.jwt.Signal1;
 import eu.webtoolkit.jwt.Signal2;
 import eu.webtoolkit.jwt.TextFormat;
@@ -886,10 +887,11 @@ public class CapoWebApplication extends WApplication {
         navigation.addWidget(adminMenuButton);
         
         final WLineEdit searchFieldTextEdit = new WLineEdit();
+       
         //searchFieldTextEdit.
         
         WPushButton searchButton = new WPushButton("Search");
-        searchButton.clicked().addListener(this, new Signal.Listener()
+        Listener searchListener =  new Signal.Listener()
         {
             
            
@@ -994,7 +996,11 @@ public class CapoWebApplication extends WApplication {
                     e.printStackTrace();
                 }
             }
-        });
+        };
+        
+        searchButton.clicked().addListener(this,searchListener);
+        searchFieldTextEdit.enterPressed().addListener(this, searchListener);
+        
         //searchButton.setStyleClass("btn btn-mini");
         navigation.addWidget(searchButton,AlignmentFlag.AlignRight);
         navigation.addWidget(searchFieldTextEdit,AlignmentFlag.AlignRight);
