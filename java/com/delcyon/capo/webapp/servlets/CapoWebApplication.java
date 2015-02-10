@@ -54,7 +54,6 @@ import eu.webtoolkit.jwt.Signal1;
 import eu.webtoolkit.jwt.Signal2;
 import eu.webtoolkit.jwt.TextFormat;
 import eu.webtoolkit.jwt.Utils;
-import eu.webtoolkit.jwt.WAbstractItemModel;
 import eu.webtoolkit.jwt.WAnchor;
 import eu.webtoolkit.jwt.WApplication;
 import eu.webtoolkit.jwt.WBootstrapTheme;
@@ -68,11 +67,10 @@ import eu.webtoolkit.jwt.WGridLayout;
 import eu.webtoolkit.jwt.WImage;
 import eu.webtoolkit.jwt.WLabel;
 import eu.webtoolkit.jwt.WLength;
+import eu.webtoolkit.jwt.WLength.Unit;
 import eu.webtoolkit.jwt.WLineEdit;
 import eu.webtoolkit.jwt.WLink;
-import eu.webtoolkit.jwt.WLength.Unit;
 import eu.webtoolkit.jwt.WLink.Type;
-import eu.webtoolkit.jwt.ItemDataRole;
 import eu.webtoolkit.jwt.WMenuItem;
 import eu.webtoolkit.jwt.WModelIndex;
 import eu.webtoolkit.jwt.WMouseEvent;
@@ -86,6 +84,8 @@ import eu.webtoolkit.jwt.WTabWidget;
 import eu.webtoolkit.jwt.WTable;
 import eu.webtoolkit.jwt.WTableView;
 import eu.webtoolkit.jwt.WText;
+import eu.webtoolkit.jwt.WTextArea;
+import eu.webtoolkit.jwt.WTextEdit;
 import eu.webtoolkit.jwt.WTreeView;
 import eu.webtoolkit.jwt.WVBoxLayout;
 import eu.webtoolkit.jwt.WValidator;
@@ -119,6 +119,7 @@ public class CapoWebApplication extends WApplication {
         setTitle("Capo");
         useStyleSheet(new WLink("/wr/source/sh_style.css"));
         require("/wr/source/sh_main.js");
+        require("/wr/ace/ace.js");
         try
         {
             jcrSession = CapoJcrServer.createSession();
@@ -681,7 +682,17 @@ public class CapoWebApplication extends WApplication {
     		                content = new String(((ResourceDescriptor) selectedItem).readBlock(null));
     		                ((ResourceDescriptor) selectedItem).reset(State.OPEN);
     		                String localName = ((ResourceDescriptor) selectedItem).getLocalName();
-    		                contentType = localName.substring(localName.indexOf(".")+1);
+    		                if(localName.indexOf(".") <= 0) //check for extension
+    		                {
+    		                   if(mimeType.equalsIgnoreCase("application/x-shellscript"))
+    		                   {
+    		                       contentType = "sh";
+    		                   }
+    		                }
+    		                else //use extenstion
+    		                {
+    		                    contentType = localName.substring(localName.indexOf(".")+1);
+    		                }
     		            }
     		            else if (contentFormatType == ContentFormatType.XML)
     		            {
@@ -736,6 +747,37 @@ public class CapoWebApplication extends WApplication {
                 wText.addStyleClass("bg-transparent");
                // System.out.println(textEdit.getText());
                 getDetailsPane().addTab(wText, "Content");
+                
+                
+                
+                WText textEdit = new WText("<div style='height: 100%; width: 100%' id='edit_content'>"+Utils.htmlEncode(content)+"</div>", TextFormat.XHTMLUnsafeText);                
+                textEdit.doJavaScript("var editor = ace.edit('edit_content');editor.setTheme('ace/theme/xcode');editor.getSession().setMode('ace/mode/"+contentType+"'); document.editor = editor;");                
+                WContainerWidget aceContainerWidget = new WContainerWidget();
+                WGridLayout gridLayout = new WGridLayout(aceContainerWidget);
+                WPushButton saveButton = new WPushButton("Save");
+                final WTextArea textArea = new WTextArea();
+                System.out.println(textArea.getJsRef());
+                saveButton.setJavaScriptMember("onclick", "function bobs()"
+                        + "{"
+                        + textArea.getJsRef()+".value = document.editor.getValue();"
+                        + textArea.getJsRef()+".onchange();"
+                        + "}");
+                
+                gridLayout.addWidget(textEdit,0,0);
+                gridLayout.addWidget(saveButton,1,0);
+                
+                gridLayout.setRowStretch(0, 100);
+                
+                textArea.setAttributeValue("style", "display: none");
+                textArea.changed().addListener(this, new Signal.Listener(){
+                    @Override
+                    public void trigger()
+                    {
+                       System.out.println("===>"+textArea.getValueText());                        
+                    }
+                });
+                gridLayout.addWidget(textArea,2,0);
+                getDetailsPane().addTab(aceContainerWidget, "Edit");
                 
             }
     		else if (mimeType != null && mimeType.startsWith("image/"))
