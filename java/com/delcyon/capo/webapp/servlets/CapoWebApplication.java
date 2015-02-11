@@ -85,7 +85,6 @@ import eu.webtoolkit.jwt.WTable;
 import eu.webtoolkit.jwt.WTableView;
 import eu.webtoolkit.jwt.WText;
 import eu.webtoolkit.jwt.WTextArea;
-import eu.webtoolkit.jwt.WTextEdit;
 import eu.webtoolkit.jwt.WTreeView;
 import eu.webtoolkit.jwt.WVBoxLayout;
 import eu.webtoolkit.jwt.WValidator;
@@ -666,8 +665,31 @@ public class CapoWebApplication extends WApplication {
     		                }
     		            });
     		            
+    		            WPushButton clearContentPushButton = new WPushButton("Clear Content");
+    		            clearContentPushButton.clicked().addListener(this, new Signal.Listener() {
+                            public void trigger() {
+                                try
+                                {
+                                    ((ResourceDescriptor) selectedItem).writeBlock(null, "".getBytes());                                    
+                                    ((ResourceDescriptor) selectedItem).getResourceMetaData(null).refresh();
+//                                    ((ResourceDescriptor) selectedItem).advanceState(State.CLOSED,null);
+//                                    ((ResourceDescriptor) selectedItem).reset(State.OPEN);
+                                    ((ResourceDescriptorItemModel) tableView.getModel()).reload();
+//                                    upload.setProgressBar(new WProgressBar());                                    
+//                                    upload.show();
+//                                    upload.enableAjax();
+                                    selectedItemChanged();
+                                }
+                                catch (Exception e)
+                                {                                    
+                                    e.printStackTrace();
+                                }
+                            }
+                        });
+    		            
     		            detailsContainerWidget.addWidget(upload);
     		            detailsContainerWidget.addWidget(anchor);
+    		            detailsContainerWidget.addWidget(clearContentPushButton);
     		            ContentFormatType contentFormatType = ((ResourceDescriptor) selectedItem).getResourceMetaData(null).getContentFormatType();
     		            mimeType = ((ResourceDescriptor) selectedItem).getResourceMetaData(null).getValue(MimeTypeFilterInputStream.MIME_TYPE_ATTRIBUTE);
     		            fileURI = ((ResourceDescriptor) selectedItem).getResourceMetaData(null).getResourceURI().getBaseURI();
@@ -676,11 +698,18 @@ public class CapoWebApplication extends WApplication {
     		            	mimeType = "";
     		            }
     		            long length = ((ResourceDescriptor) selectedItem).getResourceMetaData(null).getLength();
-    		            if(contentFormatType == ContentFormatType.TEXT)
+    		            if(contentFormatType == ContentFormatType.TEXT || contentFormatType == ContentFormatType.NO_CONTENT)
     		            {
-    		                ((ResourceDescriptor) selectedItem).getResourceState();
-    		                content = new String(((ResourceDescriptor) selectedItem).readBlock(null));
-    		                ((ResourceDescriptor) selectedItem).reset(State.OPEN);
+    		                if(contentFormatType == ContentFormatType.NO_CONTENT)
+    		                {
+    		                    content = "";
+    		                }
+    		                else
+    		                {
+    		                    ((ResourceDescriptor) selectedItem).getResourceState();
+    		                    content = new String(((ResourceDescriptor) selectedItem).readBlock(null));
+    		                    ((ResourceDescriptor) selectedItem).reset(State.OPEN);
+    		                }
     		                String localName = ((ResourceDescriptor) selectedItem).getLocalName();
     		                if(localName.indexOf(".") <= 0) //check for extension
     		                {
@@ -723,7 +752,7 @@ public class CapoWebApplication extends WApplication {
     		                content = HexUtil.dump(bytes); 
     		                contentType = "hex";
 
-    		            }
+    		            }    		            
     		        }
     		    } catch (Exception e)
     		    {
@@ -731,7 +760,7 @@ public class CapoWebApplication extends WApplication {
     		    }
     		}
     		
-    		if (content != null && content.trim().isEmpty() == false)
+    		if (content != null)
             {               
                
                // WTextArea textEdit = new WTextArea(Utils.htmlEncode(content));
@@ -773,7 +802,23 @@ public class CapoWebApplication extends WApplication {
                     @Override
                     public void trigger()
                     {
-                       System.out.println("===>"+textArea.getValueText());                        
+                       System.out.println("===>"+textArea.getValueText());
+                       try
+                       {
+                           ((ResourceDescriptor) selectedItem).writeBlock(null, textArea.getValueText().getBytes());
+                           ((ResourceDescriptor) selectedItem).getResourceMetaData(null).refresh();
+                           ((ResourceDescriptor) selectedItem).advanceState(State.CLOSED,null);
+                           ((ResourceDescriptor) selectedItem).reset(State.OPEN);
+                           ((ResourceDescriptorItemModel) tableView.getModel()).reload();
+//                           upload.setProgressBar(new WProgressBar());                                    
+//                           upload.show();
+//                           upload.enableAjax();
+                           selectedItemChanged();
+                       }                                
+                       catch (Exception e)
+                       {                                    
+                           e.printStackTrace();
+                       }
                     }
                 });
                 gridLayout.addWidget(textArea,2,0);
@@ -951,7 +996,7 @@ public class CapoWebApplication extends WApplication {
                         System.out.println(lang+"--"+searchFieldTextEdit.getText());
                     }
                   //Query query = jcrSession.getWorkspace().getQueryManager().createQuery("//element(*, nt:unstructured)[jcr:contains(@content, '"+searchFieldTextEdit.getText()+"')/(@content)]", Query.XPATH);
-                  Query query = jcrSession.getWorkspace().getQueryManager().createQuery("SELECT * FROM [nt:unstructured] as n WHERE CONTAINS(n.content, '"+searchFieldTextEdit.getText()+"')", Query.JCR_SQL2);
+                  Query query = jcrSession.getWorkspace().getQueryManager().createQuery("SELECT * FROM [nt:unstructured] as n WHERE CONTAINS(n.*, '"+searchFieldTextEdit.getText()+"')", Query.JCR_SQL2);
                   QueryResult result = query.execute();
                   for (String lang : result.getColumnNames())
                   {
@@ -959,7 +1004,7 @@ public class CapoWebApplication extends WApplication {
                   }
             
                   // Iterate over the nodes in the results ...
-                  int excerptWidth = 30;
+                  int excerptWidth = 50;
                   RowIterator rows = result.getRows();
                   System.out.println("=============================");
 
