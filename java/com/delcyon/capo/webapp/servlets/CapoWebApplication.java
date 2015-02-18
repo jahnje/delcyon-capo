@@ -38,6 +38,7 @@ import com.delcyon.capo.webapp.models.ResourceDescriptorItemModel;
 import com.delcyon.capo.webapp.servlets.resource.AbstractResourceServlet;
 import com.delcyon.capo.webapp.servlets.resource.WResourceDescriptor;
 import com.delcyon.capo.webapp.widgets.CapoWTreeView;
+import com.delcyon.capo.webapp.widgets.WAceEditor;
 import com.delcyon.capo.webapp.widgets.WCSSItemDelegate;
 import com.delcyon.capo.xml.dom.ResourceDocument;
 import com.delcyon.capo.xml.dom.ResourceDocumentBuilder;
@@ -778,50 +779,45 @@ public class CapoWebApplication extends WApplication {
                 getDetailsPane().addTab(wText, "Content");
                 
                 
-                
-                WText textEdit = new WText("<div style='height: 100%; width: 100%' id='edit_content'>"+Utils.htmlEncode(content)+"</div>", TextFormat.XHTMLUnsafeText);                
-                textEdit.doJavaScript("var editor = ace.edit('edit_content');editor.setTheme('ace/theme/xcode');editor.getSession().setMode('ace/mode/"+contentType+"'); document.editor = editor;");                
-                WContainerWidget aceContainerWidget = new WContainerWidget();
-                WGridLayout gridLayout = new WGridLayout(aceContainerWidget);
-                WPushButton saveButton = new WPushButton("Save");
-                final WTextArea textArea = new WTextArea();
-                System.out.println(textArea.getJsRef());
-                saveButton.setJavaScriptMember("onclick", "function bobs()"
-                        + "{"
-                        + textArea.getJsRef()+".value = document.editor.getValue();"
-                        + textArea.getJsRef()+".onchange();"
-                        + "}");
-                
-                gridLayout.addWidget(textEdit,0,0);
-                gridLayout.addWidget(saveButton,1,0);
-                
-                gridLayout.setRowStretch(0, 100);
-                
-                textArea.setAttributeValue("style", "display: none");
-                textArea.changed().addListener(this, new Signal.Listener(){
-                    @Override
-                    public void trigger()
-                    {
-                       System.out.println("===>"+textArea.getValueText());
+                //===================================START ACE TEXT EDITOR================================
+                //TODO move to WAceEditor
+                WAceEditor textEdit = new WAceEditor(Utils.htmlEncode(content), TextFormat.XHTMLUnsafeText);                
+                textEdit.doJavaScript(textEdit.getJsRef()+".editor = ace.edit("+textEdit.getJsRef()+");"
+                        + textEdit.getJsRef()+".editor.setTheme('ace/theme/xcode');"
+                        + textEdit.getJsRef()+".editor.getSession().setMode('ace/mode/"+contentType+"');"
+                        //+ textEdit.getJsRef()+".editor.setReadOnly(true);"
+                        );
+                textEdit.save().addListener(this, new Signal1.Listener<String>()
+                {
+                   public void trigger(String arg1) 
+                   {
                        try
                        {
-                           ((ResourceDescriptor) selectedItem).writeBlock(null, textArea.getValueText().getBytes());
+                           ((ResourceDescriptor) selectedItem).writeBlock(null, arg1.getBytes());
                            ((ResourceDescriptor) selectedItem).getResourceMetaData(null).refresh();
                            ((ResourceDescriptor) selectedItem).advanceState(State.CLOSED,null);
                            ((ResourceDescriptor) selectedItem).reset(State.OPEN);
-                           ((ResourceDescriptorItemModel) tableView.getModel()).reload();
-//                           upload.setProgressBar(new WProgressBar());                                    
-//                           upload.show();
-//                           upload.enableAjax();
+                           ((ResourceDescriptorItemModel) tableView.getModel()).reload();                          
                            selectedItemChanged();
-                       }                                
-                       catch (Exception e)
-                       {                                    
-                           e.printStackTrace();
+                       } catch (Exception exception)
+                       {
+                           exception.printStackTrace();
                        }
-                    }
+                   }; 
                 });
-                gridLayout.addWidget(textArea,2,0);
+                
+                
+
+                WPushButton saveButton = new WPushButton("Save");
+                saveButton.setJavaScriptMember("onclick", "function (){"+textEdit.save().createCall(textEdit.getJsRef()+".editor.getValue()")+"}");
+                
+                WContainerWidget aceContainerWidget = new WContainerWidget();
+                WGridLayout gridLayout = new WGridLayout(aceContainerWidget);
+                gridLayout.addWidget(textEdit,0,0);
+                gridLayout.addWidget(saveButton,1,0);                
+                gridLayout.setRowStretch(0, 100);
+              //===================================END ACE TEXT EDITOR================================
+               
                 getDetailsPane().addTab(aceContainerWidget, "Edit");
                 
             }
