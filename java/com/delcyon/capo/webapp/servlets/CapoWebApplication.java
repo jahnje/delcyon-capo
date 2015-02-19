@@ -39,6 +39,7 @@ import com.delcyon.capo.webapp.servlets.resource.AbstractResourceServlet;
 import com.delcyon.capo.webapp.servlets.resource.WResourceDescriptor;
 import com.delcyon.capo.webapp.widgets.CapoWTreeView;
 import com.delcyon.capo.webapp.widgets.WAceEditor;
+import com.delcyon.capo.webapp.widgets.WAceEditor.Theme;
 import com.delcyon.capo.webapp.widgets.WCSSItemDelegate;
 import com.delcyon.capo.xml.dom.ResourceDocument;
 import com.delcyon.capo.xml.dom.ResourceDocumentBuilder;
@@ -117,8 +118,6 @@ public class CapoWebApplication extends WApplication {
         useStyleSheet(new WLink("/wr/css/local.css"));
         //setCssTheme("polished");
         setTitle("Capo");
-        useStyleSheet(new WLink("/wr/source/sh_style.css"));
-        require("/wr/source/sh_main.js");
         require("/wr/ace/ace.js");
         try
         {
@@ -609,6 +608,7 @@ public class CapoWebApplication extends WApplication {
     		
     		String content = null;
     		String contentType = null;
+    		ContentFormatType contentFormatType = null;
     		String mimeType = null;
     		String fileURI = null;
     		if (selectedItem instanceof Element)
@@ -691,7 +691,7 @@ public class CapoWebApplication extends WApplication {
     		            detailsContainerWidget.addWidget(upload);
     		            detailsContainerWidget.addWidget(anchor);
     		            detailsContainerWidget.addWidget(clearContentPushButton);
-    		            ContentFormatType contentFormatType = ((ResourceDescriptor) selectedItem).getResourceMetaData(null).getContentFormatType();
+    		            contentFormatType = ((ResourceDescriptor) selectedItem).getResourceMetaData(null).getContentFormatType();
     		            mimeType = ((ResourceDescriptor) selectedItem).getResourceMetaData(null).getValue(MimeTypeFilterInputStream.MIME_TYPE_ATTRIBUTE);
     		            fileURI = ((ResourceDescriptor) selectedItem).getResourceMetaData(null).getResourceURI().getBaseURI();
     		            if(mimeType == null)
@@ -765,61 +765,36 @@ public class CapoWebApplication extends WApplication {
             {               
                
                // WTextArea textEdit = new WTextArea(Utils.htmlEncode(content));
-    		    
-                WText wText = new WText("<pre class='sh_"+contentType+" bg-transparent'>"+Utils.htmlEncode(content)+"</pre>", TextFormat.XHTMLUnsafeText);
-                
-                if(contentType != null && AbstractResourceServlet.getResourceServletInstance().exists("/wr/source/lang/sh_"+contentType+".js"))
-                {
-                    
-                    WApplication.getInstance().require("/wr/source/lang/sh_"+contentType+".js");
-                    wText.doJavaScript("sh_highlightDocument();");
-                }
-                wText.addStyleClass("bg-transparent");
-               // System.out.println(textEdit.getText());
+    		    WAceEditor wText = new WAceEditor(content,contentType);
+    		    wText.setReadOnly(true);
+    		    wText.setTheme(Theme.eclipse);
                 getDetailsPane().addTab(wText, "Content");
-                
-                
-                //===================================START ACE TEXT EDITOR================================
-                //TODO move to WAceEditor
-                WAceEditor textEdit = new WAceEditor(Utils.htmlEncode(content), TextFormat.XHTMLUnsafeText);                
-                textEdit.doJavaScript(textEdit.getJsRef()+".editor = ace.edit("+textEdit.getJsRef()+");"
-                        + textEdit.getJsRef()+".editor.setTheme('ace/theme/xcode');"
-                        + textEdit.getJsRef()+".editor.getSession().setMode('ace/mode/"+contentType+"');"
-                        //+ textEdit.getJsRef()+".editor.setReadOnly(true);"
-                        );
-                textEdit.save().addListener(this, new Signal1.Listener<String>()
-                {
-                   public void trigger(String arg1) 
-                   {
-                       try
-                       {
-                           ((ResourceDescriptor) selectedItem).writeBlock(null, arg1.getBytes());
-                           ((ResourceDescriptor) selectedItem).getResourceMetaData(null).refresh();
-                           ((ResourceDescriptor) selectedItem).advanceState(State.CLOSED,null);
-                           ((ResourceDescriptor) selectedItem).reset(State.OPEN);
-                           ((ResourceDescriptorItemModel) tableView.getModel()).reload();                          
-                           selectedItemChanged();
-                       } catch (Exception exception)
-                       {
-                           exception.printStackTrace();
-                       }
-                   }; 
-                });
-                
-                
 
-                WPushButton saveButton = new WPushButton("Save");
-                saveButton.setJavaScriptMember("onclick", "function (){"+textEdit.save().createCall(textEdit.getJsRef()+".editor.getValue()")+"}");
-                
-                WContainerWidget aceContainerWidget = new WContainerWidget();
-                WGridLayout gridLayout = new WGridLayout(aceContainerWidget);
-                gridLayout.addWidget(textEdit,0,0);
-                gridLayout.addWidget(saveButton,1,0);                
-                gridLayout.setRowStretch(0, 100);
-              //===================================END ACE TEXT EDITOR================================
-               
-                getDetailsPane().addTab(aceContainerWidget, "Edit");
-                
+                //don't allow binary content to be edited
+                if (contentFormatType != ContentFormatType.BINARY)
+                {
+                    WAceEditor aceEditor = new WAceEditor(content,contentType);                
+                    aceEditor.save().addListener(this, new Signal1.Listener<String>()
+                            {
+                        public void trigger(String arg1) 
+                        {
+                            try
+                            {
+
+                                ((ResourceDescriptor) selectedItem).writeBlock(null, arg1.getBytes());
+                                ((ResourceDescriptor) selectedItem).getResourceMetaData(null).refresh();
+                                ((ResourceDescriptor) selectedItem).advanceState(State.CLOSED,null);
+                                ((ResourceDescriptor) selectedItem).reset(State.OPEN);
+                                ((ResourceDescriptorItemModel) tableView.getModel()).reload();                                                                                                           
+                                selectedItemChanged();
+                            } catch (Exception exception)
+                            {
+                                exception.printStackTrace();
+                            }
+                        }; 
+                            });
+                    getDetailsPane().addTab(aceEditor, "Edit");
+                }
             }
     		else if (mimeType != null && mimeType.startsWith("image/"))
     		{

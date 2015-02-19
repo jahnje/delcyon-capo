@@ -2,6 +2,10 @@ package com.delcyon.capo.webapp.widgets;
 
 import eu.webtoolkit.jwt.JSignal1;
 import eu.webtoolkit.jwt.TextFormat;
+import eu.webtoolkit.jwt.Utils;
+import eu.webtoolkit.jwt.WContainerWidget;
+import eu.webtoolkit.jwt.WGridLayout;
+import eu.webtoolkit.jwt.WPushButton;
 import eu.webtoolkit.jwt.WText;
 
 /**
@@ -10,22 +14,125 @@ import eu.webtoolkit.jwt.WText;
  * @author jeremiah
  *
  */
-public class WAceEditor extends WText
+public class WAceEditor extends WContainerWidget
 {
 
-    private JSignal1<String> save;
+    public enum Theme
+    {
+        ambiance,
+        chaos,
+        chrome,
+        clouds,
+        clouds_midnight,
+        cobalt,
+        crimson_editor,
+        dawn,
+        deamweaver,
+        eclipse,
+        github,
+        idle_fingers,
+        katzenmilch,
+        kr_theme,
+        kuroir,
+        merbivore,
+        merbivore_soft,
+        mono_industrial,
+        monokai,
+        pastel_on_dark,
+        solarized_dark,
+        solarized_light,
+        terminal,
+        textmate,
+        tomorrow,
+        tomorrow_night,
+        tomorrow_night_blue,
+        tomorrow_night_bright,
+        tomorrow_night_eighties,
+        twilight,
+        vibrant_ink,
+        xcode
+    }
+    
+    private WText contentWText = null;
+    
+    private JSignal1<String> save = new JSignal1<String>(this, "save") { };
+    private String mode = null;
+    private Theme theme = Theme.xcode;
+    private boolean readOnly = false;
+
+    private WPushButton saveButton;
+    
     
     public WAceEditor()
     {
-        save = new JSignal1<String>(this, "save") { };
+        contentWText = new WText("",TextFormat.XHTMLUnsafeText);
+        contentWText.doJavaScript(contentWText.getJsRef()+".editor = ace.edit("+contentWText.getJsRef()+");"
+                + contentWText.getJsRef()+".editor.setTheme('ace/theme/"+theme+"');"
+                //+ contentWText.getJsRef()+".editor.getSession().setMode('ace/mode/"+mode+"');"
+                //+ textEdit.getJsRef()+".editor.setReadOnly(true);"
+                );
+        saveButton = new WPushButton("Save");
+        saveButton.setJavaScriptMember("onclick", "function (){"+this.save().createCall(contentWText.getJsRef()+".editor.getValue()")+"}");
+        
+        
+        WGridLayout gridLayout = new WGridLayout(this);
+        gridLayout.addWidget(contentWText,0,0);
+        gridLayout.addWidget(saveButton,1,0);                
+        gridLayout.setRowStretch(0, 100);
     }
     
-    public WAceEditor(String string, TextFormat xhtmlunsafetext)
+    public WAceEditor(String content,String mode)
     {
-        super(string, xhtmlunsafetext);
-        save = new JSignal1<String>(this, "save") { };
+        this();
+        setMode(mode);
+        contentWText.setText(Utils.htmlEncode(content));        
     }
 
+    //=====================Properties============================
+    public void setText(String content)
+    {
+        contentWText.setText(Utils.htmlEncode(content));
+    }
+    
+    //=====================ACE PROPERTIES========================
+    public void setTheme(Theme theme)
+    {
+        this.theme = theme;
+        contentWText.doJavaScript(contentWText.getJsRef()+".editor.setTheme('ace/theme/"+theme+"');");
+    }
+    
+    public Theme getTheme()
+    {
+        return theme;
+    }
+    
+    
+    public void setReadOnly(boolean readOnly)
+    {
+        this.readOnly = readOnly;
+        contentWText.doJavaScript(contentWText.getJsRef()+".editor.setReadOnly("+readOnly+");");        
+        saveButton.setHidden(readOnly);        
+    }
+    
+    public boolean isReadOnly()
+    {
+        return readOnly;
+    }
+    
+    public void setMode(String mode)
+    {
+        this.mode = mode;
+        contentWText.doJavaScript(contentWText.getJsRef()+".editor.getSession().setMode('ace/mode/"+mode+"');");
+    }
+    
+    public String getMode()
+    {
+        return mode;
+    }
+    
+    
+    
+    //========================Events=============================
     public JSignal1<String> save() { return save; }
 
     
