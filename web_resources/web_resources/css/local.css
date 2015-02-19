@@ -43,3 +43,9 @@ table {
 {
     width: 100%;
 }
+
+.editorArea {
+    border: 1px ;
+    border-color: lightgrey;
+    border-style: solid;
+}

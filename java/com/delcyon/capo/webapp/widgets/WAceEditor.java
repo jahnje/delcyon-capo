@@ -66,8 +66,10 @@ public class WAceEditor extends WContainerWidget
     public WAceEditor()
     {
         contentWText = new WText("",TextFormat.XHTMLUnsafeText);
+        contentWText.setStyleClass("editorArea"); 
         contentWText.doJavaScript(contentWText.getJsRef()+".editor = ace.edit("+contentWText.getJsRef()+");"
                 + contentWText.getJsRef()+".editor.setTheme('ace/theme/"+theme+"');"
+                + contentWText.getJsRef()+".editor.setShowPrintMargin(false);"
                 //+ contentWText.getJsRef()+".editor.getSession().setMode('ace/mode/"+mode+"');"
                 //+ textEdit.getJsRef()+".editor.setReadOnly(true);"
                 );
