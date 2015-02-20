@@ -41,6 +41,7 @@ import com.delcyon.capo.webapp.widgets.CapoWTreeView;
 import com.delcyon.capo.webapp.widgets.WAceEditor;
 import com.delcyon.capo.webapp.widgets.WAceEditor.Theme;
 import com.delcyon.capo.webapp.widgets.WCSSItemDelegate;
+import com.delcyon.capo.webapp.widgets.CapoWDetailPane;
 import com.delcyon.capo.xml.dom.ResourceDocument;
 import com.delcyon.capo.xml.dom.ResourceDocumentBuilder;
 
@@ -102,7 +103,7 @@ public class CapoWebApplication extends WApplication {
 	private WContainerWidget contentPane;
 	private WGridLayout contentPaneLayout;
 	private WVBoxLayout detailsPaneLayout;
-	private WTabWidget detailsPane;
+	private CapoWDetailPane detailsPane;
 	private WTabWidget subDetailsPane;
 	private CapoWTreeView treeView;
     private ResourceDocument document;
@@ -301,11 +302,11 @@ public class CapoWebApplication extends WApplication {
 		return subDetailsPane;
 	}
 
-	private WTabWidget getDetailsPane() 
+	private CapoWDetailPane getDetailsPane() 
     {
     	if (detailsPane == null)
     	{
-    		detailsPane = new WTabWidget();
+    		detailsPane = new CapoWDetailPane();
     	
     	}
     	return detailsPane;
@@ -589,223 +590,8 @@ public class CapoWebApplication extends WApplication {
     	else if (selectedIndexes.size() == 1)
     	{
     		WModelIndex modelIndex = selectedIndexes.first();
-    		final Object selectedItem =  modelIndex.getInternalPointer();
-    		while(getDetailsPane().getCount() > 0)
-    		{    			
-    			getDetailsPane().removeTab(getDetailsPane().getWidget(0));    			
-    		}
-    		WContainerWidget detailsContainerWidget = new WContainerWidget();
-    		final WTableView tableView = new WTableView();
-    		tableView.addStyleClass("bg-transparent");
-    		tableView.setItemDelegateForColumn(0,new WCSSItemDelegate("font-weight: bold;"));
-    		tableView.setSortingEnabled(true);
-    		tableView.setSelectable(true);   		
-    		tableView.setAlternatingRowColors(true);    		
-    		tableView.setColumnResizeEnabled(true);
-    		tableView.setColumnAlignment(0, AlignmentFlag.AlignRight);
-    		tableView.setColumnWidth(1, new WLength(500));
-    		tableView.setSelectionMode(SelectionMode.SingleSelection);
-    		
-    		String content = null;
-    		String contentType = null;
-    		ContentFormatType contentFormatType = null;
-    		String mimeType = null;
-    		String fileURI = null;
-    		if (selectedItem instanceof Element)
-    		{
-    		    tableView.setModel(new DomItemModel((Element) selectedItem, DomUse.ATTRIBUTES));
-    		    content = ((Element) selectedItem).getTextContent();
-    		}
-    		else if (selectedItem instanceof ResourceDescriptor)
-    		{
-    		    tableView.setModel(new ResourceDescriptorItemModel((ResourceDescriptor) selectedItem, DomUse.ATTRIBUTES));
-    		    try
-    		    {
-    		        //if(((ResourceDescriptor) selectedItem).getResourceMetaData(null).isContainer() == false)
-    		        {
-    		            WAnchor anchor = new WAnchor(new WLink(new WResourceDescriptor((ResourceDescriptor) selectedItem)),"Download");
-    		            anchor.setTarget(AnchorTarget.TargetNewWindow);
-    		            final WFileUpload upload = new WFileUpload();
-    		            upload.setFileTextSize(10000);
-    		            upload.setProgressBar(new WProgressBar());
-    		            upload.changed().addListener(this, new Signal.Listener() {
-    		                public void trigger() {
-    		                    upload.upload();    		                   
-    		                }
-    		            });
-    		            upload.uploaded().addListener(this, new Signal.Listener() {
-    		                public void trigger() {
-    		                    System.out.println("done");
-    		                    List<UploadedFile> uploadedFiles = upload.getUploadedFiles();
-    		                    String tempFileName = uploadedFiles.get(0).getSpoolFileName();
-    		                    File tempFile = new File(tempFileName);
-    		                    try
-                                {
-    		                        OutputStream outputStream = ((ResourceDescriptor) selectedItem).getOutputStream(null);
-                                    StreamUtil.readInputStreamIntoOutputStream(new FileInputStream(tempFile), outputStream );
-                                    outputStream.close();
-                                    ((ResourceDescriptor) selectedItem).getResourceMetaData(null).refresh();
-                                    ((ResourceDescriptor) selectedItem).advanceState(State.CLOSED,null);
-                                    ((ResourceDescriptor) selectedItem).reset(State.OPEN);
-                                    ((ResourceDescriptorItemModel) tableView.getModel()).reload();
-//                                    upload.setProgressBar(new WProgressBar());                                    
-//                                    upload.show();
-//                                    upload.enableAjax();
-                                    selectedItemChanged();
-                                }                                
-                                catch (Exception e)
-                                {                                    
-                                    e.printStackTrace();
-                                }
-    		                    
-    		                }
-    		            });
-    		            upload.fileTooLarge().addListener(this, new Signal.Listener() {
-    		                public void trigger() {
-    		                    System.out.println("error, too large");
-    		                }
-    		            });
-    		            
-    		            WPushButton clearContentPushButton = new WPushButton("Clear Content");
-    		            clearContentPushButton.clicked().addListener(this, new Signal.Listener() {
-                            public void trigger() {
-                                try
-                                {
-                                    ((ResourceDescriptor) selectedItem).writeBlock(null, "".getBytes());                                    
-                                    ((ResourceDescriptor) selectedItem).getResourceMetaData(null).refresh();
-//                                    ((ResourceDescriptor) selectedItem).advanceState(State.CLOSED,null);
-//                                    ((ResourceDescriptor) selectedItem).reset(State.OPEN);
-                                    ((ResourceDescriptorItemModel) tableView.getModel()).reload();
-//                                    upload.setProgressBar(new WProgressBar());                                    
-//                                    upload.show();
-//                                    upload.enableAjax();
-                                    selectedItemChanged();
-                                }
-                                catch (Exception e)
-                                {                                    
-                                    e.printStackTrace();
-                                }
-                            }
-                        });
-    		            
-    		            detailsContainerWidget.addWidget(upload);
-    		            detailsContainerWidget.addWidget(anchor);
-    		            detailsContainerWidget.addWidget(clearContentPushButton);
-    		            contentFormatType = ((ResourceDescriptor) selectedItem).getResourceMetaData(null).getContentFormatType();
-    		            mimeType = ((ResourceDescriptor) selectedItem).getResourceMetaData(null).getValue(MimeTypeFilterInputStream.MIME_TYPE_ATTRIBUTE);
-    		            fileURI = ((ResourceDescriptor) selectedItem).getResourceMetaData(null).getResourceURI().getBaseURI();
-    		            if(mimeType == null)
-    		            {
-    		            	mimeType = "";
-    		            }
-    		            long length = ((ResourceDescriptor) selectedItem).getResourceMetaData(null).getLength();
-    		            if(contentFormatType == ContentFormatType.TEXT || contentFormatType == ContentFormatType.NO_CONTENT)
-    		            {
-    		                if(contentFormatType == ContentFormatType.NO_CONTENT)
-    		                {
-    		                    content = "";
-    		                }
-    		                else
-    		                {
-    		                    ((ResourceDescriptor) selectedItem).getResourceState();
-    		                    content = new String(((ResourceDescriptor) selectedItem).readBlock(null));
-    		                    ((ResourceDescriptor) selectedItem).reset(State.OPEN);
-    		                }
-    		                String localName = ((ResourceDescriptor) selectedItem).getLocalName();
-    		                if(localName.indexOf(".") <= 0) //check for extension
-    		                {
-    		                   if(mimeType.equalsIgnoreCase("application/x-shellscript"))
-    		                   {
-    		                       contentType = "sh";
-    		                   }
-    		                }
-    		                else //use extenstion
-    		                {
-    		                    contentType = localName.substring(localName.indexOf(".")+1);
-    		                }
-    		            }
-    		            else if (contentFormatType == ContentFormatType.XML)
-    		            {
-    		                ((ResourceDescriptor) selectedItem).getResourceState();
-                            content = new String(((ResourceDescriptor) selectedItem).readBlock(null));
-                            ((ResourceDescriptor) selectedItem).reset(State.OPEN);
-                            contentType = "xml";
-    		            }
-    		            else if(contentFormatType == ContentFormatType.BINARY && length < 70000l && mimeType.startsWith("image/") == false)
-    		            {
-    		                byte[] bytes = ((ResourceDescriptor) selectedItem).readBlock(null);
-    		                ((ResourceDescriptor) selectedItem).reset(State.OPEN);
-//    		                char[] hexArray = "0123456789ABCDEF".toCharArray();
-//
-//    		                char[] hexChars = new char[(bytes.length * 3)+(bytes.length/16)];
-//    		                for ( int j = 0; j < bytes.length; j++ ) 
-//    		                {
-//    		                    int v = bytes[j] & 0xFF;
-//    		                    hexChars[j * 3] = hexArray[v >>> 4];
-//    		                    hexChars[j * 3 + 1] = hexArray[v & 0x0F];
-//    		                    hexChars[j * 3 + 2] = ' ';
-//    		                    if(j % 16 == 0)
-//    		                    {
-//    		                        
-//    		                    }
-//    		                }
-    		                
-    		                content = HexUtil.dump(bytes); 
-    		                contentType = "hex";
-
-    		            }    		            
-    		        }
-    		    } catch (Exception e)
-    		    {
-    		        e.printStackTrace();
-    		    }
-    		}
-    		
-    		if (content != null)
-            {               
-               
-               // WTextArea textEdit = new WTextArea(Utils.htmlEncode(content));
-    		    WAceEditor wText = new WAceEditor(content,contentType);
-    		    wText.setReadOnly(true);
-    		    wText.setTheme(Theme.eclipse);
-                getDetailsPane().addTab(wText, "Content");
-
-                //don't allow binary content to be edited
-                if (contentFormatType != ContentFormatType.BINARY)
-                {
-                    WAceEditor aceEditor = new WAceEditor(content,contentType);                
-                    aceEditor.save().addListener(this, new Signal1.Listener<String>()
-                            {
-                        public void trigger(String arg1) 
-                        {
-                            try
-                            {
-
-                                ((ResourceDescriptor) selectedItem).writeBlock(null, arg1.getBytes());
-                                ((ResourceDescriptor) selectedItem).getResourceMetaData(null).refresh();
-                                ((ResourceDescriptor) selectedItem).advanceState(State.CLOSED,null);
-                                ((ResourceDescriptor) selectedItem).reset(State.OPEN);
-                                ((ResourceDescriptorItemModel) tableView.getModel()).reload();                                                                                                           
-                                selectedItemChanged();
-                            } catch (Exception exception)
-                            {
-                                exception.printStackTrace();
-                            }
-                        }; 
-                            });
-                    getDetailsPane().addTab(aceEditor, "Edit");
-                }
-            }
-    		else if (mimeType != null && mimeType.startsWith("image/"))
-    		{
-    			WResourceDescriptor wResourceDescriptor = new WResourceDescriptor((ResourceDescriptor) selectedItem);
-    			getDetailsPane().addTab(new WImage(wResourceDescriptor, "Content"), "Content");
-    		}
-    		
-    		detailsContainerWidget.addWidget(tableView);
-    		getDetailsPane().addTab(detailsContainerWidget, "Details");
-    		getDetailsPane().getWidget(0).setAttributeValue("style", "background-color: rgba(255, 255, 255, 0.55);");
-    		
+    		final Object selectedItem =  modelIndex.getInternalPointer();    		
+    		getDetailsPane().setModel(selectedItem);    		
     	}
     }
     
