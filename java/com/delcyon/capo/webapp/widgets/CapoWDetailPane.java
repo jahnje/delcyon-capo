@@ -34,210 +34,439 @@ import eu.webtoolkit.jwt.WProgressBar;
 import eu.webtoolkit.jwt.WPushButton;
 import eu.webtoolkit.jwt.WTabWidget;
 import eu.webtoolkit.jwt.WTableView;
+import eu.webtoolkit.jwt.WWidget;
 import eu.webtoolkit.jwt.servlet.UploadedFile;
 
 public class CapoWDetailPane extends WTabWidget
 {
+    private static final String XML_CONTENT_TYPE = "xml";
+    private static final String HEX_CONTENT_TYPE = "hex";
+    private static final String SHELL_CONTENT_TYPE = "sh";    
+    private static final String MIMETYPE_IMAGE_PREFIX = "image/";    
+    private static final String APPLICATION_X_SHELLSCRIPT = "application/x-shellscript";
+    private static final String EXTENTION_DELIMITER = ".";
+    private static final String EMPTY_STRING = "";
     private Object model = null;
+    private WTableView attributeTableView;
+    private WContainerWidget detailsContainerWidget;
+    private String content = null;
+    private String contentType = null;
+    private ContentFormatType contentFormatType = null;
+    private String mimeType = null;
+    private long length = 0l;
+    private WLink downloadLink;
+    private WPushButton createContentPushButton;
+    private WAceEditor aceEditor;
+    private WAceEditor formattedContentDisplay;
 
-    public void setModel(Object model)
+    
+    /**
+     * Actually loads the data into the editor. This is the only place tabs and what not should be added since it's the main controller method for this class
+     * @param content - actual data to display
+     * @param contentType - ace mode to use when displaying data
+     * @param contentFormatType - Capo Content format type 
+     * @param mimeType - standard mime type 
+     * @param length - length of data
+     */
+    public void setContent(String content, String contentType, ContentFormatType contentFormatType, String mimeType, Long length)
     {
-        this.model = model;
-        while(this.getCount() > 0)
+        this.content = content;
+
+        //empty out all of the existing tabs since were going to add some random number back in
+        while(this.getCount() > 0) 
         {               
             this.removeTab(this.getWidget(0));              
         }
-        WContainerWidget detailsContainerWidget = new WContainerWidget();
-        final WTableView tableView = new WTableView();
-        tableView.addStyleClass("bg-transparent");
-        tableView.setItemDelegateForColumn(0,new WCSSItemDelegate("font-weight: bold;"));
-        tableView.setSortingEnabled(true);
-        tableView.setSelectable(true);          
-        tableView.setAlternatingRowColors(true);            
-        tableView.setColumnResizeEnabled(true);
-        tableView.setColumnAlignment(0, AlignmentFlag.AlignRight);
-        tableView.setColumnWidth(1, new WLength(500));
-        tableView.setSelectionMode(SelectionMode.SingleSelection);
         
-        String content = null;
-        String contentType = null;
-        ContentFormatType contentFormatType = null;
-        String mimeType = null;
-        String fileURI = null;
-        if (this.model instanceof Element)
-        {
-            tableView.setModel(new DomItemModel((Element) this.model, DomUse.ATTRIBUTES));
-            content = ((Element) this.model).getTextContent();
-        }
-        else if (this.model instanceof ResourceDescriptor)
-        {
-            tableView.setModel(new ResourceDescriptorItemModel((ResourceDescriptor) this.model, DomUse.ATTRIBUTES));
-            try
-            {
-                //if(((ResourceDescriptor) this.model).getResourceMetaData(null).isContainer() == false)
-                {
-                    WAnchor anchor = new WAnchor(new WLink(new WResourceDescriptor((ResourceDescriptor) this.model)),"Download");
-                    anchor.setTarget(AnchorTarget.TargetNewWindow);
-                    final WFileUpload upload = new WFileUpload();
-                    upload.setFileTextSize(10000);
-                    upload.setProgressBar(new WProgressBar());
-                    upload.changed().addListener(this, new Signal.Listener() {
-                        public void trigger() {
-                            upload.upload();                               
-                        }
-                    });
-                    upload.uploaded().addListener(this, new Signal.Listener() {
-                        public void trigger() {
-                            System.out.println("done");
-                            List<UploadedFile> uploadedFiles = upload.getUploadedFiles();
-                            String tempFileName = uploadedFiles.get(0).getSpoolFileName();
-                            File tempFile = new File(tempFileName);
-                            try
-                            {
-                                OutputStream outputStream = ((ResourceDescriptor) CapoWDetailPane.this.model).getOutputStream(null);
-                                StreamUtil.readInputStreamIntoOutputStream(new FileInputStream(tempFile), outputStream );
-                                outputStream.close();
-                                ((ResourceDescriptor) CapoWDetailPane.this.model).getResourceMetaData(null).refresh();
-                                ((ResourceDescriptor) CapoWDetailPane.this.model).advanceState(State.CLOSED,null);
-                                ((ResourceDescriptor) CapoWDetailPane.this.model).reset(State.OPEN);
-                                ((ResourceDescriptorItemModel) tableView.getModel()).reload();
-                                CapoWDetailPane.this.setModel(CapoWDetailPane.this.model);
-                                //selectedItemChanged();
-                            }                                
-                            catch (Exception e)
-                            {                                    
-                                e.printStackTrace();
-                            }
-                            
-                        }
-                    });
-                    upload.fileTooLarge().addListener(this, new Signal.Listener() {
-                        public void trigger() {
-                            System.out.println("error, too large");
-                        }
-                    });
-                    
-                    WPushButton clearContentPushButton = new WPushButton("Clear Content");
-                    clearContentPushButton.clicked().addListener(this, new Signal.Listener() {
-                        public void trigger() {
-                            try
-                            {
-                                ((ResourceDescriptor) CapoWDetailPane.this.model).writeBlock(null, "".getBytes());                                    
-                                ((ResourceDescriptor) CapoWDetailPane.this.model).getResourceMetaData(null).refresh();
-                                ((ResourceDescriptorItemModel) tableView.getModel()).reload();
-                                CapoWDetailPane.this.setModel(CapoWDetailPane.this.model);
-                                //selectedItemChanged();
-                            }
-                            catch (Exception e)
-                            {                                    
-                                e.printStackTrace();
-                            }
-                        }
-                    });
-                    
-                    detailsContainerWidget.addWidget(upload);
-                    detailsContainerWidget.addWidget(anchor);
-                    detailsContainerWidget.addWidget(clearContentPushButton);
-                    contentFormatType = ((ResourceDescriptor) this.model).getResourceMetaData(null).getContentFormatType();
-                    mimeType = ((ResourceDescriptor) this.model).getResourceMetaData(null).getValue(MimeTypeFilterInputStream.MIME_TYPE_ATTRIBUTE);
-                    fileURI = ((ResourceDescriptor) this.model).getResourceMetaData(null).getResourceURI().getBaseURI();
-                    if(mimeType == null)
-                    {
-                        mimeType = "";
-                    }
-                    long length = ((ResourceDescriptor) this.model).getResourceMetaData(null).getLength();
-                    if(contentFormatType == ContentFormatType.TEXT || contentFormatType == ContentFormatType.NO_CONTENT)
-                    {
-                        if(contentFormatType == ContentFormatType.NO_CONTENT)
-                        {
-                            content = "";
-                        }
-                        else
-                        {
-                            ((ResourceDescriptor) this.model).getResourceState();
-                            content = new String(((ResourceDescriptor) this.model).readBlock(null));
-                            ((ResourceDescriptor) this.model).reset(State.OPEN);
-                        }
-                        String localName = ((ResourceDescriptor) this.model).getLocalName();
-                        if(localName.indexOf(".") <= 0) //check for extension
-                        {
-                           if(mimeType.equalsIgnoreCase("application/x-shellscript"))
-                           {
-                               contentType = "sh";
-                           }
-                        }
-                        else //use extenstion
-                        {
-                            contentType = localName.substring(localName.indexOf(".")+1);
-                        }
-                    }
-                    else if (contentFormatType == ContentFormatType.XML)
-                    {
-                        ((ResourceDescriptor) this.model).getResourceState();
-                        content = new String(((ResourceDescriptor) this.model).readBlock(null));
-                        ((ResourceDescriptor) this.model).reset(State.OPEN);
-                        contentType = "xml";
-                    }
-                    else if(contentFormatType == ContentFormatType.BINARY && length < 70000l && mimeType.startsWith("image/") == false)
-                    {
-                        byte[] bytes = ((ResourceDescriptor) this.model).readBlock(null);
-                        ((ResourceDescriptor) this.model).reset(State.OPEN);
-                        content = HexUtil.dump(bytes); 
-                        contentType = "hex";
-
-                    }                       
-                }
-            } catch (Exception e)
-            {
-                e.printStackTrace();
-            }
-        }
-        
+        //null content is ok
         if (content != null)
         {               
-           
-           // WTextArea textEdit = new WTextArea(Utils.htmlEncode(content));
-            WAceEditor wText = new WAceEditor(content,contentType);
-            wText.setReadOnly(true);
-            wText.setTheme(Theme.eclipse);
-            this.addTab(wText, "Content");
 
+            //we can also work with empty content, we just don't want to show it if there's nothing there
+            if(length != null && length > 0l)
+            {                
+                getFormattedContentDisplay().setText(content);
+                getFormattedContentDisplay().setMode(contentType);
+                this.addTab(getFormattedContentDisplay(), "Content");
+            }
+                        
             //don't allow binary content to be edited
             if (contentFormatType != ContentFormatType.BINARY)
             {
-                WAceEditor aceEditor = new WAceEditor(content,contentType);                
-                aceEditor.save().addListener(this, new Signal1.Listener<String>()
-                {
-                    public void trigger(String arg1) 
-                    {
-                        try
-                        {
-
-                            ((ResourceDescriptor) CapoWDetailPane.this.model).writeBlock(null, arg1.getBytes());
-                            ((ResourceDescriptor) CapoWDetailPane.this.model).getResourceMetaData(null).refresh();
-                            ((ResourceDescriptor) CapoWDetailPane.this.model).advanceState(State.CLOSED,null);
-                            ((ResourceDescriptor) CapoWDetailPane.this.model).reset(State.OPEN);
-                            ((ResourceDescriptorItemModel) tableView.getModel()).reload();                                                                                                           
-                            CapoWDetailPane.this.setModel(CapoWDetailPane.this.model);
-                            //selectedItemChanged();
-                        } catch (Exception exception)
-                        {
-                            exception.printStackTrace();
-                        }
-                    }; 
-                });
-                this.addTab(aceEditor, "Edit");
+                getAceEditor().setText(content);
+                getAceEditor().setMode(contentType);
+                this.addTab(getAceEditor(), "Edit");
             }
-        }
-        else if (mimeType != null && mimeType.startsWith("image/"))
+        }//treat images a little differently, since we know what to do with them to showup
+        else if (mimeType != null && mimeType.startsWith(MIMETYPE_IMAGE_PREFIX))
         {
             WResourceDescriptor wResourceDescriptor = new WResourceDescriptor((ResourceDescriptor) this.model);
             this.addTab(new WImage(wResourceDescriptor, "Content"), "Content");
         }
         
-        detailsContainerWidget.addWidget(tableView);
-        this.addTab(detailsContainerWidget, "Details");
+        //update the download link with the new mode data
+        getDownloadLink().setResource(new WResourceDescriptor((ResourceDescriptor) this.model));
+        
+        //always add the details tab last
+        this.addTab(getDetailsContainerWidget(), "Details");
+        
+        //this might be able to be removed, but was put there when we we're using a background image 
         this.getWidget(0).setAttributeValue("style", "background-color: rgba(255, 255, 255, 0.55);");
+        
+    }
+    
+    /**
+     * this widget is here to simply add comcolor codeing to the content to make it more readable, but is ALWAYS readonly.
+     * @return
+     */
+    private WAceEditor getFormattedContentDisplay()
+    {
+        if(formattedContentDisplay == null)
+        {
+            formattedContentDisplay = new WAceEditor();
+            formattedContentDisplay.setTheme(Theme.eclipse); //TODO set via user preference
+            formattedContentDisplay.setReadOnly(true);
+        }
+        return formattedContentDisplay;
+    }
+    
+    /**
+     * This is the widget which actually edit's the content 
+     * @return
+     */
+    private WAceEditor getAceEditor()
+    {
+        if(aceEditor == null)
+        {
+            aceEditor = new WAceEditor();
+            aceEditor.setTheme(Theme.tomorrow);
+            //add a save listen to the editor
+            aceEditor.save().addListener(this, new Signal1.Listener<String>()
+            {
+                public void trigger(String arg1) 
+                {
+                    //update content
+                    CapoWDetailPane.this.content = arg1;
+                    //then save 
+                    save();
+                }
+            });
+        }
+        return aceEditor;
+    }
+    
+    /**
+     * this will save the 'content' to the 'model', then call refresh
+     */
+    private void save()
+    {
+        try
+        {            
+            ((ResourceDescriptor) model).writeBlock(null, content.getBytes());
+            refresh();
+        } catch (Exception exception)
+        {
+            exception.printStackTrace(); //TODO do something with this error
+        }
+        
+    }; 
+    
+    
+    /**
+     * 
+     * @return the text content of this detail pane
+     */
+    public String getContent()
+    {
+        return content;
+    }
+    
+    
+    /**
+     * 
+     * @param model, can be either a resource descriptor or DOM element.  
+     */
+    public void setModel(Object model)
+    {
+        this.model = model;
+        
+        //keep all of our variable as nulls, so we don't get weird on each model reset
+        String content = null;
+        String contentType = null;
+        ContentFormatType contentFormatType = null;
+        String mimeType = null;
+        getCreateContentButton().setHidden(true);
+        long length = 0l;
+
+        
+        if (this.model instanceof Element)
+        {
+            getAttributeTableView().setModel(new DomItemModel((Element) this.model, DomUse.ATTRIBUTES));
+            //set some decent defaults for xml data
+            content = ((Element) this.model).getTextContent();
+            contentFormatType = ContentFormatType.XML;
+            contentType = XML_CONTENT_TYPE;
+        }
+        else if (this.model instanceof ResourceDescriptor)
+        {
+            //go ahead a cast here so we can have some cleaner looking code
+            ResourceDescriptor resourceDescriptor = (ResourceDescriptor) this.model;
+            getAttributeTableView().setModel(new ResourceDescriptorItemModel(resourceDescriptor, DomUse.ATTRIBUTES));
+            try
+            {
+                //used to be a container check here, but doesn't make since when backing is JCR
+                
+                //start figuring out what kind of data we're dealing with
+                contentFormatType = resourceDescriptor.getResourceMetaData(null).getContentFormatType();
+                mimeType = resourceDescriptor.getResourceMetaData(null).getValue(MimeTypeFilterInputStream.MIME_TYPE_ATTRIBUTE);
+
+                //default mimetype to empty string so we don't have to litter null checks every where
+                if(mimeType == null) 
+                {
+                    mimeType = EMPTY_STRING;
+                }
+                
+                length = resourceDescriptor.getResourceMetaData(null).getLength();
+                
+                //figure out the contentType. Content type basically matches up to any available ACE mode in the ace editor
+                if(contentFormatType == ContentFormatType.TEXT || contentFormatType == ContentFormatType.NO_CONTENT)
+                {
+                    if(contentFormatType == ContentFormatType.NO_CONTENT)
+                    {
+                        //no content? enable the create button
+                        getCreateContentButton().setHidden(false);
+                    }
+                    else
+                    {//other wise use the data we have in the model
+                        resourceDescriptor.getResourceState();
+                        content = new String(resourceDescriptor.readBlock(null));
+                        resourceDescriptor.reset(State.OPEN);
+                    }
+                    
+                    //see if the node name has some sort of clue as to the editor mode to use
+                    String localName = resourceDescriptor.getLocalName();
+                    if(localName.indexOf(EXTENTION_DELIMITER) <= 0) //check for extension
+                    {
+                        //ok, well what about the mime type
+                        if(mimeType.equalsIgnoreCase(APPLICATION_X_SHELLSCRIPT))
+                        {
+                            //to bad we only know one type.. :-(
+                            contentType = SHELL_CONTENT_TYPE;
+                        }
+                    }
+                    else //use extension
+                    {
+                        //sure hope this matches up to some available ACE editor mode
+                        contentType = localName.substring(localName.indexOf(EXTENTION_DELIMITER)+1);
+                    }
+                }
+                
+                //ok, this is XML not text, so put the editor in XML mode
+                //TODO once we become namespace aware, we should use somesort of scheme aware xml editor, for known XML schemas
+                else if (contentFormatType == ContentFormatType.XML)
+                {
+                    resourceDescriptor.getResourceState();
+                    content = new String(resourceDescriptor.readBlock(null));
+                    resourceDescriptor.reset(State.OPEN);
+                    contentType = XML_CONTENT_TYPE;
+                }
+                //looks like we have some binary content here, and it's not an image, lets dump it to a nice hex output
+                //TODO this should probably not default to showing the binary, but present the user with the option to view binary content
+                //unless it's a registered mimetype, that the user, or admin has set in their preferences or something.
+                else if(contentFormatType == ContentFormatType.BINARY && length < 70000l && mimeType.startsWith(MIMETYPE_IMAGE_PREFIX) == false)
+                {
+                    byte[] bytes = resourceDescriptor.readBlock(null);
+                    resourceDescriptor.reset(State.OPEN);
+                    content = HexUtil.dump(bytes); 
+                    contentType = HEX_CONTENT_TYPE;
+
+                }                       
+
+            } catch (Exception e)
+            {
+                e.printStackTrace();
+            }
+        }
+  
+        setContent(content, contentType, contentFormatType, mimeType, length);
+  
     }
 
+    
+    
+    /**
+     * This just empty out any content from the model, then refreshes the widget
+     */
+    public void clearContent()
+    {
+        try
+        {
+            ((ResourceDescriptor) CapoWDetailPane.this.model).writeBlock(null, EMPTY_STRING.getBytes());
+            refresh();
+        }
+        catch (Exception e)
+        {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }                                            
+    }
+    
+    
+    
+    private WContainerWidget getDetailsContainerWidget()
+    {
+        if(detailsContainerWidget == null)
+        {
+            detailsContainerWidget = new WContainerWidget();
+            WAnchor anchor = new WAnchor(getDownloadLink(),"Download"); //this is a link so "save as" will work 
+            
+            anchor.setTarget(AnchorTarget.TargetNewWindow);
+            final WFileUpload upload = new WFileUpload();
+            upload.setFileTextSize(10000); //needed to get a basic starting point on the progress apparently
+            upload.setProgressBar(new WProgressBar());
+            
+            //fired when the user selects a file to upload, which we use to indicate that we'd like to start uploading
+            upload.changed().addListener(this, new Signal.Listener() {
+                public void trigger() {
+                    upload.upload();                               
+                }
+            });
+            
+            //trigger that gets called once a file is done uploading
+            upload.uploaded().addListener(this, new Signal.Listener() {
+                public void trigger() {
+                    try
+                    {
+                        //we always get the first uploaded file, as we don't allow multiple files here
+                        List<UploadedFile> uploadedFiles = upload.getUploadedFiles();
+                        String tempFileName = uploadedFiles.get(0).getSpoolFileName();
+                        File tempFile = new File(tempFileName);
+                        //once we have a handle on the file, stream it into our resource descriptor
+                        //This is a little crazy, i'd rather pass a pointer around, but we're dealing with streams and jcr and all sorts of stuff
+                        OutputStream outputStream = ((ResourceDescriptor) CapoWDetailPane.this.model).getOutputStream(null);
+                        StreamUtil.readInputStreamIntoOutputStream(new FileInputStream(tempFile), outputStream );
+                        outputStream.close();
+                        refresh();
+                    }                                
+                    catch (Exception e)
+                    {                                    
+                        e.printStackTrace();
+                    }
+                    
+                }
+            });
+            
+            //TODO This upload error has to be processed. We really need an error dialog
+            upload.fileTooLarge().addListener(this, new Signal.Listener() {
+                public void trigger() {
+                    System.err.println("error, too large");
+                }
+            });
+            
+            //clean content button.
+            WPushButton clearContentPushButton = new WPushButton("Clear Content");
+            clearContentPushButton.clicked().addListener(this, new Signal.Listener() {
+                public void trigger() {                           
+                        clearContent();                           
+                }
+            });
+            
+            
+            
+            detailsContainerWidget.addWidget(upload);
+            detailsContainerWidget.addWidget(anchor);
+            detailsContainerWidget.addWidget(clearContentPushButton);
+            detailsContainerWidget.addWidget(getCreateContentButton());
+            detailsContainerWidget.addWidget(getAttributeTableView());
+        }
+        return detailsContainerWidget;
+    }
+    
+    /**
+     * Exposed download link so that we can change the backing model when needed. 
+     * @return
+     */
+    private WLink getDownloadLink()
+    {
+        if(downloadLink == null)
+        {
+            downloadLink = new WLink();            
+        }
+        return downloadLink;
+    }
+    
+    
+    /**
+     * just creates the create content button, privately exposed, so it can be enabled and disabled accordingly  
+     * @return
+     */
+    private WWidget getCreateContentButton()
+    {
+       if(createContentPushButton == null)
+       {
+           createContentPushButton = new WPushButton("Create Content");
+           createContentPushButton.clicked().addListener(this, new Signal.Listener() {
+               public void trigger() {                           
+                       createContent();                           
+               }
+           });
+       }
+       return createContentPushButton;
+    }
+
+    /**
+     * This will create an empty place holder for some text content on an empty node
+     */
+    private void createContent()
+    {
+        setContent(EMPTY_STRING, contentType, contentFormatType, mimeType, length);
+    }
+
+    /**
+     * This just create the attribute table for the model
+     * @return
+     */
+    private WTableView getAttributeTableView()
+    {
+        if(attributeTableView == null)
+        {
+            attributeTableView = new WTableView();
+            attributeTableView.addStyleClass("bg-transparent");
+            attributeTableView.setItemDelegateForColumn(0,new WCSSItemDelegate("font-weight: bold;"));
+            attributeTableView.setSortingEnabled(true);
+            attributeTableView.setSelectable(true);          
+            attributeTableView.setAlternatingRowColors(true);            
+            attributeTableView.setColumnResizeEnabled(true);
+            attributeTableView.setColumnAlignment(0, AlignmentFlag.AlignRight);
+            attributeTableView.setColumnWidth(1, new WLength(500));
+            attributeTableView.setSelectionMode(SelectionMode.SingleSelection);
+        }
+        return attributeTableView;
+    }
+    
+    
+    /**
+     * Will refresh all of the data from the model.
+     */
+    @Override
+    public void refresh()
+    {
+        try
+        {
+            ((ResourceDescriptor) CapoWDetailPane.this.model).getResourceMetaData(null).refresh();
+            ((ResourceDescriptor) CapoWDetailPane.this.model).advanceState(State.CLOSED,null);
+            ((ResourceDescriptor) CapoWDetailPane.this.model).reset(State.OPEN);
+            ((ResourceDescriptorItemModel) getAttributeTableView().getModel()).reload();                                                                                                           
+            CapoWDetailPane.this.setModel(CapoWDetailPane.this.model);
+        }
+        catch (Exception e)
+        {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+       
+        super.refresh();
+    }
+    
+    
 }
