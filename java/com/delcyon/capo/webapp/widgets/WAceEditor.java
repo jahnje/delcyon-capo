@@ -66,13 +66,8 @@ public class WAceEditor extends WContainerWidget
     public WAceEditor()
     {
         contentWText = new WText("",TextFormat.XHTMLUnsafeText);
-        contentWText.setStyleClass("editorArea"); 
-        contentWText.doJavaScript(contentWText.getJsRef()+".editor = ace.edit("+contentWText.getJsRef()+");"
-                + contentWText.getJsRef()+".editor.setTheme('ace/theme/"+theme+"');"
-                + contentWText.getJsRef()+".editor.setShowPrintMargin(false);"
-                //+ contentWText.getJsRef()+".editor.getSession().setMode('ace/mode/"+mode+"');"
-                //+ textEdit.getJsRef()+".editor.setReadOnly(true);"
-                );
+        contentWText.setStyleClass("editorArea");
+        attachEditorJS();
         saveButton = new WPushButton("Save");
         saveButton.setJavaScriptMember("onclick", "function (){"+this.save().createCall(contentWText.getJsRef()+".editor.getValue()")+"}");
         
@@ -85,15 +80,16 @@ public class WAceEditor extends WContainerWidget
     
     public WAceEditor(String content,String mode)
     {
-        this();
+        this();        
+        setText(Utils.htmlEncode(content));
         setMode(mode);
-        contentWText.setText(Utils.htmlEncode(content));        
     }
 
     //=====================Properties============================
     public void setText(String content)
     {
         contentWText.setText(Utils.htmlEncode(content));
+        attachEditorJS();
     }
     
     //=====================ACE PROPERTIES========================
@@ -131,8 +127,18 @@ public class WAceEditor extends WContainerWidget
     {
         return mode;
     }
-    
-    
+    /**
+     This must be called every time we change the text from the server side, 
+     since a new div object is is created on this client side each time making us lose any properties we've stored on the div. 
+     */
+    private void attachEditorJS()
+    {
+      //TODO we might be able to do this with setting a javascript member, which might get automatically added each time the div is created..
+        contentWText.doJavaScript(contentWText.getJsRef()+".editor = ace.edit("+contentWText.getJsRef()+");"
+                + contentWText.getJsRef()+".editor.setTheme('ace/theme/"+theme+"');"
+                + contentWText.getJsRef()+".editor.setShowPrintMargin(false);"        
+                );
+    }
     
     //========================Events=============================
     public JSignal1<String> save() { return save; }
