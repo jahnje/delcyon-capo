@@ -34,6 +34,9 @@ public class ResourceDescriptorItemModel extends WAbstractItemModel
 		this.domUse = navigation;
 	}
 	
+	/**
+	 * Resets the model, and invalidates any data. If you have an index, you may want to use fireDataChanged instead.
+	 */
 	public void reload()
 	{
 	    reset();
@@ -336,6 +339,11 @@ public class ResourceDescriptorItemModel extends WAbstractItemModel
 	    super.beginRemoveRows(parent, first, last);
 	}
 	
+	/**
+	 * reloads a child based on it's parents index, use append if you'll be adding rows, otherwise append can be false.
+	 * @param parentIndex
+	 * @param append
+	 */
     public void fireDataChanged(WModelIndex parentIndex,boolean append)
     {
         //reload();

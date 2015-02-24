@@ -15,29 +15,22 @@ import javax.jcr.query.QueryResult;
 import javax.jcr.query.Row;
 import javax.jcr.query.RowIterator;
 
-import org.w3c.dom.Element;
-
 import com.delcyon.capo.CapoApplication;
 import com.delcyon.capo.resourcemanager.ResourceDescriptor;
 import com.delcyon.capo.resourcemanager.ResourceDescriptor.Action;
 import com.delcyon.capo.resourcemanager.ResourceDescriptor.State;
 import com.delcyon.capo.resourcemanager.ResourceURI;
-import com.delcyon.capo.resourcemanager.types.ContentMetaData;
-import com.delcyon.capo.resourcemanager.types.JcrResourceDescriptor;
+import com.delcyon.capo.resourcemanager.types.FileResourceType;
 import com.delcyon.capo.server.jackrabbit.CapoJcrServer;
-import com.delcyon.capo.webapp.models.DomItemModel;
 import com.delcyon.capo.webapp.models.DomItemModel.DomUse;
 import com.delcyon.capo.webapp.models.ResourceDescriptorItemModel;
 import com.delcyon.capo.webapp.widgets.WCapoResourceEditor;
-import com.delcyon.capo.webapp.widgets.CapoWTreeView;
+import com.delcyon.capo.webapp.widgets.WCapoResourceTreeView;
 import com.delcyon.capo.xml.dom.ResourceDocument;
-import com.delcyon.capo.xml.dom.ResourceDocumentBuilder;
 
 import eu.webtoolkit.jwt.AlignmentFlag;
 import eu.webtoolkit.jwt.MatchOptions;
 import eu.webtoolkit.jwt.PositionScheme;
-import eu.webtoolkit.jwt.SelectionBehavior;
-import eu.webtoolkit.jwt.SelectionMode;
 import eu.webtoolkit.jwt.Signal;
 import eu.webtoolkit.jwt.Signal.Listener;
 import eu.webtoolkit.jwt.Signal1;
@@ -52,7 +45,6 @@ import eu.webtoolkit.jwt.WContainerWidget;
 import eu.webtoolkit.jwt.WDialog;
 import eu.webtoolkit.jwt.WEnvironment;
 import eu.webtoolkit.jwt.WGridLayout;
-import eu.webtoolkit.jwt.WLabel;
 import eu.webtoolkit.jwt.WLength;
 import eu.webtoolkit.jwt.WLength.Unit;
 import eu.webtoolkit.jwt.WLineEdit;
@@ -64,14 +56,11 @@ import eu.webtoolkit.jwt.WMouseEvent;
 import eu.webtoolkit.jwt.WNavigationBar;
 import eu.webtoolkit.jwt.WPopupMenu;
 import eu.webtoolkit.jwt.WPushButton;
-import eu.webtoolkit.jwt.WRegExpValidator;
 import eu.webtoolkit.jwt.WStackedWidget;
 import eu.webtoolkit.jwt.WTabWidget;
 import eu.webtoolkit.jwt.WTable;
 import eu.webtoolkit.jwt.WText;
-import eu.webtoolkit.jwt.WTreeView;
 import eu.webtoolkit.jwt.WVBoxLayout;
-import eu.webtoolkit.jwt.WValidator;
 import eu.webtoolkit.jwt.WWidget;
 
 public class CapoWebApplication extends WApplication {
@@ -85,14 +74,12 @@ public class CapoWebApplication extends WApplication {
 	private WVBoxLayout detailsPaneLayout;
 	private WCapoResourceEditor capoResourceEditor;
 	private WTabWidget subDetailsPane;
-	private CapoWTreeView treeView;
+	private WCapoResourceTreeView treeView;
     private ResourceDocument document;
     private Session jcrSession;
     private WPushButton resetButton;
     private WPushButton saveButton;
     private WDialog searchResultsDialog;
-    private WPopupMenu treeViewRightClickMenu;
-    private WDialog createNodeDialog;
     
 	public CapoWebApplication(WEnvironment env, boolean embedded) {
         super(env);
@@ -146,7 +133,7 @@ public class CapoWebApplication extends WApplication {
                                     setInternalPath(resourceDescriptor.getResourceURI().getPath());
                                 }
                             }
-                            treeView.setModel(new ResourceDescriptorItemModel(resourceDescriptor,DomUse.NAVIGATION));
+                            treeView.setRootResourceDescriptor(resourceDescriptor);
                             if(originalURI != null)
                             {
                                 List<WModelIndex> indexes = treeView.getModel().match(treeView.getModel().getIndex(0, 0), ResourceDescriptorItemModel.ResourceURI_ROLE, originalURI.toString(), 1, MatchOptions.defaultMatchOptions);
@@ -178,7 +165,7 @@ public class CapoWebApplication extends WApplication {
         getRootLayout().addWidget(getContentPane(),1,0);
         try
 		{
-            //FileResourceType fileResourceType = new FileResourceType();
+            FileResourceType fileResourceType = new FileResourceType();
             //ResourceDescriptor resourceDescriptor = fileResourceType.getResourceDescriptor("file:/");
             ResourceDescriptor resourceDescriptor = CapoApplication.getDataManager().getResourceDescriptor(null, "repo:"+WApplication.getInstance().getInternalPath());
             if(resourceDescriptor.getResourceMetaData(null).exists() == false)
@@ -186,50 +173,24 @@ public class CapoWebApplication extends WApplication {
                 resourceDescriptor.performAction(null, Action.CREATE);
                 resourceDescriptor.reset(State.OPEN);
             }
-            ResourceDescriptor resourceDescriptor2 = CapoApplication.getDataManager().getResourceDirectory("CLIENTS_DIR");
-            ResourceDocumentBuilder documentBuilder = new ResourceDocumentBuilder();
-            document = (ResourceDocument) documentBuilder.buildDocument(resourceDescriptor2);
-
-
+//            ResourceDescriptor resourceDescriptor2 = CapoApplication.getDataManager().getResourceDirectory("CLIENTS_DIR");
+//            ResourceDocumentBuilder documentBuilder = new ResourceDocumentBuilder();
+//            document = (ResourceDocument) documentBuilder.buildDocument(resourceDescriptor2);
             
-			getContentPaneLayout().addWidget(getTreeView(), 0, 0,1,0);	
-			if (resourceDescriptor instanceof Element)
-            {
-			    getTreeView().setModel(new DomItemModel((Element) resourceDescriptor,DomUse.NAVIGATION));            
-            }
-            else if (resourceDescriptor instanceof ResourceDescriptor)
-            {
-                getTreeView().setModel(new ResourceDescriptorItemModel((ResourceDescriptor)resourceDescriptor,DomUse.NAVIGATION));
-            }			
+			getContentPaneLayout().addWidget(getTreeView(), 0, 0,1,0);
+			getTreeView().setRootResourceDescriptor(resourceDescriptor);
 			
 		} catch (Exception e)
 		{			
 			e.printStackTrace();
 		}
         
-        getContentPaneLayout().addLayout(getDetailsPaneLayout(), 0, 1);
-        
         //pathButton.setLink(new WLink(Type.InternalPath, "/legend"));
+        getContentPaneLayout().addLayout(getDetailsPaneLayout(), 0, 1);
         getContentPaneLayout().addWidget(getSaveButton(), 2, 0, 1, 1, AlignmentFlag.AlignTop); 
-        
-        
         getContentPaneLayout().addWidget(getResetButton(), 3, 0, 1, 1, AlignmentFlag.AlignTop);
-        
-//        getDetailsPane().addTab(createTitle("Title"), "results");
-//        getDetailsPane().addTab(getMenu(), "details");
-//        getDetailsPane().getWidget(1).setAttributeValue("style", "background-color: lightgrey;");
-//        
-        
         getDetailsPaneLayout().addWidget(getDetailsPane(), 0);
-        //getDetailsPaneLayout().addWidget(getSubDetailsPane(), 0);
         getDetailsPaneLayout().setResizable(0);
-        
-//        getSubDetailsPane().addTab(createTitle("Title"), "properties");
-//        getSubDetailsPane().addTab(createTitle("Title"), "details");
-//        getSubDetailsPane().getWidget(1).setAttributeValue("style", "background-color: lightgrey;");
-        
-        
-       
             
     }
 
@@ -345,25 +306,17 @@ public class CapoWebApplication extends WApplication {
     	return rootLayout;
 	}
     
-    private  WTreeView getTreeView() {
+    private  WCapoResourceTreeView getTreeView() {
         if(treeView == null)
         {
-            treeView = new CapoWTreeView();
-            treeView.setLayoutSizeAware(true);
-            treeView.setColumnResizeEnabled(false);
-            treeView.setRightClickAware(true);
-            treeView.setWidth(new WLength(250));
-            treeView.setSelectionMode(SelectionMode.SingleSelection);
-            treeView.setSelectionBehavior(SelectionBehavior.SelectItems);
-            treeView.setSelectable(true);
-            treeView.setAlternatingRowColors(true);
+            treeView = new WCapoResourceTreeView();
             treeView.selectionChanged().addListener(this, new Signal.Listener() {
                 public void trigger() {
                     selectedItemChanged();
-                    treeView.refresh();
+                    refresh();
                 }
             });
-            
+
             treeView.doubleClicked().addListener(this, new Signal2.Listener<WModelIndex, WMouseEvent>() {
 
                 @Override
@@ -372,179 +325,34 @@ public class CapoWebApplication extends WApplication {
                     treeView.setModel(new ResourceDescriptorItemModel((ResourceDescriptor)arg1.getInternalPointer(),DomUse.NAVIGATION));
                 }
             });
-            
-            //Right click Menu
-            treeView.rightClicked().addListener(this, new Signal2.Listener<WModelIndex, WMouseEvent>() {
-                @Override
-                public void trigger(WModelIndex arg1, WMouseEvent arg2) {
-                        getTreeViewRightClickMenu().popup(arg2);;
-                    }
-            });
-        }
-       // folderView_ = treeView;
+        }       
 
         return treeView;
     }
     
-    private WPopupMenu getTreeViewRightClickMenu()
-    {
-        if(treeViewRightClickMenu == null)
-        {
-            treeViewRightClickMenu = new WPopupMenu();
-
-            treeViewRightClickMenu.addItem("Create Node...").clicked().addListener(CapoWebApplication.this, new Signal.Listener()
-            {
-                public void trigger() {
-                        getCreateNodeDialog().show();
-                };
-            });
-            treeViewRightClickMenu.addItem("Delete").clicked().addListener(CapoWebApplication.this, new Signal.Listener()
-            {
-                @Override
-                public void trigger()
-                {
-                    deleteNode();
-                }
-            });           
-        }
-        return this.treeViewRightClickMenu;
-    }
-    
-    private WDialog getCreateNodeDialog()
-    {
-        if(createNodeDialog == null)
-        {
-            createNodeDialog = new WDialog("Create Node");
-            createNodeDialog.setClosable(true);
-            createNodeDialog.rejectWhenEscapePressed(true);
-            WLabel label = new WLabel("Enter a node name", createNodeDialog.getContents());
-            final WLineEdit edit = new WLineEdit(createNodeDialog.getContents());
-            label.setBuddy(edit);
-            WRegExpValidator validator = new WRegExpValidator("[A-Za-z1-9 \\.]+");
-            validator.setMandatory(true);
-            final WPushButton ok = new WPushButton("OK", createNodeDialog.getFooter());
-            ok.setDefault(true);
-            ok.disable();
-            WPushButton cancel = new WPushButton("Cancel", createNodeDialog.getFooter());
-
-            createNodeDialog.rejectWhenEscapePressed();
-            edit.keyWentUp().addListener(CapoWebApplication.this, new Signal.Listener() {
-                public void trigger() {
-                    ok.setDisabled(edit.validate() != WValidator.State.Valid);
-                }
-            });
-            ok.clicked().addListener(CapoWebApplication.this, new Signal.Listener() {
-                public void trigger() {
-                    if (edit.validate() != null) {
-                        createNodeDialog.accept();
-                        createNode(edit.getText());
-                        edit.setText("");
-                    }
-                }
-            });
-            cancel.clicked().addListener(createNodeDialog,
-                    new Signal1.Listener<WMouseEvent>() {
-                public void trigger(WMouseEvent e1) {
-                    createNodeDialog.reject();
-                }
-            });           
-        }
-        return createNodeDialog;
-    }
-    
-    private void createNode(String name)
-    {
-        System.out.println(name);
-        WModelIndex index;
-        ResourceDescriptor selectedResourceDescriptor;
-        if(getTreeView().getSelectedIndexes().isEmpty())
-        {
-            index = null;
-            selectedResourceDescriptor = ((ResourceDescriptorItemModel)getTreeView().getModel()).getTopLevelResourceDescriptor();
-        }
-        else
-        {
-            index = getTreeView().getSelectedIndexes().first();
-            selectedResourceDescriptor = (ResourceDescriptor) index.getInternalPointer();
-        }
-
-        try
-        {
-            if(selectedResourceDescriptor instanceof JcrResourceDescriptor && selectedResourceDescriptor.getResourceMetaData(null).isContainer() == false)
-            {
-                selectedResourceDescriptor.getResourceMetaData(null).setValue(ContentMetaData.Attributes.container.toString(), true+"");
-            }
-            ResourceDescriptor childResourceDescriptor = selectedResourceDescriptor.getChildResourceDescriptor(null, name);
-            System.out.println(childResourceDescriptor.getResourceURI());
-            childResourceDescriptor.init(null, null, null, false);
-            childResourceDescriptor.performAction(null, Action.CREATE);                                        
-            //jcrSession.save();
-            selectedResourceDescriptor.reset(State.OPEN);
-            if(index != null)
-            {
-                ((ResourceDescriptorItemModel) getTreeView().getModel()).fireDataChanged(index,true);                
-            }
-            else
-            {
-                ((ResourceDescriptorItemModel) getTreeView().getModel()).reload();//TODO this is really heavy weight, when in reality, model needs to fire data changed event
-            }
-        }
-        catch (Exception e)
-        {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        }
-    }
-    
-    private void deleteNode()
-    {
-        WModelIndex index = getTreeView().getSelectedIndexes().first();
-        if(index != null)
-        {
-            ResourceDescriptor selectedResourceDescriptor = (ResourceDescriptor) index.getInternalPointer();
-            try
-            {
-                ResourceDescriptor parentResourceDescriptor = selectedResourceDescriptor.getParentResourceDescriptor();
-                WModelIndex parentIndex = ((ResourceDescriptorItemModel) getTreeView().getModel()).getParent(index);
-                ((ResourceDescriptorItemModel) getTreeView().getModel()).beginRemoveRows(parentIndex, index.getRow(), index.getRow());
-                selectedResourceDescriptor.performAction(null, Action.DELETE);
-                if (parentResourceDescriptor != null)
-                {
-                    parentResourceDescriptor.reset(State.INITIALIZED);
-                }
-                if (parentIndex != null)
-                {
-                    ((ResourceDescriptorItemModel) getTreeView().getModel()).fireDataChanged(parentIndex,false);
-                }
-                else
-                {
-                    ((ResourceDescriptorItemModel) getTreeView().getModel()).reload();
-                }
-            }
-            catch (Exception e)
-            {
-                // TODO Auto-generated catch block
-                e.printStackTrace();
-            }
-
-        }
-    }
-    
-    
     private void selectedItemChanged()
     {
-    	SortedSet<WModelIndex> selectedIndexes = treeView.getSelectedIndexes();
-    	if(selectedIndexes.size() == 0)
-    	{
-    		return;
-    	}
-    	else if (selectedIndexes.size() == 1)
-    	{
-    		WModelIndex modelIndex = selectedIndexes.first();
-    		final Object selectedItem =  modelIndex.getInternalPointer();    		
-    		getDetailsPane().setModel(selectedItem);    		
-    	}
+        SortedSet<WModelIndex> selectedIndexes = getTreeView().getSelectedIndexes();
+        if(selectedIndexes.size() == 0)
+        {
+            return;
+        }
+        else if (selectedIndexes.size() == 1)
+        {
+            WModelIndex modelIndex = selectedIndexes.first();
+            final Object selectedItem =  modelIndex.getInternalPointer();           
+            getDetailsPane().setModel(selectedItem); //TODO add somesort of event/Signal listener to process this            
+        }
     }
+    
+    
+    
+    
+    
+   
+    
+    
+    
     
     private WWidget getNavigationContainer()
     {
