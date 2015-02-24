@@ -67,9 +67,9 @@ public class ContentFormatTypeFilterInputStream extends AbstractFilterInputStrea
 	public int read(byte[] b, int off, int len) throws IOException
 	{
 		int bytesRead = super.read(b, off, len);
+		hasRead = true;
 		if (bytesRead > 0 && contentFormatType != ContentFormatType.BINARY)
-		{
-			hasRead = true;
+		{			
 			for (int readByteIndex = off; readByteIndex < off+bytesRead; readByteIndex++)
 			{
 				
