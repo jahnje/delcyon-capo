@@ -37,7 +37,7 @@ import eu.webtoolkit.jwt.WTableView;
 import eu.webtoolkit.jwt.WWidget;
 import eu.webtoolkit.jwt.servlet.UploadedFile;
 
-public class CapoWDetailPane extends WTabWidget
+public class WCapoResourceEditor extends WTabWidget
 {
     private static final String XML_CONTENT_TYPE = "xml";
     private static final String HEX_CONTENT_TYPE = "hex";
@@ -146,7 +146,7 @@ public class CapoWDetailPane extends WTabWidget
                 public void trigger(String arg1) 
                 {
                     //update content
-                    CapoWDetailPane.this.content = arg1;
+                    WCapoResourceEditor.this.content = arg1;
                     //then save 
                     save();
                 }
@@ -301,7 +301,7 @@ public class CapoWDetailPane extends WTabWidget
     {
         try
         {
-            ((ResourceDescriptor) CapoWDetailPane.this.model).writeBlock(null, EMPTY_STRING.getBytes());
+            ((ResourceDescriptor) WCapoResourceEditor.this.model).writeBlock(null, EMPTY_STRING.getBytes());
             refresh();
         }
         catch (Exception e)
@@ -343,7 +343,7 @@ public class CapoWDetailPane extends WTabWidget
                         File tempFile = new File(tempFileName);
                         //once we have a handle on the file, stream it into our resource descriptor
                         //This is a little crazy, i'd rather pass a pointer around, but we're dealing with streams and jcr and all sorts of stuff
-                        OutputStream outputStream = ((ResourceDescriptor) CapoWDetailPane.this.model).getOutputStream(null);
+                        OutputStream outputStream = ((ResourceDescriptor) WCapoResourceEditor.this.model).getOutputStream(null);
                         StreamUtil.readInputStreamIntoOutputStream(new FileInputStream(tempFile), outputStream );
                         outputStream.close();
                         refresh();
@@ -453,11 +453,11 @@ public class CapoWDetailPane extends WTabWidget
     {
         try
         {
-            ((ResourceDescriptor) CapoWDetailPane.this.model).getResourceMetaData(null).refresh();
-            ((ResourceDescriptor) CapoWDetailPane.this.model).advanceState(State.CLOSED,null);
-            ((ResourceDescriptor) CapoWDetailPane.this.model).reset(State.OPEN);
+            ((ResourceDescriptor) WCapoResourceEditor.this.model).getResourceMetaData(null).refresh();
+            ((ResourceDescriptor) WCapoResourceEditor.this.model).advanceState(State.CLOSED,null);
+            ((ResourceDescriptor) WCapoResourceEditor.this.model).reset(State.OPEN);
             ((ResourceDescriptorItemModel) getAttributeTableView().getModel()).reload();                                                                                                           
-            CapoWDetailPane.this.setModel(CapoWDetailPane.this.model);
+            WCapoResourceEditor.this.setModel(WCapoResourceEditor.this.model);
         }
         catch (Exception e)
         {

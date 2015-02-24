@@ -28,7 +28,7 @@ import com.delcyon.capo.server.jackrabbit.CapoJcrServer;
 import com.delcyon.capo.webapp.models.DomItemModel;
 import com.delcyon.capo.webapp.models.DomItemModel.DomUse;
 import com.delcyon.capo.webapp.models.ResourceDescriptorItemModel;
-import com.delcyon.capo.webapp.widgets.CapoWDetailPane;
+import com.delcyon.capo.webapp.widgets.WCapoResourceEditor;
 import com.delcyon.capo.webapp.widgets.CapoWTreeView;
 import com.delcyon.capo.xml.dom.ResourceDocument;
 import com.delcyon.capo.xml.dom.ResourceDocumentBuilder;
@@ -83,7 +83,7 @@ public class CapoWebApplication extends WApplication {
 	private WContainerWidget contentPane;
 	private WGridLayout contentPaneLayout;
 	private WVBoxLayout detailsPaneLayout;
-	private CapoWDetailPane detailsPane;
+	private WCapoResourceEditor capoResourceEditor;
 	private WTabWidget subDetailsPane;
 	private CapoWTreeView treeView;
     private ResourceDocument document;
@@ -291,14 +291,14 @@ public class CapoWebApplication extends WApplication {
 		return subDetailsPane;
 	}
 
-	private CapoWDetailPane getDetailsPane() 
+	private WCapoResourceEditor getDetailsPane() 
     {
-    	if (detailsPane == null)
+    	if (capoResourceEditor == null)
     	{
-    		detailsPane = new CapoWDetailPane();
+    		capoResourceEditor = new WCapoResourceEditor();
     	
     	}
-    	return detailsPane;
+    	return capoResourceEditor;
 	}
 
 	private WBoxLayout getDetailsPaneLayout() {
