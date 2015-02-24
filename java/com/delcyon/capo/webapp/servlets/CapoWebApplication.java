@@ -5,9 +5,6 @@
  */
 package com.delcyon.capo.webapp.servlets;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.OutputStream;
 import java.util.List;
 import java.util.SortedSet;
 
@@ -21,9 +18,6 @@ import javax.jcr.query.RowIterator;
 import org.w3c.dom.Element;
 
 import com.delcyon.capo.CapoApplication;
-import com.delcyon.capo.datastream.StreamUtil;
-import com.delcyon.capo.datastream.stream_attribute_filter.MimeTypeFilterInputStream;
-import com.delcyon.capo.resourcemanager.ContentFormatType;
 import com.delcyon.capo.resourcemanager.ResourceDescriptor;
 import com.delcyon.capo.resourcemanager.ResourceDescriptor.Action;
 import com.delcyon.capo.resourcemanager.ResourceDescriptor.State;
@@ -31,22 +25,15 @@ import com.delcyon.capo.resourcemanager.ResourceURI;
 import com.delcyon.capo.resourcemanager.types.ContentMetaData;
 import com.delcyon.capo.resourcemanager.types.JcrResourceDescriptor;
 import com.delcyon.capo.server.jackrabbit.CapoJcrServer;
-import com.delcyon.capo.util.HexUtil;
 import com.delcyon.capo.webapp.models.DomItemModel;
 import com.delcyon.capo.webapp.models.DomItemModel.DomUse;
 import com.delcyon.capo.webapp.models.ResourceDescriptorItemModel;
-import com.delcyon.capo.webapp.servlets.resource.AbstractResourceServlet;
-import com.delcyon.capo.webapp.servlets.resource.WResourceDescriptor;
-import com.delcyon.capo.webapp.widgets.CapoWTreeView;
-import com.delcyon.capo.webapp.widgets.WAceEditor;
-import com.delcyon.capo.webapp.widgets.WAceEditor.Theme;
-import com.delcyon.capo.webapp.widgets.WCSSItemDelegate;
 import com.delcyon.capo.webapp.widgets.CapoWDetailPane;
+import com.delcyon.capo.webapp.widgets.CapoWTreeView;
 import com.delcyon.capo.xml.dom.ResourceDocument;
 import com.delcyon.capo.xml.dom.ResourceDocumentBuilder;
 
 import eu.webtoolkit.jwt.AlignmentFlag;
-import eu.webtoolkit.jwt.AnchorTarget;
 import eu.webtoolkit.jwt.MatchOptions;
 import eu.webtoolkit.jwt.PositionScheme;
 import eu.webtoolkit.jwt.SelectionBehavior;
@@ -55,7 +42,6 @@ import eu.webtoolkit.jwt.Signal;
 import eu.webtoolkit.jwt.Signal.Listener;
 import eu.webtoolkit.jwt.Signal1;
 import eu.webtoolkit.jwt.Signal2;
-import eu.webtoolkit.jwt.TextFormat;
 import eu.webtoolkit.jwt.Utils;
 import eu.webtoolkit.jwt.WAnchor;
 import eu.webtoolkit.jwt.WApplication;
@@ -65,9 +51,7 @@ import eu.webtoolkit.jwt.WBoxLayout.Direction;
 import eu.webtoolkit.jwt.WContainerWidget;
 import eu.webtoolkit.jwt.WDialog;
 import eu.webtoolkit.jwt.WEnvironment;
-import eu.webtoolkit.jwt.WFileUpload;
 import eu.webtoolkit.jwt.WGridLayout;
-import eu.webtoolkit.jwt.WImage;
 import eu.webtoolkit.jwt.WLabel;
 import eu.webtoolkit.jwt.WLength;
 import eu.webtoolkit.jwt.WLength.Unit;
@@ -79,20 +63,16 @@ import eu.webtoolkit.jwt.WModelIndex;
 import eu.webtoolkit.jwt.WMouseEvent;
 import eu.webtoolkit.jwt.WNavigationBar;
 import eu.webtoolkit.jwt.WPopupMenu;
-import eu.webtoolkit.jwt.WProgressBar;
 import eu.webtoolkit.jwt.WPushButton;
 import eu.webtoolkit.jwt.WRegExpValidator;
 import eu.webtoolkit.jwt.WStackedWidget;
 import eu.webtoolkit.jwt.WTabWidget;
 import eu.webtoolkit.jwt.WTable;
-import eu.webtoolkit.jwt.WTableView;
 import eu.webtoolkit.jwt.WText;
-import eu.webtoolkit.jwt.WTextArea;
 import eu.webtoolkit.jwt.WTreeView;
 import eu.webtoolkit.jwt.WVBoxLayout;
 import eu.webtoolkit.jwt.WValidator;
 import eu.webtoolkit.jwt.WWidget;
-import eu.webtoolkit.jwt.servlet.UploadedFile;
 
 public class CapoWebApplication extends WApplication {
 	
@@ -111,6 +91,8 @@ public class CapoWebApplication extends WApplication {
     private WPushButton resetButton;
     private WPushButton saveButton;
     private WDialog searchResultsDialog;
+    private WPopupMenu treeViewRightClickMenu;
+    private WDialog createNodeDialog;
     
 	public CapoWebApplication(WEnvironment env, boolean embedded) {
         super(env);
@@ -209,9 +191,16 @@ public class CapoWebApplication extends WApplication {
             document = (ResourceDocument) documentBuilder.buildDocument(resourceDescriptor2);
 
 
-
-			getContentPaneLayout().addWidget(getTreeView(resourceDescriptor), 0, 0,1,0);	
-			
+            
+			getContentPaneLayout().addWidget(getTreeView(), 0, 0,1,0);	
+			if (resourceDescriptor instanceof Element)
+            {
+			    getTreeView().setModel(new DomItemModel((Element) resourceDescriptor,DomUse.NAVIGATION));            
+            }
+            else if (resourceDescriptor instanceof ResourceDescriptor)
+            {
+                getTreeView().setModel(new ResourceDescriptorItemModel((ResourceDescriptor)resourceDescriptor,DomUse.NAVIGATION));
+            }			
 			
 		} catch (Exception e)
 		{			
@@ -355,51 +344,21 @@ public class CapoWebApplication extends WApplication {
     	}
     	return rootLayout;
 	}
-
-	private WText createTitle(String title) {
-        WText result = new WText(title);
-        result.setInline(false);
-        result.setStyleClass("title");
-
-        return result;
-    }
     
-    private  WTreeView getTreeView(Object data) {
+    private  WTreeView getTreeView() {
         if(treeView == null)
         {
             treeView = new CapoWTreeView();
             treeView.setLayoutSizeAware(true);
             treeView.setColumnResizeEnabled(false);
-            //treeView.
-            /*
-             * To support right-click, we need to disable the built-in browser
-             * context menu.
-             * 
-             * Note that disabling the context menu and catching the right-click
-             * does not work reliably on all browsers.
-             */
-            treeView.setAttributeValue("oncontextmenu","event.cancelBubble = true; event.returnValue = false; return false;");
-            if (data instanceof Element)
-            {
-                treeView.setModel(new DomItemModel((Element) data,DomUse.NAVIGATION));            
-            }
-            else if (data instanceof ResourceDescriptor)
-            {
-                treeView.setModel(new ResourceDescriptorItemModel((ResourceDescriptor)data,DomUse.NAVIGATION));
-            }
-            //tree
-            treeView.setWidth(new WLength(250));//, WLength.Auto);
-
-
-            // treeView.setWidth(new WLength("100%"));
+            treeView.setRightClickAware(true);
+            treeView.setWidth(new WLength(250));
             treeView.setSelectionMode(SelectionMode.SingleSelection);
             treeView.setSelectionBehavior(SelectionBehavior.SelectItems);
             treeView.setSelectable(true);
-            //treeView.expandToDepth();
             treeView.setAlternatingRowColors(true);
             treeView.selectionChanged().addListener(this, new Signal.Listener() {
                 public void trigger() {
-                    System.out.println("selectionChanged");
                     selectedItemChanged();
                     treeView.refresh();
                 }
@@ -409,176 +368,168 @@ public class CapoWebApplication extends WApplication {
 
                 @Override
                 public void trigger(WModelIndex arg1, WMouseEvent arg2) {
-                    System.out.println("DoubleClicked:");
-                    
                     setInternalPath(((ResourceDescriptor)arg1.getInternalPointer()).getResourceURI().getPath(), false);
                     treeView.setModel(new ResourceDescriptorItemModel((ResourceDescriptor)arg1.getInternalPointer(),DomUse.NAVIGATION));
                 }
             });
             
-            treeView.clicked().addListener(this, new Signal2.Listener<WModelIndex, WMouseEvent>() {
-
-                @Override
-                public void trigger(WModelIndex arg1, WMouseEvent arg2) {
-                    System.out.println("Clicked:"+arg2.getModifiers());
-
-                }
-            });
-            
             //Right click Menu
-            treeView.mouseWentUp().addListener(this, new Signal2.Listener<WModelIndex, WMouseEvent>() {
-
+            treeView.rightClicked().addListener(this, new Signal2.Listener<WModelIndex, WMouseEvent>() {
                 @Override
                 public void trigger(WModelIndex arg1, WMouseEvent arg2) {
-                    System.out.println("mouseUp");
-                    if (arg2.getButton().getValue() == 4)
-                    {
-                        WPopupMenu adminSubMenu = new WPopupMenu();
-
-
-                        adminSubMenu.addItem("Create Node...").clicked().addListener(CapoWebApplication.this, new Signal.Listener()
-                        {
-                            public void trigger() {
-
-                                final WModelIndex index;
-                                final ResourceDescriptor selectedResourceDescriptor;
-                                if(treeView.getSelectedIndexes().isEmpty())
-                                {
-                                    index = null;
-                                    selectedResourceDescriptor = ((ResourceDescriptorItemModel)treeView.getModel()).getTopLevelResourceDescriptor();
-                                }
-                                else
-                                {
-                                    index = treeView.getSelectedIndexes().first();
-                                    selectedResourceDescriptor = (ResourceDescriptor) index.getInternalPointer();
-                                }
-                                if(selectedResourceDescriptor != null)
-                                {
-                                    System.out.println(selectedResourceDescriptor.getLocalName());
-                                    final WDialog dialog = new WDialog("Create Node");
-                                    dialog.setClosable(true);
-                                    dialog.rejectWhenEscapePressed(true);
-                                    WLabel label = new WLabel("Enter a node name", dialog.getContents());
-                                    final WLineEdit edit = new WLineEdit(dialog.getContents());
-                                    label.setBuddy(edit);
-                                    WRegExpValidator validator = new WRegExpValidator("[A-Za-z1-9 \\.]+");
-                                    validator.setMandatory(true);
-                                    final WPushButton ok = new WPushButton("OK", dialog.getFooter());
-                                    ok.setDefault(true);
-                                    ok.disable();
-                                    WPushButton cancel = new WPushButton("Cancel", dialog.getFooter());
-
-                                    dialog.rejectWhenEscapePressed();
-                                    edit.keyWentUp().addListener(CapoWebApplication.this, new Signal.Listener() {
-                                        public void trigger() {
-                                            ok.setDisabled(edit.validate() != WValidator.State.Valid);
-                                        }
-                                    });
-                                    ok.clicked().addListener(CapoWebApplication.this, new Signal.Listener() {
-                                        public void trigger() {
-                                            if (edit.validate() != null) {
-                                                dialog.accept();
-                                            }
-                                        }
-                                    });
-                                    cancel.clicked().addListener(dialog,
-                                            new Signal1.Listener<WMouseEvent>() {
-                                        public void trigger(WMouseEvent e1) {
-                                            dialog.reject();
-                                        }
-                                    });
-                                    dialog.finished().addListener(CapoWebApplication.this, new Signal.Listener() {
-                                        public void trigger() {
-                                            System.out.println(edit.getText());
-
-
-                                            try
-                                            {
-                                                if(selectedResourceDescriptor instanceof JcrResourceDescriptor && selectedResourceDescriptor.getResourceMetaData(null).isContainer() == false)
-                                                {
-                                                    selectedResourceDescriptor.getResourceMetaData(null).setValue(ContentMetaData.Attributes.container.toString(), true+"");
-                                                }
-                                                ResourceDescriptor childResourceDescriptor = selectedResourceDescriptor.getChildResourceDescriptor(null, edit.getText());
-                                                System.out.println(childResourceDescriptor.getResourceURI());
-                                                childResourceDescriptor.init(null, null, null, false);
-                                                childResourceDescriptor.performAction(null, Action.CREATE);                                        
-                                                //jcrSession.save();
-                                                selectedResourceDescriptor.reset(State.OPEN);
-                                                if(index != null)
-                                                {
-                                                    ((ResourceDescriptorItemModel) treeView.getModel()).fireDataChanged(index,true);
-                                                    //                                            ((FileResourceDescriptorItemModel) treeView.getModel()).reload();                                           
-                                                    //                                            treeView.setExpanded(index, true);
-                                                    //                                            treeView.select(index);
-                                                }
-                                                else
-                                                {
-                                                    ((ResourceDescriptorItemModel) treeView.getModel()).reload();//TODO this is really heavy weight, when in reality, model needs to fire data changed event
-                                                }
-                                            }
-                                            catch (Exception e)
-                                            {
-                                                // TODO Auto-generated catch block
-                                                e.printStackTrace();
-                                            }
-                                            if (dialog != null)
-                                                dialog.remove();
-                                        }
-                                    });
-                                    dialog.show();
-                                }
-                            };
-                        }
-                                );
-                        adminSubMenu.addItem("Delete").clicked().addListener(CapoWebApplication.this, new Signal.Listener()
-                        {
-
-                            @Override
-                            public void trigger()
-                            {
-                                final WModelIndex index = treeView.getSelectedIndexes().first();
-                                if(index != null)
-                                {
-                                    ResourceDescriptor selectedResourceDescriptor = (ResourceDescriptor) index.getInternalPointer();
-                                    try
-                                    {
-                                        ResourceDescriptor parentResourceDescriptor = selectedResourceDescriptor.getParentResourceDescriptor();
-                                        WModelIndex parentIndex = ((ResourceDescriptorItemModel) treeView.getModel()).getParent(index);
-                                        ((ResourceDescriptorItemModel) treeView.getModel()).beginRemoveRows(parentIndex, index.getRow(), index.getRow());
-                                        selectedResourceDescriptor.performAction(null, Action.DELETE);
-                                        if (parentResourceDescriptor != null)
-                                        {
-                                            parentResourceDescriptor.reset(State.INITIALIZED);
-                                        }
-                                        if (parentIndex != null)
-                                        {
-                                            ((ResourceDescriptorItemModel) treeView.getModel()).fireDataChanged(parentIndex,false);
-                                        }
-                                        else
-                                        {
-                                            ((ResourceDescriptorItemModel) treeView.getModel()).reload();
-                                        }
-                                    }
-                                    catch (Exception e)
-                                    {
-                                        // TODO Auto-generated catch block
-                                        e.printStackTrace();
-                                    }
-
-                                }
-
-                            }
-                        });
-                        adminSubMenu.addItem("Configuration");
-                        adminSubMenu.popup(arg2);
+                        getTreeViewRightClickMenu().popup(arg2);;
                     }
-                }
             });
         }
        // folderView_ = treeView;
 
         return treeView;
     }
+    
+    private WPopupMenu getTreeViewRightClickMenu()
+    {
+        if(treeViewRightClickMenu == null)
+        {
+            treeViewRightClickMenu = new WPopupMenu();
+
+            treeViewRightClickMenu.addItem("Create Node...").clicked().addListener(CapoWebApplication.this, new Signal.Listener()
+            {
+                public void trigger() {
+                        getCreateNodeDialog().show();
+                };
+            });
+            treeViewRightClickMenu.addItem("Delete").clicked().addListener(CapoWebApplication.this, new Signal.Listener()
+            {
+                @Override
+                public void trigger()
+                {
+                    deleteNode();
+                }
+            });           
+        }
+        return this.treeViewRightClickMenu;
+    }
+    
+    private WDialog getCreateNodeDialog()
+    {
+        if(createNodeDialog == null)
+        {
+            createNodeDialog = new WDialog("Create Node");
+            createNodeDialog.setClosable(true);
+            createNodeDialog.rejectWhenEscapePressed(true);
+            WLabel label = new WLabel("Enter a node name", createNodeDialog.getContents());
+            final WLineEdit edit = new WLineEdit(createNodeDialog.getContents());
+            label.setBuddy(edit);
+            WRegExpValidator validator = new WRegExpValidator("[A-Za-z1-9 \\.]+");
+            validator.setMandatory(true);
+            final WPushButton ok = new WPushButton("OK", createNodeDialog.getFooter());
+            ok.setDefault(true);
+            ok.disable();
+            WPushButton cancel = new WPushButton("Cancel", createNodeDialog.getFooter());
+
+            createNodeDialog.rejectWhenEscapePressed();
+            edit.keyWentUp().addListener(CapoWebApplication.this, new Signal.Listener() {
+                public void trigger() {
+                    ok.setDisabled(edit.validate() != WValidator.State.Valid);
+                }
+            });
+            ok.clicked().addListener(CapoWebApplication.this, new Signal.Listener() {
+                public void trigger() {
+                    if (edit.validate() != null) {
+                        createNodeDialog.accept();
+                        createNode(edit.getText());
+                        edit.setText("");
+                    }
+                }
+            });
+            cancel.clicked().addListener(createNodeDialog,
+                    new Signal1.Listener<WMouseEvent>() {
+                public void trigger(WMouseEvent e1) {
+                    createNodeDialog.reject();
+                }
+            });           
+        }
+        return createNodeDialog;
+    }
+    
+    private void createNode(String name)
+    {
+        System.out.println(name);
+        WModelIndex index;
+        ResourceDescriptor selectedResourceDescriptor;
+        if(getTreeView().getSelectedIndexes().isEmpty())
+        {
+            index = null;
+            selectedResourceDescriptor = ((ResourceDescriptorItemModel)getTreeView().getModel()).getTopLevelResourceDescriptor();
+        }
+        else
+        {
+            index = getTreeView().getSelectedIndexes().first();
+            selectedResourceDescriptor = (ResourceDescriptor) index.getInternalPointer();
+        }
+
+        try
+        {
+            if(selectedResourceDescriptor instanceof JcrResourceDescriptor && selectedResourceDescriptor.getResourceMetaData(null).isContainer() == false)
+            {
+                selectedResourceDescriptor.getResourceMetaData(null).setValue(ContentMetaData.Attributes.container.toString(), true+"");
+            }
+            ResourceDescriptor childResourceDescriptor = selectedResourceDescriptor.getChildResourceDescriptor(null, name);
+            System.out.println(childResourceDescriptor.getResourceURI());
+            childResourceDescriptor.init(null, null, null, false);
+            childResourceDescriptor.performAction(null, Action.CREATE);                                        
+            //jcrSession.save();
+            selectedResourceDescriptor.reset(State.OPEN);
+            if(index != null)
+            {
+                ((ResourceDescriptorItemModel) getTreeView().getModel()).fireDataChanged(index,true);                
+            }
+            else
+            {
+                ((ResourceDescriptorItemModel) getTreeView().getModel()).reload();//TODO this is really heavy weight, when in reality, model needs to fire data changed event
+            }
+        }
+        catch (Exception e)
+        {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+    }
+    
+    private void deleteNode()
+    {
+        WModelIndex index = getTreeView().getSelectedIndexes().first();
+        if(index != null)
+        {
+            ResourceDescriptor selectedResourceDescriptor = (ResourceDescriptor) index.getInternalPointer();
+            try
+            {
+                ResourceDescriptor parentResourceDescriptor = selectedResourceDescriptor.getParentResourceDescriptor();
+                WModelIndex parentIndex = ((ResourceDescriptorItemModel) getTreeView().getModel()).getParent(index);
+                ((ResourceDescriptorItemModel) getTreeView().getModel()).beginRemoveRows(parentIndex, index.getRow(), index.getRow());
+                selectedResourceDescriptor.performAction(null, Action.DELETE);
+                if (parentResourceDescriptor != null)
+                {
+                    parentResourceDescriptor.reset(State.INITIALIZED);
+                }
+                if (parentIndex != null)
+                {
+                    ((ResourceDescriptorItemModel) getTreeView().getModel()).fireDataChanged(parentIndex,false);
+                }
+                else
+                {
+                    ((ResourceDescriptorItemModel) getTreeView().getModel()).reload();
+                }
+            }
+            catch (Exception e)
+            {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            }
+
+        }
+    }
+    
     
     private void selectedItemChanged()
     {
