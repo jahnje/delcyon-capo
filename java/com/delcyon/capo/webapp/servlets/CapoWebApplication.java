@@ -4,12 +4,7 @@ package com.delcyon.capo.webapp.servlets;
 import java.util.List;
 import java.util.SortedSet;
 
-import javax.jcr.Node;
 import javax.jcr.Session;
-import javax.jcr.query.Query;
-import javax.jcr.query.QueryResult;
-import javax.jcr.query.Row;
-import javax.jcr.query.RowIterator;
 
 import com.delcyon.capo.CapoApplication;
 import com.delcyon.capo.resourcemanager.ResourceDescriptor;
@@ -22,28 +17,22 @@ import com.delcyon.capo.webapp.models.DomItemModel.DomUse;
 import com.delcyon.capo.webapp.models.ResourceDescriptorItemModel;
 import com.delcyon.capo.webapp.widgets.WCapoResourceEditor;
 import com.delcyon.capo.webapp.widgets.WCapoResourceTreeView;
+import com.delcyon.capo.webapp.widgets.WCapoSearchControl;
 import com.delcyon.capo.xml.dom.ResourceDocument;
 
 import eu.webtoolkit.jwt.AlignmentFlag;
 import eu.webtoolkit.jwt.MatchOptions;
 import eu.webtoolkit.jwt.PositionScheme;
 import eu.webtoolkit.jwt.Signal;
-import eu.webtoolkit.jwt.Signal.Listener;
-import eu.webtoolkit.jwt.Signal1;
 import eu.webtoolkit.jwt.Signal2;
-import eu.webtoolkit.jwt.Utils;
-import eu.webtoolkit.jwt.WAnchor;
 import eu.webtoolkit.jwt.WApplication;
 import eu.webtoolkit.jwt.WBootstrapTheme;
 import eu.webtoolkit.jwt.WBoxLayout;
 import eu.webtoolkit.jwt.WBoxLayout.Direction;
 import eu.webtoolkit.jwt.WContainerWidget;
-import eu.webtoolkit.jwt.WDialog;
 import eu.webtoolkit.jwt.WEnvironment;
 import eu.webtoolkit.jwt.WGridLayout;
 import eu.webtoolkit.jwt.WLength;
-import eu.webtoolkit.jwt.WLength.Unit;
-import eu.webtoolkit.jwt.WLineEdit;
 import eu.webtoolkit.jwt.WLink;
 import eu.webtoolkit.jwt.WLink.Type;
 import eu.webtoolkit.jwt.WMenuItem;
@@ -54,8 +43,6 @@ import eu.webtoolkit.jwt.WPopupMenu;
 import eu.webtoolkit.jwt.WPushButton;
 import eu.webtoolkit.jwt.WStackedWidget;
 import eu.webtoolkit.jwt.WTabWidget;
-import eu.webtoolkit.jwt.WTable;
-import eu.webtoolkit.jwt.WText;
 import eu.webtoolkit.jwt.WVBoxLayout;
 import eu.webtoolkit.jwt.WWidget;
 
@@ -75,7 +62,8 @@ public class CapoWebApplication extends WApplication {
     private Session jcrSession;
     private WPushButton resetButton;
     private WPushButton saveButton;
-    private WDialog searchResultsDialog;
+    private WCapoSearchControl capoSearchControl;
+   
     
 	public CapoWebApplication(WEnvironment env, boolean embedded) {
         super(env);
@@ -96,59 +84,11 @@ public class CapoWebApplication extends WApplication {
         }
         
         createUI();
-        WApplication.getInstance().internalPathChanged().addListener(this, new Signal.Listener()
-                {
-
-                    @Override
-                    public void trigger()
-                    {
-                        System.out.println(WApplication.getInstance().getInternalPath());
-                        try
-                        {
-                            if(searchResultsDialog != null && searchResultsDialog.isVisible())
-                            {
-                                searchResultsDialog.hide();
-                            }
-                            ResourceDescriptor resourceDescriptor = CapoApplication.getDataManager().getResourceDescriptor(null, "repo:"+WApplication.getInstance().getInternalPath());
-                            ResourceURI originalURI = resourceDescriptor.getResourceURI();
-                            if(resourceDescriptor.getResourceMetaData(null).isContainer() == false)
-                            {
-                                if(resourceDescriptor.getParentResourceDescriptor() != null)
-                                {
-                                    resourceDescriptor = resourceDescriptor.getParentResourceDescriptor();
-                                }
-                                else
-                                {
-                                    String parentURI = resourceDescriptor.getResourceURI().getResourceURIString().replaceAll("/"+resourceDescriptor.getLocalName(), "");
-                                    if(parentURI.equals("repo:")) //make sure we have a root for the repo
-                                    {
-                                        parentURI = "repo:/";
-                                    }
-                                    
-                                    resourceDescriptor = CapoApplication.getDataManager().getResourceDescriptor(null,parentURI);
-                                    setInternalPath(resourceDescriptor.getResourceURI().getPath());
-                                }
-                            }
-                            treeView.setRootResourceDescriptor(resourceDescriptor);
-                            if(originalURI != null)
-                            {
-                                List<WModelIndex> indexes = treeView.getModel().match(treeView.getModel().getIndex(0, 0), ResourceDescriptorItemModel.ResourceURI_ROLE, originalURI.toString(), 1, MatchOptions.defaultMatchOptions);
-                                if(indexes.size() > 0)
-                                {
-                                    treeView.select(indexes.get(0));
-                                }
-                            }
-                            treeView.selectionChanged();
-                        }
-                        catch (Exception e)
-                        {                         
-                            e.printStackTrace();
-                        }
-                    }
-            
-                });
+        WApplication.getInstance().internalPathChanged().addListener(this,this::processInternalPathChange);
     }
 
+	
+	
     private void createUI() 
     {
         rootContainerWidget = getRoot();
@@ -173,7 +113,7 @@ public class CapoWebApplication extends WApplication {
 //            ResourceDocumentBuilder documentBuilder = new ResourceDocumentBuilder();
 //            document = (ResourceDocument) documentBuilder.buildDocument(resourceDescriptor2);
             
-			getContentPaneLayout().addWidget(getTreeView(), 0, 0,1,0);
+			
 			getTreeView().setRootResourceDescriptor(resourceDescriptor);
 			
 		} catch (Exception e)
@@ -182,6 +122,7 @@ public class CapoWebApplication extends WApplication {
 		}
         
         //pathButton.setLink(new WLink(Type.InternalPath, "/legend"));
+        getContentPaneLayout().addWidget(getTreeView(), 0, 0,1,0);
         getContentPaneLayout().addLayout(getDetailsPaneLayout(), 0, 1);
         getContentPaneLayout().addWidget(getSaveButton(), 2, 0, 1, 1, AlignmentFlag.AlignTop); 
         getContentPaneLayout().addWidget(getResetButton(), 3, 0, 1, 1, AlignmentFlag.AlignTop);
@@ -195,22 +136,23 @@ public class CapoWebApplication extends WApplication {
         if(saveButton == null)
         {
             saveButton = new WPushButton("Save");
-            saveButton.clicked().addListener(this, new Signal.Listener()
-            {
-
-                public void trigger()
-                {
-                    try
-                    {
-                        jcrSession.save();
-                    } catch (Exception e)
-                    {
-                        e.printStackTrace();
-                    }
-                }
-            });
+            saveButton.clicked().addListener(this, this::saveSession);
         }
         return saveButton;
+    }
+    
+    /**
+     * saves current jcrSession, TODO this should really work with the current users workspace or something.
+     */
+    private void saveSession()
+    {
+        try
+        {
+            jcrSession.save();
+        } catch (Exception e)
+        {
+            e.printStackTrace();
+        }
     }
     
     private WPushButton getResetButton()
@@ -220,25 +162,26 @@ public class CapoWebApplication extends WApplication {
         {
             resetButton = new WPushButton("Reset");
             resetButton.setLink(new WLink(Type.InternalPath, "/"));
-            resetButton.clicked().addListener(this, new Signal.Listener()
-            {            
-                public void trigger()
-                {
-                    try
-                    {
-                        jcrSession.refresh(false);
-                        ((ResourceDescriptorItemModel) treeView.getModel()).reload();
-                        treeView.setModel(new ResourceDescriptorItemModel(CapoApplication.getDataManager().getResourceDescriptor(null, "repo:/"),DomUse.NAVIGATION));
-                    } catch (Exception e)
-                    {
-                        e.printStackTrace();
-                    }
-                }
-            });
+            resetButton.clicked().addListener(this, this::reset);           
         }
         return resetButton;
     }
     
+    /**
+     * Resets session and tree view to root
+     */
+    private void reset()
+    {
+        try
+        {
+            jcrSession.refresh(false);
+            ((ResourceDescriptorItemModel) treeView.getModel()).reload();
+            treeView.setModel(new ResourceDescriptorItemModel(CapoApplication.getDataManager().getResourceDescriptor(null, "repo:/"),DomUse.NAVIGATION));
+        } catch (Exception e)
+        {
+            e.printStackTrace();
+        }
+    }
     
     private WTabWidget getSubDetailsPane() {
     	if (subDetailsPane == null)
@@ -306,26 +249,29 @@ public class CapoWebApplication extends WApplication {
         if(treeView == null)
         {
             treeView = new WCapoResourceTreeView();
-            treeView.selectionChanged().addListener(this, new Signal.Listener() {
-                public void trigger() {
-                    selectedItemChanged();
-                    refresh();
-                }
-            });
-
-            treeView.doubleClicked().addListener(this, new Signal2.Listener<WModelIndex, WMouseEvent>() {
-
-                @Override
-                public void trigger(WModelIndex arg1, WMouseEvent arg2) {
-                    setInternalPath(((ResourceDescriptor)arg1.getInternalPointer()).getResourceURI().getPath(), false);
-                    treeView.setModel(new ResourceDescriptorItemModel((ResourceDescriptor)arg1.getInternalPointer(),DomUse.NAVIGATION));
-                }
-            });
+            //watch for selection change events
+            treeView.selectionChanged().addListener(this, this::selectedItemChanged);
+            //watch for internal patch change requests from tree
+            treeView.doubleClicked().addListener(this, this::processTreeDoubleClick);
         }       
 
         return treeView;
     }
     
+    /**
+     * Process request for tree root/internal path changes from tree
+     * @param arg1
+     * @param arg2
+     */
+    private void processTreeDoubleClick(WModelIndex arg1, WMouseEvent arg2)
+    {
+        setInternalPath(((ResourceDescriptor)arg1.getInternalPointer()).getResourceURI().getPath(), false);
+        getTreeView().setModel(new ResourceDescriptorItemModel((ResourceDescriptor)arg1.getInternalPointer(),DomUse.NAVIGATION));
+    }
+    
+    /**
+     * sends selection changes in the tree to the resource editor
+     */
     private void selectedItemChanged()
     {
         SortedSet<WModelIndex> selectedIndexes = getTreeView().getSelectedIndexes();
@@ -339,12 +285,57 @@ public class CapoWebApplication extends WApplication {
             final Object selectedItem =  modelIndex.getInternalPointer();           
             getDetailsPane().setModel(selectedItem); //TODO add somesort of event/Signal listener to process this            
         }
+        refresh();
     }
     
     
     
+    /**
+     * Deal with any internal path changes in the system. Make sure that the proper components and resources are loaded and views are show etc
+     */
+    private void processInternalPathChange()
+    {
+        System.out.println(WApplication.getInstance().getInternalPath());
+        try
+        {
+            
+            ResourceDescriptor resourceDescriptor = CapoApplication.getDataManager().getResourceDescriptor(null, "repo:"+WApplication.getInstance().getInternalPath());
+            ResourceURI originalURI = resourceDescriptor.getResourceURI();
+            if(resourceDescriptor.getResourceMetaData(null).isContainer() == false)
+            {
+                if(resourceDescriptor.getParentResourceDescriptor() != null)
+                {
+                    resourceDescriptor = resourceDescriptor.getParentResourceDescriptor();
+                }
+                else
+                {
+                    String parentURI = resourceDescriptor.getResourceURI().getResourceURIString().replaceAll("/"+resourceDescriptor.getLocalName(), "");
+                    if(parentURI.equals("repo:")) //make sure we have a root for the repo
+                    {
+                        parentURI = "repo:/";
+                    }
+                    
+                    resourceDescriptor = CapoApplication.getDataManager().getResourceDescriptor(null,parentURI);
+                    setInternalPath(resourceDescriptor.getResourceURI().getPath());
+                }
+            }
+            getTreeView().setRootResourceDescriptor(resourceDescriptor);
+            if(originalURI != null)
+            {
+                List<WModelIndex> indexes = getTreeView().getModel().match(getTreeView().getModel().getIndex(0, 0), ResourceDescriptorItemModel.ResourceURI_ROLE, originalURI.toString(), 1, MatchOptions.defaultMatchOptions);
+                if(indexes.size() > 0)
+                {
+                    getTreeView().select(indexes.get(0));
+                }
+            }
+            getTreeView().selectionChanged();
+        }
+        catch (Exception e)
+        {                         
+            e.printStackTrace();
+        }
     
-    
+    }
    
     
     
@@ -485,124 +476,11 @@ public class CapoWebApplication extends WApplication {
         
         navigation.addWidget(adminMenuButton);
         
-        final WLineEdit searchFieldTextEdit = new WLineEdit();
-       
-        //searchFieldTextEdit.
         
-        WPushButton searchButton = new WPushButton("Search");
-        Listener searchListener =  new Signal.Listener()
-        {
-            
-           
-
-            public void trigger()
-            {
-                try
-                {
-                  //element(*, nt:unstructured)[jcr:contains(., 'foo')]    
-                    
-                  //Query query = jcrSession.getWorkspace().getQueryManager().createQuery("SELECT * FROM [nt:unstructured] where NAME([nt:unstructured]) = 'server:log' order by message", "JCR-SQL2");
-                    String[] langs = jcrSession.getWorkspace().getQueryManager().getSupportedQueryLanguages();
-                    for (String lang : langs)
-                    {
-                        System.out.println(lang+"--"+searchFieldTextEdit.getText());
-                    }
-                  //Query query = jcrSession.getWorkspace().getQueryManager().createQuery("//element(*, nt:unstructured)[jcr:contains(@content, '"+searchFieldTextEdit.getText()+"')/(@content)]", Query.XPATH);
-                  Query query = jcrSession.getWorkspace().getQueryManager().createQuery("SELECT * FROM [nt:unstructured] as n WHERE CONTAINS(n.*, '"+searchFieldTextEdit.getText()+"')", Query.JCR_SQL2);
-                  QueryResult result = query.execute();
-                  for (String lang : result.getColumnNames())
-                  {
-                      System.out.println(lang);
-                  }
-            
-                  // Iterate over the nodes in the results ...
-                  int excerptWidth = 50;
-                  RowIterator rows = result.getRows();
-                  System.out.println("=============================");
-
-                  searchResultsDialog = new WDialog("Search Results");
-                  searchResultsDialog.setWidth(new WLength(80d, Unit.Percentage));
-                  searchResultsDialog.setClosable(true);
-                  searchResultsDialog.rejectWhenEscapePressed(true);
-                  WTable table = new WTable(searchResultsDialog.getContents());
-                  //table.toggleStyleClass("table-hover", true);
-                  table.toggleStyleClass("table-condensed", true);
-                  table.toggleStyleClass("table-striped", true);
-                  table.toggleStyleClass("table-full", true);
-                  table.setHeaderCount(1);
-                  table.getElementAt(0, 0).addWidget(new WText("Path"));                  
-                  table.getElementAt(0, 1).addWidget(new WText("Excerpt"));
-                  table.getElementAt(0, 2).addWidget(new WText("Score"));
-                  table.getElementAt(0, 2).setContentAlignment(AlignmentFlag.AlignRight);
-
-                  table.doubleClicked().addListener(CapoWebApplication.this, new Signal1.Listener<WMouseEvent>()
-                  {
-                      @Override
-                      public void trigger(WMouseEvent arg1)
-                      {
-                          System.out.println(arg1);
-
-                      }
-
-                  });
-
-                  int rowNumber = 0;
-                  while ( rows.hasNext() ) {
-                      
-                      rowNumber++;
-                      
-                      Row row = rows.nextRow();
-                      Node _node = row.getNode();
-                      String excerpt = _node.getProperty("content").getString().toLowerCase();
-                      String searchField = searchFieldTextEdit.getText();
-                      int excerptLocation = excerpt.indexOf(searchField.toLowerCase());
-                      int startExcerptLocation = excerptLocation -excerptWidth;
-                      if(startExcerptLocation < 0 )
-                      {
-                          startExcerptLocation = 0;
-                      }
-                      if(excerpt.substring(startExcerptLocation, excerptLocation).indexOf('\n') >= 0)
-                      {
-                          startExcerptLocation += excerpt.substring(startExcerptLocation, excerptLocation).indexOf('\n')+1;
-                      }
-                      int endExcerptLocation = excerptLocation+excerptWidth+searchField.length();
-                      if(endExcerptLocation >= excerpt.length())
-                      {
-                          endExcerptLocation = excerpt.length()-1;
-                      }
-                      if(excerpt.substring(excerptLocation+searchField.length(), endExcerptLocation).indexOf('\n') >= 0)
-                      {
-                          int crDistance = excerpt.substring(excerptLocation+searchField.length(), endExcerptLocation).indexOf('\n');
-                          endExcerptLocation -= (excerptWidth - crDistance);
-                      }
-                      excerpt = _node.getProperty("content").getString().substring(startExcerptLocation, endExcerptLocation);
-                      
-                      
-                      System.out.println("===>"+_node.getPath()+" type:"+_node.getPrimaryNodeType().getName()+" score="+row.getScore()+" exrp = '"+excerpt+"'");
-                      //dump(_node);new WLink(Type.InternalPath, "/legend")
-                      table.getElementAt(rowNumber, 0).addWidget(new WAnchor(new WLink(Type.InternalPath, _node.getPath()),_node.getPath(),CapoWebApplication.getInstance().getRoot()));
-                      table.getElementAt(rowNumber,1).addWidget(new WText(Utils.htmlEncode(excerpt)));
-                      table.getElementAt(rowNumber,1).setAttributeValue("width", "80%");
-                      table.getElementAt(rowNumber,1).setContentAlignment(AlignmentFlag.AlignCenter);
-                      table.getElementAt(rowNumber, 2).addWidget(new WText(row.getScore()+""));                      
-                      table.getElementAt(rowNumber,2).setContentAlignment(AlignmentFlag.AlignRight);                      
-                  }
-                  
-                  searchResultsDialog.show();
-                  System.out.println("=============================");
-                } catch (Exception e)
-                {
-                    e.printStackTrace();
-                }
-            }
-        };
-        
-        searchButton.clicked().addListener(this,searchListener);
-        searchFieldTextEdit.enterPressed().addListener(this, searchListener);
         
         //searchButton.setStyleClass("btn btn-mini");
-        navigation.addWidget(searchButton,AlignmentFlag.AlignRight);
-        navigation.addWidget(searchFieldTextEdit,AlignmentFlag.AlignRight);
+        navigation.addWidget(getSearchControl(),AlignmentFlag.AlignRight);
+        
         
         navigation.setResponsive(false);
         navigation.setTitle("Capo");
@@ -614,6 +492,15 @@ public class CapoWebApplication extends WApplication {
         navigation.setAttributeValue("style", "background-color: black;");
         return navigation;
 //        return adminMenuButton;
+    }
+    
+    private WCapoSearchControl getSearchControl()
+    {
+        if(capoSearchControl == null)
+        {
+            capoSearchControl = new WCapoSearchControl();
+        }
+        return capoSearchControl;
     }
     
     private WWidget getMenu() {
@@ -648,4 +535,6 @@ public class CapoWebApplication extends WApplication {
     {
         return this.jcrSession;
     }
+    
+    
 }
