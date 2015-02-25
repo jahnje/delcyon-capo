@@ -10,7 +10,6 @@ import javax.jcr.query.RowIterator;
 import com.delcyon.capo.webapp.servlets.CapoWebApplication;
 
 import eu.webtoolkit.jwt.AlignmentFlag;
-import eu.webtoolkit.jwt.Signal1;
 import eu.webtoolkit.jwt.Utils;
 import eu.webtoolkit.jwt.WAnchor;
 import eu.webtoolkit.jwt.WApplication;
@@ -22,7 +21,6 @@ import eu.webtoolkit.jwt.WLength.Unit;
 import eu.webtoolkit.jwt.WLineEdit;
 import eu.webtoolkit.jwt.WLink;
 import eu.webtoolkit.jwt.WLink.Type;
-import eu.webtoolkit.jwt.WMouseEvent;
 import eu.webtoolkit.jwt.WPushButton;
 import eu.webtoolkit.jwt.WTable;
 import eu.webtoolkit.jwt.WText;
@@ -97,20 +95,6 @@ public class WCapoSearchControl extends WCompositeWidget
           table.getElementAt(0, 2).addWidget(new WText("Score"));
           table.getElementAt(0, 2).setContentAlignment(AlignmentFlag.AlignRight);
 
-          table.doubleClicked().addListener(this, this::doSomething);
-          table.doubleClicked().addListener(this, (arg1) -> System.out.println(arg1));
-          
-          table.doubleClicked().addListener(this, new Signal1.Listener<WMouseEvent>()
-          {
-              @Override
-              public void trigger(WMouseEvent arg1)
-              {
-                  System.out.println(arg1);
-
-              }
-
-          });
-
           int rowNumber = 0;
           while ( rows.hasNext() ) {
               
@@ -172,9 +156,5 @@ public class WCapoSearchControl extends WCompositeWidget
         }
         return searchResultsDialog;
     }
-    
-    private void doSomething(WMouseEvent mouseEvent)
-    {
-        System.out.println(mouseEvent);
-    }
+   
 }
