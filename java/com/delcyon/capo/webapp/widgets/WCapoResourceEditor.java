@@ -22,8 +22,6 @@ import com.delcyon.capo.webapp.widgets.WAceEditor.Theme;
 import eu.webtoolkit.jwt.AlignmentFlag;
 import eu.webtoolkit.jwt.AnchorTarget;
 import eu.webtoolkit.jwt.SelectionMode;
-import eu.webtoolkit.jwt.Signal;
-import eu.webtoolkit.jwt.Signal1;
 import eu.webtoolkit.jwt.WAnchor;
 import eu.webtoolkit.jwt.WContainerWidget;
 import eu.webtoolkit.jwt.WFileUpload;
@@ -58,6 +56,7 @@ public class WCapoResourceEditor extends WTabWidget
     private WPushButton createContentPushButton;
     private WAceEditor aceEditor;
     private WAceEditor formattedContentDisplay;
+    private WFileUpload upload;
 
     
     /**
@@ -141,16 +140,7 @@ public class WCapoResourceEditor extends WTabWidget
             aceEditor = new WAceEditor();
             aceEditor.setTheme(Theme.tomorrow);
             //add a save listen to the editor
-            aceEditor.save().addListener(this, new Signal1.Listener<String>()
-            {
-                public void trigger(String arg1) 
-                {
-                    //update content
-                    WCapoResourceEditor.this.content = arg1;
-                    //then save 
-                    save();
-                }
-            });
+            aceEditor.save().addListener(this, this::save);
         }
         return aceEditor;
     }
@@ -158,10 +148,13 @@ public class WCapoResourceEditor extends WTabWidget
     /**
      * this will save the 'content' to the 'model', then call refresh
      */
-    private void save()
+    private void save(String content)
     {
         try
         {            
+            //update content
+            WCapoResourceEditor.this.content = content;
+            //then save 
             ((ResourceDescriptor) model).writeBlock(null, content.getBytes());
             refresh();
         } catch (Exception exception)
@@ -321,57 +314,22 @@ public class WCapoResourceEditor extends WTabWidget
             WAnchor anchor = new WAnchor(getDownloadLink(),"Download"); //this is a link so "save as" will work 
             
             anchor.setTarget(AnchorTarget.TargetNewWindow);
-            final WFileUpload upload = new WFileUpload();
+            upload = new WFileUpload();
             upload.setFileTextSize(10000); //needed to get a basic starting point on the progress apparently
             upload.setProgressBar(new WProgressBar());
             
             //fired when the user selects a file to upload, which we use to indicate that we'd like to start uploading
-            upload.changed().addListener(this, new Signal.Listener() {
-                public void trigger() {
-                    upload.upload();                               
-                }
-            });
+            upload.changed().addListener(this, upload::upload);                               
             
             //trigger that gets called once a file is done uploading
-            upload.uploaded().addListener(this, new Signal.Listener() {
-                public void trigger() {
-                    try
-                    {
-                        //we always get the first uploaded file, as we don't allow multiple files here
-                        List<UploadedFile> uploadedFiles = upload.getUploadedFiles();
-                        String tempFileName = uploadedFiles.get(0).getSpoolFileName();
-                        File tempFile = new File(tempFileName);
-                        //once we have a handle on the file, stream it into our resource descriptor
-                        //This is a little crazy, i'd rather pass a pointer around, but we're dealing with streams and jcr and all sorts of stuff
-                        OutputStream outputStream = ((ResourceDescriptor) WCapoResourceEditor.this.model).getOutputStream(null);
-                        StreamUtil.readInputStreamIntoOutputStream(new FileInputStream(tempFile), outputStream );
-                        outputStream.close();
-                        refresh();
-                    }                                
-                    catch (Exception e)
-                    {                                    
-                        e.printStackTrace();
-                    }
-                    
-                }
-            });
+            upload.uploaded().addListener(this, this::fileUploaded);
             
             //TODO This upload error has to be processed. We really need an error dialog
-            upload.fileTooLarge().addListener(this, new Signal.Listener() {
-                public void trigger() {
-                    System.err.println("error, too large");
-                }
-            });
+            upload.fileTooLarge().addListener(this, () -> System.err.println("error, too large"));
             
             //clean content button.
             WPushButton clearContentPushButton = new WPushButton("Clear Content");
-            clearContentPushButton.clicked().addListener(this, new Signal.Listener() {
-                public void trigger() {                           
-                        clearContent();                           
-                }
-            });
-            
-            
+            clearContentPushButton.clicked().addListener(this, this::clearContent);
             
             detailsContainerWidget.addWidget(upload);
             detailsContainerWidget.addWidget(anchor);
@@ -380,6 +338,31 @@ public class WCapoResourceEditor extends WTabWidget
             detailsContainerWidget.addWidget(getAttributeTableView());
         }
         return detailsContainerWidget;
+    }
+    
+    /**
+     * Handles file upload event
+     */
+    private void fileUploaded()
+    {
+        try
+        {
+            //we always get the first uploaded file, as we don't allow multiple files here
+            List<UploadedFile> uploadedFiles = upload.getUploadedFiles();
+            String tempFileName = uploadedFiles.get(0).getSpoolFileName();
+            File tempFile = new File(tempFileName);
+            //once we have a handle on the file, stream it into our resource descriptor
+            //This is a little crazy, i'd rather pass a pointer around, but we're dealing with streams and jcr and all sorts of stuff
+            OutputStream outputStream = ((ResourceDescriptor) WCapoResourceEditor.this.model).getOutputStream(null);
+            StreamUtil.readInputStreamIntoOutputStream(new FileInputStream(tempFile), outputStream );
+            outputStream.close();
+            refresh();
+        }                                
+        catch (Exception e)
+        {                                    
+            e.printStackTrace();
+        }
+        
     }
     
     /**
@@ -405,11 +388,7 @@ public class WCapoResourceEditor extends WTabWidget
        if(createContentPushButton == null)
        {
            createContentPushButton = new WPushButton("Create Content");
-           createContentPushButton.clicked().addListener(this, new Signal.Listener() {
-               public void trigger() {                           
-                       createContent();                           
-               }
-           });
+           createContentPushButton.clicked().addListener(this, this::createContent);
        }
        return createContentPushButton;
     }
