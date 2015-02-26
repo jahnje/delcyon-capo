@@ -339,7 +339,7 @@
 	<!--START MAIN BUILD TARGET-->
 	<!-- this compiles everything, pretty standard. Compile everything, and move anything in the resources directory into the build directory so it can be accessed by the application -->
 	<target name="compile" depends="prepare">		
-		<javac debug="on" srcdir="${src.dir}" destdir="${build.dir}" target="1.6" source="1.6">
+		<javac debug="on" srcdir="${src.dir}" destdir="${build.dir}">
 			<classpath refid="compile.classpath" />
 		</javac>
 		<copy todir="${build.dir}">
