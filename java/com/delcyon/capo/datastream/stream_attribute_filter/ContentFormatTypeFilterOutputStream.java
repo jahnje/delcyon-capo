@@ -91,9 +91,16 @@ public class ContentFormatTypeFilterOutputStream extends FilterOutputStream impl
     @Override
     public void write(byte[] data, int offset, int length) throws IOException
     {
-        for (int i = offset; i < offset + length; i++)
+        if(contentFormatType == null)
         {
-            this.write(data[i]);
+            for (int i = offset; i < offset + length; i++)
+            {
+                this.write(data[i]);
+            }
+        }
+        else
+        {
+            out.write(data, offset, length);
         }
     }
     

@@ -45,12 +45,12 @@ public class SimpleContentMetaData extends AbstractContentMetaData
 		setResourceURI(resourceURI);
 	}
 	
-	public void refresh()
+	public void refresh(ResourceParameter... resourceParameters)
 	{
-		init();
+		//init();
 	}
 	
-	private void init()
+	public void init()
 	{
 		setValue(Attributes.exists, false);
 

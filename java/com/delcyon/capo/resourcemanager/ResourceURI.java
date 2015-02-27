@@ -38,7 +38,7 @@ public class ResourceURI
 	private String resourceURIString = null;
 	private String scheme = null;
 	private String schemeSpecificPart = null;
-	private boolean opaque = false;
+	private Boolean opaque = null;
 	private String authority = null;
 	private String hierarchy = null;
 	private String userInfo = null;
@@ -50,26 +50,30 @@ public class ResourceURI
 	private String path = null;
 	private HashMap<String, String> parameterMap = null;//new HashMap<String, String>(0);
 	private ResourceURI childResourceURI = null;
+    private Boolean hasHierarchy = null;
 	
 
 	/** needed for serialization **/
 	private ResourceURI(){};
 	
 	public ResourceURI(String resourceURI)
-	{
+	{	    
+	    this.baseURI = getBaseURI(resourceURI,this);
+	    this.hasHierarchy = hasHierarchy(resourceURI, this);
+	    this.hierarchy  = getHierarchy(resourceURI,this);
 		this.resourceURIString = resourceURI;
-		this.scheme = getScheme(resourceURI);
-		this.schemeSpecificPart = getSchemeSpecificPart(resourceURI);
-		this.opaque = isOpaque(resourceURI);
-		this.authority  = getAuthroity(resourceURI);
-		this.hierarchy  = getHierarchy(resourceURI);
-		this.userInfo = getUserInfo(resourceURI);
-		this.hostname = getHostname(resourceURI);
-		this.port = getPort(resourceURI);
-		this.baseURI = getBaseURI(resourceURI);		
-		this.query = getQuery(resourceURI);
-		this.path = getPath(resourceURI);
-		this.fragment = getFragment(resourceURI);
+		this.scheme = getScheme(resourceURI,this);
+		this.schemeSpecificPart = getSchemeSpecificPart(resourceURI,this);
+		this.opaque = isOpaque(resourceURI,this);
+		this.authority  = getAuthroity(resourceURI,this);
+		
+		this.userInfo = getUserInfo(resourceURI,this);
+		this.hostname = getHostname(resourceURI,this);
+		this.port = getPort(resourceURI,this);
+				
+		this.query = getQuery(resourceURI,this);
+		this.path = getPath(resourceURI,this);
+		this.fragment = getFragment(resourceURI,this);
 		
 		if(getChildURI(resourceURI) != null)
 		{
@@ -99,7 +103,11 @@ public class ResourceURI
 	}
 	
 	
-	public String getResourceURIString()
+	
+
+    
+
+    public String getResourceURIString()
 	{
 		return resourceURIString;
 	}
@@ -199,9 +207,18 @@ public class ResourceURI
 	
 //================================start static methods==============================================
 
-
 	public static String getScheme(String resourceURI)
+    {
+            return getScheme(resourceURI,null);
+    }
+	
+	private static String getScheme(String resourceURI,ResourceURI uri)
 	{
+	    if(uri != null && uri.scheme != null)
+	    {
+	        return uri.scheme;
+	    }
+	    
 		String scheme = null;
 		
 		int schemeDeliminatorIndex = resourceURI.indexOf(":");
@@ -212,10 +229,11 @@ public class ResourceURI
 			{
 				scheme = null;
 			}
-			else
+			else //TODO expensive CPU wise when reading a file system
 			{
 			    scheme = scheme.intern();
 			}
+			
 		}
 		return scheme;
 	}
@@ -224,8 +242,18 @@ public class ResourceURI
 	//Pattern.compile(regex).split(this, limit)
     private static final Pattern schemeSpecificPartMatchPattern = Pattern.compile("[a-z0-9+\\-\\.]+");
     
-	public static String getSchemeSpecificPart(String resourceURI)
+    public static String getSchemeSpecificPart(String resourceURI)
+    {
+        return getSchemeSpecificPart(resourceURI, null);
+    }
+    
+	private static String getSchemeSpecificPart(String resourceURI,ResourceURI uri)
 	{
+	    if(uri != null && uri.schemeSpecificPart != null)
+        {
+            return uri.schemeSpecificPart;
+        }
+	    
 		String scheme = null;
 		String uriRemainder = null;
 		int schemeDeliminatorIndex = resourceURI.indexOf(':');
@@ -270,13 +298,31 @@ public class ResourceURI
 	 */
 	public static boolean isOpaque(String resourceURI)
 	{
-		return getSchemeSpecificPart(resourceURI).startsWith("/") == false;
+		return isOpaque(resourceURI, null);
 	}
+	private static boolean isOpaque(String resourceURI,ResourceURI uri)
+    {
+	    if(uri != null && uri.opaque != null)
+        {
+            return uri.opaque;
+        }
+        return getSchemeSpecificPart(resourceURI,uri).startsWith("/") == false;
+    }
 
 	public static String getAuthroity(String resourceURI)
+    {
+	    return getAuthroity(resourceURI,null);
+    }
+	
+	private static String getAuthroity(String resourceURI,ResourceURI uri)
 	{
 
-		String hierarchy = getHierarchy(resourceURI);
+	    if(uri != null && uri.authority != null)
+        {
+            return uri.authority;
+        }
+	    
+		String hierarchy = getHierarchy(resourceURI,uri);
 		if (hierarchy != null && hierarchy.matches(".+[/:]{0,1}.*"))
 		{
 			String authority = hierarchy.split("/")[0]; 
@@ -289,9 +335,19 @@ public class ResourceURI
 	}
 
 	public static String getUserInfo(String resourceURI)
+    {
+	    return getUserInfo(resourceURI,null);
+    }
+	
+	private static String getUserInfo(String resourceURI,ResourceURI uri)
 	{
+	    if(uri != null && uri.userInfo != null)
+        {
+            return uri.userInfo;
+        }
+	    
 		String userInfo = null;
-		String authority = getAuthroity(resourceURI);
+		String authority = getAuthroity(resourceURI,uri);
 		if(authority != null && authority.matches(".+@.*"))
 		{
 			userInfo = authority.replaceFirst("(.+)@.*", "$1");
@@ -300,9 +356,18 @@ public class ResourceURI
 	}
 	
 	public static String getHostname(String resourceURI)
+    {
+	    return getHostname(resourceURI,null);
+    }
+	public static String getHostname(String resourceURI,ResourceURI uri)
 	{
+	    if(uri != null && uri.hostname != null)
+        {
+            return uri.hostname;
+        }
+	    
 		String hostname = null;
-		String authority = getAuthroity(resourceURI);
+		String authority = getAuthroity(resourceURI,uri);
 		if(authority != null)
 		{
 			hostname = authority.replaceFirst(".+@", "").replaceFirst(":\\d+", "");
@@ -311,9 +376,19 @@ public class ResourceURI
 	}
 	
 	public static Integer getPort(String resourceURI)
+    {
+	    return getPort(resourceURI, null);
+    }
+	
+	private static Integer getPort(String resourceURI,ResourceURI uri)
 	{
+	    if(uri != null && uri.port != null)
+        {
+            return uri.port;
+        }
+	    
 		Integer port = null;
-		String authority = getAuthroity(resourceURI);
+		String authority = getAuthroity(resourceURI,uri);
 		if(authority != null && authority.matches(".+:\\d+"))
 		{
 			port = Integer.parseInt(authority.replaceAll(".+:(\\d+)", "$1"));
@@ -322,15 +397,25 @@ public class ResourceURI
 	}
 	
 	
-	
 	/**
-	 * This returns the part of the URI with any sub/content URI's removed.
-	 * Content URI's are deliminated by a '!'. For example 'file:some.jar!something.class'
-	 * This would return file:some.jar  
-	 * @param resourceURI
-	 */
+     * This returns the part of the URI with any sub/content URI's removed.
+     * Content URI's are deliminated by a '!'. For example 'file:some.jar!something.class'
+     * This would return file:some.jar  
+     * @param resourceURI
+     */
 	public static String getBaseURI(String resourceURI)
+    {
+	    
+	    return getBaseURI(resourceURI,null);
+        
+    }
+	
+	private static String getBaseURI(String resourceURI, ResourceURI uri)
 	{
+	    if(uri != null && uri.baseURI != null)
+        {
+            return uri.baseURI;
+        }
 		//split on the '!' char
 		String baseURI = baseURISplitPattern.split(resourceURI)[0];//resourceURI.split("!(?<!\\\\!)")[0];
 		//remove any escape chars that were used in the URL
@@ -362,9 +447,19 @@ public class ResourceURI
     private static final Pattern hasHierarchySplitPattern = Pattern.compile("\\?(?<!\\\\\\?)");
     private static final Pattern hasHierarchyMatchesPattern = Pattern.compile(".+://.+/.*");
 	
-	public static boolean hasHierarchy(String resourceURI)
+    public static boolean hasHierarchy(String resourceURI)
+    {
+        return hasHierarchy(resourceURI,null);
+    }
+    
+	private static boolean hasHierarchy(String resourceURI,ResourceURI uri)
 	{
-		String hierarchy = hasHierarchySplitPattern.split(getBaseURI(resourceURI))[0];//getBaseURI(resourceURI).split("\\?(?<!\\\\\\?)")[0];
+	    if(uri != null && uri.hasHierarchy  != null)
+        {
+            return uri.hasHierarchy;
+        }
+	    
+		String hierarchy = hasHierarchySplitPattern.split(getBaseURI(resourceURI,uri))[0];//getBaseURI(resourceURI).split("\\?(?<!\\\\\\?)")[0];
 		if (hasHierarchyMatchesPattern.matcher(hierarchy).matches())//hierarchy.matches(".+://.+/.*"))
 		{
 			return true;
@@ -375,22 +470,42 @@ public class ResourceURI
 		}
 		
 	}
+	
 	public static String getHierarchy(String resourceURI)
 	{
-		if(hasHierarchy(resourceURI) == false)
+	    return getHierarchy(resourceURI,null);
+	}
+	
+	private static String getHierarchy(String resourceURI,ResourceURI uri)
+	{
+		if(hasHierarchy(resourceURI,uri) == false)
 		{
 			return null;
 		}
 		
-		String hierarchy = getBaseURI(resourceURI).split("\\?(?<!\\\\\\?)")[0];// now split off the parameter section of the first declaration of the URI
-		return getSchemeSpecificPart(hierarchy).replaceFirst("//(.*)", "$1");
+		if(uri != null && uri.hierarchy != null)
+        {
+            return uri.hierarchy;
+        }
+		
+		String hierarchy = getBaseURI(resourceURI,uri).split("\\?(?<!\\\\\\?)")[0];// now split off the parameter section of the first declaration of the URI
+		return getSchemeSpecificPart(hierarchy,uri).replaceFirst("//(.*)", "$1");
 	}
 	
-
 	public static String getQuery(String resourceURI)
+    {
+	    return getQuery(resourceURI,null);
+    }
+
+	private static String getQuery(String resourceURI,ResourceURI uri)
 	{
+	    if(uri != null && uri.query != null)
+        {
+            return uri.query;
+        }
+	    
 		String query = null;
-		String[] querySplit = getBaseURI(resourceURI).split("\\?(?<!\\\\\\?)");
+		String[] querySplit = getBaseURI(resourceURI,uri).split("\\?(?<!\\\\\\?)");
 		if(querySplit.length > 1)
 		{
 			query = querySplit[1].replaceAll("\\\\(?=\\?)", "");
@@ -403,9 +518,20 @@ public class ResourceURI
 	}
 	
 	public static String getFragment(String resourceURI)
+    {
+	    return getFragment(resourceURI,null);
+    }
+	
+	private static String getFragment(String resourceURI,ResourceURI uri)
 	{
+	    
+	    if(uri != null && uri.fragment != null)
+        {
+            return uri.fragment;
+        }
+	    
 		String fragment = null;
-		String[] querySplit = getBaseURI(resourceURI).split("\\?(?<!\\\\\\?)");
+		String[] querySplit = getBaseURI(resourceURI,uri).split("\\?(?<!\\\\\\?)");
 		if(querySplit.length > 1)
 		{
 			fragment = querySplit[1].replaceAll("\\\\(?=\\?)", "");
@@ -422,29 +548,47 @@ public class ResourceURI
 	}
 	
 	private static final Pattern pathSplitPattern = Pattern.compile("\\?(?<!\\\\\\?)");
-    private static final Pattern pathReplaceAllPattern1 = Pattern.compile(".+:(?<!\\\\:)(.+)");
-    private static final Pattern pathReplaceAllPattern2 = Pattern.compile("\\\\(?=:)");
+    private static final Pattern pathReplaceAllPattern1 = Pattern.compile("([^/]*:)?(.+)");//strip off urn
+    private static final Pattern pathReplaceAllPattern2 = Pattern.compile("\\\\(?=:)"); //hmmm... not sure
 	
-	public static String getPath(String resourceURI)
+    public static String getPath(String resourceURI)
+    {
+        return getPath(resourceURI,null);
+    }
+    
+	private static String getPath(String resourceURI,ResourceURI uri)
 	{
+	    if(uri != null && uri.path != null)
+        {
+            return uri.path;
+        }
+	    
 		String path = null;
-		String baseURI = getBaseURI(resourceURI);
-		if(hasHierarchy(baseURI))
+		String baseURI = getBaseURI(resourceURI,uri);
+		if(hasHierarchy(baseURI,uri))
 		{
-			String authority = getAuthroity(baseURI);
-			path = getHierarchy(baseURI);
+			String authority = getAuthroity(baseURI,uri);
+			path = getHierarchy(baseURI,uri);
 			if (authority != null)
 			{
 				path = path.substring(authority.length());
 			}
 		}
 		else
-		{
-			
-			path = pathSplitPattern.split(getSchemeSpecificPart(getBaseURI(resourceURI)))[0];//getSchemeSpecificPart(getBaseURI(resourceURI).split("\\?(?<!\\\\\\?)")[0]);
-			if (path.indexOf('/') >= 0)//matches(".*/.*")) //see if this path is a urn path or a conventional path
+		{			
+			path = pathSplitPattern.split(getSchemeSpecificPart(getBaseURI(resourceURI,uri),uri))[0];//getSchemeSpecificPart(getBaseURI(resourceURI).split("\\?(?<!\\\\\\?)")[0]);
+			int firstSlashIndex = path.indexOf('/');
+			if (firstSlashIndex >= 0)//matches(".*/.*")) //see if this path is a urn path or a conventional path
 			{
-				path = pathReplaceAllPattern2.matcher(pathReplaceAllPattern1.matcher(path).replaceAll("$1")).replaceAll("");//path.replaceAll(".+:(?<!\\\\:)(.+)", "$1").replaceAll("\\\\(?=:)", "");
+			    int lastIndexOfColon = path.lastIndexOf(":");
+			    if (lastIndexOfColon <= firstSlashIndex)
+			    {
+			        path = path.substring(lastIndexOfColon+1);
+			    }
+			    else //fall back to regex
+			    {
+			        path = pathReplaceAllPattern2.matcher(pathReplaceAllPattern1.matcher(path).replaceAll("$2")).replaceAll("");//path.replaceAll(".+:(?<!\\\\:)(.+)", "$1").replaceAll("\\\\(?=:)", "");
+			    }
 			}			
 		}
 		

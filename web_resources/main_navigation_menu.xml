@@ -1,0 +1,20 @@
+<menu styleClass="btn btn-mini">
+    <menu name="System">
+        <menu name="Clients"/>
+        <menu name="Tasks"/>
+        <menu name="Chores"/>
+        <menu name="Groups"/>
+        <menu name="Scripts"/>
+    </menu>
+    <menu name="Documentation"/>
+    <menu name="Chores"/>
+    <menu name="Reports"/>
+    <menu name="Admin">
+        <menu name="Users"/>
+        <menu name="Roles"/>
+        <menu name="Configuration">
+            <menu name="Keys" path="config/keys"/>
+        </menu>
+    </menu>
+    
+</menu>

@@ -20,6 +20,7 @@ import com.delcyon.capo.CapoApplication;
 public abstract class AbstractResourceServlet extends HttpServlet
 {
 	
+    private static AbstractResourceServlet  resourceServlet = null;
 
 	private boolean caching;	// allow the client to cache resources sent by this servlet? defaults to true but can be overridden by setting a 'caching' init-param with value 'false' in web.xml
 	private long oneYear = 31363200000L;
@@ -41,8 +42,19 @@ public abstract class AbstractResourceServlet extends HttpServlet
 
 		initMimeTypes();
 		initResourceStreamers();
+		if(AbstractResourceServlet.resourceServlet == null)
+		{
+		    AbstractResourceServlet.resourceServlet = this;
+		}
 	}
 
+	public static AbstractResourceServlet getResourceServletInstance()
+	{
+	    return AbstractResourceServlet.resourceServlet;
+	}
+	
+	
+	
 	/**
 	 * define the collection of MimeTypes the servlet will serve up
 	 */
@@ -70,7 +82,7 @@ public abstract class AbstractResourceServlet extends HttpServlet
 	 * @param requestURI
 	 * @return a String representing the absolute path for the requested resource, validity of path may or may not be checked
 	 */
-	protected abstract String getResourcePath(String requestURI);
+	public abstract String getResourcePath(String requestURI);
 	
 	/**
 	 * Stream the resource with the appropriate ResourceStreamer for mimeType
@@ -81,6 +93,10 @@ public abstract class AbstractResourceServlet extends HttpServlet
 	 */
 	protected abstract void streamResource(HttpServletRequest request, HttpServletResponse response, String mimeType, InputStream inputStream) throws IOException;
 	
+	public boolean exists(String requestURI)
+	{
+	    return (AbstractResourceServlet.class.getResource(getResourcePath(requestURI)) != null);
+	}
 	/**
 	 * Takes a request, attempts to locate the resource requested and stream it to the response 
 	 */

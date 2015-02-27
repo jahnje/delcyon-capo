@@ -16,10 +16,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 package com.delcyon.capo.resourcemanager.types;
 
-import java.util.HashMap;
 import java.util.List;
 
 import com.delcyon.capo.resourcemanager.ContentFormatType;
+import com.delcyon.capo.resourcemanager.ResourceParameter;
 import com.delcyon.capo.resourcemanager.ResourceURI;
 
 /**
@@ -56,6 +56,14 @@ public interface ContentMetaData
 	 * @return
 	 */
 	public boolean isDynamic();
+	
+	/**
+	 * only relevant when isDynamic is true. If areDynamicAttributeLoaded returns true, then then controlling object may make a decision as to whether or not to refresh the data, since we have all we're going to get at this point.
+	 * @return
+	 */
+	public boolean areDynamicAttributeLoaded();
+	
+	public void refresh(ResourceParameter... resourceParameters) throws Exception;
 	
 	public boolean isInitialized();
 	
@@ -113,5 +121,7 @@ public interface ContentMetaData
 	public void addContainedResource(ContentMetaData contentMetaData);
 
 	public ResourceURI getResourceURI();
+
+    public void init();
 	
 }

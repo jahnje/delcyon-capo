@@ -10,10 +10,12 @@
 	<property name="build.dir" value="${distribution.dir}/classes" />
 	<property name="package.src.dir" value="${build.dir}" />
 	<property name="lib.dir" value="./lib" />
+	<property name="serverlib.dir" value="./lib-server" />
 	<property name="bin.dir" value="./bin" />
 	<property name="config.dir" value="./config" />
 	<property name="resource.dir" value="resources" />
-
+	<property name="webresource.dir" value="web_resources" />
+	
 	<property name="build_number.file" value="build.number" />
 	<property name="temp_build_number.file" value="build.number.tmp" />
 	<property name="otherlib.dir" value="./lib-other" />
@@ -35,6 +37,9 @@
 			<include name="**/*.jar" />
 		</fileset>
 		<fileset dir="${otherlib.dir}">
+			<include name="**/*.jar" />
+		</fileset>
+		<fileset dir="${serverlib.dir}">
 			<include name="**/*.jar" />
 		</fileset>
 	</path>
@@ -110,12 +115,16 @@
 			<srcfiles dir="${lib.dir}">
 				<include name="**/*.jar" />
 			</srcfiles>
+			<srcfiles dir="${serverlib.dir}">
+				<include name="**/*.jar" />
+			</srcfiles>
 			<srcfiles dir="${otherlib.dir}">
 				<include name="**/*.jar" />
 			</srcfiles>
 			<srcfiles dir="${resource.dir}">
 				<exclude name="version.properties" />
 			</srcfiles>
+			<srcfiles dir="${webresource.dir}"/>				
 			<srcfiles dir="${src.dir}" />
 		</uptodate>
 		<!-- call the bail out code here if things are already up to date -->
@@ -126,8 +135,11 @@
 	<target name="prepare" depends="up2datecheck">
 
 		<!-- register all of the libraries needed to run the application-->
-		<RequiredLibrariesBuildTask propertyname="required.libraries" verbose="true">
+		<RequiredLibrariesBuildTask propertyname="required.libraries" verbose="true" useRelativePaths="true">
 			<fileset dir="lib">
+				<include name="*.jar" />
+			</fileset>
+			<fileset dir="lib-server">
 				<include name="*.jar" />
 			</fileset>
 		</RequiredLibrariesBuildTask>
@@ -137,10 +149,12 @@
 		<mkdir dir="${distribution.dir}" />		
 		<mkdir dir="${build.dir}/help" />
 		<mkdir dir="${lib.dir}" />
+		<mkdir dir="${serverlib.dir}" />
 		<mkdir dir="${config.dir}" />
 		<mkdir dir="${bin.dir}" />
 		<mkdir dir="${otherlib.dir}" />
 		<mkdir dir="${resource.dir}" />
+		<mkdir dir="${webresource.dir}" />
 		<mkdir dir="${test_resources.dir}" />
 		<mkdir dir="${test.dir}" />
 
@@ -339,11 +353,14 @@
 	<!--START MAIN BUILD TARGET-->
 	<!-- this compiles everything, pretty standard. Compile everything, and move anything in the resources directory into the build directory so it can be accessed by the application -->
 	<target name="compile" depends="prepare">		
-		<javac debug="on" srcdir="${src.dir}" destdir="${build.dir}" target="1.6" source="1.6">
+		<javac debug="on" srcdir="${src.dir}" destdir="${build.dir}">
 			<classpath refid="compile.classpath" />
 		</javac>
 		<copy todir="${build.dir}">
 			<fileset dir="${resource.dir}" />
+		</copy>
+		<copy todir="${build.dir}">
+			<fileset dir="${webresource.dir}" />
 		</copy>
 	</target>
 	
@@ -374,6 +391,9 @@
 		<echo>Building ${distribution.dir}/${product.name}-${version}.${build.number}.${patch.number}.${jarFileExtension}</echo>
 		<copy todir="${distribution.dir}/lib">
 			<fileset dir="${lib.dir}" />			
+		</copy>
+		<copy todir="${distribution.dir}/lib-server">
+			<fileset dir="${serverlib.dir}" />			
 		</copy>
 		<copy todir="${distribution.dir}/bin">
 			<fileset dir="${bin.dir}" />			
@@ -416,6 +436,7 @@
 		<InstallerBuildTask distributionfilename="${distribution.dir}/capo-server-${version}.${build.number}.${patch.number}-dist.${jarFileExtension}">
 			<fileset dir="${distribution.dir}">				
 				<include name="lib/**" />
+				<include name="lib-server/**" />
 				<include name="bin/**" />
 				<include name="config/**" />
 				<include name="client/**" />

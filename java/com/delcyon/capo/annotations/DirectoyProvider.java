@@ -35,4 +35,5 @@ public @interface DirectoyProvider
 	String preferenceName();
 	Class<? extends Preference> preferences();
 	Location location() default Location.BOTH;
+	boolean canUseRepository() default true; 
 }

@@ -119,7 +119,7 @@ public class ImportElement extends AbstractControl implements XPathFunctionProce
 		{
 			throw new Exception("src="+src+" not found");
 		}
-		resourceDescriptor.addResourceParameters(getParentGroup(), new ResourceParameter(FileResourceType.Parameters.PARENT_PROVIDED_DIRECTORY,PREFERENCE.RESOURCE_DIR,Source.CALL));
+		//resourceDescriptor.addResourceParameters(getParentGroup(), new ResourceParameter(FileResourceType.Parameters.PARENT_PROVIDED_DIRECTORY,PREFERENCE.RESOURCE_DIR,Source.CALL));
 		resourceDescriptor.open(getParentGroup());
 		if(resourceDescriptor.getResourceMetaData(getParentGroup()).exists() == false)
 		{

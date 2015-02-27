@@ -56,11 +56,33 @@ public class Util
     }
     
     @SuppressWarnings({ "unchecked", "rawtypes" })
+    public static byte[] readData(String src) throws Exception
+    {
+        Class utilClass = getIndependentClassLoader().loadClass("com.delcyon.capo.tests.util.Util");
+        return (byte[]) utilClass.getMethod("readData", String.class).invoke(null, src); 
+    }
+    
+    @SuppressWarnings({ "unchecked", "rawtypes" })
+    public static void writeData(String dest, byte[] bytes) throws Exception
+    {
+        Class utilClass = getIndependentClassLoader().loadClass("com.delcyon.capo.tests.util.Util");
+        utilClass.getMethod("writeData", String.class,byte[].class).invoke(null, dest,bytes); 
+    }
+    
+    @SuppressWarnings({ "unchecked", "rawtypes" })
     public static void copyTree(String src, String dest) throws Exception
     {
         
         Class utilClass = getIndependentClassLoader().loadClass("com.delcyon.capo.tests.util.Util");
         utilClass.getMethod("copyTree", String.class,String.class,boolean.class,boolean.class).invoke(null, src,dest,true,true);        
+    }
+    
+    @SuppressWarnings({ "unchecked", "rawtypes" })
+    public static void copyTree(String src, String dest,boolean recursive,boolean prune) throws Exception
+    {
+        
+        Class utilClass = getIndependentClassLoader().loadClass("com.delcyon.capo.tests.util.Util");
+        utilClass.getMethod("copyTree", String.class,String.class,boolean.class,boolean.class).invoke(null, src,dest,recursive,prune);        
     }
     
     @SuppressWarnings({ "unchecked", "rawtypes" })

@@ -26,6 +26,7 @@ public class ResourceDocument extends CDocument implements ResourceNode
     private ResourceDescriptor resourceDescriptor;   
     private ResourceControlElement resourceControlElement = null;
     private boolean exportContentOnly = false;
+    private boolean includeAttributes = false;
     private boolean fullDocument = true;
     
     private ResourceDocument() //serialization
@@ -110,6 +111,19 @@ public class ResourceDocument extends CDocument implements ResourceNode
 		return fullDocument;
 	}
     
+    public boolean isIncludeAttributes()
+    {        
+        return includeAttributes;
+    }
+    /**
+     * This only takes effect when the document isn't a fullDocument
+     * @param includeAttributes
+     */
+    public void setIncludeAttributes(boolean includeAttributes)
+    {
+        this.includeAttributes = includeAttributes;
+    }
+    
     @Override
     public ResourceDescriptor getResourceDescriptor()
     {
@@ -176,6 +190,8 @@ public class ResourceDocument extends CDocument implements ResourceNode
         return (Document) domResult.getNode();
     }
 
-   
+    
+
+    
 
 }

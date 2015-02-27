@@ -46,9 +46,9 @@ public class ParserElementTest
     	Util.copyTree("test-data/capo", "capo", true, true);
     	Util.deleteTree("testdb");
     	Util.copyTree("test-data/testdb", "testdb", true, true);
-    	//Util.copyTree("test-data/parser_test_data/SIMPLE.grammer", "capo/server/resources", true, true);
-    	Util.copyTree("test-data/parser_test_data", "capo/server/resources", true, true);
+    	//Util.copyTree("test-data/parser_test_data/SIMPLE.grammer", "capo/server/resources", true, true);    	
         TestServer.start();
+        Util.copyTree("test-data/parser_test_data", "repo:/resources", true, false);
         Document document = CapoApplication.getDocumentBuilder().parse(new FileInputStream("test-data/parser_test_data/parser-element-test.xml"));
         LocalRequestProcessor localRequestProcessor = new LocalRequestProcessor();
         localRequestProcessor.process(document);

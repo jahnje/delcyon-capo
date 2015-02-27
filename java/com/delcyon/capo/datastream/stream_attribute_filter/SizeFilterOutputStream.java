@@ -66,7 +66,7 @@ public class SizeFilterOutputStream extends FilterOutputStream implements Stream
      public void write(byte[] data, int offset, int length) throws IOException
      {
     	 size = size + length;
-    	 super.write(data, offset, length);
+    	 out.write(data, offset, length);
  
          
      }

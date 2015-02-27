@@ -8,7 +8,7 @@
     
     <server:group name="default">
         <server:command name="ifconfig" exec="/sbin/ifconfig"/>
-        <server:parse name="parsed" grammar="SIMPLE.grammer" src="ref:${command.ifconfig}/stdout" dumpRef=".." dumpVars="true"/>
+        <server:parse name="parsed" grammar="repo:SIMPLE.grammer" src="ref:${command.ifconfig}/stdout" dumpRef=".." dumpVars="true"/>
         
     </server:group>
     

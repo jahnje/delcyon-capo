@@ -37,8 +37,7 @@ public abstract class CapoDataManager
 		return (CapoDataManager) Class.forName(className).newInstance();
 	}
 
-	public abstract void init() throws Exception;
-	
+	public abstract void init(Boolean... minimal) throws Exception;
 	
 	public abstract ResourceDescriptor getResourceDescriptor(ControlElement callingControlElement,String uri) throws Exception;
 
@@ -55,4 +54,9 @@ public abstract class CapoDataManager
     public abstract ResourceDescriptor findDocumentResourceDescriptor(String documentName, String clientID, Preference directoryPreference) throws Exception;
     
     public abstract void release() throws Exception;
+
+    public abstract void setDefaultResourceTypeScheme(String scheme);
+    
+    public abstract String getDefaultResourceTypeScheme();
+    
 }

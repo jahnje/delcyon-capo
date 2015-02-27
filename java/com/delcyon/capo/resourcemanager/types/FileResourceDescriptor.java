@@ -136,7 +136,7 @@ public class FileResourceDescriptor extends AbstractResourceDescriptor implement
 		if (getResourceState() != State.OPEN && getResourceState() != State.STEPPING)
 		{
 			open(variableContainer,resourceParameters);
-		}
+		}		
 		return contentMetaData;
 	}
 	
@@ -281,7 +281,7 @@ public class FileResourceDescriptor extends AbstractResourceDescriptor implement
 		super.close(variableContainer,resourceParameters);
 		if (contentMetaData != null)
 		{
-			contentMetaData.refresh(getResourceURI().getBaseURI());
+			contentMetaData.refresh();
 		}
 		if(contentInputStream != null)
 		{

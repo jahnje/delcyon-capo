@@ -179,7 +179,6 @@ public class ClientRequestXMLProcessor implements XMLProcessor
 	{
 	    try
 	    {
-	        
 	        clientRequestProcessor.process(clientRequest);
 	        if(isRegisteredSession == false)
 	        {
@@ -190,7 +189,6 @@ public class ClientRequestXMLProcessor implements XMLProcessor
 	            clientRequest.finish();
 	            //send finished indicator
 	        }
-
 	    } catch (Exception exception)
 	    {
 	        CapoApplication.logger.log(Level.SEVERE, "Exception in  session:"+sessionId,exception);

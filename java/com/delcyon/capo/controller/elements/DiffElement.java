@@ -30,6 +30,7 @@ import com.delcyon.capo.resourcemanager.ResourceParameterBuilder;
 import com.delcyon.capo.util.diff.Diff;
 import com.delcyon.capo.util.diff.XMLTextDiff;
 import com.delcyon.capo.xml.XMLDiff;
+import com.delcyon.capo.xml.XPath;
 
 /**
  * @author jeremiah
@@ -127,6 +128,7 @@ public class DiffElement extends AbstractClientSideControl implements ClientSide
 			Document modDocument = CapoApplication.getDocumentBuilder().parse(modResourceDescriptor.getInputStream(getParentGroup(),resourceParameters));
 			XMLDiff xmlDiff = new XMLDiff();
 			Document differenceDocument = xmlDiff.getDifferences(baseDocument,modDocument);
+			//XPath.dumpNode(differenceDocument, System.err);
 			getControlElementDeclaration().appendChild(getControlElementDeclaration().getOwnerDocument().adoptNode(differenceDocument.getDocumentElement()));
 		}
 		else if (baseResourceDescriptor.getResourceMetaData(getParentGroup(),resourceParameters).getContentFormatType() == ContentFormatType.TEXT || modResourceDescriptor.getResourceMetaData(getParentGroup(),resourceParameters).getContentFormatType() == ContentFormatType.TEXT)
@@ -138,7 +140,7 @@ public class DiffElement extends AbstractClientSideControl implements ClientSide
 		}
 		else //assume both are BINARY at this point
 		{
-			//TODO going to need to set a token list for this
+			//TODO deal with Binary diffs. going to need to set a token list for this
 			Diff diff = new Diff(baseResourceDescriptor.getInputStream(getParentGroup(),resourceParameters), modResourceDescriptor.getInputStream(getParentGroup(),resourceParameters));
 		}
 		baseResourceDescriptor.close(getParentGroup(),resourceParameters);
