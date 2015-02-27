@@ -119,7 +119,7 @@ public class CapoWebApplication extends WApplication {
 	        navigation = new WXmlNavigationBar(menuDocument.getDocumentElement());
 	        navigation.addWidget(getSearchControl(),AlignmentFlag.AlignRight);
 	        navigation.setResponsive(false);
-	        navigation.setTitle("Capo");
+	        navigation.setTitle("Capo",new WLink("/"));
 	        navigation.setPopup(true);
 	        navigation.setHeight(new WLength(5));
 	        navigation.setMargin(0);
