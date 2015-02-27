@@ -259,6 +259,7 @@ public class ControllerClientRequestProcessor  extends AbstractClientRequestProc
             clientResourceDescriptor.performAction(null, Action.CREATE);
             CapoApplication.logger.log(Level.INFO,"Creating new identity document for "+clientID);
             XPath.dumpNode(CapoApplication.getDefaultDocument("ids.xml"), clientResourceDescriptor.getOutputStream(null));
+            clientResourceDescriptor.getOutputStream(null).close();
         }
         
         Element identityDocumentElement = CapoApplication.getDocumentBuilder().parse(clientResourceDescriptor.getInputStream(null)).getDocumentElement();

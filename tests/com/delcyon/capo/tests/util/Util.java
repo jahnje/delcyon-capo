@@ -1,8 +1,8 @@
 package com.delcyon.capo.tests.util;
 
 import java.io.File;
+import java.util.logging.Level;
 
-import org.junit.Assert;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
@@ -17,8 +17,10 @@ import com.delcyon.capo.resourcemanager.ResourceDescriptor.LifeCycle;
 import com.delcyon.capo.resourcemanager.ResourceManager;
 import com.delcyon.capo.resourcemanager.ResourceParameter;
 import com.delcyon.capo.resourcemanager.types.ContentMetaData;
-import com.delcyon.capo.resourcemanager.types.FileResourceType;
 import com.delcyon.capo.resourcemanager.types.FileResourceContentMetaData.FileAttributes;
+import com.delcyon.capo.resourcemanager.types.FileResourceType;
+import com.delcyon.capo.resourcemanager.types.JcrResourceType;
+import com.delcyon.capo.server.CapoServer.Preferences;
 import com.delcyon.capo.xml.XMLDiff;
 import com.delcyon.capo.xml.XPath;
 import com.delcyon.capo.xml.dom.ResourceDocument;
@@ -30,7 +32,7 @@ public class Util
     
     public static void startMinimalCapoApplication() throws Exception
     {        
-    	System.setProperty("jaxp.debug", "true");
+    	
     	if (minmalApplication == null)
     	{
     	    minmalApplication = new TestCapoApplication();
@@ -42,7 +44,12 @@ public class Util
     	}
     	if (CapoApplication.getConfiguration() == null)
     	{
-    	    CapoApplication.setConfiguration(new Configuration(new String[]{"-"+PREFERENCE.DISABLE_CONFIG_AUTOSYNC.toString()}));
+    	    CapoApplication.setConfiguration(new Configuration(new String[]{"-"+PREFERENCE.DISABLE_CONFIG_AUTOSYNC.toString(),"-"+Preferences.DISABLE_REPO.toString(),"true","-"+Preferences.DISABLE_WEBSERVER.toString(),"true"}));
+    	}
+    	
+    	if(CapoApplication.LOGGING_LEVEL.intValue() >= Level.FINER.intValue())
+    	{
+    	    System.setProperty("jaxp.debug", "true");
     	}
     	
     	if (CapoApplication.getDataManager() == null)
@@ -67,6 +74,7 @@ public class Util
         syncElement.setAttribute(SyncElement.Attributes.dest.toString(), dest);
         syncElement.setAttribute(SyncElement.Attributes.recursive.toString(), recursive+"");
         syncElement.setAttribute(SyncElement.Attributes.prune.toString(), prune+"");
+        syncElement.setAttribute(SyncElement.Attributes.syncAttributes.toString(), true+"");
         Element resourceParameterElement = document.createElementNS(CapoApplication.RESOURCE_NAMESPACE_URI, "resouce:parameter");
         resourceParameterElement.setAttribute("name", FileResourceType.Parameters.ROOT_DIR.toString());
         resourceParameterElement.setAttribute("value", new File(".").getCanonicalPath());
@@ -79,11 +87,52 @@ public class Util
         syncControlElement.processServerSideElement();
     }
     
+    public static byte[] readData(String src) throws Exception
+    {
+        startMinimalCapoApplication();
+        ResourceDescriptor sourceResourceDescriptor = null;
+        if(src.startsWith("repo:"))
+        {
+            sourceResourceDescriptor = new JcrResourceType().getResourceDescriptor(src);
+        }
+        else
+        {
+            sourceResourceDescriptor = new FileResourceType().getResourceDescriptor(src);
+            sourceResourceDescriptor.getResourceMetaData(null,new ResourceParameter(FileResourceType.Parameters.ROOT_DIR, new File(".").getCanonicalPath()));
+        }
+        return sourceResourceDescriptor.readBlock(null);
+    }
+    
+    
+    public static void writeData(String dest, byte[] bytes) throws Exception
+    {
+        startMinimalCapoApplication();
+        ResourceDescriptor destinationResourceDescriptor = null;
+        if(dest.startsWith("repo:"))
+        {
+            destinationResourceDescriptor = new JcrResourceType().getResourceDescriptor(dest);
+        }
+        else
+        {
+            destinationResourceDescriptor = new FileResourceType().getResourceDescriptor(dest);
+            destinationResourceDescriptor.getResourceMetaData(null,new ResourceParameter(FileResourceType.Parameters.ROOT_DIR, new File(".").getCanonicalPath()));
+        }
+        destinationResourceDescriptor.writeBlock(null, bytes);
+    }
+    
     public static void deleteTree(String dest) throws Exception
     {
         startMinimalCapoApplication();
-        ResourceDescriptor destinationResourceDescriptor = new FileResourceType().getResourceDescriptor(dest);
-        destinationResourceDescriptor.getResourceMetaData(null,new ResourceParameter(FileResourceType.Parameters.ROOT_DIR, new File(".").getCanonicalPath()));
+        ResourceDescriptor destinationResourceDescriptor = null;
+        if(dest.startsWith("repo:"))
+        {
+            destinationResourceDescriptor = new JcrResourceType().getResourceDescriptor(dest);
+        }
+        else
+        {
+            destinationResourceDescriptor = new FileResourceType().getResourceDescriptor(dest);
+            destinationResourceDescriptor.getResourceMetaData(null,new ResourceParameter(FileResourceType.Parameters.ROOT_DIR, new File(".").getCanonicalPath()));
+        }
         destinationResourceDescriptor.performAction(null, Action.DELETE);
     }
     

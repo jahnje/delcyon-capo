@@ -179,7 +179,7 @@ public class SyncElement extends AbstractControl
 	    ContentMetaData sourceContentMetaData = sourceResourceDescriptor.getResourceMetaData(getParentGroup(), ResourceParameterBuilder.getResourceParameters(getControlElementDeclaration()));
 	    ContentMetaData destinationContentMetaData = destinationResourceDescriptor.getResourceMetaData(getParentGroup(), ResourceParameterBuilder.getResourceParameters(getControlElementDeclaration()));
 	    
-	    
+	    //check to see if we need to remove the destination
         if (sourceContentMetaData.exists() == false)
         {
             if(getAttributeBooleanValue(Attributes.prune) == true && destinationContentMetaData.exists() == true)
@@ -197,6 +197,7 @@ public class SyncElement extends AbstractControl
                 throw new Exception(" src='"+ sourceContentMetaData.getResourceURI() +"' does not exist, can't sync.");
             }
         }
+        //check to see if we have children
         else if (sourceContentMetaData.isContainer() == true )
         {
             
@@ -260,8 +261,9 @@ public class SyncElement extends AbstractControl
             copyContentMetaData(sourceContentMetaData,destinationResourceDescriptor);
             
         }
-        else
+        else //check to see if we are just a normal file or leaf node.
         {
+        	
             String srcMD5 = sourceResourceDescriptor.getResourceMetaData(getParentGroup(), ResourceParameterBuilder.getResourceParameters(getControlElementDeclaration())).getMD5();
             String destMD5 = destinationResourceDescriptor.getResourceMetaData(getParentGroup(), ResourceParameterBuilder.getResourceParameters(getControlElementDeclaration())).getMD5();
             if (destMD5 == null || destMD5.equals(srcMD5) == false)
@@ -350,6 +352,10 @@ public class SyncElement extends AbstractControl
                 }
             }
         }
+        //after we're done copying, always refresh our metadata, This is probably redundant most of the time, but if we're a container
+        //we want to make sure that we pick up any changes to our children that will effect us.
+        destinationContentMetaData.refresh();
+        
     }
 
 
@@ -357,10 +363,10 @@ public class SyncElement extends AbstractControl
     private void copyContentMetaData(ContentMetaData sourceContentMetaData, ResourceDescriptor destinationResourceDescriptor) throws Exception
 	{
     	String keepAttributesValue = getAttributeValue(Attributes.syncAttributes);
-        if (keepAttributesValue.isEmpty() == false)
+        if (keepAttributesValue.equalsIgnoreCase("false") == false)
         {
         	Vector<ContentMetaData.Attributes> copyAttributesList = new Vector<ContentMetaData.Attributes>();
-        	if (keepAttributesValue.equalsIgnoreCase("true"))
+        	if (keepAttributesValue.equalsIgnoreCase("true") || keepAttributesValue.isEmpty())
         	{
         		List<String> attributeSet = sourceContentMetaData.getSupportedAttributes();
         		for (String contentAttributeName : attributeSet)
@@ -370,7 +376,7 @@ public class SyncElement extends AbstractControl
         				copyAttributesList.add(ContentMetaData.Attributes.valueOf(contentAttributeName));
         			} catch (IllegalArgumentException illegalArgumentException)
         			{
-        				CapoApplication.logger.log(Level.WARNING, "Couldn't find attribte name of "+contentAttributeName+" in content metadata");
+        				CapoApplication.logger.log(Level.FINER, "Couldn't find attribte name of "+contentAttributeName+" in content metadata");
         			}
 				}
         	}
@@ -384,7 +390,7 @@ public class SyncElement extends AbstractControl
         				copyAttributesList.add(ContentMetaData.Attributes.valueOf(contentAttributeName));
         			} catch (IllegalArgumentException illegalArgumentException)
         			{
-        				CapoApplication.logger.log(Level.WARNING, "Couldn't find attribte name of "+contentAttributeName+" in content metadata");
+        				CapoApplication.logger.log(Level.FINER, "Couldn't find attribte name of "+contentAttributeName+" in content metadata");
         			}
 				}
         	}

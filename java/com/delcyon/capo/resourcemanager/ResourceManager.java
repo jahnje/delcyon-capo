@@ -113,13 +113,8 @@ public class ResourceManager extends CapoDataManager
 	private transient Transformer transformer;	
 	private HashMap<String, ResourceDescriptor> directoryHashMap = new HashMap<String, ResourceDescriptor>();	
 	private HashMap<String,ResourceType> schemeResourceTypeHashMap = new HashMap<String, ResourceType>();
-
-
-
 	private ResourceControlElement resourceManagerControlElement;
-
-
-
+    private String defaultResourceTypeScheme;
 	
 	
 	
@@ -165,15 +160,62 @@ public class ResourceManager extends CapoDataManager
 	}
 	
 	@Override
-	public void init() throws Exception
+	public void init(Boolean... minimal) throws Exception
 	{
+	    boolean initMinimalOnly = false;
+	    HashMap<String, String> multiInitHashMap = null;
+	    if(minimal != null && minimal.length >= 1 )
+	    {
+	        initMinimalOnly = minimal[0];
+	        //load directory providers and see which ones correspond to directory preferences that are actionable this round
+	        multiInitHashMap = new HashMap<>();
+
+	        Set<String> directoryProvidersSet = CapoApplication.getAnnotationMap().get(DirectoyProvider.class.getCanonicalName());
+	        if (directoryProvidersSet != null)
+	        {
+	            for (String className : directoryProvidersSet)
+	            {
+	                try
+	                {
+	                    if(Class.forName(className).getAnnotation(DirectoyProvider.class).canUseRepository() != initMinimalOnly)
+	                    {
+	                        multiInitHashMap.put(Class.forName(className).getAnnotation(DirectoyProvider.class).preferenceName(),"");
+	                    }
+	                    else
+	                    {
+	                        CapoApplication.logger.log(Level.FINE, "Skipping: "+className+" until repo ready");	                        
+	                    }
+	                } catch (Exception exception){
+	                    exception.printStackTrace();
+	                }
+	            }
+	        }
+	    }
+	    
+	    
 	    
 	  //build dynamic directories
         Preference[] directoryPreferences = CapoApplication.getConfiguration().getDirectoryPreferences();
         for (Preference preference : directoryPreferences)
         {
+            if(multiInitHashMap != null)
+            {
+                if(multiInitHashMap.containsKey(preference.toString()) == false)
+                {
+                    continue;
+                }
+            }
+            ResourceDescriptor dynamicDir = null;//dataDir.getChildResourceDescriptor(resourceManagerControlElement,CapoApplication.getConfiguration().getValue(preference));
             
-            ResourceDescriptor dynamicDir = dataDir.getChildResourceDescriptor(resourceManagerControlElement,CapoApplication.getConfiguration().getValue(preference));
+            if(multiInitHashMap != null && initMinimalOnly == false) //rewrite to use repo
+            {
+                dynamicDir = getResourceDescriptor(resourceManagerControlElement, "repo:/"+CapoApplication.getConfiguration().getValue(preference));
+                dynamicDir.init(null, null, LifeCycle.EXPLICIT, false);
+            }
+            else
+            {
+                dynamicDir = dataDir.getChildResourceDescriptor(resourceManagerControlElement,CapoApplication.getConfiguration().getValue(preference));
+            }
             
             ContentMetaData dynamicDirContentMetaData = dynamicDir.getResourceMetaData(null);
             if (dynamicDirContentMetaData.exists() == false)
@@ -205,6 +247,13 @@ public class ResourceManager extends CapoDataManager
             String[] fileNames = defaultDocumentProvider.name().split(",");
             for (String fileName : fileNames)
 			{
+                if(directoryHashMap.get(preference.toString()) == null)
+                {
+                    if(initMinimalOnly == true)
+                    {
+                        continue;
+                    }
+                }
             	ResourceDescriptor dynamicFile = directoryHashMap.get(preference.toString()).getChildResourceDescriptor(null,fileName);
                 if (dynamicFile.getResourceMetaData(null).exists() == false)
                 {
@@ -246,8 +295,17 @@ public class ResourceManager extends CapoDataManager
 	
 	@Override
 	public ResourceDescriptor getResourceDirectory(String resourceDirectoryPreferenceName)
-	{
-		return directoryHashMap.get(resourceDirectoryPreferenceName);
+	{   ResourceDescriptor resourceDescriptor = directoryHashMap.get(resourceDirectoryPreferenceName);
+	     
+		try
+        {
+            return getResourceDescriptor(null, resourceDescriptor.getResourceURI().getBaseURI());
+        }
+        catch (Exception e)
+        {
+            CapoApplication.logger.warning(e.getMessage());
+            return null;
+        } 
 	}
 		
 	/**
@@ -267,7 +325,7 @@ public class ResourceManager extends CapoDataManager
 		//if there is no scheme, and it didn't come from client request, assume it's a default resource type. Which unless overridden is a file:.
 		if (scheme == null) 
 		{
-			scheme = CapoApplication.getConfiguration().getValue(Preferences.DEFAULT_RESOURCE_TYPE);
+			scheme = getDefaultResourceTypeScheme();
 		}
 		
 		
@@ -281,7 +339,7 @@ public class ResourceManager extends CapoDataManager
 				return remoteResourceType.getResourceDescriptor(callingControlElement.getControllerClientRequestProcessor(),resourceURI);
 			}
 			else
-			{
+			{			    
 				return resourceType.getResourceDescriptor(resourceURI);
 			}
 		}
@@ -295,6 +353,27 @@ public class ResourceManager extends CapoDataManager
 	public ResourceType getResourceType(String scheme)
 	{
 		return schemeResourceTypeHashMap.get(scheme.toLowerCase());
+	}
+	
+	
+	@Override
+	public String getDefaultResourceTypeScheme()
+	{
+	   if(defaultResourceTypeScheme == null)
+	   {
+	       return CapoApplication.getConfiguration().getValue(Preferences.DEFAULT_RESOURCE_TYPE);
+	   }
+	   else
+	   {
+	       return defaultResourceTypeScheme;
+	   }
+	}
+	
+	
+	@Override
+	public void setDefaultResourceTypeScheme(String defaultResourceTypeScheme)
+	{
+	    this.defaultResourceTypeScheme = defaultResourceTypeScheme;	    
 	}
 	
 	/**
@@ -316,7 +395,7 @@ public class ResourceManager extends CapoDataManager
 		//if we don't know what this assume it's a default resource type. Which unless overridden is a file.
 		if (resourceURI != null && scheme == null && resourceControlElement == null)
 		{
-			scheme = CapoApplication.getConfiguration().getValue(Preferences.DEFAULT_RESOURCE_TYPE);
+			scheme = getDefaultResourceTypeScheme();
 		}
 		
 		ResourceType resourceType = schemeResourceTypeHashMap.get(scheme.toLowerCase());
@@ -422,7 +501,7 @@ public class ResourceManager extends CapoDataManager
         List<ContentMetaData> childResourceList = contentMetaData.getContainedResources();
         for (ContentMetaData childContentMetaData : childResourceList)
         {
-            if (childContentMetaData.isContainer() == false && childContentMetaData.getResourceURI().getPath().matches(".*/"+documentName+"\\.[Xx][MmSs][Ll]"))
+            if ((childContentMetaData.isContainer() == false  || childContentMetaData.getLength() > 0) && childContentMetaData.getResourceURI().getPath().matches(".*/"+documentName+"\\.[Xx][MmSs][Ll]"))
             {
                 return  CapoApplication.getDataManager().getResourceDescriptor(null, childContentMetaData.getResourceURI().getResourceURIString());
                 

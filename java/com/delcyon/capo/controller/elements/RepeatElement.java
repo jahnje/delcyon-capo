@@ -106,7 +106,7 @@ public class RepeatElement extends AbstractControl
 		}
 		
 		
-		
+
 		NodeList nodeList = XPath.selectNodes(getControlElementDeclaration(), nodeset);
 		for(int index = 0; index < nodeList.getLength(); index++)
 		{

@@ -56,7 +56,8 @@ public class MD5FilterOutputStream extends FilterOutputStream implements StreamA
      public void write(byte[] data, int offset, int length) throws IOException
      {
     	 messageDigest.update(data,offset,length);
-    	 super.write(data, offset, length);
+    	 out.write(data, offset, length);
+    	 //super.write(data, offset, length);
  
          
      }

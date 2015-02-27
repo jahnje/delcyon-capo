@@ -392,7 +392,7 @@ public class ResourceElement extends CElement implements ControlledClone,Resourc
                    CapoApplication.logger.log(Level.WARNING,"couldn't load resource: "+childContentMetaData.getResourceURI(),e);
                 }
             }
-            if (contentMetaData.isContainer() == false)
+            if (contentMetaData.isContainer() == false && ownerResourceDocument.isFullDocument())
             {                
                 if (contentMetaData.getContentFormatType() == ContentFormatType.XML)
                 {
@@ -462,7 +462,7 @@ public class ResourceElement extends CElement implements ControlledClone,Resourc
     @Override
     public NamedNodeMap getAttributes()
     {
-    	if(ownerResourceDocument.isFullDocument())
+    	if(ownerResourceDocument.isFullDocument() || ownerResourceDocument.isIncludeAttributes())
     	{
     		return super.getAttributes();
     	}

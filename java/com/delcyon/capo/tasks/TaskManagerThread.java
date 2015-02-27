@@ -22,6 +22,9 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.logging.Level;
 
+import javax.jcr.LoginException;
+import javax.jcr.RepositoryException;
+import javax.jcr.SimpleCredentials;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.transform.OutputKeys;
@@ -38,9 +41,9 @@ import org.w3c.dom.NodeList;
 import org.xml.sax.SAXParseException;
 
 import com.delcyon.capo.CapoApplication;
-import com.delcyon.capo.ContextThread;
 import com.delcyon.capo.CapoApplication.ApplicationState;
 import com.delcyon.capo.CapoApplication.Location;
+import com.delcyon.capo.ContextThread;
 import com.delcyon.capo.annotations.DefaultDocumentProvider;
 import com.delcyon.capo.annotations.DirectoyProvider;
 import com.delcyon.capo.client.CapoClient;
@@ -58,6 +61,7 @@ import com.delcyon.capo.resourcemanager.CapoDataManager;
 import com.delcyon.capo.resourcemanager.ResourceDescriptor;
 import com.delcyon.capo.resourcemanager.ResourceDescriptor.Action;
 import com.delcyon.capo.server.CapoServer;
+import com.delcyon.capo.server.jackrabbit.CapoJcrServer;
 import com.delcyon.capo.xml.XPath;
 
 /**
@@ -236,12 +240,13 @@ public class TaskManagerThread extends ContextThread
 //			this.taskManagerDocument = CapoApplication.getDefaultDocument("tasks.xml");
 //		}
 		
+		
 		//go ahead and start things up
 		tasksDocumentUpdaterThread = new TaskManagerDocumentUpdaterThread(lock,runAsService);
 		if (runAsService == true) // TODO in theory if this is false, you can do a single pass of monitors, then it will exit, and not update anything
-		{
+		{		    
 			tasksDocumentUpdaterThread.start();
-		}
+		}		
 		
 	}
 	
@@ -304,6 +309,22 @@ public class TaskManagerThread extends ContextThread
 	public void run()
 	{
 		taskManagerState = ApplicationState.READY;
+		if(CapoApplication.isServer())
+        {
+            try
+            {
+                setSession(CapoJcrServer.createSession());
+                tasksDocumentUpdaterThread.setSession(getSession());
+            }
+            catch (Exception exception)
+            {             
+                CapoServer.logger.log(Level.SEVERE, "Couldn't start TaskManager because of repository errors.",exception);
+                this.taskManagerState = ApplicationState.STOPPED;
+                WrapperManager.stopAndReturn(0);
+            }            
+            
+        }
+        
 		while(taskManagerState.ordinal() < ApplicationState.STOPPING.ordinal())
 		{
 			try
@@ -353,12 +374,13 @@ public class TaskManagerThread extends ContextThread
 			    //===============================================BEGIN OVERALL TASK RUN===============================================================
 			    ResourceDescriptor taskDirResourceDescriptor = capoDataManager.getResourceDirectory(Preferences.TASK_DIR.toString());
 			    ResourceDescriptor taskStatusDocumentResourceDescriptor = taskDirResourceDescriptor.getChildResourceDescriptor(null, "task-status.xml");
+			    taskStatusDocumentResourceDescriptor.getResourceMetaData(null).exists();
 			    Document taskStatusDocument = null;
 			    try
 			    {
 			        taskStatusDocument = CapoApplication.getDocumentBuilder().parse(taskStatusDocumentResourceDescriptor.getInputStream(null));
 			    }
-			    catch (SAXParseException saxParseException) 
+			    catch (Exception saxParseException) 
 			    {
 			        taskStatusDocument = CapoApplication.getDefaultDocument("task-status.xml");
                 }

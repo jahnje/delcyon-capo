@@ -24,7 +24,6 @@ import java.io.OutputStream;
 import java.lang.reflect.Modifier;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.Vector;
 import java.util.logging.Level;
@@ -135,7 +134,7 @@ public abstract class AbstractContentMetaData implements ContentMetaData, Contro
 	
 	@CloneControl(filter=Clone.exclude)
 	private transient LinkedList<StreamAttributeFilter> streamAttributeFilterLinkedList = new LinkedList<StreamAttributeFilter>();
-	private LinkedList<ContentMetaData> childContentMetaDataLinkedList = new LinkedList<ContentMetaData>();
+	protected LinkedList<ContentMetaData> childContentMetaDataLinkedList = new LinkedList<ContentMetaData>();
 	
 	
 	private String[] attributeKeys = null;
@@ -154,6 +153,7 @@ public abstract class AbstractContentMetaData implements ContentMetaData, Contro
     //minimize memory by making sure attribute names, and common values are interned
     private void internAttributes()
     {
+        initializeAttributeStorage();
         for (int index = 0; index < attributeKeys.length; index++)
         {
             attributeKeys[index] = attributeKeys[index].intern();
@@ -203,7 +203,7 @@ public abstract class AbstractContentMetaData implements ContentMetaData, Contro
 	protected byte[] readInputStream(InputStream inputStream, boolean returnContent) throws Exception
 	{
 	    this.includeStreamAttributes = true;
-	    
+	    boolean useHugeBuffer = false;
 	    OutputStream outputStream = null;
 	    if(returnContent == true)
 	    {
@@ -211,10 +211,18 @@ public abstract class AbstractContentMetaData implements ContentMetaData, Contro
 	    }
 	    else
 	    {
+	    	useHugeBuffer = true;
 	        outputStream = new NullOutputStream();
 	    }
 		inputStream =  wrapInputStream(inputStream);
-		StreamUtil.readInputStreamIntoOutputStream(inputStream, outputStream);
+		if(useHugeBuffer == false)
+		{
+			StreamUtil.readInputStreamIntoOutputStream(inputStream, outputStream);
+		}
+		else
+		{
+			StreamUtil.readInputStreamIntoOutputStream(inputStream, outputStream,1024000);
+		}
 		inputStream.close();
 		loadAttributes(); //once we've read the file, load up he attribute map with any stream attributes.
 		this.isInitialized = true;
@@ -291,8 +299,11 @@ public abstract class AbstractContentMetaData implements ContentMetaData, Contro
 	@Override
 	public void clearAttributes()
 	{
-	    attributeValues = new String[attributeKeys.length];
-	    attributesLoaded = false;
+	    if(attributesLoaded != false)
+	    {
+	        attributeValues = new String[attributeKeys.length];
+	        attributesLoaded = false;
+	    }
 	}
 	
 	private int getAttributeIndex(String attributeName)
@@ -334,6 +345,12 @@ public abstract class AbstractContentMetaData implements ContentMetaData, Contro
 	}
 	
 
+	@Override
+	public boolean areDynamicAttributeLoaded()
+	{
+	    return attributesLoaded;
+	}
+	
 	private void loadAttributes()
 	{
 	    if (attributesLoaded  == false)
@@ -360,6 +377,11 @@ public abstract class AbstractContentMetaData implements ContentMetaData, Contro
 	
 	public ContentFormatType getContentFormatType()
 	{
+    	if(isInitialized() == false)
+    	{
+    		init();
+    	}
+
 	    loadAttributes();
 	    String contentFormatTypeString = getValue(ContentFormatType.ATTRIBUTE_NAME);
 		if (contentFormatTypeString != null)
@@ -379,6 +401,11 @@ public abstract class AbstractContentMetaData implements ContentMetaData, Contro
 	
 	public String getMD5()
 	{
+    	if(isInitialized() == false)
+    	{
+    		init();
+    	}
+
 	    loadAttributes();
 		return getValue(MD5FilterInputStream.ATTRIBUTE_NAME);		
 	}
@@ -390,6 +417,11 @@ public abstract class AbstractContentMetaData implements ContentMetaData, Contro
 	
 	public Long getLength()
 	{
+    	if(isInitialized() == false)
+    	{
+    		init();
+    	}
+
 	    loadAttributes();
 		String length = getValue(SizeFilterInputStream.ATTRIBUTE_NAME);
 		if (length.matches("\\d+"))
@@ -404,8 +436,12 @@ public abstract class AbstractContentMetaData implements ContentMetaData, Contro
 	}
 	
 	@Override
-	public String getValue(String name)
+	public String getValue(String name) throws RuntimeException
 	{
+	    if (isInitialized == false)
+	    {
+	        init();
+	    }
 	    initializeAttributeStorage();
 	    loadAttributes();
 	    int attributeIndex = getAttributeIndex(name);
@@ -417,8 +453,10 @@ public abstract class AbstractContentMetaData implements ContentMetaData, Contro
 		return null;
 	}
 	
-	@Override
-	public String getValue(Enum name)
+	abstract public void init() throws RuntimeException;
+	
+    @Override
+	public String getValue(Enum name) throws RuntimeException
 	{
 	    return getValue(name.toString());
 	}
@@ -570,6 +608,10 @@ public abstract class AbstractContentMetaData implements ContentMetaData, Contro
 	@Override
 	public List<ContentMetaData> getContainedResources()
 	{
+	    if(isInitialized == false)
+	    {
+	        init();
+	    }
 		return childContentMetaDataLinkedList;
 	}
 	

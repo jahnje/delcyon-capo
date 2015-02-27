@@ -208,6 +208,10 @@ public class XMLStreamProcessor implements StreamProcessor
 		    {			
 		        xmlProcessor.init(document, this, outputStream,sessionHashMap);
 		        ContextThread contextThread = new ContextThread(processorThread.getThreadGroup(), xmlProcessor);
+		        if(Thread.currentThread() instanceof ContextThread)
+		        {
+		            contextThread.setSession(((ContextThread) Thread.currentThread()).getSession());
+		        }
 		        threadMap.put(tid, contextThread);
 		        if(initialTID < 0l)
 		        {

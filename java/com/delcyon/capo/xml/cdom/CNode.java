@@ -20,6 +20,7 @@ import java.lang.reflect.Modifier;
 import java.util.Vector;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.regex.Pattern;
 
 import org.w3c.dom.DOMException;
 import org.w3c.dom.Document;
@@ -45,7 +46,9 @@ import com.delcyon.capo.xml.cdom.CDOMEvent.EventType;
 @ToStringControl(control=Control.exclude,modifiers=Modifier.STATIC+Modifier.FINAL)
 public abstract class CNode implements Node, ControlledClone
 {
-
+	@CloneControl(filter=Clone.exclude)
+	private static final Pattern pattern = Pattern.compile("^[:A-Z_a-z\\xC0-\\xD6\\xD8-\\xF6\\xF8-\\x{2FF}\\x{370}-\\x{37D}\\x{37F}-\\x{1FFF}\\x{200C}-\\x{200D}\\x{2070}-\\x{218F}\\x{2C00}-\\x{2FEF}\\x{3001}-\\x{D7FF}\\x{F900}-\\x{FDCF}\\x{FDF0}-\\x{FFFD}\\x{10000}-\\x{EFFFF}][:A-Z_a-z\\xC0-\\xD6\\xD8-\\xF6\\xF8-\\x{2FF}\\x{370}-\\x{37D}\\x{37F}-\\x{1FFF}\\x{200C}-\\x{200D}\\x{2070}-\\x{218F}\\x{2C00}-\\x{2FEF}\\x{3001}-\\x{D7FF}\\x{F900}-\\x{FDCF}\\x{FDF0}-\\x{FFFD}\\x{10000}-\\x{EFFFF}.\\-0-9\\xB7\\x{0300}-\\x{036F}\\x{203F}-\\x{2040}]*");
+	
     @CloneControl(filter=Clone.exclude)
     @ToStringControl(control=Control.exclude)
     protected CNode parentNode;
@@ -161,8 +164,16 @@ public abstract class CNode implements Node, ControlledClone
     
     public void setNodeName(String nodeName)
     {
-        this.nodeName = nodeName;
-        cascadeDOMEvent(prepareEvent(EventType.UPDATE, this));
+    	if(ownerDocument != null && ownerDocument.onlyAllowValidNodeNames() == true)
+    	{
+    		if(pattern.matcher(nodeName).matches() == false)
+    		{
+    			throw new RuntimeException(nodeName+" is not a valid node name");	
+    		}
+    	}
+    	
+    	this.nodeName = nodeName;
+		cascadeDOMEvent(prepareEvent(EventType.UPDATE, this));
     }
     /* (non-Javadoc)
      * @see org.w3c.dom.Node#getNodeName()

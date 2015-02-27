@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<server:Capo xmlns:server="http://www.delcyon.com/capo-server"
+             xmlns:client="http://www.delcyon.com/capo-client"
+             xmlns:resource="http://www.delcyon.com/capo/resource"
+             xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
+             mainGroup="default"
+             name="main">
+    
+    <server:group name="default">
+        <server:snapshot name="test" startPath="clients"/>
+    </server:group>
+    
+</server:Capo>

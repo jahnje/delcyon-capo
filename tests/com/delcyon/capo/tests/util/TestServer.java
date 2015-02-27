@@ -20,6 +20,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.logging.Level;
 
 import com.delcyon.capo.CapoApplication;
+import com.delcyon.capo.ContextThread;
 import com.delcyon.capo.CapoApplication.ApplicationState;
 import com.delcyon.capo.server.CapoServer;
 

@@ -31,6 +31,7 @@ import org.w3c.dom.Document;
 
 import com.delcyon.capo.CapoApplication;
 import com.delcyon.capo.CapoApplication.ApplicationState;
+import com.delcyon.capo.ContextThread;
 import com.delcyon.capo.resourcemanager.ResourceDescriptor;
 import com.delcyon.capo.resourcemanager.ResourceDescriptor.Action;
 import com.delcyon.capo.server.CapoServer;
@@ -40,7 +41,7 @@ import com.delcyon.capo.tasks.TaskManagerThread.Preferences;
  * @author jeremiah
  *
  */
-public class TaskManagerDocumentUpdaterThread extends Thread
+public class TaskManagerDocumentUpdaterThread extends ContextThread
 {
     private ConcurrentLinkedQueue<DocumentUpdate> documentUpdateQueue = new ConcurrentLinkedQueue<DocumentUpdate>();
 	private volatile ApplicationState state = ApplicationState.NONE;	

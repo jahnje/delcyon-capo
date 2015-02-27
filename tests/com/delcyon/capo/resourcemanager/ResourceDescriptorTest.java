@@ -51,6 +51,7 @@ public abstract class ResourceDescriptorTest
     {
         Util.copyTree("test-data/capo", "capo", true, true);
         TestServer.start();
+        Util.copyTree("test-data/capo/server/clients", "repo:/clients", true, false);
     }
 
     @AfterClass
@@ -63,7 +64,9 @@ public abstract class ResourceDescriptorTest
     @Before
     public void setUp() throws Exception
     {
-    	Util.copyTree("test-data/capo", "capo", true, true);
+        //can't just blindly copy everything over since we don't want to over write a running repository.
+    	Util.copyTree("test-data/capo/server/config", "capo/server/config", true, true);
+    	Util.copyTree("test-data/capo/server/clients", "repo:/clients", true, false);
         this.resourceDescriptor = getResourceDescriptor();
         checkFile();
     }
@@ -256,7 +259,8 @@ public abstract class ResourceDescriptorTest
         	CElement rootElement = (CElement) document.createElementNS("BSNS","ns:testRootElement");
         	rootElement.setAttributeNS("http://www.w3.org/2000/xmlns/","xmlns:ns","BSNS");
         	rootElement.setTextContent("This is a test");
-        	resourceDescriptor.writeXML(null, rootElement);
+        	resourceDescriptor.writeXML(null, rootElement);        	
+        	resourceDescriptor.performAction(null, Action.COMMIT);
         	Element readElement = resourceDescriptor.readXML(null);
         	XMLDiff xmlDiff = new XMLDiff();
         	Element diffElement = xmlDiff.getDifferences(rootElement, readElement);
@@ -278,6 +282,7 @@ public abstract class ResourceDescriptorTest
         if (resourceDescriptor.isSupportedStreamFormat(StreamType.OUTPUT,StreamFormat.BLOCK))
         {
         	resourceDescriptor.writeBlock(null,"this is a test".getBytes());
+        	resourceDescriptor.performAction(null, Action.COMMIT);
         	Assert.assertArrayEquals("this is a test".getBytes(),resourceDescriptor.readBlock(null));
         }
         

@@ -113,7 +113,7 @@
             <xsl:template match="server:sync" mode="completeURIs">
                 <xsl:param name="localRootPath"/>
                 <xsl:param name="remoteRootPath"/>
-                <server:sync onCopy="$update:requiresRestart">
+                <server:sync onCopy="$update:requiresRestart" syncAttributes="true">
                     <!-- copy over any delete information -->
                     <xsl:if test="exists(@delete)">
                         <xsl:copy-of select="@delete"/>
@@ -136,6 +136,10 @@
                   nodeset="${transform.sync_transform}/server:group/server:sync">
         <server:call ref="${context}"/>
     </server:repeat>
+    
+    <!-- make sure that we set all of the attibutes on the lib dir -->
+    <server:sync src="file:lib" dest="remote:file:lib" recursive="false"/>
+    
     <!--<server:group name="test.debug">
         <server:debug dumpVars="true" dumpRef=".." sleep="10000"/>
      </server:group>-->

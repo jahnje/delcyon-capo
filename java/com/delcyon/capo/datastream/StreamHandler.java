@@ -25,9 +25,14 @@ import java.util.Vector;
 import java.util.Map.Entry;
 import java.util.logging.Level;
 
+import javax.jcr.LoginException;
+import javax.jcr.RepositoryException;
+import javax.jcr.SimpleCredentials;
+
 import com.delcyon.capo.CapoApplication;
 import com.delcyon.capo.ContextThread;
 import com.delcyon.capo.InterruptibleRunnable;
+import com.delcyon.capo.server.jackrabbit.CapoJcrServer;
 
 /**
  * @author jeremiah
@@ -120,6 +125,14 @@ public class StreamHandler implements InterruptibleRunnable
 			if (Thread.currentThread() instanceof ContextThread)
 			{
 				((ContextThread)Thread.currentThread()).setInterruptible(this);
+				try
+                {
+                    ((ContextThread)Thread.currentThread()).setSession(CapoJcrServer.createSession());
+                }
+                catch (Exception exception)
+                {
+                    CapoApplication.logger.log(Level.WARNING, "Exception thrown when processing stream with "+streamProcessor.getClass().getSimpleName(),exception);
+                }               
 			}
 			try
 			{
@@ -135,6 +148,11 @@ public class StreamHandler implements InterruptibleRunnable
 				if (Thread.currentThread() instanceof ContextThread)
 				{
 					((ContextThread)Thread.currentThread()).setInterruptible(null);
+					if(((ContextThread)Thread.currentThread()).getSession() != null)
+					{
+					    ((ContextThread)Thread.currentThread()).getSession().logout();
+					    ((ContextThread)Thread.currentThread()).setSession(null);
+					}
 				}
 				shutdown();
 			}
