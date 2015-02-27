@@ -25,12 +25,23 @@ public class Util
     		
     		Vector<URL> classPathURLVector = new Vector<URL>();
     		classPathURLVector.add(new File("build").toURL());
+    		
+    		
     		File libFile = new File("lib");
     		File[] libFiles = libFile.listFiles();
     		for (File file : libFiles)
     		{
     			classPathURLVector.add(file.toURL());
     		}
+    		
+    		//we have to process both directories for this to work
+    		libFile = new File("lib-server");
+            libFiles = libFile.listFiles();
+            for (File file : libFiles)
+            {
+                classPathURLVector.add(file.toURL());
+            }
+    		
     		URL[] classpathURLs = classPathURLVector.toArray(new URL[]{});
 
     		independentClassLoader =  new URLClassLoader(classpathURLs,null){
