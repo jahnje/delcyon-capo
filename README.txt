@@ -1,4 +1,4 @@
-Runtime Requirements: Java 6 or better.
+Runtime Requirements: Java 8 or better.
 
 IDE Requirements: Eclipse
 
@@ -23,6 +23,6 @@ install: java -jar client-x.x.x.x-dist.jar or server-x.x.x.x-dist.jar
 run: capo/[server|client]/bin/capo-[server|client].sh 
 	Or in /etc/rc.d/init.d/capo-server or capo-client
 
-Status: alpha 
+Status: pre-alpha 
 
 You can download a pre-built distribution from here https://github.com/downloads/jahnje/delcyon-capo/capo-server-0.1.6.0-dist.jar
