@@ -147,7 +147,7 @@ public class ResourceMetaDataElement extends AbstractControl
 		}
 		if (contentMetaData.isContainer())
 		{
-			for (ContentMetaData childContentMetaData : contentMetaData.getContainedResources())
+			for (ContentMetaData childContentMetaData : contentMetaData.getContainedResources()) //hmmm....
 			{
 				if (getAttributeValue(Attributes.requiredAttributes).isEmpty() == false)
 				{

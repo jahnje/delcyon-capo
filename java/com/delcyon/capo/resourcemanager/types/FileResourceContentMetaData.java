@@ -440,4 +440,10 @@ public class FileResourceContentMetaData extends AbstractContentMetaData
     	}
         return " %;?<>#|\\[]{}\"\n\r\t".indexOf(ch) >= 0;
     }
+    
+    @Override
+    public ResourceParameter[] getResourceParameters()
+    {
+        return resourceParameters;
+    }
 }

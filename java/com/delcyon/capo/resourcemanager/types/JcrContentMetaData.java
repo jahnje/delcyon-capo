@@ -23,6 +23,7 @@ public class JcrContentMetaData implements ContentMetaData
     public static final String CAPO_METADATA_PREFIX = "";
     
     private ResourceURI resourceURI = null;
+    private ResourceParameter[] resourceParameters = new ResourceParameter[0];
     
     private JcrContentMetaData()
     {
@@ -38,8 +39,9 @@ public class JcrContentMetaData implements ContentMetaData
 //        ((JcrContentMetaData)clonedObject).node = this.node;        
 //    }
     
-    public JcrContentMetaData(ResourceURI resourceURI)
+    public JcrContentMetaData(ResourceURI resourceURI,ResourceParameter...resourceParameters)
     {
+        this.resourceParameters = resourceParameters;
         this.resourceURI = resourceURI;
     }
     
@@ -352,5 +354,9 @@ public class JcrContentMetaData implements ContentMetaData
         return null;
         
     }
-
+    @Override
+    public ResourceParameter[] getResourceParameters()
+    {
+        return resourceParameters;
+    }
 }

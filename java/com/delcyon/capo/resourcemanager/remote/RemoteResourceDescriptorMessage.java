@@ -240,7 +240,8 @@ public class RemoteResourceDescriptorMessage extends AbstractResponse
 
 	public void setResourceMetaData(ContentMetaData resourceMetaData)
 	{
-		this.resourceMetaData = resourceMetaData;		
+		this.resourceMetaData = resourceMetaData;
+		fullyInitializeContentMetaData(resourceMetaData,0,ContentMetaData.getIntValue(ContentMetaData.Parameters.DEPTH,0,resourceMetaData.getResourceParameters()));
 	}
 	
 	public ContentMetaData getResourceMetaData()
@@ -256,6 +257,7 @@ public class RemoteResourceDescriptorMessage extends AbstractResponse
     public void setContentMetaData(ContentMetaData contentMetaData)
     {
         this.contentMetaData = contentMetaData;
+        fullyInitializeContentMetaData(contentMetaData,0,ContentMetaData.getIntValue(ContentMetaData.Parameters.DEPTH,0,contentMetaData.getResourceParameters()));
     }
 	
 	public void setOutputMetaData(ContentMetaData outputMetaData)
@@ -406,5 +408,27 @@ public class RemoteResourceDescriptorMessage extends AbstractResponse
     public void setVarName(String varName)
     {
         this.varName = varName;
+    }
+    
+    /**
+     * We want to make sure that any content meta data that we send back is fully initialized, since currently there is no RemoteMetaDataProxy  
+     * @param contentMetaData
+     */
+    private void fullyInitializeContentMetaData(ContentMetaData contentMetaData, int currentDepth, int maxDepth)
+    {
+        if(contentMetaData.getContainedResources().isEmpty() == false)
+        {
+            for (ContentMetaData childResourceMetaData : contentMetaData.getContainedResources())
+            {
+                if(childResourceMetaData.isInitialized() == false)
+                {
+                    childResourceMetaData.init();
+                }
+                if(currentDepth < maxDepth)
+                {
+                    fullyInitializeContentMetaData(childResourceMetaData,currentDepth++,maxDepth);
+                }
+            }
+        }
     }
 }

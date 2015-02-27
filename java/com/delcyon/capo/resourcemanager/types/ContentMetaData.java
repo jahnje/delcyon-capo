@@ -123,5 +123,29 @@ public interface ContentMetaData
 	public ResourceURI getResourceURI();
 
     public void init();
-	
+
+    public ResourceParameter[] getResourceParameters();
+
+    public static int getIntValue(Enum name, int defaultValue, ResourceParameter... resourceParameters)
+    {
+        for (ResourceParameter resourceParameter : resourceParameters)
+        {
+            if (resourceParameter.getName().equals(name.toString()))
+            {
+                if(resourceParameter.getValue().equalsIgnoreCase("max"))
+                {
+                    return Integer.MAX_VALUE;
+                }
+                else if (resourceParameter.getValue().matches("\\d+"))
+                {
+                    return Integer.parseInt(resourceParameter.getValue());
+                }
+                else
+                {
+                    throw new RuntimeException(resourceParameter.getName()+": '"+resourceParameter.getValue()+"' is not a number");
+                }
+            }
+        }
+        return defaultValue;    
+    }
 }
