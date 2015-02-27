@@ -4,7 +4,8 @@
     xmlns="http://www.delcyon.com/capo-server" 
     xmlns:sch="http://purl.oclc.org/dsdl/schematron"
     xmlns:client="http://www.delcyon.com/capo-client"
-    elementFormDefault="qualified">
+    elementFormDefault="qualified"
+    xmlns:vc="http://www.w3.org/2007/XMLSchema-versioning" vc:minVersion="1.1">
     <xsd:annotation>
         <xsd:appinfo>
             <sch:schema queryBinding="xslt2"/>
@@ -298,6 +299,14 @@
             <xsd:attribute name="ref" use="optional"/>
             <xsd:attribute name="uri" use="optional"/>
             <xsd:assert test="(@ref and not(@uri)) or (not(@ref) and @uri)"/>            
+        </xsd:complexType>
+    </xsd:element>
+    
+    <xsd:element name="debug">
+        <xsd:complexType>                        
+            <xsd:attribute name="sleep" use="optional"/>
+            <xsd:attribute name="dumpVars" use="optional"/>
+            <xsd:attribute name="dumpRef" use="optional"/>
         </xsd:complexType>
     </xsd:element>
     
