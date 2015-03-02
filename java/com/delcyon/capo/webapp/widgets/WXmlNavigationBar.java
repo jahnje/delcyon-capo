@@ -3,6 +3,7 @@ package com.delcyon.capo.webapp.widgets;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 
+import eu.webtoolkit.jwt.Signal;
 import eu.webtoolkit.jwt.WMenu;
 import eu.webtoolkit.jwt.WMenuItem;
 import eu.webtoolkit.jwt.WNavigationBar;
@@ -16,6 +17,9 @@ import eu.webtoolkit.jwt.WPushButton;
  */
 public class WXmlNavigationBar extends WNavigationBar
 {
+    private Signal enableMenuSignal = new Signal();
+    private Signal disableMenuSignal = new Signal();
+    
     public WXmlNavigationBar(Element menuRootElement)
     {
         super();
@@ -26,7 +30,8 @@ public class WXmlNavigationBar extends WNavigationBar
             {
                 Element menu = (Element) menuList.item(index);
                 WPushButton menuButton = new WPushButton(menu.getAttribute("name"));
-                
+                enableMenuSignal.addListener(menuButton, ()-> menuButton.enable());
+                disableMenuSignal.addListener(menuButton, ()-> menuButton.disable());
                 if(menuRootElement.hasAttribute("styleClass"))
                 {
                     menuButton.setStyleClass(menuRootElement.getAttribute("styleClass"));
@@ -54,6 +59,16 @@ public class WXmlNavigationBar extends WNavigationBar
 
     }
 
+    public void disableMenus()
+    {
+        disableMenuSignal.trigger();
+    }
+    
+    public void enableMenus()
+    {
+        enableMenuSignal.trigger();
+    }
+    
     /**
      * Will process all of the children of a menu element and create their respective menu items or recurse through their children and do the same 
      * @param parentMenu
