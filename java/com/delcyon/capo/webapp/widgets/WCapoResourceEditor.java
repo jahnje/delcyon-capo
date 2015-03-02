@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.OutputStream;
 import java.util.List;
+import java.util.SortedSet;
 
 import org.w3c.dom.Element;
 
@@ -11,23 +12,31 @@ import com.delcyon.capo.datastream.StreamUtil;
 import com.delcyon.capo.datastream.stream_attribute_filter.MimeTypeFilterInputStream;
 import com.delcyon.capo.resourcemanager.ContentFormatType;
 import com.delcyon.capo.resourcemanager.ResourceDescriptor;
+import com.delcyon.capo.resourcemanager.ResourceDescriptor.Action;
 import com.delcyon.capo.resourcemanager.ResourceDescriptor.State;
+import com.delcyon.capo.resourcemanager.types.ContentMetaData;
+import com.delcyon.capo.resourcemanager.types.Versionable;
 import com.delcyon.capo.util.HexUtil;
 import com.delcyon.capo.webapp.models.DomItemModel;
 import com.delcyon.capo.webapp.models.DomItemModel.DomUse;
 import com.delcyon.capo.webapp.models.ResourceDescriptorItemModel;
+import com.delcyon.capo.webapp.models.WContentMetaDataItemModel;
 import com.delcyon.capo.webapp.servlets.resource.WResourceDescriptor;
 import com.delcyon.capo.webapp.widgets.WAceEditor.Theme;
 
 import eu.webtoolkit.jwt.AlignmentFlag;
 import eu.webtoolkit.jwt.AnchorTarget;
 import eu.webtoolkit.jwt.SelectionMode;
+import eu.webtoolkit.jwt.Signal;
+import eu.webtoolkit.jwt.Signal1;
+import eu.webtoolkit.jwt.WAbstractItemView;
 import eu.webtoolkit.jwt.WAnchor;
 import eu.webtoolkit.jwt.WContainerWidget;
 import eu.webtoolkit.jwt.WFileUpload;
 import eu.webtoolkit.jwt.WImage;
 import eu.webtoolkit.jwt.WLength;
 import eu.webtoolkit.jwt.WLink;
+import eu.webtoolkit.jwt.WModelIndex;
 import eu.webtoolkit.jwt.WProgressBar;
 import eu.webtoolkit.jwt.WPushButton;
 import eu.webtoolkit.jwt.WTabWidget;
@@ -57,7 +66,9 @@ public class WCapoResourceEditor extends WTabWidget
     private WAceEditor aceEditor;
     private WAceEditor formattedContentDisplay;
     private WFileUpload upload;
-
+	private WContainerWidget historyContainerWidget;
+	private WTableView historyTableView;
+	private Signal modelChanged = new Signal();
     
     /**
      * Actually loads the data into the editor. This is the only place tabs and what not should be added since it's the main controller method for this class
@@ -108,6 +119,12 @@ public class WCapoResourceEditor extends WTabWidget
         
         //always add the details tab last
         this.addTab(getDetailsContainerWidget(), "Details");
+        
+        //add version history tab
+        if(this.model instanceof Versionable)
+        {
+        	this.addTab(getHistoryContainerWidget(), "History");
+        }
         
         //this might be able to be removed, but was put there when we we're using a background image 
         this.getWidget(0).setAttributeValue("style", "background-color: rgba(255, 255, 255, 0.55);");
@@ -175,6 +192,7 @@ public class WCapoResourceEditor extends WTabWidget
     }
     
     
+    
     /**
      * 
      * @param model, can be either a resource descriptor or DOM element.  
@@ -205,6 +223,17 @@ public class WCapoResourceEditor extends WTabWidget
             //go ahead a cast here so we can have some cleaner looking code
             ResourceDescriptor resourceDescriptor = (ResourceDescriptor) this.model;
             getAttributeTableView().setModel(new ResourceDescriptorItemModel(resourceDescriptor, DomUse.ATTRIBUTES));
+            try
+			{
+            	if(resourceDescriptor instanceof Versionable)
+            	{
+            		getHistoryTableView().setModel(new WContentMetaDataItemModel(((Versionable) resourceDescriptor).getVersionHistory(),"isBaseVersion,Current","versionTimeStamp,Date","versionName,Version","mimeType","MD5","size","contentFormatType,Type"));
+            	}
+			} catch (Exception e1)
+			{
+			
+				e1.printStackTrace();
+			}
             try
             {
                 //used to be a container check here, but doesn't make since when backing is JCR
@@ -282,7 +311,7 @@ public class WCapoResourceEditor extends WTabWidget
         }
   
         setContent(content, contentType, contentFormatType, mimeType, length);
-  
+        modelChanged.trigger();
     }
 
     
@@ -331,14 +360,169 @@ public class WCapoResourceEditor extends WTabWidget
             WPushButton clearContentPushButton = new WPushButton("Clear Content");
             clearContentPushButton.clicked().addListener(this, this::clearContent);
             
+            //checkin version button
+            WPushButton checkinVersionPushButton = new WPushButton("Check In");
+            checkinVersionPushButton.clicked().addListener(this, this::checkinContent);
+            
+          //checkout version button
+            WPushButton checkoutVersionPushButton = new WPushButton("Check Out");
+            checkoutVersionPushButton.clicked().addListener(this, this::checkoutContent);
+            
             detailsContainerWidget.addWidget(upload);
             detailsContainerWidget.addWidget(anchor);
             detailsContainerWidget.addWidget(clearContentPushButton);
             detailsContainerWidget.addWidget(getCreateContentButton());
+            detailsContainerWidget.addWidget(checkinVersionPushButton);
+            detailsContainerWidget.addWidget(checkoutVersionPushButton);
             detailsContainerWidget.addWidget(getAttributeTableView());
+            
+            
         }
         return detailsContainerWidget;
     }
+    
+    private WContainerWidget getHistoryContainerWidget()
+    {
+        if(historyContainerWidget == null)
+        {
+        	historyContainerWidget = new WContainerWidget();
+            
+            
+            //checkin version button
+            WPushButton checkinVersionPushButton = new WPushButton("Check In");
+            checkinVersionPushButton.clicked().addListener(this, this::checkinContent);
+            
+          //checkout version button
+            WPushButton checkoutVersionPushButton = new WPushButton("Check Out");
+            checkoutVersionPushButton.clicked().addListener(this, this::checkoutContent);
+            
+          //checkout version button
+            WPushButton restoreSelectedVersionPushButton = new WPushButton("Restore Selected");
+            restoreSelectedVersionPushButton.disable();
+            restoreSelectedVersionPushButton.clicked().addListener(this, this::restoreSelected);
+            getHistoryTableView().selectionChanged().addListener(this, ()->processSelectionEvent(getHistoryTableView(), restoreSelectedVersionPushButton));
+            modelChanged.addListener(this, restoreSelectedVersionPushButton::disable);
+            
+          //checkout version button
+            WPushButton deleteSelectedVersionPushButton = new WPushButton("Delete Selected");
+            deleteSelectedVersionPushButton.clicked().addListener(this, this::deleteSelected);
+            getHistoryTableView().selectionChanged().addListener(this, ()->processSelectionEvent(getHistoryTableView(), deleteSelectedVersionPushButton));
+            modelChanged.addListener(this, deleteSelectedVersionPushButton::disable);
+            
+            historyContainerWidget.addWidget(checkinVersionPushButton);
+            historyContainerWidget.addWidget(checkoutVersionPushButton);
+            historyContainerWidget.addWidget(restoreSelectedVersionPushButton);
+            historyContainerWidget.addWidget(deleteSelectedVersionPushButton);            
+            historyContainerWidget.addWidget(getHistoryTableView());
+            
+            
+        }
+        return historyContainerWidget;
+    }
+    
+    private void processSelectionEvent(WAbstractItemView abstractItemView,WWidget widget)
+    {
+    	if(abstractItemView.getSelectedIndexes() == null || abstractItemView.getSelectedIndexes().isEmpty())
+    	{
+    		widget.disable();
+    	}
+    	else
+    	{
+    		widget.enable();
+    	}
+    }
+    
+    private void deleteSelected()
+    {
+    	SortedSet<WModelIndex> selectedIndexes = getHistoryTableView().getSelectedIndexes();
+    	if(selectedIndexes != null && selectedIndexes.isEmpty() == false)
+    	{
+    		WModelIndex selectedIndex = selectedIndexes.first();
+    		try
+			{
+				((Versionable) this.model).remove(((ContentMetaData) selectedIndex.getInternalPointer()).getResourceURI().getPath());
+				 refresh();
+			} catch (Exception e)
+			{
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+    	}
+    }
+    
+    private void restoreSelected()
+    {
+    	SortedSet<WModelIndex> selectedIndexes = getHistoryTableView().getSelectedIndexes();
+    	if(selectedIndexes != null && selectedIndexes.isEmpty() == false)
+    	{
+    		WModelIndex selectedIndex = selectedIndexes.first();
+    		try
+			{
+				((Versionable) this.model).restore(((ContentMetaData) selectedIndex.getInternalPointer()).getResourceURI().getResourceURIString());
+				 refresh();
+			} catch (Exception e)
+			{
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+    	}
+    }
+    
+    /**
+     * This just create the attribute table for the model
+     * @return
+     */
+    private WTableView getHistoryTableView()
+    {
+        if(historyTableView == null)
+        {
+        	historyTableView = new WTableView();
+        	historyTableView.addStyleClass("bg-transparent");
+        	historyTableView.setItemDelegateForColumn(0,new WCSSItemDelegate("font-weight: bold;"));
+        	historyTableView.setSortingEnabled(true);
+        	historyTableView.setSelectable(true);          
+        	historyTableView.setAlternatingRowColors(true);            
+        	historyTableView.setColumnResizeEnabled(true);
+        	historyTableView.setColumnAlignment(0, AlignmentFlag.AlignRight);
+        	historyTableView.setColumnWidth(1, new WLength(500));
+        	historyTableView.setSelectionMode(SelectionMode.SingleSelection);
+        }
+        return historyTableView;
+    }
+    
+    private void checkinContent()
+    {
+    	
+    		try
+    		{
+    			if(model != null)
+    			{
+    				((ResourceDescriptor)model).performAction(null, Action.CHECKIN);
+    				 refresh();
+    			}
+			} catch (Exception e)
+			{				
+				e.printStackTrace();
+			}
+    	
+    }
+    
+    private void checkoutContent()
+    {
+    	
+    		try
+    		{
+    			if(model != null)
+    			{
+    				((ResourceDescriptor)model).performAction(null, Action.CHECKOUT);
+    			}
+			} catch (Exception e)
+			{				
+				e.printStackTrace();
+			}
+    	
+    }
+    
     
     /**
      * Handles file upload event

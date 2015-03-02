@@ -147,5 +147,17 @@ public class ResourceParameterBuilder
 		return false;
 	}
 
+	@SuppressWarnings("unchecked")
+	public static String getValue(Enum parameter, ResourceParameter[] resourceParameters)
+	{
+		for (ResourceParameter resourceParameter : resourceParameters)
+		{
+			if (resourceParameter.getName().equals(parameter.toString()))
+			{
+				return resourceParameter.getValue();
+			}
+		}
+		return null;
+	}
 	
 }

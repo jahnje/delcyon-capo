@@ -17,14 +17,14 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 package com.delcyon.capo.resourcemanager.types;
 
 import java.io.ByteArrayInputStream;
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.PipedInputStream;
 import java.io.PipedOutputStream;
-import java.net.URI;
 import java.util.EnumSet;
+import java.util.List;
+import java.util.Vector;
 import java.util.logging.Level;
 
 import javax.jcr.Binary;
@@ -33,36 +33,32 @@ import javax.jcr.NodeIterator;
 import javax.jcr.Property;
 import javax.jcr.PropertyIterator;
 import javax.jcr.RepositoryException;
-import javax.jcr.Session;
-import javax.jcr.SimpleCredentials;
 import javax.jcr.Value;
+import javax.jcr.version.Version;
+import javax.jcr.version.VersionHistory;
+import javax.jcr.version.VersionIterator;
+import javax.jcr.version.VersionManager;
 
 import com.delcyon.capo.CapoApplication;
 import com.delcyon.capo.ContextThread;
-import com.delcyon.capo.controller.ControlElement;
 import com.delcyon.capo.datastream.stream_attribute_filter.ContentFormatTypeFilterInputStream;
 import com.delcyon.capo.datastream.stream_attribute_filter.MD5FilterInputStream;
 import com.delcyon.capo.datastream.stream_attribute_filter.MimeTypeFilterInputStream;
 import com.delcyon.capo.datastream.stream_attribute_filter.SizeFilterInputStream;
 import com.delcyon.capo.resourcemanager.ContentFormatType;
-import com.delcyon.capo.resourcemanager.ResourceDescriptor;
 import com.delcyon.capo.resourcemanager.ResourceParameter;
-import com.delcyon.capo.resourcemanager.ResourceDescriptor.DefaultParameters;
-import com.delcyon.capo.resourcemanager.ResourceDescriptor.State;
+import com.delcyon.capo.resourcemanager.ResourceParameterBuilder;
 import com.delcyon.capo.resourcemanager.ResourceURI;
 import com.delcyon.capo.resourcemanager.types.FileResourceType.Parameters;
 import com.delcyon.capo.server.jackrabbit.CapoJcrServer;
-import com.delcyon.capo.webapp.servlets.CapoWebApplication;
 import com.delcyon.capo.xml.cdom.VariableContainer;
 import com.delcyon.capo.xml.dom.ResourceDeclarationElement;
-
-import eu.webtoolkit.jwt.WApplication;
 
 /**
  * @author jeremiah
  *
  */
-public class JcrResourceDescriptor extends AbstractResourceDescriptor
+public class JcrResourceDescriptor extends AbstractResourceDescriptor implements Versionable
 {
 
 	
@@ -517,6 +513,24 @@ public class JcrResourceDescriptor extends AbstractResourceDescriptor
     		    success = true;
             }
         }
+        else if (action == Action.CHECKIN)
+        {
+            checkin();
+            refreshResourceMetaData(variableContainer, resourceParameters);
+		    success = true;
+        }
+        else if (action == Action.CHECKOUT)
+        {
+            checkout();
+            refreshResourceMetaData(variableContainer, resourceParameters);
+		    success = true;
+        }
+        else if (action == Action.RESTORE)
+        {
+            restore(ResourceParameterBuilder.getValue(Versionable.ResourceParameters.VERSION_UUID, resourceParameters));
+            refreshResourceMetaData(variableContainer, resourceParameters);
+		    success = true;
+        }
 	    return success;
 	}
 	
@@ -533,26 +547,31 @@ public class JcrResourceDescriptor extends AbstractResourceDescriptor
 	    {
 	        return;
 	    }
-	    // Skip the virtual (and large!) jcr:system subtree 
-	    if (node.getPath().startsWith("/jcr:system")) { 
-	        return; 
-	    } 
 	    System.out.println(node.getPath()); 
+	    // Skip the virtual (and large!) jcr:system subtree 
+//	    if (node.getPath().startsWith("/jcr:system")) { 
+//	        return; 
+//	    } 
+	    
 	    // Then output the properties 
 	    PropertyIterator properties = node.getProperties(); 
 	    while (properties.hasNext()) { 
-	        Property property = properties.nextProperty(); 
+	        Property property = properties.nextProperty();
+	        if(property.getName().equals("jcr:data") || property.getName().equals("content"))
+	        {
+	        	continue;
+	        }
 	        if (property.getDefinition().isMultiple()) { 
 	            // A multi-valued property, print all values 
 	            Value[] values = property.getValues(); 
 	            for (int i = 0; i < values.length; i++) { 
 	                System.out.println( 
-	                        property.getPath() + " = " + values[i].getString()); 
+	                        property.getPath() + " += " + values[i].getString()); 
 	            } 
 	        } else { 
 	            // A single-valued property 
 	            System.out.println( 
-	                    property.getPath() + " = " + property.getString()); 
+	                    property.getPath() + " == " + property.getString()); 
 	        } 
 	    } 
 
@@ -600,7 +619,125 @@ public class JcrResourceDescriptor extends AbstractResourceDescriptor
 //	    return childResourceDescriptor;
 //	}
 	
- 
+	public void checkin() throws Exception {
+		if (getNode() != null)
+        {
+        	VersionManager versionManager = getNode().getSession().getWorkspace().getVersionManager();            	
+            Node node = getNode();
+            if(node.isNodeType("mix:versionable") == false)
+            {
+            	node.addMixin("mix:versionable");
+            	node.getSession().save();
+            }
+            
+            Version version = versionManager.checkin(node.getPath());
+            dump(version.getFrozenNode());
+//            version.addMixin("mix:title");
+//            version.setProperty("jcr:title", "my reason");
+//            version.setProperty("jcr:description", "my reason");
+//            version.getSession().save();
+		    
+        }
+	}
+
+	@Override
+	public void checkout() throws Exception
+	{
+		if (getNode() != null)
+        {
+        	VersionManager versionManager = getNode().getSession().getWorkspace().getVersionManager();            	
+            Node node = getNode();
+            getVersionHistory();
+            if(node.hasProperty("jcr:isCheckedOut") == true)
+            {
+            	versionManager.checkout(node.getPath());	
+            }                		 
+        }
+		
+	}
+	
+	@Override
+	public boolean isVersioned() throws Exception
+	{
+		if (getNode() != null && getNode().hasProperty("jcr:isCheckedOut"))
+		{
+			return true;
+		}
+		return false;
+	}
+	
+	@Override
+	public List<ContentMetaData> getVersionHistory() throws Exception
+	{
+		Vector<ContentMetaData> versionHistory = new Vector<>();
+		if (getNode() != null && getNode().hasProperty("jcr:isCheckedOut"))
+		{			 
+			VersionManager versionManager = getNode().getSession().getWorkspace().getVersionManager();  
+			VersionHistory history = versionManager.getVersionHistory(getNode().getPath());
+			boolean isRootVersion = true;
+			for (VersionIterator it = history.getAllVersions(); it.hasNext();) 
+			{
+				
+				Version version = (Version) it.next();
+				version.getPath();				
+				JcrContentMetaData contentMetaData = new JcrVersionContentMetaData(new ResourceURI("repo:"+getNode().getPath()+"?version="+version.getName()));
+				//skip first version
+				if(isRootVersion)
+				{
+					isRootVersion = false;
+					continue;
+				}
+				versionHistory.add(contentMetaData);
+				//dump(version.getFrozenNode());
+				//System.out.println(version.getName());				
+			}
+		}
+		return versionHistory;
+	}
+	
+	@Override
+	public void restore(String versionUUID) throws Exception
+	{
+		
+		if (getNode() != null)
+		{
+			VersionManager versionManager = getNode().getSession().getWorkspace().getVersionManager();  
+			ResourceURI versionURI = new ResourceURI(versionUUID);
+			VersionHistory history = versionManager.getVersionHistory(getNode().getPath());
+			Version version = history.getVersion(versionURI.getParameterMap().get("version"));
+			if (version != null)
+			{
+				versionManager.restore( version, true);
+			}
+			
+        }
+	}
+	
+	@Override
+	public void remove(String versionUUID) throws Exception
+	{
+		
+		if (getNode() != null)
+		{
+			VersionManager versionManager = getNode().getSession().getWorkspace().getVersionManager();  
+			
+			VersionHistory history = versionManager.getVersionHistory(getNode().getPath());
+			for (VersionIterator it = history.getAllVersions(); it.hasNext();) 
+			{				
+				Version version = (Version) it.next();
+				if(version.getPath().equals(versionUUID) || version.getFrozenNode().getPath().equals(versionUUID))
+				{
+					//if(version.isCheckedOut() == false)
+					{
+						history.removeVersion(version.getName());
+						return;
+					}
+					
+				}
+			}
+        }
+	}
+	
 	private Node getNode() throws Exception
 	{
 	    if(CapoJcrServer.getSession().nodeExists(absPath))

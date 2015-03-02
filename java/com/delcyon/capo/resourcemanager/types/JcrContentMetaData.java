@@ -8,6 +8,7 @@ import javax.jcr.NodeIterator;
 import javax.jcr.Property;
 import javax.jcr.PropertyIterator;
 import javax.jcr.RepositoryException;
+import javax.jcr.Value;
 
 import com.delcyon.capo.datastream.stream_attribute_filter.MD5FilterInputStream;
 import com.delcyon.capo.datastream.stream_attribute_filter.SizeFilterInputStream;
@@ -235,7 +236,14 @@ public class JcrContentMetaData implements ContentMetaData
             }
             else
             {
-                return "//TODO-- IS MUTLTIPLE";
+            	Value[] values = property.getValues();
+            	StringBuilder builder = new StringBuilder("{");
+            	for (Value value : values)
+				{
+					builder.append(value.getString()+",");
+				}
+            	builder.setCharAt(builder.length()-1, '}');
+                return builder.toString();
             }
         }
         catch (Exception exception)
@@ -279,6 +287,7 @@ public class JcrContentMetaData implements ContentMetaData
                 return properties;
             }
             PropertyIterator propertyIterator = getNode().getProperties();
+            //JcrResourceDescriptor.dump(getNode());
             while(propertyIterator.hasNext())
             {
                 Property property = propertyIterator.nextProperty();
@@ -339,7 +348,7 @@ public class JcrContentMetaData implements ContentMetaData
 
     }
 
-    private Node getNode()
+    protected Node getNode()
     {
         try
         {

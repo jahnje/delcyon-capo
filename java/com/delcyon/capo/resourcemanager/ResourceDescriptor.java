@@ -55,7 +55,10 @@ public interface ResourceDescriptor
 		DELETE, 
 		SET_ATTRIBUTE,
 		ROLLBACK,
-		COMMIT
+		COMMIT,
+		CHECKIN,
+		CHECKOUT,
+		RESTORE
 	}
 	
 	/** This represents the state of a resource. 
