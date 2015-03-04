@@ -9,14 +9,17 @@ import com.delcyon.capo.CapoApplication;
 import com.delcyon.capo.resourcemanager.ResourceDescriptor;
 import com.delcyon.capo.resourcemanager.ResourceDescriptor.Action;
 import com.delcyon.capo.resourcemanager.ResourceDescriptor.State;
+import com.delcyon.capo.server.CapoServer;
 import com.delcyon.capo.server.jackrabbit.CapoJcrServer;
 import com.delcyon.capo.webapp.widgets.WCapoResourceExplorer;
 import com.delcyon.capo.webapp.widgets.WCapoSearchControl;
+import com.delcyon.capo.webapp.widgets.WConsoleWidget;
 import com.delcyon.capo.webapp.widgets.WXmlNavigationBar;
 import com.delcyon.capo.xml.dom.ResourceDocument;
 
 import eu.webtoolkit.jwt.AlignmentFlag;
 import eu.webtoolkit.jwt.PositionScheme;
+import eu.webtoolkit.jwt.Signal1.Listener;
 import eu.webtoolkit.jwt.WApplication;
 import eu.webtoolkit.jwt.WBootstrapTheme;
 import eu.webtoolkit.jwt.WContainerWidget;
@@ -37,7 +40,8 @@ public class CapoWebApplication extends WApplication {
     private Session jcrSession;
     private WCapoSearchControl capoSearchControl;
     private WXmlNavigationBar navigation;
-   
+    private WConsoleWidget consoleWidget;
+    private Listener<String> consoleListener;
     
 	public CapoWebApplication(WEnvironment env, boolean embedded) {
         super(env);
@@ -47,6 +51,7 @@ public class CapoWebApplication extends WApplication {
         //setCssTheme("polished");
         setTitle("Capo");
         require("/wr/ace/ace.js");
+        WApplication.getInstance().enableUpdates(true);
         try
         {
             jcrSession = CapoJcrServer.createSession();
@@ -72,6 +77,7 @@ public class CapoWebApplication extends WApplication {
         
         getRootLayout().addWidget(getNavigationContainer(),0,0);              
         getRootLayout().addWidget(getCapoResourceExplorer(),1,0);
+        getRootLayout().addWidget(getConsoleWidget(),2,0);
 
         //FileResourceType fileResourceType = new FileResourceType();
         //ResourceDescriptor resourceDescriptor = fileResourceType.getResourceDescriptor("file:/");
@@ -97,6 +103,22 @@ public class CapoWebApplication extends WApplication {
     	return capoResourceExplorer;
 	}
 
+	private WConsoleWidget getConsoleWidget()
+	{
+	    if(consoleWidget == null)
+	    {
+	        consoleWidget = new WConsoleWidget();
+	        consoleWidget.setBufferSize(10);
+	        consoleListener = (input) -> {
+	            getConsoleWidget().append(input);                
+            };
+            CapoServer.errConsole.output().addListener(this, consoleListener);
+            CapoServer.outConsole.output().addListener(this, consoleListener);
+	    }
+	    
+	    return consoleWidget;
+	}
+	
 	
 
 	private WGridLayout getRootLayout() {
@@ -142,5 +164,16 @@ public class CapoWebApplication extends WApplication {
         return capoSearchControl;
     }
    
+    /* (non-Javadoc)
+     * @see eu.webtoolkit.jwt.WApplication#destroy()
+     */
+    @Override
+    public void destroy()
+    {  
+        getConsoleWidget().destroy();
+        CapoServer.errConsole.output().removeListener(consoleListener);
+        CapoServer.outConsole.output().removeListener(consoleListener);
+        super.destroy();
+    }
     
 }

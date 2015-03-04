@@ -19,6 +19,7 @@ package com.delcyon.capo.server;
 import java.io.BufferedInputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.PrintStream;
 import java.math.BigInteger;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -43,7 +44,6 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 
-import javax.jcr.SimpleCredentials;
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLException;
@@ -73,9 +73,9 @@ import com.delcyon.capo.CapoApplication;
 import com.delcyon.capo.CapoThreadFactory;
 import com.delcyon.capo.Configuration;
 import com.delcyon.capo.Configuration.PREFERENCE;
-import com.delcyon.capo.ContextThread;
 import com.delcyon.capo.controller.LocalRequestProcessor;
 import com.delcyon.capo.datastream.BufferedSocket;
+import com.delcyon.capo.datastream.ConsoleOutputStreamFilter;
 import com.delcyon.capo.datastream.SocketFinalizer;
 import com.delcyon.capo.datastream.StreamFinalizer;
 import com.delcyon.capo.datastream.StreamHandler;
@@ -90,7 +90,6 @@ import com.delcyon.capo.protocol.client.CapoConnection.ConnectionTypes;
 import com.delcyon.capo.protocol.server.ClientRequestProcessorSessionManager;
 import com.delcyon.capo.resourcemanager.CapoDataManager;
 import com.delcyon.capo.resourcemanager.ResourceDescriptor;
-import com.delcyon.capo.resourcemanager.ResourceManager;
 import com.delcyon.capo.resourcemanager.ResourceDescriptor.Action;
 import com.delcyon.capo.resourcemanager.ResourceDescriptor.LifeCycle;
 import com.delcyon.capo.resourcemanager.ResourceParameter;
@@ -192,6 +191,22 @@ public class CapoServer extends CapoApplication
 	private CapoJettyServer capoJettyServer;
 	private CapoJcrServer capoJcrServer;
 
+	public static final PrintStream sysout = System.out;
+    public static final PrintStream syserr = System.err;
+    public static ConsoleOutputStreamFilter outConsole = null;
+    public static ConsoleOutputStreamFilter errConsole = null;
+	
+    /**
+     * This is so that we can steal the output streams as quickly as possible
+     */
+    static
+    {
+        outConsole = new ConsoleOutputStreamFilter(System.out);
+        System.setOut(new PrintStream(outConsole));
+        errConsole = new ConsoleOutputStreamFilter(System.err);
+        System.setErr(new PrintStream(errConsole));
+    }
+    
 	public CapoServer() throws Exception
 	{
 		super();		
