@@ -44,7 +44,7 @@ public abstract class WValidatorFactory extends WValidator
 	 * matches the validate method from WValidator
 	 *
 	 */
-	private interface WValidatorInterface
+	public interface WValidatorInterface
 	{		
 		public abstract Result validateFunction(String input);
 

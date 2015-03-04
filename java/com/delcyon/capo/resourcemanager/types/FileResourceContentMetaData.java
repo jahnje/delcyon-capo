@@ -241,7 +241,7 @@ public class FileResourceContentMetaData extends AbstractContentMetaData
 				setValue(FileAttributes.regular, "false");
 			}
 		}
-		else if (file.isDirectory() == true && getIntValue(ContentMetaData.Parameters.DEPTH,1,resourceParameters) > currentDepth && isSymlink == false)
+		else if (file.isDirectory() == true && ContentMetaData.getIntValue(ContentMetaData.Parameters.DEPTH,1,resourceParameters) > currentDepth && isSymlink == false)
 		{				
 			String[] fileList = file.list();
 			
