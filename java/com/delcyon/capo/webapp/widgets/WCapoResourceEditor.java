@@ -8,6 +8,7 @@ import java.util.SortedSet;
 
 import org.w3c.dom.Element;
 
+import com.delcyon.capo.CapoApplication;
 import com.delcyon.capo.datastream.StreamUtil;
 import com.delcyon.capo.datastream.stream_attribute_filter.MimeTypeFilterInputStream;
 import com.delcyon.capo.resourcemanager.ContentFormatType;
@@ -17,18 +18,22 @@ import com.delcyon.capo.resourcemanager.ResourceDescriptor.State;
 import com.delcyon.capo.resourcemanager.types.ContentMetaData;
 import com.delcyon.capo.resourcemanager.types.Versionable;
 import com.delcyon.capo.util.HexUtil;
+import com.delcyon.capo.util.diff.Diff;
+import com.delcyon.capo.util.diff.InputStreamTokenizer.TokenList;
 import com.delcyon.capo.webapp.models.DomItemModel;
 import com.delcyon.capo.webapp.models.DomItemModel.DomUse;
 import com.delcyon.capo.webapp.models.ResourceDescriptorItemModel;
 import com.delcyon.capo.webapp.models.WContentMetaDataItemModel;
 import com.delcyon.capo.webapp.servlets.resource.WResourceDescriptor;
 import com.delcyon.capo.webapp.widgets.WAceEditor.Theme;
+import com.delcyon.capo.webapp.widgets.WDiffWidget.DiffFormat;
+import com.delcyon.capo.xml.XMLDiff;
+import com.delcyon.capo.xml.XPath;
 
 import eu.webtoolkit.jwt.AlignmentFlag;
 import eu.webtoolkit.jwt.AnchorTarget;
 import eu.webtoolkit.jwt.SelectionMode;
 import eu.webtoolkit.jwt.Signal;
-import eu.webtoolkit.jwt.Signal1;
 import eu.webtoolkit.jwt.WAbstractItemView;
 import eu.webtoolkit.jwt.WAnchor;
 import eu.webtoolkit.jwt.WContainerWidget;
@@ -69,6 +74,7 @@ public class WCapoResourceEditor extends WTabWidget
 	private WContainerWidget historyContainerWidget;
 	private WTableView historyTableView;
 	private Signal modelChanged = new Signal();
+    private WDiffWidget diffWidget;
     
     /**
      * Actually loads the data into the editor. This is the only place tabs and what not should be added since it's the main controller method for this class
@@ -124,6 +130,7 @@ public class WCapoResourceEditor extends WTabWidget
         if(this.model instanceof Versionable)
         {
         	this.addTab(getHistoryContainerWidget(), "History");
+        	this.addTab(getDiffWidget(), "Diff");
         }
         
         //this might be able to be removed, but was put there when we we're using a background image 
@@ -409,10 +416,17 @@ public class WCapoResourceEditor extends WTabWidget
             getHistoryTableView().selectionChanged().addListener(this, ()->processSelectionEvent(getHistoryTableView(), deleteSelectedVersionPushButton));
             modelChanged.addListener(this, deleteSelectedVersionPushButton::disable);
             
+          //diff version button
+            WPushButton diffSelectedVersionPushButton = new WPushButton("Diff Selected");
+            diffSelectedVersionPushButton.clicked().addListener(this, this::diffSelected);
+            getHistoryTableView().selectionChanged().addListener(this, ()->processSelectionEvent(getHistoryTableView(), diffSelectedVersionPushButton));
+            modelChanged.addListener(this, diffSelectedVersionPushButton::disable);
+            
             historyContainerWidget.addWidget(checkinVersionPushButton);
             historyContainerWidget.addWidget(checkoutVersionPushButton);
             historyContainerWidget.addWidget(restoreSelectedVersionPushButton);
-            historyContainerWidget.addWidget(deleteSelectedVersionPushButton);            
+            historyContainerWidget.addWidget(deleteSelectedVersionPushButton); 
+            historyContainerWidget.addWidget(diffSelectedVersionPushButton); 
             historyContainerWidget.addWidget(getHistoryTableView());
             
             
@@ -468,6 +482,66 @@ public class WCapoResourceEditor extends WTabWidget
     	}
     }
     
+    /**
+     * Generate a diff between the current version, and a selected version
+     */
+    private void diffSelected()
+    {
+        SortedSet<WModelIndex> selectedIndexes = getHistoryTableView().getSelectedIndexes();
+        if(selectedIndexes != null && selectedIndexes.isEmpty() == false)
+        {
+            WModelIndex selectedIndex = selectedIndexes.first();
+            try
+            {
+                String versionURI = ((Versionable) this.model).getVersion((((ContentMetaData) selectedIndex.getInternalPointer()).getResourceURI().getResourceURIString()));
+                ResourceDescriptor versionResourceDescriptor = CapoApplication.getDataManager().getResourceDescriptor(null, versionURI);
+                
+                ContentFormatType contentFormatType = ((ResourceDescriptor) this.model).getResourceMetaData(null).getContentFormatType();
+                ContentFormatType versionContentFormatType = versionResourceDescriptor.getResourceMetaData(null).getContentFormatType();
+                if(versionContentFormatType.ordinal() > contentFormatType.ordinal())
+                {
+                    contentFormatType = versionContentFormatType;
+                }
+                
+                if (contentFormatType == ContentFormatType.XML)
+                {
+                    XMLDiff xmlDiff = new XMLDiff();
+                    Element diffelement = xmlDiff.getDifferences(((ResourceDescriptor) this.model).readXML(null), versionResourceDescriptor.readXML(null));
+                    XPath.dumpNode(diffelement, System.out);
+                }
+                else if (contentFormatType == ContentFormatType.TEXT)
+                {
+                    Diff diff = new Diff(((ResourceDescriptor) this.model).getInputStream(null), versionResourceDescriptor.getInputStream(null), TokenList.NEW_LINE);                    
+                    getDiffWidget().setDiff(diff.getDifferences(),DiffFormat.CAPO);
+                }
+                else
+                {
+                    Diff diff = new Diff(((ResourceDescriptor) this.model).getInputStream(null), versionResourceDescriptor.getInputStream(null));
+                    byte[] diffs = diff.getDifferencesAsBytes();
+                    System.out.println(new String(diffs));
+                }
+                 
+                
+            } catch (Exception e)
+            {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            }
+        }
+    }
+    
+    
+    
+    private WDiffWidget getDiffWidget()
+    {
+        if (diffWidget == null)
+        {
+            diffWidget = new WDiffWidget();
+        }
+        
+        return diffWidget;
+    }
+
     /**
      * This just create the attribute table for the model
      * @return
