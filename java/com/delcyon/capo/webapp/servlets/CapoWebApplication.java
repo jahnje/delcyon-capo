@@ -25,6 +25,7 @@ import eu.webtoolkit.jwt.WBootstrapTheme;
 import eu.webtoolkit.jwt.WContainerWidget;
 import eu.webtoolkit.jwt.WEnvironment;
 import eu.webtoolkit.jwt.WGridLayout;
+import eu.webtoolkit.jwt.WLayoutItem;
 import eu.webtoolkit.jwt.WLength;
 import eu.webtoolkit.jwt.WLink;
 import eu.webtoolkit.jwt.WWidget;
@@ -74,10 +75,12 @@ public class CapoWebApplication extends WApplication {
         rootContainerWidget.setPadding(new WLength(0));
         rootContainerWidget.setLayout(getRootLayout());
        
+        WApplication.getInstance().internalPathChanged().addListener(this, this::processInternalPathChanged);
+        
         
         getRootLayout().addWidget(getNavigationContainer(),0,0);              
         getRootLayout().addWidget(getCapoResourceExplorer(),1,0);
-        getRootLayout().addWidget(getConsoleWidget(),2,0);
+        //getRootLayout().addWidget(getConsoleWidget(),2,0);
 
         //FileResourceType fileResourceType = new FileResourceType();
         //ResourceDescriptor resourceDescriptor = fileResourceType.getResourceDescriptor("file:/");
@@ -94,6 +97,32 @@ public class CapoWebApplication extends WApplication {
         getCapoResourceExplorer().setRootResourceDescriptor(resourceDescriptor);
     }
 
+    private void processInternalPathChanged()
+    {
+    	String internalPath = getInternalPath();
+    	switch (internalPath)
+		{
+		case "/console":
+			replaceCurrentContentWidgetWith(getConsoleWidget());
+			break;
+		default:
+			replaceCurrentContentWidgetWith(getCapoResourceExplorer());
+			break;
+		}
+    }
+    
+    private void replaceCurrentContentWidgetWith(WWidget widget)
+    {
+    	WLayoutItem layoutItem = getRootLayout().getItemAt(1);
+    	if(layoutItem != null)
+    	{
+    		if(layoutItem.getWidget() != widget)
+    		{
+    			getRootLayout().removeItem(layoutItem);
+    			getRootLayout().addWidget(widget,1,0);
+    		}
+    	}
+    }
 
 	private WCapoResourceExplorer getCapoResourceExplorer() {
     	if (capoResourceExplorer == null)
@@ -107,9 +136,12 @@ public class CapoWebApplication extends WApplication {
 	{
 	    if(consoleWidget == null)
 	    {
-	        consoleWidget = new WConsoleWidget();
-	        consoleWidget.setBufferSize(10);
+	        consoleWidget = new WConsoleWidget();	        
 	        consoleListener = (input) -> {
+	        	if(input.startsWith("["))
+	        	{
+	        		input = input.replaceFirst("(\\[.+\\]) ([a-zA-Z0-9]+) ([a-zA-Z0-9\\.]+) - (.*)", "<span class='console-msg-tsrc'>$1</span> <span class='console-msg-level'>$2</span> <span class='console-msg-jsrc'>$3</span> - $4");
+	        	}
 	            getConsoleWidget().append(input);                
             };
             CapoServer.errConsole.output().addListener(this, consoleListener);

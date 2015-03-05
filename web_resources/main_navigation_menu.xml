@@ -10,6 +10,7 @@
     <menu name="Chores"/>
     <menu name="Reports"/>
     <menu name="Admin">
+        <menu name="Console" path="console"/>
         <menu name="Users"/>
         <menu name="Roles"/>
         <menu name="Configuration">

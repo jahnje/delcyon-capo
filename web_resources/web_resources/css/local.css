@@ -43,6 +43,29 @@ table {
 {
     width: 100%;
 }
+.console-msgs
+{
+    margin: 10px;
+    border: 1px ;
+    border-color: lightgrey;
+    border-style: solid;
+}
+.console-msg-tsrc
+{
+  color: rgb(32, 99, 134);  
+}
+.console-msg-level
+{
+    color: rgb(55, 128, 55);
+}
+.console-msg-jsrc
+{
+    color: rgb(216, 160, 96);
+}
+.console-msg
+{
+  color: rgb(82, 72, 72);
+}
 
 .editorArea {
     border: 1px ;

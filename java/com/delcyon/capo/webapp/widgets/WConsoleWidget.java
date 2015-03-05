@@ -5,7 +5,6 @@ import eu.webtoolkit.jwt.WCompositeWidget;
 import eu.webtoolkit.jwt.WContainerWidget;
 import eu.webtoolkit.jwt.WContainerWidget.Overflow;
 import eu.webtoolkit.jwt.WText;
-import eu.webtoolkit.jwt.WWidget;
 
 /**
  * This class can be called from other threads to enable console logging to be pushed to the client.
@@ -66,7 +65,10 @@ public class WConsoleWidget extends WCompositeWidget
          */
         if(isAutoscroll() == true)
         {
-            application.doJavaScript(implemetationWidget.getJsRef() + ".scrollTop += "+ implemetationWidget.getJsRef() + ".scrollHeight;");
+        	if(implemetationWidget.isVisible())
+        	{
+        		application.doJavaScript(implemetationWidget.getJsRef() + ".scrollTop += "+ implemetationWidget.getJsRef() + ".scrollHeight;");
+        	}
         }
         
         /*

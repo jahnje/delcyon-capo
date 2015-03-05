@@ -211,6 +211,11 @@ public class WCapoResourceExplorer extends WCompositeWidget
    private void processInternalPathChange()
    {
        System.out.println(WApplication.getInstance().getInternalPath());
+       //skip and changes that happen when we're not visible
+       if(isVisible() == false)
+       {
+    	   return;
+       }
        try
        {
            //TODO make this deal with resource that are not only of type repo: 
@@ -238,13 +243,18 @@ public class WCapoResourceExplorer extends WCompositeWidget
            setRootResourceDescriptor(resourceDescriptor);
            if(originalURI != null)
            {
-               List<WModelIndex> indexes = getCapoResourceTreeView().getModel().match(getCapoResourceTreeView().getModel().getIndex(0, 0), ResourceDescriptorItemModel.ResourceURI_ROLE, originalURI.toString(), 1, MatchOptions.defaultMatchOptions);
-               if(indexes.size() > 0)
-               {
-                   getCapoResourceTreeView().select(indexes.get(0));
-               }
+        	   WModelIndex currentIndex = getCapoResourceTreeView().getModel().getIndex(0, 0);
+        	   if(currentIndex != null) //not sure why this can be null, it isn't very often
+        	   {
+        		   List<WModelIndex> indexes = getCapoResourceTreeView().getModel().match(currentIndex, ResourceDescriptorItemModel.ResourceURI_ROLE, originalURI.toString(), 1, MatchOptions.defaultMatchOptions);
+        		   if(indexes.size() > 0)
+        		   {
+        			   getCapoResourceTreeView().select(indexes.get(0));
+        		   }
+        	   }
            }
            getCapoResourceTreeView().selectionChanged();
+           refresh();
        }
        catch (Exception e)
        {                         
