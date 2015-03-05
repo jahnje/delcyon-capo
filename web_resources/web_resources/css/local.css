@@ -72,3 +72,138 @@ table {
     border-color: lightgrey;
     border-style: solid;
 }
+
+/*DIFF Coloring*/
+.diff
+{
+    /*background-color: white;*/
+    border-spacing: 2px;
+border-color: gray;
+white-space: pre-wrap;
+border: 1px ;
+border-color: lightgrey;
+    border-style: solid;
+}
+
+.diff_base_addition
+{
+    background-color: white;
+    padding-left: 10px;
+padding-right: 10px;
+white-space: pre-wrap;
+ border: solid #eee;
+    border-width: 0 1px 0 0;
+ border-color: #c1e9c1;
+}
+.diff_mod_addtition
+{
+    background-color: #eaffea;
+    padding-left: 10px;
+padding-right: 10px;
+white-space: pre-wrap;
+}
+.diff_base_deletion
+{
+    background-color: #ffecec;
+    padding-left: 10px;
+padding-right: 10px;
+white-space: pre-wrap;
+ border: solid #eee;
+    border-width: 0 1px 0 0;
+    border-color: #c1e9c1;
+}
+.diff_mod_deletion
+{
+    background-color: white;
+    padding-left: 10px;
+padding-right: 10px;
+white-space: pre-wrap;
+ border: solid #eee;
+    border-width: 0 1px 0 0;
+    border-color: #c1e9c1;
+}
+.diff_mod_text
+{
+    background-color: #a6f3a6;;
+}
+.diff_base_same
+{
+    background-color: white;
+    padding-left: 10px;
+padding-right: 10px;
+white-space: pre-wrap;
+ border: solid #eee;
+    border-width: 0 1px 0 0;
+    
+}
+.diff_base_text
+{
+     background-color: #ddbbbb;
+}
+.diff_mod_same
+{
+    background-color: white;
+    padding-left: 10px;
+padding-right: 10px;
+white-space: pre-wrap;
+ border: solid #eee;
+    border-width: 0 1px 0 0;
+    
+
+}
+.diff_base_addition_linenumber
+{
+    background-color: white;
+padding-left: 10px;
+padding-right: 10px;    
+text-align: right;
+border: solid #eee;
+border-width: 0 1px 0 0;
+}
+.diff_mod_addition_linenumber
+{
+    background-color: #dbffdb;
+    border: solid #eee;
+    border-width: 0 1px 0 0;
+    border-color: #c1e9c1;
+    padding-left: 10px;
+    padding-right: 10px;
+    text-align: right;
+}
+.diff_base_deletion_linenumber
+{
+    background-color: #ffdddd;
+       border: solid #eee;
+    border-width: 0 1px 0 0;
+        text-align: right;
+        border-color: #f1c0c0;
+         padding-left: 10px;
+    padding-right: 10px;
+}
+.diff_mod_deletion_linenumber
+{
+    background-color: white;
+padding-left: 10px;
+padding-right: 10px;    
+text-align: right;
+border: solid #eee;
+border-width: 0 1px 0 0;
+}
+.diff_base_same_linenumber
+{
+    background-color: white;
+    padding-left: 10px;
+padding-right: 10px;
+text-align: right;
+border: solid #eee;
+border-width: 0 1px 0 0;
+}
+.diff_mod_same_linenumber
+{
+    background-color: white;
+    padding-left: 10px;
+padding-right: 10px;
+text-align: right;
+border: solid #eee;
+border-width: 0 1px 0 0;
+}
