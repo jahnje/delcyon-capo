@@ -57,6 +57,8 @@ public abstract class AbstractFilterInputStream extends FilterInputStream implem
 		 }
 		 else //if we're closed, then return -1 to indicate as much
 		 {
+		     //clear the buffer when we haven't read anything, just in case we use the stream again, like in a zipstream  
+		     smallBuffer[0] = (byte)0;
 			 return -1;
 		 }
 	}
