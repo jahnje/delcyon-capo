@@ -696,6 +696,20 @@ public class JcrResourceDescriptor extends AbstractResourceDescriptor implements
 	}
 	
 	@Override
+	public String getVersion(String versionUUID) throws Exception
+	{
+	    VersionManager versionManager = getNode().getSession().getWorkspace().getVersionManager();  
+        ResourceURI versionURI = new ResourceURI(versionUUID);
+        VersionHistory history = versionManager.getVersionHistory(getNode().getPath());
+        Version version = history.getVersion(versionURI.getParameterMap().get("version"));
+        if (version != null)
+        {
+            return "repo:"+version.getFrozenNode().getPath();
+        }
+        return null;
+	}
+	
+	@Override
 	public void restore(String versionUUID) throws Exception
 	{
 		

@@ -14,5 +14,12 @@ public interface Versionable
 	public void checkout() throws Exception;
 	public void restore(String versionUUID) throws Exception;
 	public void remove(String versionUUID) throws Exception;
-	public List<ContentMetaData> getVersionHistory() throws Exception;
+	/**
+	 * 
+	 * @param versionUUID
+	 * @return String representation of a resourceURI for this version.
+	 * @throws Exception
+	 */
+	public String getVersion(String versionUUID)  throws Exception; 
+	public List<ContentMetaData> getVersionHistory() throws Exception;	
 }
