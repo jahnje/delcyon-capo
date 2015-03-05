@@ -506,17 +506,17 @@ public class WCapoResourceEditor extends WTabWidget
                 if (contentFormatType == ContentFormatType.XML)
                 {
                     XMLDiff xmlDiff = new XMLDiff();
-                    Element diffelement = xmlDiff.getDifferences(((ResourceDescriptor) this.model).readXML(null), versionResourceDescriptor.readXML(null));
+                    Element diffelement = xmlDiff.getDifferences(versionResourceDescriptor.readXML(null),((ResourceDescriptor) this.model).readXML(null));
                     XPath.dumpNode(diffelement, System.out);
                 }
                 else if (contentFormatType == ContentFormatType.TEXT)
                 {
-                    Diff diff = new Diff(((ResourceDescriptor) this.model).getInputStream(null), versionResourceDescriptor.getInputStream(null), TokenList.NEW_LINE);                    
+                    Diff diff = new Diff(versionResourceDescriptor.getInputStream(null),((ResourceDescriptor) this.model).getInputStream(null),  TokenList.NEW_LINE);                    
                     getDiffWidget().setDiff(diff.getDifferences(),DiffFormat.CAPO);
                 }
                 else
                 {
-                    Diff diff = new Diff(((ResourceDescriptor) this.model).getInputStream(null), versionResourceDescriptor.getInputStream(null));
+                    Diff diff = new Diff(versionResourceDescriptor.getInputStream(null),((ResourceDescriptor) this.model).getInputStream(null));
                     byte[] diffs = diff.getDifferencesAsBytes();
                     System.out.println(new String(diffs));
                 }

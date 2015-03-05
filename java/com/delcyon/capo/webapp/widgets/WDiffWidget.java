@@ -68,13 +68,16 @@ public class WDiffWidget extends WCompositeWidget
                 
                 //System.out.println("data = "+matcher.group(1) +"==>"+line);
                 String type = null;
+                String text = null;
                 if(tokenizer.hasMore() == false)
                 {
-                    type = "="; 
+                    type = "=";
+                    text = "";
                 }
                 else
                 {
                     type = matcher.group(1);
+                    text = Utils.htmlEncode(matcher.group(4));
                 }
                 
                 //check to see if were switching types, and not from an equals, as the system should be in balance at that point
@@ -96,16 +99,19 @@ public class WDiffWidget extends WCompositeWidget
                             modRow++;
                         }
                     }
-                    if(tokenizer.hasMore() == false)
-                    {
-                        break; //we we're just here to finish flushing out the empty rows
-                    }
+                   
                 }
-
+                
+                if(tokenizer.hasMore() == false)
+                {
+                    break; //we we're just here to finish flushing out the empty rows
+                }
+                
                 lastType = type;
-                String text = Utils.htmlEncode(matcher.group(4));
+                
                 switch (type)
                 {
+                
                     case "+":
                         //This all takes care of hightlighing on an indivdual line if we find ourselves across from an already existing base or mod that we're going to fill out here
                         if(modRow < baseRow) //check too see if we're filling in a mod 
