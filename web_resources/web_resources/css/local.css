@@ -62,9 +62,15 @@ table {
 {
     color: rgb(216, 160, 96);
 }
-.console-msg
+.console-msg-XHTMLText
+{
+  color: rgb(82, 72, 72);  
+}
+
+.console-msg-PlainText
 {
   color: rgb(82, 72, 72);
+  white-space: pre-wrap;
 }
 
 .editorArea {
@@ -84,7 +90,15 @@ border: 1px ;
 border-color: lightgrey;
     border-style: solid;
 }
+.diff_base_header
+{
+    background-color: beige;
+}
 
+.diff_mod_header
+{
+    background-color: beige;
+}
 .diff_base_addition
 {
     background-color: white;
