@@ -1,5 +1,6 @@
 package com.delcyon.capo.webapp.widgets;
 
+import eu.webtoolkit.jwt.TextFormat;
 import eu.webtoolkit.jwt.WApplication;
 import eu.webtoolkit.jwt.WCompositeWidget;
 import eu.webtoolkit.jwt.WContainerWidget;
@@ -35,7 +36,7 @@ public class WConsoleWidget extends WCompositeWidget
      * Main method. Adds a pure pile of data to the widget surrounded by a div tag 
      * @param message
      */
-    public void append(String message)
+    public void append(String message,TextFormat textFormat)
     {
         //WApplication.getInstance(); this will NOT work. 
         //You can only call getInsatnce on widget creation from that app that will need to be notified.
@@ -46,10 +47,10 @@ public class WConsoleWidget extends WCompositeWidget
          * Format and append the line to the conversation.
          *         
          */
-        WText w = new WText(message, implemetationWidget);
+        WText w = new WText(message,textFormat);
         w.setInline(isInline());
-        w.setStyleClass("console-msg");
-        
+        w.setStyleClass("console-msg-"+textFormat);
+        implemetationWidget.addWidget(w);
         
         /*
          * Leave not more than 100 messages in the back-log

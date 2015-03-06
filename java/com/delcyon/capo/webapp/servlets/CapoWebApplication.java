@@ -20,6 +20,7 @@ import com.delcyon.capo.xml.dom.ResourceDocument;
 import eu.webtoolkit.jwt.AlignmentFlag;
 import eu.webtoolkit.jwt.PositionScheme;
 import eu.webtoolkit.jwt.Signal1.Listener;
+import eu.webtoolkit.jwt.TextFormat;
 import eu.webtoolkit.jwt.WApplication;
 import eu.webtoolkit.jwt.WBootstrapTheme;
 import eu.webtoolkit.jwt.WContainerWidget;
@@ -141,8 +142,12 @@ public class CapoWebApplication extends WApplication {
 	        	if(input.startsWith("["))
 	        	{
 	        		input = input.replaceFirst("(\\[.+\\]) ([a-zA-Z0-9]+) ([a-zA-Z0-9\\.]+) - (.*)", "<span class='console-msg-tsrc'>$1</span> <span class='console-msg-level'>$2</span> <span class='console-msg-jsrc'>$3</span> - $4");
+	        		getConsoleWidget().append(input,TextFormat.XHTMLText);
 	        	}
-	            getConsoleWidget().append(input);                
+	        	else
+	        	{
+	        	    getConsoleWidget().append(input,TextFormat.PlainText);
+	        	}
             };
             CapoServer.errConsole.output().addListener(this, consoleListener);
             CapoServer.outConsole.output().addListener(this, consoleListener);
