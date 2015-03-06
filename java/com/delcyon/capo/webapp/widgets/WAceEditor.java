@@ -136,7 +136,8 @@ public class WAceEditor extends WContainerWidget
       //TODO we might be able to do this with setting a javascript member, which might get automatically added each time the div is created..
         contentWText.doJavaScript(contentWText.getJsRef()+".editor = ace.edit("+contentWText.getJsRef()+");"
                 + contentWText.getJsRef()+".editor.setTheme('ace/theme/"+theme+"');"
-                + contentWText.getJsRef()+".editor.setShowPrintMargin(false);"        
+                + contentWText.getJsRef()+".editor.setShowPrintMargin(false);" 
+                + contentWText.getJsRef()+".editor.setReadOnly("+readOnly+");"
                 );
     }
     
