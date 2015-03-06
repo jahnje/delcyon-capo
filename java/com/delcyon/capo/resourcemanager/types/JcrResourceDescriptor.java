@@ -22,6 +22,8 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.PipedInputStream;
 import java.io.PipedOutputStream;
+import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Vector;
@@ -38,6 +40,12 @@ import javax.jcr.version.Version;
 import javax.jcr.version.VersionHistory;
 import javax.jcr.version.VersionIterator;
 import javax.jcr.version.VersionManager;
+
+import org.apache.jackrabbit.core.ItemImpl;
+import org.apache.jackrabbit.core.ItemValidator;
+import org.apache.jackrabbit.core.NodeImpl;
+import org.apache.jackrabbit.core.SessionImpl;
+import org.apache.jackrabbit.core.session.SessionContext;
 
 import com.delcyon.capo.CapoApplication;
 import com.delcyon.capo.ContextThread;
@@ -71,6 +79,7 @@ public class JcrResourceDescriptor extends AbstractResourceDescriptor implements
 	private volatile Boolean isWriting = false;
 	private Boolean hasPipeThreadStarted = false;
     private PipedOutputStream pipedOutputStream;
+    private ItemValidator originalItemValidator;
 
 	 
 	
@@ -621,32 +630,149 @@ public class JcrResourceDescriptor extends AbstractResourceDescriptor implements
 	
 	public void checkin() throws Exception {
 		if (getNode() != null)
-        {
+        {		    
         	VersionManager versionManager = getNode().getSession().getWorkspace().getVersionManager();            	
             Node node = getNode();
-            if(node.isNodeType("mix:versionable") == false)
+            
+            if(node.isCheckedOut() == false) //this should return true on anything that isn't versionable
             {
-            	node.addMixin("mix:versionable");
-            	node.getSession().save();
+                //make sure that the node is versionable
+                if(node.isNodeType("mix:versionable") == false)
+                {
+                    try
+                    {
+                        //if this is not checked out AND ist' not versionable something is wrong, so try and check it out and see if that throws an exception
+                        versionManager.checkout(node.getPath());
+                    } catch (Exception exception)
+                    {                    
+                        //if so we managed to get a node checked in without a versionable mixin
+                        //so let the addMixin call succeed no matter the cost by removing some validation from jack rabbit for the time being 
+                        overrideJackrabbitValidation(node,ItemValidator.CHECK_CHECKED_OUT);                   
+                    }
+                }
             }
             
-            Version version = versionManager.checkin(node.getPath());
-            dump(version.getFrozenNode());
-//            version.addMixin("mix:title");
-//            version.setProperty("jcr:title", "my reason");
-//            version.setProperty("jcr:description", "my reason");
-//            version.getSession().save();
-		    
+            if(node.isNodeType("mix:versionable") == false)
+            {
+                node.addMixin("mix:versionable");
+                node.getSession().save();
+
+                if(originalItemValidator != null)
+                {
+                    resetJackRabitValidation(node);            	    
+                }
+            }
+            
+            versionManager.checkin(node.getPath());
+    
         }
 	}
 
-	@Override
+	
+
+	/**
+	 * This should never really be used, but in testing a node was marked as checked in w/o the required mixin's for versioning.
+	 * So this is basically a method to override jackrabbit's validation methods so that we can still write to a checked in version.
+	 * @param n
+	 * @param optionsOverride
+	 * @throws Exception
+	 */
+	private void overrideJackrabbitValidation(Node n, int optionsOverride) throws Exception
+	{
+	    try
+	    {
+
+
+	        NodeImpl node = (NodeImpl) n;
+	        SessionImpl session =  (SessionImpl) node.getSession();
+	        Field sessionContextField = SessionImpl.class.getDeclaredField("context");
+	        sessionContextField.setAccessible(true);
+	        SessionContext sessionContext = (SessionContext) sessionContextField.get(session);
+
+	        Field modifiersField = Field.class.getDeclaredField("modifiers");
+	        modifiersField.setAccessible(true);
+
+	        Field itemValidatorField =  SessionContext.class.getDeclaredField("itemValidator");
+	        itemValidatorField.setAccessible(true);
+	        originalItemValidator = (ItemValidator) itemValidatorField.get(sessionContext); 
+	        modifiersField.setInt(itemValidatorField, itemValidatorField.getModifiers() & ~Modifier.FINAL);
+
+	        ItemValidator itemValidator = new ItemValidator(sessionContext){
+	            @Override
+	            public synchronized boolean canModify(ItemImpl item, int options, int permissions) throws RepositoryException
+	            {
+	                options = options & ~optionsOverride;
+	                return super.canModify(item, options, permissions);
+	            }
+	            @Override
+	            public synchronized void checkModify(ItemImpl item, int options, int permissions) throws RepositoryException
+	            {
+	                options = options & ~optionsOverride;
+	                super.checkModify(item, options, permissions);
+	            }
+
+	            @Override
+	            public synchronized void checkRemove(ItemImpl item, int options, int permissions) throws RepositoryException
+	            {
+	                options = options & ~optionsOverride;
+	                super.checkRemove(item, options, permissions);
+	            }
+
+	        };
+
+	        itemValidatorField.set(sessionContext, itemValidator);
+
+	    }
+	    catch (Exception e)
+	    {
+	        throw e;
+	    }
+
+	}
+
+	/**
+	 * this should restore any jackrabbit validation that was turned off. 
+	 * @param n
+	 * @throws Exception
+	 */
+	private void resetJackRabitValidation(Node n) throws Exception
+	{
+	    try
+	    {
+
+
+	        NodeImpl node = (NodeImpl) n;
+	        SessionImpl session =  (SessionImpl) node.getSession();
+	        Field sessionContextField = SessionImpl.class.getDeclaredField("context");
+	        sessionContextField.setAccessible(true);
+	        SessionContext sessionContext = (SessionContext) sessionContextField.get(session);
+
+	        Field itemValidatorField =  SessionContext.class.getDeclaredField("itemValidator");
+	        itemValidatorField.setAccessible(true);
+	        itemValidatorField.set(sessionContext, originalItemValidator);
+
+	        Field modifiersField = Field.class.getDeclaredField("modifiers");
+	        modifiersField.setAccessible(true); 
+	        modifiersField.setInt(itemValidatorField, itemValidatorField.getModifiers() | Modifier.FINAL);
+	        modifiersField.setAccessible(false); 
+	        itemValidatorField.setAccessible(false);
+	        sessionContextField.setAccessible(false);
+	        originalItemValidator = null;
+	    }
+	    catch (Exception e)
+	    {
+	        throw e;
+	    }
+
+	}
+
+    @Override
 	public void checkout() throws Exception
 	{
 		if (getNode() != null)
         {
         	VersionManager versionManager = getNode().getSession().getWorkspace().getVersionManager();            	
-            Node node = getNode();
+            Node node = getNode();            
             getVersionHistory();
             if(node.hasProperty("jcr:isCheckedOut") == true)
             {
