@@ -22,6 +22,8 @@ import eu.webtoolkit.jwt.WText;
 public class WDiffWidget extends WCompositeWidget
 {
     private WTable table = new WTable();
+    private String baseHeader = "";
+    private String modHeader = "";
     
     /**
      * Supported diff formats
@@ -39,19 +41,21 @@ public class WDiffWidget extends WCompositeWidget
         containerWidget.addWidget(table);
         setImplementation(containerWidget);
         setStyleClass("diff");
+        table.setHeaderCount(1);
     }
     
     public void setDiff(String differences, DiffFormat format) throws Exception
     {
         table.clear();
+        int headerOffset = insertHeaders();
         ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(differences.getBytes());
         Tokenizer tokenizer = new Tokenizer(byteArrayInputStream);
         tokenizer.resetSyntax();        
         tokenizer.setCharRangeType(0, 255, CharacterType.ALPHA);        
         tokenizer.setCharType('\n', CharacterType.EOL);
         tokenizer.setCharType('\r', CharacterType.EOL);
-        int baseRow = 0;
-        int modRow = 0;
+        int baseRow = headerOffset;
+        int modRow = headerOffset;
         String lastType = "=";
         while(tokenizer.hasMore())
         {
@@ -231,6 +235,36 @@ public class WDiffWidget extends WCompositeWidget
         cell.setStyleClass(styleClass);
         return cell;
     }
+
+    public void setHeaders(String baseHeader, String modHeader)
+    {
+        this.baseHeader  = baseHeader+""; //insure not null
+        this.modHeader   = modHeader+"";
+        insertHeaders();
+    }
     
+    public String getBaseHeader()
+    {
+        return baseHeader;
+    }
+    
+    public String getModHeader()
+    {
+        return modHeader;        
+    }
+    
+    private int insertHeaders()
+    {
+        WTableCell cell = table.getElementAt(0, 0);
+        cell.setStyleClass("diff_base_header");
+        cell.setColumnSpan(2);
+        cell.addWidget(new WText(getBaseHeader()));
+        
+        cell = table.getElementAt(0, 2);
+        cell.setStyleClass("diff_base_header");
+        cell.setColumnSpan(2);
+        cell.addWidget(new WText(getModHeader()));
+        return 1;
+    }
     
 }
