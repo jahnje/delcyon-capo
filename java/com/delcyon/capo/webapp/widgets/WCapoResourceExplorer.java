@@ -2,6 +2,7 @@ package com.delcyon.capo.webapp.widgets;
 
 import java.util.List;
 import java.util.SortedSet;
+import java.util.logging.Level;
 
 import com.delcyon.capo.CapoApplication;
 import com.delcyon.capo.resourcemanager.ResourceDescriptor;
@@ -163,7 +164,7 @@ public class WCapoResourceExplorer extends WCompositeWidget
            ((CapoWebApplication) CapoWebApplication.getInstance()).getJcrSession().save();
        } catch (Exception e)
        {
-           e.printStackTrace();
+    	   CapoWebApplication.exception(Level.SEVERE, "Error saving JCR session", e);
        }
    }
    
@@ -193,7 +194,7 @@ public class WCapoResourceExplorer extends WCompositeWidget
            capoResourceTreeView.setModel(new ResourceDescriptorItemModel(CapoApplication.getDataManager().getResourceDescriptor(null, getResourceTypeScheme()+"/"),DomUse.NAVIGATION));
        } catch (Exception e)
        {
-           e.printStackTrace();
+    	   CapoWebApplication.exception(Level.SEVERE, "Error resetting", e);
        }
    }
 
@@ -258,7 +259,7 @@ public class WCapoResourceExplorer extends WCompositeWidget
        }
        catch (Exception e)
        {                         
-           e.printStackTrace();
+    	   CapoWebApplication.exception(Level.SEVERE, "Error processing internal path change", e);
        }
    
    }

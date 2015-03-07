@@ -6,6 +6,7 @@ import java.io.OutputStream;
 import java.util.List;
 import java.util.SortedSet;
 import java.util.TreeSet;
+import java.util.logging.Level;
 
 import org.w3c.dom.Element;
 
@@ -25,6 +26,7 @@ import com.delcyon.capo.webapp.models.DomItemModel;
 import com.delcyon.capo.webapp.models.DomItemModel.DomUse;
 import com.delcyon.capo.webapp.models.ResourceDescriptorItemModel;
 import com.delcyon.capo.webapp.models.WContentMetaDataItemModel;
+import com.delcyon.capo.webapp.servlets.CapoWebApplication;
 import com.delcyon.capo.webapp.servlets.resource.WResourceDescriptor;
 import com.delcyon.capo.webapp.widgets.WAceEditor.Theme;
 import com.delcyon.capo.webapp.widgets.WDiffWidget.DiffFormat;
@@ -147,7 +149,7 @@ public class WCapoResourceEditor extends WTabWidget
             }
             catch (Exception e)
             {
-                e.printStackTrace();
+            	CapoWebApplication.exception(Level.SEVERE, "Error adding history tabs", e);
             }
 
         }
@@ -227,7 +229,7 @@ public class WCapoResourceEditor extends WTabWidget
         }
         catch (Exception exception)
         {
-            exception.printStackTrace(); // TODO do something with this error
+        	CapoWebApplication.exception(Level.SEVERE, "Error saving", exception);
         }
 
     };
@@ -287,7 +289,7 @@ public class WCapoResourceEditor extends WTabWidget
             catch (Exception e1)
             {
 
-                e1.printStackTrace();
+            	CapoWebApplication.exception(Level.SEVERE, "Error getting base version", e1);
             }
             try
             {
@@ -363,7 +365,7 @@ public class WCapoResourceEditor extends WTabWidget
             }
             catch (Exception e)
             {
-                e.printStackTrace();
+            	CapoWebApplication.exception(Level.SEVERE, "Error setting model", e);
             }
         }
 
@@ -383,8 +385,7 @@ public class WCapoResourceEditor extends WTabWidget
         }
         catch (Exception e)
         {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
+        	CapoWebApplication.exception(Level.SEVERE, "Error clearing content", e);
         }
     }
 
@@ -500,10 +501,9 @@ public class WCapoResourceEditor extends WTabWidget
                 ((Versionable) this.model).remove(((ContentMetaData) selectedIndex.getInternalPointer()).getResourceURI().getResourceURIString());
                 refresh();
             }
-            catch (Exception e)
+            catch (Exception exception)
             {
-                // TODO Auto-generated catch block
-                e.printStackTrace();
+            	CapoWebApplication.exception(Level.SEVERE, "Error deleting selected", exception);
             }
         }
     }
@@ -519,10 +519,9 @@ public class WCapoResourceEditor extends WTabWidget
                 ((Versionable) this.model).restore(((ContentMetaData) selectedIndex.getInternalPointer()).getResourceURI().getResourceURIString());
                 refresh();
             }
-            catch (Exception e)
+            catch (Exception exception)
             {
-                // TODO Auto-generated catch block
-                e.printStackTrace();
+            	CapoWebApplication.exception(Level.SEVERE, "error restoring selected", exception);
             }
         }
     }
@@ -577,8 +576,7 @@ public class WCapoResourceEditor extends WTabWidget
             }
             catch (Exception e)
             {
-                // TODO Auto-generated catch block
-                e.printStackTrace();
+            	CapoWebApplication.exception(Level.SEVERE, "Error diffing selected", e);
             }
         }
     }
@@ -637,8 +635,8 @@ public class WCapoResourceEditor extends WTabWidget
             setCurrentIndex(currentIndex);
         }
         catch (Exception exception)
-        {
-            exception.printStackTrace();
+        {           
+            CapoWebApplication.exception(Level.SEVERE, "Error making versionale", exception);
         }
     }
 
@@ -655,7 +653,7 @@ public class WCapoResourceEditor extends WTabWidget
         }
         catch (Exception e)
         {
-            e.printStackTrace();
+        	CapoWebApplication.exception(Level.SEVERE, "Error checkin content", e);
         }
 
     }
@@ -672,7 +670,7 @@ public class WCapoResourceEditor extends WTabWidget
         }
         catch (Exception e)
         {
-            e.printStackTrace();
+        	CapoWebApplication.exception(Level.SEVERE, "Error checking out content", e);
         }
 
     }
@@ -716,7 +714,7 @@ public class WCapoResourceEditor extends WTabWidget
         }
         catch (Exception e)
         {
-            e.printStackTrace();
+        	CapoWebApplication.exception(Level.SEVERE, "Uploaded file couldn't be saved ", e);
         }
 
     }
@@ -797,8 +795,7 @@ public class WCapoResourceEditor extends WTabWidget
         }
         catch (Exception e)
         {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
+        	CapoWebApplication.exception(Level.SEVERE, "Error refreshing", e);
         }
 
         super.refresh();

@@ -1,6 +1,11 @@
 
 package com.delcyon.capo.webapp.servlets;
 
+import java.io.ByteArrayOutputStream;
+import java.io.PrintStream;
+import java.util.EnumSet;
+import java.util.logging.Level;
+
 import javax.jcr.Session;
 
 import org.w3c.dom.Document;
@@ -20,6 +25,7 @@ import com.delcyon.capo.xml.dom.ResourceDocument;
 import eu.webtoolkit.jwt.AlignmentFlag;
 import eu.webtoolkit.jwt.PositionScheme;
 import eu.webtoolkit.jwt.Signal1.Listener;
+import eu.webtoolkit.jwt.StandardButton;
 import eu.webtoolkit.jwt.TextFormat;
 import eu.webtoolkit.jwt.WApplication;
 import eu.webtoolkit.jwt.WBootstrapTheme;
@@ -29,6 +35,7 @@ import eu.webtoolkit.jwt.WGridLayout;
 import eu.webtoolkit.jwt.WLayoutItem;
 import eu.webtoolkit.jwt.WLength;
 import eu.webtoolkit.jwt.WLink;
+import eu.webtoolkit.jwt.WMessageBox;
 import eu.webtoolkit.jwt.WWidget;
 
 public class CapoWebApplication extends WApplication {
@@ -59,9 +66,9 @@ public class CapoWebApplication extends WApplication {
             jcrSession = CapoJcrServer.createSession();
             createUI();
         }
-        catch (Exception e)
+        catch (Exception exception)
         {        
-            e.printStackTrace();
+            CapoWebApplication.exception(Level.SEVERE, "error creating UI", exception);
         }
     }
 
@@ -201,6 +208,18 @@ public class CapoWebApplication extends WApplication {
         return capoSearchControl;
     }
    
+    
+    public static void exception(Level level,String message, Exception exception)
+    {
+    	    	
+    	CapoApplication.logger.log(level, message, exception);
+    	ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+    	PrintStream printStream = new PrintStream(byteArrayOutputStream);
+    	exception.printStackTrace(printStream);
+    	WMessageBox.show(message,"<pre class='error_message'>"+new String(byteArrayOutputStream.toByteArray())+"</pre>", EnumSet.of(StandardButton.Ok));
+        
+    }
+    
     /* (non-Javadoc)
      * @see eu.webtoolkit.jwt.WApplication#destroy()
      */

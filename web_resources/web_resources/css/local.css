@@ -221,3 +221,11 @@ text-align: right;
 border: solid #eee;
 border-width: 0 1px 0 0;
 }
+
+.error_message
+{
+    font-size: xx-small;
+    line-height: 10px;
+    /* word-wrap: normal; */
+    white-space: pre;
+}
