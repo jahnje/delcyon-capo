@@ -497,7 +497,7 @@ public class WCapoResourceEditor extends WTabWidget
             WModelIndex selectedIndex = selectedIndexes.first();
             try
             {
-                ((Versionable) this.model).remove(((ContentMetaData) selectedIndex.getInternalPointer()).getResourceURI().getPath());
+                ((Versionable) this.model).remove(((ContentMetaData) selectedIndex.getInternalPointer()).getResourceURI().getResourceURIString());
                 refresh();
             }
             catch (Exception e)

@@ -859,22 +859,18 @@ public class JcrResourceDescriptor extends AbstractResourceDescriptor implements
 		
 		if (getNode() != null)
 		{
-			VersionManager versionManager = getNode().getSession().getWorkspace().getVersionManager();  
-			
-			VersionHistory history = versionManager.getVersionHistory(getNode().getPath());
-			for (VersionIterator it = history.getAllVersions(); it.hasNext();) 
-			{				
-				Version version = (Version) it.next();
-				if(version.getPath().equals(versionUUID) || version.getFrozenNode().getPath().equals(versionUUID))
+			if (getNode() != null)
+			{
+				VersionManager versionManager = getNode().getSession().getWorkspace().getVersionManager();  
+				ResourceURI versionURI = new ResourceURI(versionUUID);
+				VersionHistory history = versionManager.getVersionHistory(getNode().getPath());
+				Version version = history.getVersion(versionURI.getParameterMap().get("version"));
+				if (version != null)
 				{
-					//if(version.isCheckedOut() == false)
-					{
-						history.removeVersion(version.getName());
-						return;
-					}
-					
+					history.removeVersion(version.getName());
 				}
-			}
+				
+	        }
         }
 	}
 	
