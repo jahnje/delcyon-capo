@@ -68,7 +68,7 @@ public class WConsoleWidget extends WCompositeWidget
         {
         	if(implemetationWidget.isVisible())
         	{
-        		application.doJavaScript(implemetationWidget.getJsRef() + ".scrollTop += "+ implemetationWidget.getJsRef() + ".scrollHeight;");
+        		application.doJavaScript("if ("+implemetationWidget.getJsRef()+" != null) {"+implemetationWidget.getJsRef() + ".scrollTop += "+ implemetationWidget.getJsRef() + ".scrollHeight;}");
         	}
         }
         
