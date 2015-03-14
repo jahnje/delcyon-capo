@@ -1,5 +1,6 @@
 package com.delcyon.capo.webapp.widgets;
 
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -14,6 +15,7 @@ import eu.webtoolkit.jwt.Signal2;
 import eu.webtoolkit.jwt.WApplication;
 import eu.webtoolkit.jwt.WGridLayout;
 import eu.webtoolkit.jwt.WLayoutItem;
+import eu.webtoolkit.jwt.WLink;
 import eu.webtoolkit.jwt.WMenu;
 import eu.webtoolkit.jwt.WMenuItem;
 import eu.webtoolkit.jwt.WNavigationBar;
@@ -22,7 +24,12 @@ import eu.webtoolkit.jwt.WPushButton;
 import eu.webtoolkit.jwt.WWidget;
 
 /**
- * Uses a simple xml layout of menu->menu->menu(name= path= perm= class=) to make nested menu that alter the systems internal path 
+ * Uses a simple xml layout of menu->menu->menu(name= path= perm= class= method=) to make nested menu that alter the systems internal path. 
+ * Paths that start with a / are considered root paths.
+ * The method attribute will run a matching method from the WApplication instance that returns a WWidget.
+ * The class attribute will instaniate a class that extends WWidget.
+ * setLayoutItem is the method that causes all of the automatic stuff to happen. It should have a widget in that location before setting it, as that widget will be put back in place whenever some other widget can't be found or an error happens.
+ * This class should always be loaded as soon as possible if it's going to be managing your internal paths, so that anything else that happens to be listening to path changes will be see the system AFTER this has swapped out widgets.     
  * @author jeremiah
  *
  */
@@ -31,8 +38,10 @@ public class WXmlNavigationBar extends WNavigationBar
     private Signal enableMenuSignal = new Signal();
     private Signal disableMenuSignal = new Signal();
     private Signal2<String, Boolean> permissionChangedSignal = new Signal2<>();
-    private HashMap<String, Class> pathClassMap = new HashMap<>();
+    @SuppressWarnings("rawtypes")
+	private HashMap<String, Class> pathClassMap = new HashMap<>();
     private HashMap<String, WWidget> pathInstanceMap = new HashMap<>();
+    private HashMap<String, Method> pathMethodMap = new HashMap<>();
     private WLayoutItem layoutItem = null;
     private WLayoutItem originalLayoutItem;
     private HashMap<String, Boolean> permissionsHashMap = new HashMap<>();
@@ -46,6 +55,8 @@ public class WXmlNavigationBar extends WNavigationBar
     public WXmlNavigationBar(Element menuRootElement)
     {
         super();
+        //do this as soon as possible or all hell can break loose.  items visible checks will return true even though they are about to be swapped out for example.
+        WApplication.getInstance().internalPathChanged().addListener(this, this::internalPathChanged);
         NodeList menuList = menuRootElement.getChildNodes();
         for(int index = 0 ; index < menuList.getLength(); index++)
         {
@@ -118,7 +129,17 @@ public class WXmlNavigationBar extends WNavigationBar
                     subMenuItem.setInternalPathEnabled(true);               
                     if(menuElement.hasAttribute("path"))
                     {
-                        subMenuItem.setPathComponent(menuElement.getAttribute("path"));    
+                    	String path = menuElement.getAttribute("path");
+                    	if(path.startsWith("/"))
+                    	{
+                    		subMenuItem.setInternalPathEnabled(false);               
+                    		subMenuItem.setLink(new WLink(WLink.Type.InternalPath, path));
+                    	}
+                    	else
+                    	{
+                    		subMenuItem.setPathComponent(path);
+                    	}
+                        
                     }
                     else
                     {
@@ -126,19 +147,31 @@ public class WXmlNavigationBar extends WNavigationBar
                     }
                     pathMenuItemHashMap.put(getPath(subMenuItem), subMenuItem);
                     loadPathClass(getPath(subMenuItem),menuElement);
+                    loadPathMethod(getPath(subMenuItem),menuElement);
                     initPermissions(subMenuItem,menuElement);
                 }
                 else //otherwise we're a submenu with our own menu items and we need to be created differently
                 {
                     WPopupMenu subMenu = new WPopupMenu();
+                    
                     parentMenu.addMenu(menuElement.getAttribute("name"),subMenu);
+                    //make sure the this submenu is not considered a valid place to go. It should have no internal path, but apparently one get created when you use addMenu 
+                    subMenu.getParentItem().setInternalPathEnabled(false);
                     if(menuElement.hasAttribute("path"))
                     {
-                        subMenu.setInternalPathEnabled(menuElement.getAttribute("path"));    
+                    	String path = menuElement.getAttribute("path");
+                    	if(path.startsWith("/"))
+                    	{
+                    		subMenu.setInternalPathEnabled(path);
+                    	}
+                    	else
+                    	{
+                    		subMenu.setInternalPathEnabled(parentMenu.getInternalBasePath()+path);
+                    	}
                     }
                     else
                     {
-                        subMenu.setInternalPathEnabled(menuElement.getAttribute("name").toLowerCase());
+                        subMenu.setInternalPathEnabled(parentMenu.getInternalBasePath()+menuElement.getAttribute("name").toLowerCase());
                     }
                     
                     //recursively call our children since we have some
@@ -177,21 +210,31 @@ public class WXmlNavigationBar extends WNavigationBar
      */
     private String getPath(WMenuItem menuItem)
     {
-        String path = menuItem.getPathComponent();
-        WMenu parentMenu = menuItem.getParentMenu();
-        while(parentMenu != null)
-        {
-            path = parentMenu.getInternalBasePath()+path;
-            if(parentMenu.getParentItem() != null)
-            {
-                parentMenu = parentMenu.getParentItem().getMenu();
-            }
-            else
-            {
-                parentMenu = null;
-            }
-        }
-        return path;
+        
+        return menuItem.getLink().getInternalPath();
+        //commented out until we know this works
+//        String path = menuItem.getPathComponent();
+//        WMenu parentMenu = menuItem.getParentMenu();
+//        while(parentMenu != null)
+//        {
+//            path = parentMenu.getInternalBasePath()+path;
+//            if(parentMenu.getParentItem() != null)
+//            {
+//            	if (parentMenu.getParentItem().getParentMenu() != null)
+//            	{
+//            		parentMenu = parentMenu.getParentItem().getParentMenu();
+//            	}
+//            	else
+//            	{
+//            		parentMenu = parentMenu.getParentItem().getMenu();
+//            	}
+//            }
+//            else
+//            {
+//                parentMenu = null;
+//            }
+//        }
+//        return path;
         
     }
     
@@ -216,6 +259,30 @@ public class WXmlNavigationBar extends WNavigationBar
         
     }
 
+    /**
+     * load a WAplication Instance Method from the xml so we can use it to get a widget later. 
+     * @param path
+     * @param menuElement
+     */
+    private void loadPathMethod(String path, Element menuElement)
+    {
+        if(menuElement.hasAttribute("method"))
+        {
+            try
+            {
+            	String methodName = menuElement.getAttribute("method");
+            	WApplication wApplication = WApplication.getInstance();
+            	Method method = wApplication.getClass().getDeclaredMethod(methodName);
+                pathMethodMap.put(path, method);
+            }
+            catch (Exception e)
+            {
+                Logger.getGlobal().log(Level.SEVERE, "Couldn't find method for path "+path, e);
+            }
+        }
+        
+    }
+    
 
     /**
      * set a layout item from a gridLayout here, if you want this class to take care of instantiating anything/everything in the menu tree
@@ -224,8 +291,7 @@ public class WXmlNavigationBar extends WNavigationBar
     public void setLayoutItem(WLayoutItem layoutItem)
     {
         if(this.layoutItem == null)
-        {
-            WApplication.getInstance().internalPathChanged().addListener(this, this::internalPathChanged);
+        {            
             this.originalLayoutItem = layoutItem;
         }
         this.layoutItem  = layoutItem;
@@ -237,6 +303,10 @@ public class WXmlNavigationBar extends WNavigationBar
      */
     private void internalPathChanged()
     {
+    	if (this.layoutItem == null)
+    	{
+    		return;
+    	}
         String iternalPath = WApplication.getInstance().getInternalPath();
         WGridLayout gridLayout = (WGridLayout) layoutItem.getParentLayout();        
         
@@ -246,7 +316,11 @@ public class WXmlNavigationBar extends WNavigationBar
         gridLayout.removeItem(layoutItem);
         try
         {
-            if( pathClassMap.containsKey(iternalPath))
+        	if( pathMethodMap.containsKey(iternalPath))
+        	{
+        		gridLayout.addWidget(getInstanceMethodForPath(iternalPath), row, column);
+        	}
+            else if( pathClassMap.containsKey(iternalPath))
             {                
                 gridLayout.addWidget(getInstanceForPath(iternalPath), row, column);                
             }
@@ -265,6 +339,23 @@ public class WXmlNavigationBar extends WNavigationBar
     }
     
     /**
+     * Call the method in our WApplication that returns the widget we are looking for
+     * @param path
+     * @return
+     * @throws Exception
+     */
+    private WWidget getInstanceMethodForPath(String path) throws Exception
+	{
+    	Method method = pathMethodMap.get(path);
+    	boolean accessible = method.isAccessible();
+    	method.setAccessible(true);    	
+    	WWidget widget = (WWidget) method.invoke(WApplication.getInstance());
+    	method.setAccessible(accessible);
+
+    	return widget;
+	}
+
+	/**
      * gets a cached instance of the widget referred to in the menu path. Will also register it for permission changes if needed 
      * @param path
      * @return
@@ -349,6 +440,7 @@ public class WXmlNavigationBar extends WNavigationBar
             permissionChangedSignal.trigger(perm, bool);
         }
     }
+    
     /**
      * This will cause a trigger whenever a permission is changed.
      * The First trigger argument is the name of the permission, the second argument is it's value. 
