@@ -139,7 +139,7 @@ public class WCapoResourceExplorer extends WCompositeWidget
        {
            WModelIndex modelIndex = selectedIndexes.first();
            final Object selectedItem =  modelIndex.getInternalPointer();           
-           getResourceEditor().setModel(selectedItem); //TODO add some sort of event/Signal listener to process this so that we don't have to know so much about models and events           
+           getResourceEditor().setModel((ResourceDescriptor) selectedItem); //TODO add some sort of event/Signal listener to process this so that we don't have to know so much about models and events           
        }
        refresh();
    }

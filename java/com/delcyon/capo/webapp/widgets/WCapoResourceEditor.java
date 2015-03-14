@@ -62,7 +62,7 @@ public class WCapoResourceEditor extends WTabWidget
     private static final String APPLICATION_X_SHELLSCRIPT = "application/x-shellscript";
     private static final String EXTENTION_DELIMITER = ".";
     private static final String EMPTY_STRING = "";
-    private Object model = null;
+    private ResourceDescriptor model = null;
     private WTableView attributeTableView;
     private WContainerWidget detailsContainerWidget;
     private String content = null;
@@ -246,7 +246,7 @@ public class WCapoResourceEditor extends WTabWidget
      * @param model
      *            , can be either a resource descriptor or DOM element.
      */
-    public void setModel(Object model)
+    public void setModel(ResourceDescriptor model)
     {
         this.model = model;
 
@@ -787,11 +787,14 @@ public class WCapoResourceEditor extends WTabWidget
     {
         try
         {
-            ((ResourceDescriptor) WCapoResourceEditor.this.model).getResourceMetaData(null).refresh();
-            ((ResourceDescriptor) WCapoResourceEditor.this.model).advanceState(State.CLOSED, null);
-            ((ResourceDescriptor) WCapoResourceEditor.this.model).reset(State.OPEN);
-            ((ResourceDescriptorItemModel) getAttributeTableView().getModel()).reload();
-            WCapoResourceEditor.this.setModel(WCapoResourceEditor.this.model);
+        	if(model != null)
+        	{
+        		model.getResourceMetaData(null).refresh();
+        		model.advanceState(State.CLOSED, null);
+        		model.reset(State.OPEN);
+        		((ResourceDescriptorItemModel) getAttributeTableView().getModel()).reload();
+        		setModel(model);
+        	}
         }
         catch (Exception e)
         {
