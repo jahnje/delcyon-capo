@@ -350,6 +350,7 @@ public class WXmlNavigationBar extends WNavigationBar
             e.printStackTrace();            
         }
         this.layoutItem  = gridLayout.getItemAt(index);
+        this.layoutItem.getWidget().refresh();
         
     }
     
