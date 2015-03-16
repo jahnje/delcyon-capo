@@ -26,10 +26,12 @@ import eu.webtoolkit.jwt.WWidget;
 /**
  * Uses a simple xml layout of menu->menu->menu(name= path= perm= class= method=) to make nested menu that alter the systems internal path. 
  * Paths that start with a / are considered root paths.
+ * permmissions can be a comma seperated list of strings.
  * The method attribute will run a matching method from the WApplication instance that returns a WWidget.
  * The class attribute will instaniate a class that extends WWidget.
  * setLayoutItem is the method that causes all of the automatic stuff to happen. It should have a widget in that location before setting it, as that widget will be put back in place whenever some other widget can't be found or an error happens.
- * This class should always be loaded as soon as possible if it's going to be managing your internal paths, so that anything else that happens to be listening to path changes will be see the system AFTER this has swapped out widgets.     
+ * This class should always be loaded as soon as possible if it's going to be managing your internal paths, so that anything else that happens to be listening to path changes will be see the system AFTER this has swapped out widgets.
+ * This call will throw an internalPathInvalid signal if a path does not have enough permissions to be shown.     
  * @author jeremiah
  *
  */
@@ -190,15 +192,18 @@ public class WXmlNavigationBar extends WNavigationBar
     {
         if(menuElement.hasAttribute("perm"))
         {
-            String perm = menuElement.getAttribute("perm");
+            String[] perms = menuElement.getAttribute("perm").split(",");
             subMenuItem.setDisabled(true);
-            List<String> pathList =  permissionPathHashMap.get(perm);
-            if(pathList == null)
+            for (String perm : perms)
             {
-                pathList = new ArrayList<>();
-                permissionPathHashMap.put(perm, pathList);
-            }
-            pathList.add(getPath(subMenuItem));
+                List<String> pathList =  permissionPathHashMap.get(perm);
+                if(pathList == null)
+                {
+                    pathList = new ArrayList<>();
+                    permissionPathHashMap.put(perm, pathList);
+                }
+                pathList.add(getPath(subMenuItem));
+            }                        
         }
     }
 
@@ -298,6 +303,8 @@ public class WXmlNavigationBar extends WNavigationBar
         
     }
     
+    
+    
     /**
      * Process internal path changes. This basically will add any widget to the grid layout at the same position every time based on the internal path changes
      */
@@ -308,6 +315,14 @@ public class WXmlNavigationBar extends WNavigationBar
     		return;
     	}
         String iternalPath = WApplication.getInstance().getInternalPath();
+        
+        //check permissions
+        if(hasPermission(getPermissionsForPath(iternalPath)) == false)
+        {
+            WApplication.getInstance().setInternalPathValid(false);
+            return;
+        }
+        
         WGridLayout gridLayout = (WGridLayout) layoutItem.getParentLayout();        
         
         int index = gridLayout.indexOf(layoutItem);
@@ -461,6 +476,44 @@ public class WXmlNavigationBar extends WNavigationBar
         return permissionsHashMap.getOrDefault(perm, false);        
     }
     
+    /**
+     * check a list of permissions to see if all are met. 
+     * @param permissions
+     * @return (true on empty list, false if any single permission is not met, true if all permissions are met)
+     */
+    public boolean hasPermission(List<String> permissions)
+    {
+        boolean hasPermission = true;
+        for (String perm : permissions)
+        {
+            if(hasPermission(perm) == false)
+            {
+                hasPermission = false;
+                break;
+            }
+        }
+        
+        return hasPermission;
+    }
+    
+    /** given a path, this will return a list of required permissions for that path
+     * 
+     * @param path
+     * @return
+     */
+    private List<String> getPermissionsForPath(String path)
+    {
+       ArrayList<String> permissionsList = new ArrayList<>();
+       permissionPathHashMap.forEach((perm,pathlist)->{
+           pathlist.forEach((path_)->{
+               if(path_.equals(path))
+               {
+                   permissionsList.add(perm);
+               }
+           });
+       });
+       return permissionsList;
+    }
     
     @Override
     protected void finalize() throws Throwable
