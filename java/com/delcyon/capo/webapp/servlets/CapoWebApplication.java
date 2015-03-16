@@ -34,6 +34,7 @@ import eu.webtoolkit.jwt.WEnvironment;
 import eu.webtoolkit.jwt.WGridLayout;
 import eu.webtoolkit.jwt.WLength;
 import eu.webtoolkit.jwt.WLink;
+import eu.webtoolkit.jwt.WLink.Type;
 import eu.webtoolkit.jwt.WMessageBox;
 
 public class CapoWebApplication extends WApplication {
@@ -158,7 +159,7 @@ public class CapoWebApplication extends WApplication {
 	        navigation = new WXmlNavigationBar(menuDocument.getDocumentElement());
 	        navigation.addWidget(getSearchControl(),AlignmentFlag.AlignRight);
 	        navigation.setResponsive(false);
-	        navigation.setTitle("Capo",new WLink("/"));
+	        navigation.setTitle("Capo",new WLink(Type.InternalPath,"/"));
 	        navigation.setPopup(true);
 	        navigation.setHeight(new WLength(5));
 	        navigation.setMargin(0);
