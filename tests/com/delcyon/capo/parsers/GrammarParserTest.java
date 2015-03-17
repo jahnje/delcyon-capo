@@ -35,13 +35,26 @@ import com.delcyon.capo.xml.XPath;
 public class GrammarParserTest
 {
 
+    
+    @Test
+    public void syslogTest() throws Exception
+    {
+        GrammarParser grammarParser = new GrammarParser();        
+        //grammarParser.loadNotationGrammer(new FileInputStream("test-data/parser_test_data/SIMPLE.notation"));       
+//        grammarParser.loadGrammer(new FileInputStream("test-data/parser_test_data/logfile.grammer"));
+//        Document document = grammarParser.parse(new FileInputStream("/var/log/messages"));
+//        XPath.dumpNode(document, System.out);
+    }
+    
+    
     @Test
     public void test() throws Exception
     {
         GrammarParser grammarParser = new GrammarParser();
         grammarParser.loadNotationGrammer(new FileInputStream("test-data/parser_test_data/SIMPLE.notation"));       
         grammarParser.loadGrammer(new FileInputStream("test-data/parser_test_data/SIMPLE.grammer"));
-        grammarParser.parse(new FileInputStream("test-data/parser_test_data/SIMPLE.input"));
+        Document document = grammarParser.parse(new FileInputStream("test-data/parser_test_data/SIMPLE.input"));
+        XPath.dumpNode(document, System.out);
     }
 
     @Test
