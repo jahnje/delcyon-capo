@@ -1,12 +1,27 @@
 package com.delcyon.capo.webapp.widgets;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.RandomAccessFile;
+import java.util.ArrayList;
+
+import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerConfigurationException;
+import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamResult;
+
+import org.w3c.dom.Document;
+
+import com.delcyon.capo.parsers.GrammarParser;
 
 import eu.webtoolkit.jwt.TextFormat;
 
 public class WTailFileWidget extends WConsoleWidget
 {
+    private ArrayList<Object[]> grammerStyles = new ArrayList<>();
+    
 	private TailingThread tailingThread;
 
 
@@ -78,4 +93,39 @@ public class WTailFileWidget extends WConsoleWidget
 		}
 		
 	}
+
+	@Override
+	public void append(String message, TextFormat textFormat)
+	{
+	    for (Object[] objects : grammerStyles)
+        {
+	        ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+	        GrammarParser grammarParser = (GrammarParser) objects[0];
+	        Transformer transformer = (Transformer) objects[1];
+	        try
+            {
+                transformer.transform(new DOMSource(grammarParser.parse(new ByteArrayInputStream(message.getBytes()))), new StreamResult(byteArrayOutputStream));
+                if(byteArrayOutputStream.size() > 0)
+                {                    
+                    super.append(new String(byteArrayOutputStream.toByteArray()), TextFormat.XHTMLText);
+                    return;
+                }
+            }            
+            catch (Exception e)
+            {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            }    
+        }
+	    
+	    super.append(message, textFormat);
+	}
+	
+
+    public void addGrammerStyle(GrammarParser grammarParser, Document xslDocument) throws TransformerConfigurationException
+    {   
+        
+        TransformerFactory tFactory = TransformerFactory.newInstance();                
+        grammerStyles.add(new Object[]{grammarParser,tFactory.newTransformer(new DOMSource(xslDocument))});
+    }
 }
