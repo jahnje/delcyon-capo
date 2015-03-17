@@ -67,7 +67,7 @@ public class ParseRule
 
 	private void printPathMessage(Node element, String message)
 	{
-	    if(Logger.global.isLoggable(Level.FINER))
+	    if(Logger.getGlobal().isLoggable(Level.FINER))
 	    {
 	        StringBuilder stringBuilder = new StringBuilder();
 	        while(element != null)
@@ -140,7 +140,7 @@ public class ParseRule
 				//====================================REGEX CODE============================================
 				String parsedRegex = null;
 				String parsedReplacement = null;
-				
+				String splitRegex = null;
 				//check to see if we're dealing with a regex
 				if(term.startsWith("~") && term.matches("~.*/.+(/.*)?"))
 				{
@@ -154,6 +154,12 @@ public class ParseRule
 				        lastSlash = originalTerm.length();
 				    }
 				    term = originalTerm.substring(1,firstSlash);
+				    //check for some kind of delimiter char in the term, because we might be dealing with a split regex where we make two temrs from one regex 
+				    if(term.matches("[a-zA-Z0-9]+[^a-zA-Z0-9]+[a-zA-Z0-9]{1}.*"))
+				    {
+				        //pull out the delimiter, well use this to split the terms and the result later
+				        splitRegex = term.replaceAll("[a-zA-Z0-9]+([^a-zA-Z0-9]+)[a-zA-Z0-9]{1}.*","$1");
+				    }
 				    parsedRegex = originalTerm.substring(firstSlash+1,lastSlash);				    
 				    if ( firstSlash != lastSlash)
 				    {
@@ -383,12 +389,32 @@ public class ParseRule
 							//overlap with Literals should be ignored as a literal can be a SYMBOL_NAME							
 							else
 							{
-							    //if we already have this attribute, then just append the values together
-							    if(peerParseNode.hasAttribute(term))
+							    //check to see if this is a compound regex 
+							    if(splitRegex != null)
 							    {
-							        value = peerParseNode.getAttribute(term) +" "+ value;
+							        String[] terms = term.split(splitRegex);
+							        String[] values = value.split(splitRegex);
+							        for(int currentSplitTerm = 0; currentSplitTerm < terms.length && currentSplitTerm < values.length; currentSplitTerm++)
+							        {
+							            
+							          //if we already have this attribute, then just append the values together
+	                                    if(peerParseNode.hasAttribute(terms[currentSplitTerm]))
+	                                    {
+	                                        values[currentSplitTerm] = peerParseNode.getAttribute(terms[currentSplitTerm]) +" "+ values[currentSplitTerm];
+	                                    }
+	                                    peerParseNode.setAttribute(terms[currentSplitTerm], values[currentSplitTerm]);
+							        }
 							    }
-								peerParseNode.setAttribute(term, value);
+							    else
+							    {
+							        //if we already have this attribute, then just append the values together
+
+							        if(peerParseNode.hasAttribute(term))
+							        {
+							            value = peerParseNode.getAttribute(term) +" "+ value;
+							        }
+							        peerParseNode.setAttribute(term, value);
+							    }
 							}
 							break;
 						case DELIMITER:

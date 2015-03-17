@@ -1,0 +1,2 @@
+ENTIRIES = entry+
+entry	=  date date date hostname ~process,pid/([^\\[\\]]+)(\\[(\\d+)\\])?:/$1,$3 message* EOL 
