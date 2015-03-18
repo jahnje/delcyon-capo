@@ -1,10 +1,12 @@
 package com.delcyon.capo.webapp.widgets;
 
+import eu.webtoolkit.jwt.Signal1;
 import eu.webtoolkit.jwt.TextFormat;
 import eu.webtoolkit.jwt.WApplication;
 import eu.webtoolkit.jwt.WCompositeWidget;
 import eu.webtoolkit.jwt.WContainerWidget;
 import eu.webtoolkit.jwt.WContainerWidget.Overflow;
+import eu.webtoolkit.jwt.WMouseEvent;
 import eu.webtoolkit.jwt.WText;
 
 /**
@@ -17,20 +19,47 @@ import eu.webtoolkit.jwt.WText;
 public class WConsoleWidget extends WCompositeWidget
 {
     //wrapped implementation widget
-    private WContainerWidget implemetationWidget = new WContainerWidget();
+    private WBoundedContainerWidget implemetationWidget = new WBoundedContainerWidget();
+    private WContainerWidget textContainerWidget = new WContainerWidget();
     //we should always have a copy of the app that created us, as it's the one that we will always want to update
     private  WApplication application =  WApplication.getInstance();
     private int bufferSize = 100;
     private boolean autoscroll = true;
     
+    
+    private WText empty = new WText();
+    
     public WConsoleWidget()
     {
+       
        setImplementation(implemetationWidget);
-       setStyleClass("console-msgs");
-       setInline(false);
-       // Display scroll bars if contents overflows
-       implemetationWidget.setOverflow(Overflow.OverflowAuto);
+       textContainerWidget.addStyleClass("console-msgs");
+       textContainerWidget.setInline(false);
+       
+       implemetationWidget.addLayoutWidget(empty,0);
+       implemetationWidget.addLayoutWidget(textContainerWidget,1);       
+       
+       empty.addStyleClass("empty-console-msgs");
+       textContainerWidget.setOverflow(Overflow.OverflowAuto);
+       
     }
+    
+    public void setTitle(String title)
+    {
+        implemetationWidget.setTitle(title);
+    }
+    
+    public void addToolButton(String buttonName, String permission, Signal1.Listener<WMouseEvent> clickListener) throws Exception
+    {
+        implemetationWidget.addToolButton(buttonName, permission, clickListener);
+        
+    }
+    
+    public void setEmptyText(String emptyText)
+    {
+        empty.setText(emptyText);
+    }
+    
     
     /**
      * Main method. Adds a pure pile of data to the widget surrounded by a div tag 
@@ -43,6 +72,14 @@ public class WConsoleWidget extends WCompositeWidget
         
         WApplication.UpdateLock lock = application.getUpdateLock();;
 
+        if(textContainerWidget.getCount() == 0)
+        {
+            empty.setHidden(false);
+        }
+        else if(empty.isHidden() == false)
+        {
+            empty.setHidden(true);
+        }
         /*
          * Format and append the line to the conversation.
          *         
@@ -50,14 +87,14 @@ public class WConsoleWidget extends WCompositeWidget
         WText w = new WText(message,textFormat);
         w.setInline(isInline());
         w.setStyleClass("console-msg-"+textFormat);
-        implemetationWidget.addWidget(w);
+        textContainerWidget.addWidget(w);
         
         /*
-         * Leave not more than 100 messages in the back-log
+         * Leave not more than getBufferSize messages in the back-log
          */
-        if (implemetationWidget.getCount() > getBufferSize())
+        if (textContainerWidget.getCount() > getBufferSize())
         {
-            implemetationWidget.getChildren().get(0).remove();            
+            textContainerWidget.getChildren().get(0).remove();            
         }
         
 
@@ -66,9 +103,9 @@ public class WConsoleWidget extends WCompositeWidget
          */
         if(isAutoscroll() == true)
         {
-        	if(implemetationWidget.isVisible())
+        	if(textContainerWidget.isVisible())
         	{
-        		application.doJavaScript("if ("+implemetationWidget.getJsRef()+" != null) {"+implemetationWidget.getJsRef() + ".scrollTop += "+ implemetationWidget.getJsRef() + ".scrollHeight;}");
+        		application.doJavaScript("if ("+textContainerWidget.getJsRef()+" != null) {"+textContainerWidget.getJsRef() + ".scrollTop += "+ textContainerWidget.getJsRef() + ".scrollHeight;}");
         	}
         }
         

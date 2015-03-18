@@ -1,5 +1,6 @@
 package com.delcyon.capo.webapp.widgets;
 
+import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -393,6 +394,25 @@ public class WXmlNavigationBar extends WNavigationBar
         return widget;
     }
 
+    
+    public static WXmlNavigationBar getNavBar() throws Exception
+    {
+        WApplication application = WApplication.getInstance();
+        if(application != null)
+        {
+            Field[] fields = application.getClass().getDeclaredFields();
+            for (Field field : fields)
+            {
+                if(field.getType().isAssignableFrom(WXmlNavigationBar.class))
+                {
+                    field.setAccessible(true);
+                    return (WXmlNavigationBar) field.get(application);
+                }
+            }
+        }
+        return null;
+    }
+    
 
 /**
  * This will completely overwrite all existing permissions by setting them to false

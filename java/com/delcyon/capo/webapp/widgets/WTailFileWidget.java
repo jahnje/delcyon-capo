@@ -5,6 +5,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.RandomAccessFile;
 import java.util.ArrayList;
+import java.util.regex.Pattern;
 
 import javax.xml.transform.Transformer;
 import javax.xml.transform.TransformerConfigurationException;
@@ -21,15 +22,14 @@ import eu.webtoolkit.jwt.TextFormat;
 public class WTailFileWidget extends WConsoleWidget
 {
     private ArrayList<Object[]> grammerStyles = new ArrayList<>();
-    
+    private ArrayList<PatternHolder> testPatternList = new ArrayList<>();
 	private TailingThread tailingThread;
 
 
 	public WTailFileWidget(String filename)
 	{
 		super();		
-		tailingThread = new TailingThread(new File(filename));
-		tailingThread.start();
+		tailingThread = new TailingThread(new File(filename));		
 	}
 	
 	public void stop()
@@ -65,8 +65,10 @@ public class WTailFileWidget extends WConsoleWidget
 		public void run()
 		{
 			try {
+			    
+			    
 		        while (_running) {
-		            Thread.sleep(1000);
+		            
 		            long len = _file.length();
 		            if (len < _filePointer) {
 		                // Log must have been jibbled or deleted.
@@ -78,16 +80,18 @@ public class WTailFileWidget extends WConsoleWidget
 		                RandomAccessFile raf = new RandomAccessFile(_file, "r");
 		                raf.seek(_filePointer);
 		                String line = null;
-		                while ((line = raf.readLine()) != null) {
-		                	append(line,TextFormat.PlainText);
+		                while ((line = raf.readLine()) != null) {		                    
+		                	append(line,TextFormat.PlainText);		                	
 		                }
 		                _filePointer = raf.getFilePointer();
 		                raf.close();
-		            }
+		            }		            
+		            Thread.sleep(1000);
 		        }
 		    }
 		    catch (Exception e) {
-		    	append("Fatal error reading log file, log tailing has stopped.",TextFormat.PlainText);
+		        e.printStackTrace();
+		    	append("Fatal error reading log file, log tailing has stopped."+e.getMessage(),TextFormat.PlainText);
 		    }
 			
 		}
@@ -97,6 +101,17 @@ public class WTailFileWidget extends WConsoleWidget
 	@Override
 	public void append(String message, TextFormat textFormat)
 	{
+	   
+	    //must match all tests
+	    for (PatternHolder patternHolder : testPatternList)
+        {
+            if(patternHolder.pattern.matcher(message).matches() != patternHolder.passingMatchRule)
+            {
+                return; 
+            }
+        }
+	    
+	   
 	    for (Object[] objects : grammerStyles)
         {
 	        ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
@@ -121,6 +136,15 @@ public class WTailFileWidget extends WConsoleWidget
 	    super.append(message, textFormat);
 	}
 	
+	/**
+	 * This takes a regex and will only append messages that match the regex
+	 * @param regex
+	 */
+	public void addFilter(String regex)
+	{
+	    addFilter(regex, true);
+	}
+	
 
     public void addGrammerStyle(GrammarParser grammarParser, Document xslDocument) throws TransformerConfigurationException
     {   
@@ -128,4 +152,37 @@ public class WTailFileWidget extends WConsoleWidget
         TransformerFactory tFactory = TransformerFactory.newInstance();                
         grammerStyles.add(new Object[]{grammarParser,tFactory.newTransformer(new DOMSource(xslDocument))});
     }
+
+    /**
+     * expected match can be used to invert the match as opposed to writing an complicated inverse regex
+     * 
+     * @param string
+     * @param expected
+     */
+    public void addFilter(String regex, boolean match)
+    {
+        Pattern pattern = Pattern.compile(regex);        
+        testPatternList.add(new PatternHolder(match, pattern));
+        
+    }
+    
+    private class PatternHolder
+    {
+        boolean passingMatchRule = true;
+        Pattern pattern = null;
+        /**
+         * @param passingMatchRule
+         * @param pattern
+         */
+        private PatternHolder(boolean passingMatchRule, Pattern pattern)
+        {
+            super();
+            this.passingMatchRule = passingMatchRule;
+            this.pattern = pattern;
+        }
+        
+        
+    }
+
+    
 }
