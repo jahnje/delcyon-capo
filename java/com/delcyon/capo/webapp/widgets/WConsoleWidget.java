@@ -1,5 +1,6 @@
 package com.delcyon.capo.webapp.widgets;
 
+import eu.webtoolkit.jwt.Orientation;
 import eu.webtoolkit.jwt.Signal1;
 import eu.webtoolkit.jwt.TextFormat;
 import eu.webtoolkit.jwt.WApplication;
@@ -39,9 +40,15 @@ public class WConsoleWidget extends WCompositeWidget
        implemetationWidget.addLayoutWidget(empty,0);
        implemetationWidget.addLayoutWidget(textContainerWidget,1);       
        
-       empty.addStyleClass("empty-console-msgs");
-       textContainerWidget.setOverflow(Overflow.OverflowAuto);
+       empty.addStyleClass("empty-console-msgs");       
+       textContainerWidget.setOverflow(Overflow.OverflowAuto,Orientation.Vertical);
+       textContainerWidget.setOverflow(Overflow.OverflowVisible,Orientation.Horizontal);
        
+    }
+    
+    public void setTextOverflow(Overflow overflow,Orientation orientation, Orientation...orientations)
+    {
+    	textContainerWidget.setOverflow(overflow,orientation,orientations);
     }
     
     public void setTitle(String title)
