@@ -7,6 +7,8 @@ import eu.webtoolkit.jwt.Signal1;
 import eu.webtoolkit.jwt.WBoxLayout;
 import eu.webtoolkit.jwt.WBoxLayout.Direction;
 import eu.webtoolkit.jwt.WContainerWidget;
+import eu.webtoolkit.jwt.WLayout;
+import eu.webtoolkit.jwt.WLength;
 import eu.webtoolkit.jwt.WMouseEvent;
 import eu.webtoolkit.jwt.WPushButton;
 import eu.webtoolkit.jwt.WScrollArea;
@@ -14,6 +16,12 @@ import eu.webtoolkit.jwt.WText;
 import eu.webtoolkit.jwt.WToolBar;
 import eu.webtoolkit.jwt.WWidget;
 
+/**
+ * This is a compound class that takes care of creating a bounded and titled container with a possible toolbar, upon which one or more components can be added. 
+ * You should NOT change the layout of this class 
+ * @author jeremiah
+ *
+ */
 public class WBoundedContainerWidget extends WContainerWidget
 {
 
@@ -23,6 +31,8 @@ public class WBoundedContainerWidget extends WContainerWidget
     private WBoxLayout layout = new WBoxLayout(Direction.TopToBottom);
     private WToolBar toolBar = new WToolBar();
     private WContainerWidget internalContainer = new WContainerWidget();
+    private WLength scrollWidth;
+    private WLength scrollHeight;
     
     public WBoundedContainerWidget()
     {
@@ -33,12 +43,12 @@ public class WBoundedContainerWidget extends WContainerWidget
     public WBoundedContainerWidget(WContainerWidget parent)
     {
         super(parent);
-        setLayout(layout);
+        super.setLayout(layout);
         setInline(false);
         
-        internalContainer.setLayout(internalLayout);
-        internalContainer.setInline(false);
-                
+        internalContainer.setLayout(internalLayout);        
+        internalContainer.setInline(false);        
+        
         layout.setSpacing(-1);
         layout.addWidget(toolBar,0);
         layout.addWidget(title,0);
@@ -50,6 +60,13 @@ public class WBoundedContainerWidget extends WContainerWidget
         title.setInline(false);
         title.addStyleClass("h2");
         
+    }
+
+    
+    @Override
+    public void setLayout(WLayout layout)
+    {
+        throw new UnsupportedOperationException("can't set layout on WBoundedContainer");
     }
     
     @Override
@@ -70,6 +87,69 @@ public class WBoundedContainerWidget extends WContainerWidget
     }
 
     /**
+     * Set contents margins (in pixels).
+     * <p>
+     * The default contents margins are 9 pixels in all directions. 
+     * </p>
+     * 
+     * @see WLayout#setContentsMargins(int left, int top, int right, int bottom)
+     */
+    public void setContentsMargins(int left, int top, int right, int bottom) 
+    {
+        internalLayout.setContentsMargins(left, top, right, bottom);
+    }
+    
+    /**
+     * Sets the height of the scroll area
+     * @param wLength
+     */
+    public void setScrollHeight(WLength wLength)
+    {
+        this.scrollHeight = wLength;
+        
+        for(int currentChild = 0; currentChild < internalLayout.getCount(); currentChild++)
+        {
+            WWidget widget = internalLayout.getItemAt(currentChild).getWidget();
+            if(widget != null && widget instanceof WScrollArea)
+            {
+                widget.setHeight(scrollHeight);
+                widget.addStyleClass("scroll-post-height");
+            }
+            else if(widget != null && widget instanceof WContainerWidget)
+            {
+                widget.setHeight(scrollHeight);
+                widget.addStyleClass("scroll-post-height");
+            }
+                
+        }
+    }
+    
+    /**
+     * sets the width of the scroll area
+     * @param wLength
+     */
+    public void setScrollWidth(WLength wLength)
+    {
+        this.scrollWidth = wLength;
+        
+        for(int currentChild = 0; currentChild < internalLayout.getCount(); currentChild++)
+        {
+            WWidget widget = internalLayout.getItemAt(currentChild).getWidget();
+            if(widget != null && widget instanceof WScrollArea)
+            {
+                widget.setWidth(scrollWidth);
+                widget.addStyleClass("scroll-post-width");
+            }
+            else if(widget != null && widget instanceof WContainerWidget)
+            {
+                widget.setWidth(scrollWidth);
+                widget.addStyleClass("scroll-post-width");
+            }
+                
+        }
+    }
+    
+    /**
      * Adds a widget to the layout.
      * <p>
      * Calls {@link #addWidget(WWidget widget, int stretch, EnumSet alignment)
@@ -78,14 +158,38 @@ public class WBoundedContainerWidget extends WContainerWidget
     public final void addLayoutWidget(WWidget widget, int stretch) {
         if(stretch > 0)
         {
+            //in a nutshell, for things to work correctly, we have to automatically add a scroll area or set the overflow on a widget whenever it get added.
+            //as well as any sizes that might have been set. 
             if(widget instanceof WContainerWidget)
             {
                 ((WContainerWidget) widget).setOverflow(Overflow.OverflowAuto);
+                widget.addStyleClass("scrollarea-overflow");
+                if(scrollWidth != null)
+                {
+                    widget.setWidth(scrollWidth);
+                    widget.addStyleClass("scroll-width");
+                }
+                if(scrollHeight != null)
+                {
+                    widget.setHeight(scrollHeight);
+                    widget.addStyleClass("scroll-height");
+                }
             }
             else
             {
                 WScrollArea scrollArea = new WScrollArea();
                 scrollArea.setWidget(widget);
+                scrollArea.addStyleClass("scrollarea");
+                if(scrollWidth != null)
+                {
+                    scrollArea.setWidth(scrollWidth);
+                    scrollArea.addStyleClass("scroll-width");
+                }
+                if(scrollHeight != null)
+                {
+                    scrollArea.setHeight(scrollHeight);
+                    scrollArea.addStyleClass("scroll-height");
+                }
                 widget = scrollArea;
             }
             
@@ -93,11 +197,22 @@ public class WBoundedContainerWidget extends WContainerWidget
         internalLayout.addWidget(widget, stretch);
     }
     
+    /**
+     * This will set the title bar at the top of this widget
+     * @param title
+     */
     public void setTitle(String title)
     {
         this.title.setText(title);
     }
     
+    /**
+     * This will add a button to the toolbar that requires tha associated permission, and will call the associated click listener on clicked()
+     * @param buttonName
+     * @param permission
+     * @param clickListener
+     * @throws Exception
+     */
     public void addToolButton(String buttonName, String permission, Signal1.Listener<WMouseEvent> clickListener) throws Exception
     {
         WPushButton pushButton = new WPushButton(buttonName);
@@ -132,5 +247,9 @@ public class WBoundedContainerWidget extends WContainerWidget
         }
         toolBar.addButton(pushButton);
     }
+
+    
+
+    
     
 }
