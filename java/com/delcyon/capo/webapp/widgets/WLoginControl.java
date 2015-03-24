@@ -40,6 +40,7 @@ public class WLoginControl extends WCompositeWidget
     private Signal2<String, String> loginSignal = new Signal2<>();
     private Signal logoutSignal = new Signal();
     private LoginState loginSate = null;
+    private boolean wasLoggedIn = false; 
     
     /**
      * 
@@ -54,10 +55,12 @@ public class WLoginControl extends WCompositeWidget
         WLabel userNameLabel = new WLabel("Username");
         userNameLabel.addStyleClass("sr-only");
         userNameFieldTextEdit = new WLineEdit();
+        userNameFieldTextEdit.setAutoComplete(true);
         userNameFieldTextEdit.setValidator(WValidatorFactory.validator(this::validate));
         userNameFieldTextEdit.setWidth(new WLength(100,Unit.Pixel));
         userNameFieldTextEdit.setPlaceholderText(userNameLabel.getText());
         userNameLabel.setBuddy(userNameFieldTextEdit);
+        
         
         implementationWidget.addWidget(userNameLabel);
         implementationWidget.addWidget(userNameFieldTextEdit);
@@ -66,6 +69,7 @@ public class WLoginControl extends WCompositeWidget
         passwordLabel.addStyleClass("sr-only");
         passwordNameFieldTextEdit = new WLineEdit();
         passwordNameFieldTextEdit.setEchoMode(EchoMode.Password);
+        passwordNameFieldTextEdit.setAutoComplete(true);  
         passwordNameFieldTextEdit.setValidator(WValidatorFactory.validator(this::validate));
         passwordNameFieldTextEdit.setWidth(new WLength(100,Unit.Pixel));
         passwordNameFieldTextEdit.setPlaceholderText(passwordLabel.getText());
@@ -161,15 +165,24 @@ public class WLoginControl extends WCompositeWidget
 				loginButton.setText("Logout");
                 passwordNameFieldTextEdit.hide();
                 userNameFieldTextEdit.disable();
-                userNameFieldTextEdit.setStyleClass("valid");
+                userNameFieldTextEdit.setStyleClass("valid");                
                 passwordNameFieldTextEdit.setStyleClass("valid");
+                wasLoggedIn = true;
 				break;
 			case LOGGED_OUT:
 				loginButton.setText("Login");
 				passwordNameFieldTextEdit.show();
 				userNameFieldTextEdit.enable();
-				userNameFieldTextEdit.setStyleClass("required");
-				passwordNameFieldTextEdit.setStyleClass("required");
+				if(wasLoggedIn == true)
+				{
+				    userNameFieldTextEdit.setStyleClass("required");
+                    passwordNameFieldTextEdit.setStyleClass("required");
+				}
+				else
+				{
+				    userNameFieldTextEdit.setStyleClass("required Wt-edit-emptyText");
+				    passwordNameFieldTextEdit.setStyleClass("required Wt-edit-emptyText");
+				}
 				break;
 			case INVALID:
 				userNameFieldTextEdit.setStyleClass("invalid");
