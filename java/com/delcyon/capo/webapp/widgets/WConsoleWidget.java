@@ -407,7 +407,8 @@ public class WConsoleWidget extends WCompositeWidget
            for(int group = 0; group < styleClasses.length && group < matcher.groupCount(); group++)
            {
                buffer.append("<span class='"+styleClasses[group]+"'>");
-               buffer.append(matcher.group(group));
+               //matching always starts at group one as opposed to zero, zero is the whole input
+               buffer.append(matcher.group(group+1));
                buffer.append("</span>");
            }
            
