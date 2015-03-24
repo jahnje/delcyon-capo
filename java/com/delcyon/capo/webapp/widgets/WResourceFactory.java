@@ -6,7 +6,7 @@ import eu.webtoolkit.jwt.WResource;
 import eu.webtoolkit.jwt.servlet.WebRequest;
 import eu.webtoolkit.jwt.servlet.WebResponse;
 
-/** this is just a wrapper class around WValidator that less us use java 8 lambdas 
+/** this is just a wrapper class around WResource that less us use java 8 lambdas 
  * 
  * @author jeremiah
  *
