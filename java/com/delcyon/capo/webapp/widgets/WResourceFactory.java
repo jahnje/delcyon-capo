@@ -2,8 +2,6 @@ package com.delcyon.capo.webapp.widgets;
 
 import java.io.IOException;
 
-import com.delcyon.capo.webapp.widgets.WValidatorFactory.WValidatorInterface;
-
 import eu.webtoolkit.jwt.WResource;
 import eu.webtoolkit.jwt.servlet.WebRequest;
 import eu.webtoolkit.jwt.servlet.WebResponse;
