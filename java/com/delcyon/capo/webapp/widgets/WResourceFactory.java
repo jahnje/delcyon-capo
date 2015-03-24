@@ -29,10 +29,10 @@ public abstract class WResourceFactory extends WResource
 	protected abstract void handleRequestFunction(WebRequest request, WebResponse response);
 	
 	/**
-	 * factory method to to use a lambda to make a custom WValidator
+	 * factory method to to use a lambda to make a custom WResource
 	 * {@link WResourceFactory#handleRequestFunction(WebRequest request, WebResponse response) handleRequest} method.
-	 * @param WebRequest request,
-	 * @param WebResponse response	 * 
+	 * @param WebRequest request
+	 * @param WebResponse response	  
 	 */
 	public static WResource resource(WResourceInterface resourceInterface)
 	{
