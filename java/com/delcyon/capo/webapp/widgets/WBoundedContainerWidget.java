@@ -100,6 +100,14 @@ public class WBoundedContainerWidget extends WContainerWidget
     }
     
     /**
+     * Specifies how child widgets must be aligned within the container.    
+     */
+    public final void setInternalContentAlignment(AlignmentFlag alignmentFlag,AlignmentFlag... alignmentFlags)
+    {
+        internalContainer.setContentAlignment(alignmentFlag, alignmentFlags);
+    }
+    
+    /**
      * Sets the height of the scroll area
      * @param wLength
      */
