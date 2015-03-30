@@ -80,6 +80,7 @@ public class WCapoResourceEditor extends WTabWidget
     private Signal modelChanged = new Signal();
     private WDiffWidget diffWidget;
     private String currentVersionName = "";
+	private WXMLEditor xmlEditor;
 
     /**
      * Actually loads the data into the editor. This is the only place tabs and what not should be added since it's the main controller method for this class
@@ -117,8 +118,21 @@ public class WCapoResourceEditor extends WTabWidget
                 this.addTab(getFormattedContentDisplay(), "Content");
             }
 
+            if(contentFormatType == ContentFormatType.XML)
+            {
+            	try
+            	{
+            		getXmlEditor().setXml(content);
+            		this.addTab(getXmlEditor(), "Edit");
+            	}
+            	catch (Exception exception)
+            	{
+            		CapoWebApplication.exception(Level.SEVERE, "Error adding xml editor", exception);
+            	}
+            }
+            
             // don't allow binary content to be edited
-            if (contentFormatType != ContentFormatType.BINARY)
+            else if (contentFormatType != ContentFormatType.BINARY)
             {
                 getAceEditor().setText(content);
                 getAceEditor().setMode(contentType);
@@ -192,6 +206,16 @@ public class WCapoResourceEditor extends WTabWidget
         return aceEditor;
     }
 
+    private WXMLEditor getXmlEditor()
+    {
+    	if(xmlEditor == null)
+    	{
+    		xmlEditor = new WXMLEditor();
+    	}
+    	return xmlEditor;
+    }
+    
+    
     /**
      * this will save the 'content' to the 'model', then call refresh
      */

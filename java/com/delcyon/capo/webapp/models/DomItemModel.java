@@ -3,15 +3,15 @@ package com.delcyon.capo.webapp.models;
 import org.w3c.dom.Attr;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
 
 import com.delcyon.capo.xml.XPath;
+import com.delcyon.capo.xml.cdom.CNodeList;
 
 import eu.webtoolkit.jwt.ItemDataRole;
 import eu.webtoolkit.jwt.Orientation;
 import eu.webtoolkit.jwt.WAbstractItemModel;
-import eu.webtoolkit.jwt.WLink;
 import eu.webtoolkit.jwt.WModelIndex;
-import eu.webtoolkit.jwt.WText;
 /**
  * 
  * @author jeremiah
@@ -33,16 +33,50 @@ public class DomItemModel extends WAbstractItemModel
 	}
 	private Element rootElement;
 	private DomUse domUse = null;
+	private String xpathFilter = "child::*";
+	
 	public DomItemModel(Element rootElement,DomUse domUse)
 	{
 		this.rootElement = rootElement;
 		this.domUse = domUse;
 	}
 	
-	@Override
-	public Object getHeaderData(int section, Orientation orientation, int role)
+	private NodeList getChildNodes(Node parentNode)
 	{
-	    if(ItemDataRole.DisplayRole == role)
+		if(parentNode == null)
+		{
+			return new CNodeList();
+		}
+		else if (xpathFilter != null)
+		{
+			try
+			{
+				return XPath.selectNodes(parentNode, xpathFilter);
+			} catch (Exception e)
+			{				
+				e.printStackTrace();
+			}
+		}
+		
+		return parentNode.getChildNodes();
+		
+	}
+	
+	@Override
+	public Object getHeaderData(int column, Orientation orientation, int role)
+	{
+		if(domUse == DomUse.ATTRIBUTES && ItemDataRole.DisplayRole == role)
+		{
+			if(column == 0)
+			{
+				return "name";
+			}
+			else
+			{
+				return "value";
+			}
+		}
+	    else if(rootElement != null && ItemDataRole.DisplayRole == role)
 	    {
 	        return rootElement.getLocalName();
 	    }
@@ -86,6 +120,7 @@ public class DomItemModel extends WAbstractItemModel
 		{
 			if(parentNode instanceof Element)
 			{
+				//System.out.println("row count = "+((Element)parentNode).getAttributes().getLength());
 				return ((Element)parentNode).getAttributes().getLength();
 			}
 			else
@@ -95,7 +130,8 @@ public class DomItemModel extends WAbstractItemModel
 		}
 		else
 		{
-			return parentNode.getChildNodes().getLength();
+			
+			return getChildNodes(parentNode).getLength();
 		}
 	}
 
@@ -170,10 +206,15 @@ public class DomItemModel extends WAbstractItemModel
 	{
 		if (domUse == DomUse.ATTRIBUTES)
 		{
-			 //if (parent == null)
-			 {
-				 return createIndex(row, column, rootElement.getAttributes().item(row));
-			 }
+			//only put in some data if it's a valid row were looking at. It can become and invalid row if were swapping out models where the previous model has more rows than this one. 
+			if(rootElement != null && row < rootElement.getAttributes().getLength())
+			{
+				return createIndex(row, column, rootElement.getAttributes().item(row));
+			}
+			else
+			{
+				return createIndex(row, column, null);	 
+			}
 		}
 		else
 		{
@@ -187,9 +228,9 @@ public class DomItemModel extends WAbstractItemModel
 				parentElement = rootElement;
 			}
 
-			if (parentElement.getChildNodes().getLength() > 0)
+			if (getChildNodes(parentElement).getLength() > 0)
 			{
-				Node childElement = parentElement.getChildNodes().item(row);
+				Node childElement = getChildNodes(parentElement).item(row);
 				if (column > 0)
 				{
 					Attr attr = (Attr) childElement.getAttributes().item(column);
