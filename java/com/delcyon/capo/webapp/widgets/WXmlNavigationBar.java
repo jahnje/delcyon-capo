@@ -256,6 +256,10 @@ public class WXmlNavigationBar extends WNavigationBar
             try
             {
                 pathClassMap.put(path, Class.forName(menuElement.getAttribute("class")));
+                if(menuElement.hasAttribute("cache") && menuElement.getAttribute("cache").equalsIgnoreCase("false"))
+                {
+                    pathInstanceMap.put(path, null);
+                }
             }
             catch (ClassNotFoundException e)
             {
@@ -388,7 +392,11 @@ public class WXmlNavigationBar extends WNavigationBar
             {                
                 permissionChanged().addListener(widget, ((PermissionListener)widget)::permissionChanged);
             }
-            pathInstanceMap.put(path, widget);
+            //if we already had a null value in here, then we want to keep it that way, as were not supposed to do any caching
+            if(pathInstanceMap.containsKey(path) == false) 
+            {
+                pathInstanceMap.put(path, widget);
+            }
         }
         
         return widget;
