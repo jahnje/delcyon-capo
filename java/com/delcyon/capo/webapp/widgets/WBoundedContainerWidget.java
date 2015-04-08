@@ -48,8 +48,9 @@ public class WBoundedContainerWidget extends WContainerWidget
         
         internalContainer.setLayout(internalLayout);        
         internalContainer.setInline(false);        
+        internalContainer.addStyleClass("bounded_container_ic",false);
         
-        layout.setSpacing(-1);
+        layout.setSpacing(0);
         layout.addWidget(toolBar,0);
         layout.addWidget(title,0);
         layout.addWidget(internalContainer,1);
@@ -256,7 +257,10 @@ public class WBoundedContainerWidget extends WContainerWidget
         toolBar.addButton(pushButton);
     }
 
-    
+    public WContainerWidget getInternalContainer()
+    {
+        return internalContainer;
+    }
 
     
     
