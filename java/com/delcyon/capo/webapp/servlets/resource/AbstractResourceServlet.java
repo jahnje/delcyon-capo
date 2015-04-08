@@ -8,6 +8,7 @@ package com.delcyon.capo.webapp.servlets.resource;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;
@@ -32,12 +33,12 @@ public abstract class AbstractResourceServlet extends HttpServlet
 		if ("false".equals(config.getInitParameter("caching")))
 		{
 			caching = false;
-			CapoApplication.logger.log(Level.FINEST, "Caching of Resources is disabled");
+			Logger.getGlobal().log(Level.FINEST, "Caching of Resources is disabled");
 		}
 		else
 		{
 			caching = true;
-			CapoApplication.logger.log(Level.FINEST, "Caching of Resources is enabled - resources are loaded from classpath");
+			Logger.getGlobal().log(Level.FINEST, "Caching of Resources is enabled - resources are loaded from classpath");
 		}
 
 		initMimeTypes();
@@ -104,13 +105,13 @@ public abstract class AbstractResourceServlet extends HttpServlet
 	protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException
 	{
 		String requestUri = request.getRequestURI();
-		CapoApplication.logger.log(Level.FINEST, "Request URI: " + requestUri);
+		Logger.getGlobal().log(Level.FINEST, "Request URI: " + requestUri);
 		String resourcePath = getResourcePath(requestUri);
-		CapoApplication.logger.log(Level.FINEST, "Resource path: " + resourcePath);
+		Logger.getGlobal().log(Level.FINEST, "Resource path: " + resourcePath);
 		
 		if (resourcePath == null)
 		{
-		    CapoApplication.logger.log(Level.INFO, "resourcePath '" + resourcePath + "' does not map to a valid resource. Sending 'not found' response - ");
+		    Logger.getGlobal().log(Level.INFO, "resourcePath '" + resourcePath + "' does not map to a valid resource. Sending 'not found' response - ");
 			response.sendError(HttpServletResponse.SC_NOT_FOUND);
 			return;
 		}
@@ -120,7 +121,7 @@ public abstract class AbstractResourceServlet extends HttpServlet
 		inputStream = AbstractResourceServlet.class.getResourceAsStream(resourcePath);
 		if (inputStream == null)
 		{
-		    CapoApplication.logger.log(Level.INFO, "Resource not found at '" + resourcePath + "'. Sending 'not found' response - ");
+		    Logger.getGlobal().log(Level.INFO, "Resource not found at '" + resourcePath + "'. Sending 'not found' response - ");
 			response.sendError(HttpServletResponse.SC_NOT_FOUND);
 			return;
 		}
@@ -128,7 +129,7 @@ public abstract class AbstractResourceServlet extends HttpServlet
 		String mimeType = getResourceContentType(resourcePath);
 		if (mimeType == null)
 		{
-		    CapoApplication.logger.log(Level.INFO, "MimeType for '" + resourcePath + "' not found. Sending 'not found' response - ");
+		    Logger.getGlobal().log(Level.INFO, "MimeType for '" + resourcePath + "' not found. Sending 'not found' response - ");
 			response.sendError(HttpServletResponse.SC_NOT_FOUND);
 			return;
 		}
@@ -140,11 +141,11 @@ public abstract class AbstractResourceServlet extends HttpServlet
 		try
 		{
 			streamResource(request, response, mimeType, inputStream);
-			CapoApplication.logger.log(Level.FINEST, "Resource '" + resourcePath + "' streamed succesfully");
+			Logger.getGlobal().log(Level.FINEST, "Resource '" + resourcePath + "' streamed succesfully");
 		}
 		catch (IOException e)
 		{
-		    CapoApplication.logger.log(Level.SEVERE, "Read exception occurred while streaming resource; path: " + resourcePath, e);
+		    Logger.getGlobal().log(Level.SEVERE, "Read exception occurred while streaming resource; path: " + resourcePath, e);
 		}
 
 		if (inputStream != null)

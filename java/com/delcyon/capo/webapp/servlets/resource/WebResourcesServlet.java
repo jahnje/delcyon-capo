@@ -13,6 +13,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;
@@ -47,12 +48,12 @@ public class WebResourcesServlet extends AbstractResourceServlet
 			defaultVersion = "";
 		}
 		
-		CapoApplication.logger.log(Level.FINEST, "Using default version: '" + defaultVersion+"'");
+		Logger.getGlobal().log(Level.FINEST, "Using default version: '" + defaultVersion+"'");
 		
 		servletConfig = config;
 		lastModified = getLastModifiedValue();
 		
-		CapoApplication.logger.log(Level.FINEST, "Using last modified: " + new SimpleDateFormat("MM/dd/yyyy hh:mm a").format(lastModified));
+		Logger.getGlobal().log(Level.FINEST, "Using last modified: " + new SimpleDateFormat("MM/dd/yyyy hh:mm a").format(lastModified));
 	}
 	
 	@Override
