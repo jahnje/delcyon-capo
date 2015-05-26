@@ -360,6 +360,41 @@ public class WXmlNavigationBar extends WNavigationBar
     }
     
     /**
+     * This is used to swap out the content widget, without modifying the internal path. Such as in stepping through a process. 
+     * @param widget to be swapped in
+     * @param refresh whether or not to call refresh on newly placed widget 
+     * @return widget that was swapped out
+     */
+    public WWidget replaceContentWidget(WWidget widget, boolean refresh)
+    {
+        if (this.layoutItem == null)
+        {
+            return null;
+        }
+        WWidget originalWidget = this.layoutItem.getWidget();
+        
+        String iternalPath = WApplication.getInstance().getInternalPath();
+        
+        //check permissions
+        if(hasPermission(getPermissionsForPath(iternalPath)) == false)
+        {
+            WApplication.getInstance().setInternalPathValid(false);
+            return null;
+        }
+        
+        WGridLayout gridLayout = (WGridLayout) layoutItem.getParentLayout();        
+        
+        int index = gridLayout.indexOf(layoutItem);
+        
+        gridLayout.removeItem(layoutItem);
+        gridLayout.addWidget(widget);
+       
+        this.layoutItem  = gridLayout.getItemAt(index);
+        this.layoutItem.getWidget().refresh();
+        return originalWidget;
+    }
+    
+    /**
      * Call the method in our WApplication that returns the widget we are looking for
      * @param path
      * @return
