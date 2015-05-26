@@ -385,9 +385,10 @@ public class WXmlNavigationBar extends WNavigationBar
         WGridLayout gridLayout = (WGridLayout) layoutItem.getParentLayout();        
         
         int index = gridLayout.indexOf(layoutItem);
-        
+        int row = index / gridLayout.getColumnCount();
+        int column = index % gridLayout.getColumnCount();
         gridLayout.removeItem(layoutItem);
-        gridLayout.addWidget(widget);
+        gridLayout.addWidget(widget, row, column);
        
         this.layoutItem  = gridLayout.getItemAt(index);
         this.layoutItem.getWidget().refresh();
