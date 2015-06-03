@@ -65,6 +65,10 @@ public class CDocumentBuilder extends DocumentBuilder
     @Override
     public Document parse(InputStream inputStream) throws SAXException, IOException
     {
+        if(inputStream == null)
+        {
+            throw new NullPointerException("input stream can't be null");
+        }
         return parse(new InputSource(inputStream));
     }
     
