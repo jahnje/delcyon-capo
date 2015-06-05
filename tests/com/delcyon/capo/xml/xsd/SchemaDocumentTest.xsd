@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified"
+    vc:minVersion="1.1" xmlns:vc="http://www.w3.org/2007/XMLSchema-versioning" targetNamespace="test" xmlns="test">
+    
+    <xs:element name="root">
+        <xs:complexType>
+            <xs:all >
+                <xs:element name="A" maxOccurs="2"/>
+                <xs:any maxOccurs="2" minOccurs="2" />                
+            </xs:all>
+        </xs:complexType>    
+    </xs:element>
+    
+    <xs:element name="Other"  type="xs:anySimpleType">
+       
+    </xs:element>
+    
+</xs:schema>

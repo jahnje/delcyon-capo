@@ -18,6 +18,11 @@ package com.delcyon.capo.xml.cdom;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Vector;
+import java.util.function.BiPredicate;
+import java.util.function.Predicate;
 
 import org.w3c.dom.Attr;
 import org.w3c.dom.CDATASection;
@@ -44,9 +49,11 @@ import com.delcyon.capo.xml.XPath;
  * @author jeremiah
  *
  */
-public class CDocument extends CNode implements Document
+public class CDocument extends CNode implements Document, NodeValidationUtilitesFI
 {
-	private static int documentIDCounter = 0;
+	public static final String XML_SCHEMA_NS = "http://www.w3.org/2001/XMLSchema";
+	public static final String XML_NAMESPACE_NS = "http://www.w3.org/2000/xmlns/";
+    private static int documentIDCounter = 0;
 	private static int incrementDocumentID()
 	{
 		documentIDCounter++;
@@ -63,6 +70,8 @@ public class CDocument extends CNode implements Document
     private VariableProcessor variableProcessor;
 	private boolean onlyAllowValidNodeNames = false;
     
+	private HashMap<String, CDocument> namespaceSchemaMap = new HashMap<String, CDocument>();
+	
     public CDocument()
     {
         setOwnerDocument(this);
@@ -569,7 +578,12 @@ public class CDocument extends CNode implements Document
     }
 
     
-    
+    /**
+     * 
+     * @return whether or not node names are checked for validity when being created. 
+     * This allows us to loosen up our node name restrictions if we want. 
+     * Spaces etc. can be allowed.
+     */
 	public boolean onlyAllowValidNodeNames()
 	{
 		return this.onlyAllowValidNodeNames ;
@@ -579,5 +593,88 @@ public class CDocument extends CNode implements Document
 	{
 		this.onlyAllowValidNodeNames = onlyAllowValidNodeNames;
 	}
+
+	/**
+	 *  set the schema document to validate against for a namespace declaration in this document
+	 * @param namespaceURI
+	 * @param schemaDocument
+	 */
+    public void setSchemaForNamespace(String namespaceURI, CDocument schemaDocument)
+    {        
+        if(schemaDocument.getDocumentElement().getNamespaceURI().equals(XML_SCHEMA_NS) == true)
+        {
+            namespaceSchemaMap.put(namespaceURI, schemaDocument);
+        }
+        else
+        {
+            throw new UnknownError("Unknown Schema URI"); 
+        }
+        
+    }
 	
+    public boolean isNodeValid(CNode node, boolean deep, boolean requireNamespace, Vector<CValidationException> exceptionVector) throws Exception
+    {
+        int initialExceptionCount = 0;
+        if(exceptionVector != null)
+        {
+            initialExceptionCount = exceptionVector.size();
+        }
+        
+        
+        if(requireNamespace == true)
+        {
+            if(node.getNamespaceURI() == null)
+            {
+                nodeInvalid("Missing Namespace", node, exceptionVector);
+            }
+            
+            if (namespaceSchemaMap.containsKey(node.getNamespaceURI()) == false && node.getNamespaceURI().equals(XML_SCHEMA_NS) == false && node.getNamespaceURI().equals(XML_NAMESPACE_NS) == false)
+            {
+                nodeInvalid("Unknown Namespace ["+node.getNamespaceURI()+"]", node, exceptionVector);
+            }            
+        }
+        
+        //find namespace
+        CDocument schemaDocument = namespaceSchemaMap.get(node.getNamespaceURI());
+        
+        if(schemaDocument != null)
+        {
+            //find node declaration
+            CElement schemaDeclElement = null;
+            switch (node.getNodeType())
+            {
+                case Node.ATTRIBUTE_NODE:
+                    schemaDeclElement = (CElement) XPath.selectNSNode(schemaDocument, "//xs:attribute[@name = '"+node.getLocalName()+"']","xs="+XML_SCHEMA_NS);                    
+                    break;
+                case Node.ELEMENT_NODE:
+                    schemaDeclElement = (CElement) XPath.selectNSNode(schemaDocument, "//xs:element[@name = '"+node.getLocalName()+"']","xs="+XML_SCHEMA_NS);                    
+                    break;
+                default:
+                    break;
+            }
+            System.out.println(schemaDeclElement);
+            if(schemaDeclElement != null)
+            {
+                node.setNodeDefinition(new CNodeDefinition(schemaDeclElement));
+                node.isValid(deep,exceptionVector);
+            }
+            else
+            {
+                nodeInvalid("unknown node", node, exceptionVector);
+            }
+        }
+        
+        
+        if(deep == true)
+        {
+            //iterate over children (node,deep,requireNamespace,exceptionVector);
+        }
+        
+        return exceptionVector == null ? true : (exceptionVector.size() == initialExceptionCount);
+    }
+
+    public HashMap<String, CDocument> getNamespaceSchemaMap()
+    {
+        return namespaceSchemaMap;
+    }
 }

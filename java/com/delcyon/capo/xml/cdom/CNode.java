@@ -31,10 +31,10 @@ import org.w3c.dom.Text;
 import org.w3c.dom.UserDataHandler;
 
 import com.delcyon.capo.util.CloneControl;
+import com.delcyon.capo.util.CloneControl.Clone;
 import com.delcyon.capo.util.ControlledClone;
 import com.delcyon.capo.util.EqualityProcessor;
 import com.delcyon.capo.util.ToStringControl;
-import com.delcyon.capo.util.CloneControl.Clone;
 import com.delcyon.capo.util.ToStringControl.Control;
 import com.delcyon.capo.xml.cdom.CDOMEvent.EventType;
 
@@ -44,7 +44,7 @@ import com.delcyon.capo.xml.cdom.CDOMEvent.EventType;
  */
 @CloneControl(filter=CloneControl.Clone.exclude,modifiers=Modifier.STATIC+Modifier.FINAL)
 @ToStringControl(control=Control.exclude,modifiers=Modifier.STATIC+Modifier.FINAL)
-public abstract class CNode implements Node, ControlledClone
+public abstract class CNode implements Node, ControlledClone, NodeValidationUtilitesFI
 {
 	@CloneControl(filter=Clone.exclude)
 	private static final Pattern pattern = Pattern.compile("^[:A-Z_a-z\\xC0-\\xD6\\xD8-\\xF6\\xF8-\\x{2FF}\\x{370}-\\x{37D}\\x{37F}-\\x{1FFF}\\x{200C}-\\x{200D}\\x{2070}-\\x{218F}\\x{2C00}-\\x{2FEF}\\x{3001}-\\x{D7FF}\\x{F900}-\\x{FDCF}\\x{FDF0}-\\x{FFFD}\\x{10000}-\\x{EFFFF}][:A-Z_a-z\\xC0-\\xD6\\xD8-\\xF6\\xF8-\\x{2FF}\\x{370}-\\x{37D}\\x{37F}-\\x{1FFF}\\x{200C}-\\x{200D}\\x{2070}-\\x{218F}\\x{2C00}-\\x{2FEF}\\x{3001}-\\x{D7FF}\\x{F900}-\\x{FDCF}\\x{FDF0}-\\x{FFFD}\\x{10000}-\\x{EFFFF}.\\-0-9\\xB7\\x{0300}-\\x{036F}\\x{203F}-\\x{2040}]*");
@@ -60,6 +60,9 @@ public abstract class CNode implements Node, ControlledClone
     @CloneControl(filter=Clone.exclude)
     protected Vector<CDOMEventListener> cdomEventListenerVector = new Vector<CDOMEventListener>();
     
+    @CloneControl(filter=Clone.exclude)
+    protected CNodeDefinition nodeDefinition = null;
+    
     protected CNodeList nodeList = new CNodeList();
     protected CNamedNodeMap attributeList = new CNamedNodeMap();
     protected String nodeName = null;
@@ -68,7 +71,6 @@ public abstract class CNode implements Node, ControlledClone
     
     @CloneControl(filter=Clone.exclude)
     private transient CDOMEvent preparedEvent = null;
-    
     
     
     public void setParent(CNode parentNode)
@@ -549,7 +551,7 @@ public abstract class CNode implements Node, ControlledClone
         }
         catch (Exception exception)
         {
-            Logger.global.log(Level.SEVERE, "Couldn't clone "+this, exception);
+            Logger.getGlobal().log(Level.SEVERE, "Couldn't clone "+this, exception);
         }
         return clonedNode;
     }
@@ -1016,4 +1018,63 @@ public abstract class CNode implements Node, ControlledClone
        cascadeDOMEvent(prepareEvent(EventType.UPDATE, this));
     }
 
+    /**
+     * associate this element with it's defining element from a schema
+     * @param nodeDefinition
+     */
+    public void setNodeDefinition(CNodeDefinition nodeDefinition)
+    {
+        this.nodeDefinition = nodeDefinition;        
+    }
+    
+    /**
+     * see setDefinition
+     * @return
+     */
+    public CNodeDefinition getNodeDefinition()
+    {
+        return nodeDefinition;
+    }
+
+    public boolean isValid() throws CValidationException, Exception
+    {
+        return isValid(false, null);
+    }
+    
+    public boolean isValid(boolean deep, Vector<CValidationException> exceptionVector) throws CValidationException, Exception
+    {
+        if(getNodeDefinition() != null)
+        {
+            //return getNodeDefinition().isValid(this,exceptionVector);
+            if(deep == true)
+            {
+                walkTree(null, this, (parentNode,node)->{((CNode) node)._isValid(exceptionVector);}, false);
+            }
+        }
+        else
+        {
+            nodeInvalid("Missing node definition, or undefined node", this, exceptionVector);
+            return false;
+        }
+        return true;
+    }
+
+    private void _isValid(Vector<CValidationException> exceptionVector) throws CValidationException, Exception
+    {
+        CNodeDefinition definition = getNodeDefinition();
+        if(definition == null)
+        {
+            definition = new CNodeDefinition(null).getDefinitionForNode(this);
+            setNodeDefinition(definition);
+        }
+        if(getNodeDefinition() != null)
+        {
+            getNodeDefinition().isValid(this,exceptionVector);           
+        }
+        
+        else
+        {
+            nodeInvalid("Missing node definition, or undefined node", this, exceptionVector);            
+        }  
+    }
 }

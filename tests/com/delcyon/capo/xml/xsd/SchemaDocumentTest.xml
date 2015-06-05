@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root xmlns="test">  
+    <A/>    
+    <Other>BOB</Other>       
+    <Other bob="test"/>
+</root>
