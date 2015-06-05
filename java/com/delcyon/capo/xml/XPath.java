@@ -308,7 +308,8 @@ public class XPath
 				    {
 				        nameSpace = new String[]{node.getPrefix()+"="+node.getNamespaceURI()};
 				    }
-					String position = selectSingleNodeValue((Element) node, "count(preceding-sibling::"+name+")+1",nameSpace);
+				    //if we're in the default namespace, makeup a prefix aka 'null:' in this current case
+					String position = selectSingleNodeValue((Element) node, "count(preceding-sibling::"+(node.getPrefix() == null && node.getNamespaceURI() != null? node.getPrefix()+":" :"")+name+")+1",nameSpace);
 					name += "["+position+"]";
 				}
 				else //this node does not belong to a document. It must have just been created.
