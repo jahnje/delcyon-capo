@@ -1,12 +1,19 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified"
     vc:minVersion="1.1" xmlns:vc="http://www.w3.org/2007/XMLSchema-versioning" targetNamespace="test" xmlns="test">
+    <xs:element name="TestTop">
+        <xs:complexType>
+            <xs:all>
+                <xs:any maxOccurs="unbounded"/>
+            </xs:all>
+        </xs:complexType>
+    </xs:element>
     
     <xs:element name="root">
         <xs:complexType>
             <xs:all >
                 <xs:element name="A" maxOccurs="2"/>
-                <xs:any maxOccurs="2" minOccurs="2" />                
+                <xs:any maxOccurs="3" minOccurs="2" />                
             </xs:all>
         </xs:complexType>    
     </xs:element>
@@ -14,5 +21,106 @@
     <xs:element name="Other"  type="xs:anySimpleType">
        
     </xs:element>
+    <xs:element name="NoTextElement" >
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element ref="Other" minOccurs="0"/>
+            </xs:sequence>
+        </xs:complexType>
+    </xs:element>
+    
+    <xs:element name="SEQTEST">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element name="SEQ.A"/>
+                <xs:sequence>
+                    <xs:element name="SEQ.B"/>
+                    <xs:element name="SEQ.D"/>
+                </xs:sequence>                
+                <xs:element name="SEQ.C"/>
+            </xs:sequence>
+        </xs:complexType>
+    </xs:element>
+    
+    
+    <xs:element name="CHOICETEST1">
+        <xs:complexType>
+            <xs:choice>
+                
+                <xs:sequence>
+                    <xs:element name="CHOICETEST1.A"/>                    
+                    <xs:element name="CHOICETEST1.A"/>
+                </xs:sequence>
+               <!-- <xs:sequence> <!-\-ambigous, not allowed-\->
+                    <xs:element name="CHOICETEST1.A"/>
+                    <xs:element name="CHOICETEST1.C"/>
+                </xs:sequence>-->
+                               
+                <xs:sequence>                    
+                    <xs:element name="CHOICETEST1.B"/>                    
+                    <xs:element name="CHOICETEST1.B"/>
+                </xs:sequence>
+                <xs:sequence>                    
+                    <xs:element name="CHOICETEST1.C"/>                    
+                    <xs:element name="CHOICETEST1.B"/>
+                </xs:sequence>
+                <xs:sequence>                    
+                    <xs:element name="CHOICETEST1.D" maxOccurs="2"/>                                        
+                </xs:sequence>
+               
+                <xs:sequence>
+                    <xs:element name="CHOICETEST1.H"></xs:element>
+                    <xs:element name="CHOICETEST1.I" maxOccurs="2" minOccurs="0"/>
+                    <xs:element name="CHOICETEST1.J"></xs:element>
+                </xs:sequence>
+                <xs:group ref="EFG_GROUP"/>
+            </xs:choice>
+        </xs:complexType>
+    </xs:element>
+    
+    <xs:group name="EFG_GROUP">
+        <xs:sequence>                    
+            <xs:element name="CHOICETEST1.E" maxOccurs="2"/>
+            <xs:element name="CHOICETEST1.F" maxOccurs="2" minOccurs="0"/>
+            <xs:element name="CHOICETEST1.G" maxOccurs="2"/>
+        </xs:sequence>
+    </xs:group>
+    
+    <xs:element name="R">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element name="A" minOccurs="1" type="xs:date"/>
+                <xs:choice minOccurs="1" maxOccurs="1">
+                    <xs:sequence>
+                        <xs:element name="B"/>
+                        <xs:choice>
+                            <xs:element name="B"/>
+                            <xs:element name="C"/>
+                        </xs:choice>
+                    </xs:sequence>
+                    <xs:sequence>
+                        <xs:element name="C"/>
+                        <xs:element name="C"/>
+                        <xs:element name="C"/>                        
+                    </xs:sequence>
+                    <xs:sequence>
+                        <xs:any/>
+                    </xs:sequence>
+                    <!--<xs:group ref="G"/>-->
+                </xs:choice>
+                <xs:element name="D"/>
+            </xs:sequence>
+        </xs:complexType>
+    </xs:element>
+    
+   
+    
+    <xs:group name="G">
+        <xs:all>
+            <xs:element name="B"/>
+            <xs:element name="C"/>
+            <xs:element name="D"/>
+        </xs:all>
+    </xs:group>
     
 </xs:schema>

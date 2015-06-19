@@ -21,6 +21,7 @@ import java.util.Vector;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Pattern;
+import java.util.stream.Stream;
 
 import org.w3c.dom.DOMException;
 import org.w3c.dom.Document;
@@ -981,6 +982,31 @@ public abstract class CNode implements Node, ControlledClone, NodeValidationUtil
     }
     
     /**
+     * gets a stream of all nodes including this and all children
+     * @return
+     */
+    public Stream<CNode> stream()
+    {
+        return Stream.concat(
+                Stream.of(this).map((node)->(CNode)node),
+                Stream.concat(
+                        attributeList.stream().map(node->(CNode)node),
+                        nodeList.stream().map(node->(CNode)node).flatMap(CNode::stream)));
+    }
+    
+    public int getDepth()
+    {
+        int depth = 0;
+        Node parentNode = getParentNode();
+        while(parentNode != null)
+        {
+            depth++;
+            parentNode = parentNode.getParentNode();
+        }
+        return depth;
+    }
+    
+    /**
      * This will run a nodeProcessor against the entire subtree of a node. 
      * @param node start node
      * @param processor processor to run
@@ -1033,6 +1059,11 @@ public abstract class CNode implements Node, ControlledClone, NodeValidationUtil
      */
     public CNodeDefinition getNodeDefinition()
     {
+        if(nodeDefinition == null && ownerDocument != null && ownerDocument.getNamespaceSchemaMap().containsKey(namespaceURI))
+        {
+            
+            nodeDefinition = CNodeDefinition.getDefinitionForNode(this);
+        }
         return nodeDefinition;
     }
 
@@ -1053,7 +1084,7 @@ public abstract class CNode implements Node, ControlledClone, NodeValidationUtil
         }
         else
         {
-            nodeInvalid("Missing node definition, or undefined node", this, exceptionVector);
+            nodeInvalid("X Missing node definition, or undefined node", this, exceptionVector);
             return false;
         }
         return true;
@@ -1061,20 +1092,30 @@ public abstract class CNode implements Node, ControlledClone, NodeValidationUtil
 
     private void _isValid(Vector<CValidationException> exceptionVector) throws CValidationException, Exception
     {
+        
+        if(this.getNodeType() == Node.TEXT_NODE && getNodeValue().isEmpty())
+        {
+            System.out.println("skipping text node validation");
+            return;
+        }
         CNodeDefinition definition = getNodeDefinition();
         if(definition == null)
         {
-            definition = new CNodeDefinition(null).getDefinitionForNode(this);
+            definition = CNodeDefinition.getDefinitionForNode(this);
             setNodeDefinition(definition);
         }
+        
         if(getNodeDefinition() != null)
         {
             getNodeDefinition().isValid(this,exceptionVector);           
+        }        
+        else if(getNodeType() == Node.ATTRIBUTE_NODE)
+        {
+            nodeInvalid("Attribute @"+getLocalName()+" is undefined", this, exceptionVector);            
         }
-        
         else
         {
             nodeInvalid("Missing node definition, or undefined node", this, exceptionVector);            
-        }  
+        }
     }
 }

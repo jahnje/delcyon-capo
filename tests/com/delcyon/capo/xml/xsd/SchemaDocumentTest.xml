@@ -1,6 +1,132 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<root xmlns="test">  
-    <A/>    
-    <Other>BOB</Other>       
-    <Other bob="test"/>
-</root>
+
+<TestTop xmlns="test">
+ <!--   
+    <CHOICETEST1>
+        <CHOICETEST1.B></CHOICETEST1.B> 
+    </CHOICETEST1>
+    
+    <CHOICETEST1>
+        <CHOICETEST1.B></CHOICETEST1.B> 
+        <CHOICETEST1.B></CHOICETEST1.B>
+    </CHOICETEST1>
+    
+    <CHOICETEST1>
+        <CHOICETEST1.B></CHOICETEST1.B> 
+        <CHOICETEST1.B></CHOICETEST1.B>
+        <CHOICETEST1.B></CHOICETEST1.B>
+    </CHOICETEST1>
+    
+    <CHOICETEST1>
+        <CHOICETEST1.B></CHOICETEST1.B>
+        <CHOICETEST1.B></CHOICETEST1.B>
+        <CHOICETEST1.B></CHOICETEST1.B>
+    </CHOICETEST1>
+    
+    <CHOICETEST1>
+        <CHOICETEST1.B></CHOICETEST1.B>
+        <CHOICETEST1.B></CHOICETEST1.B>
+        <CHOICETEST1.C></CHOICETEST1.C>
+    </CHOICETEST1>
+    
+    <CHOICETEST1>
+        <CHOICETEST1.A></CHOICETEST1.A>
+        <CHOICETEST1.C></CHOICETEST1.C>
+    </CHOICETEST1>
+    
+   <CHOICETEST1><!-\-7-\->
+        <CHOICETEST1.C></CHOICETEST1.C>
+        <CHOICETEST1.B></CHOICETEST1.B>
+    </CHOICETEST1>
+    
+    <CHOICETEST1><!-\-8-\->
+        <CHOICETEST1.D></CHOICETEST1.D>        
+        <CHOICETEST1.D></CHOICETEST1.D>
+    </CHOICETEST1>
+    
+    <CHOICETEST1><!-\-9-\->
+        <CHOICETEST1.E></CHOICETEST1.E>        
+        <CHOICETEST1.F></CHOICETEST1.F>        
+        <CHOICETEST1.G></CHOICETEST1.G>
+    </CHOICETEST1>
+    
+    <CHOICETEST1><!-\-10-\->
+        <CHOICETEST1.E></CHOICETEST1.E>        
+        <CHOICETEST1.F></CHOICETEST1.F>
+        <CHOICETEST1.F></CHOICETEST1.F>        
+        <CHOICETEST1.G></CHOICETEST1.G>
+    </CHOICETEST1>
+    
+    <CHOICETEST1><!-\- 11 -\->
+        <CHOICETEST1.E></CHOICETEST1.E>                        
+        <CHOICETEST1.G></CHOICETEST1.G>
+    </CHOICETEST1>
+    
+    <CHOICETEST1><!-\- OK-\->
+        <CHOICETEST1.H></CHOICETEST1.H>        
+        <CHOICETEST1.I></CHOICETEST1.I>        
+        <CHOICETEST1.J></CHOICETEST1.J>
+    </CHOICETEST1>
+    
+    
+    <CHOICETEST1><!-\- OK-\->
+        <CHOICETEST1.H></CHOICETEST1.H>        
+        <CHOICETEST1.I></CHOICETEST1.I>  
+        <CHOICETEST1.I></CHOICETEST1.I>  
+        <CHOICETEST1.J></CHOICETEST1.J>
+    </CHOICETEST1>
+    
+    
+   <!-\- <root>  
+        <A/>    
+        <Other>BOB</Other>
+        <NoTextElement>    
+        </NoTextElement>
+        <Other />   
+    </root>-\->-->
+
+    
+    <R>
+        <A>2003-12-01</A>
+        <B></B>
+        <B></B>
+        <D></D>
+    </R>
+    
+  <!--  <R>
+        <A>2003-12-01</A>
+        <B></B>
+        <C></C>
+        <D></D>
+    </R>
+
+
+    <R>
+        <A>2003-12-01</A>
+        <C></C>
+        <C></C>
+        <C></C>        
+        <D></D>    
+    </R>
+    
+    <R>
+        <A>2003-12-01</A>
+        <Other></Other>
+        <D></D>
+    </R>
+    
+    <SEQTEST>
+        <SEQ.A></SEQ.A>
+        <SEQ.B></SEQ.B>
+        <SEQ.D></SEQ.D>
+        <SEQ.C></SEQ.C>
+    </SEQTEST>
+    
+    <SEQTEST>
+        <SEQ.A></SEQ.A>
+        <SEQ.C></SEQ.C>
+        <SEQ.C></SEQ.C>
+    </SEQTEST>-->
+    
+</TestTop>
+

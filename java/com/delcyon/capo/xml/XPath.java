@@ -299,7 +299,7 @@ public class XPath
 			String nameAttributeValue = ((Element) node).getAttribute("name");
 			
 			
-			if (nameAttributeValue.isEmpty() == true )
+			//if (nameAttributeValue.isEmpty() == true )
 			{	
 				if (node.getParentNode() != null)
 				{
@@ -317,7 +317,7 @@ public class XPath
 					name += "[ORPHAN_NODE]";
 				}
 			}
-			else
+			if(nameAttributeValue.isEmpty() == false)
 			{
 				name += "[@name = '"+nameAttributeValue+"']";
 			}

@@ -8,7 +8,8 @@ public class OccurancePredicate
     public enum TestErrorResult
     {            
         FULL,
-        NO_MATCH
+        NO_MATCH,
+        MATCH
     }
     
     
@@ -18,6 +19,9 @@ public class OccurancePredicate
     public int max = 1;
     public CElement definition = null;
 
+    @SuppressWarnings("unused")
+    private OccurancePredicate(){}
+    
     public OccurancePredicate(CElement def, Predicate<CElement> predicateChain)
     {
         if(def.hasAttribute("minOccurs"))
@@ -41,12 +45,16 @@ public class OccurancePredicate
     
     public TestErrorResult increment(CElement node)
     {
+        if(node == null)
+        {
+            return TestErrorResult.NO_MATCH;
+        }
         if(predicateChain.test(node))
         {
             if(count+1 <= max )
             {
                 count++;
-                return null;
+                return TestErrorResult.MATCH;
             }
             else
             {
@@ -59,6 +67,11 @@ public class OccurancePredicate
     public boolean isSatisfied()
     {
         return count >= min && count <= max;
+    }
+    
+    public boolean isFull()
+    {
+        return count == max;
     }
     
     public CElement getDefinition()
