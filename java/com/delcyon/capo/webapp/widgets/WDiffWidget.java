@@ -179,7 +179,7 @@ public class WDiffWidget extends WCompositeWidget
      * @return int[3]  where 0 = startPos, 1 = baseEndPos, 2 = modEndPos
      */
     private int[] getLineDifferences(String baseText, String modText)
-    {
+    {        
         int[] lineDiffs = new int[]{-1,-1,-1};
         
         //first find start position, by finding first place where chars don't match
@@ -190,25 +190,25 @@ public class WDiffWidget extends WCompositeWidget
                 lineDiffs[0] = index;
             }
             
-            int baseRIndex = baseText.length()-1-index;
-            int modRIndex = modText.length()-1-index;
+            int baseReversedIndex = baseText.length()-1-index;
+            int modReveresedIndex = modText.length()-1-index;
             
             
-            if(baseRIndex <= lineDiffs[0] && lineDiffs[1] == -1) //break if we've passsed each other
+            if(baseReversedIndex <= lineDiffs[0] && lineDiffs[1] == -1) //break if we've passsed each other
             {
                 lineDiffs[1] = lineDiffs[0];
-                lineDiffs[2] = modRIndex;
+                lineDiffs[2] = modReveresedIndex;
             }
-            if(modRIndex <= lineDiffs[0] && lineDiffs[2] == -1) //break if we've passsed each other
+            if(modReveresedIndex <= lineDiffs[0] && lineDiffs[2] == -1) //break if we've passsed each other
             {
                 lineDiffs[2] = lineDiffs[0];
-                lineDiffs[1] = baseRIndex;
+                lineDiffs[1] = baseReversedIndex;
             }
             
-            if(lineDiffs[1] == -1 && baseText.charAt(baseRIndex) != modText.charAt(modRIndex))
+            if(lineDiffs[1] == -1 && baseText.charAt(baseReversedIndex) != modText.charAt(modReveresedIndex))
             {
-                lineDiffs[1] = baseRIndex+1;
-                lineDiffs[2] = modRIndex+1;
+                lineDiffs[1] = baseReversedIndex+1;
+                lineDiffs[2] = modReveresedIndex+1;
             }
             
             if(lineDiffs[0] != -1 && lineDiffs[1] != -1 && lineDiffs[2] != -1) //break if we know everything
@@ -217,7 +217,16 @@ public class WDiffWidget extends WCompositeWidget
             }
         }
         
+        //make sure that we don't set an end position before a start position. Can happen when we've added stuff to the middle of a string 
+        if(lineDiffs[0] > lineDiffs[1])
+        {
+            lineDiffs[1]  = lineDiffs[0];
+        }
         
+        if(lineDiffs[0] > lineDiffs[2])
+        {
+            lineDiffs[2]  = lineDiffs[0];
+        }
         
         return lineDiffs;
     }
