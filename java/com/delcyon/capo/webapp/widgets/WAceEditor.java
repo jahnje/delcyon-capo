@@ -5,6 +5,7 @@ import eu.webtoolkit.jwt.TextFormat;
 import eu.webtoolkit.jwt.Utils;
 import eu.webtoolkit.jwt.WContainerWidget;
 import eu.webtoolkit.jwt.WGridLayout;
+import eu.webtoolkit.jwt.WMouseEvent;
 import eu.webtoolkit.jwt.WPushButton;
 import eu.webtoolkit.jwt.WText;
 
@@ -69,9 +70,8 @@ public class WAceEditor extends WContainerWidget
         contentWText.setStyleClass("editorArea");
         attachEditorJS();
         saveButton = new WPushButton("Save");
+        save.addListener(this, ()->{}); //add BS listener, So that createCall will generate emit code. Emit code generator checks to see if signal exposed. This is done by checking to see if number of listeners is greater than 1 
         saveButton.setJavaScriptMember("onclick", "function (){"+this.save().createCall(contentWText.getJsRef()+".editor.getValue()")+"}");
-        
-        
         WGridLayout gridLayout = new WGridLayout(this);
         gridLayout.addWidget(contentWText,0,0);
         gridLayout.addWidget(saveButton,1,0);                
