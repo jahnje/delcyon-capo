@@ -26,14 +26,12 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.w3c.dom.Node;
 
-import com.delcyon.capo.tests.util.TestServer;
-import com.delcyon.capo.tests.util.Util;
 import com.delcyon.capo.xml.XPath;
 import com.delcyon.capo.xml.cdom.CDocument;
 import com.delcyon.capo.xml.cdom.CDocumentBuilder;
 import com.delcyon.capo.xml.cdom.CNode;
 import com.delcyon.capo.xml.cdom.CNodeDefinition.NodeDefinitionType;
-import com.delcyon.capo.xml.cdom.CNodeValidator;
+import com.delcyon.capo.xml.cdom.CNodeValidator2;
 import com.delcyon.capo.xml.cdom.CValidationException;
 
 public class SchemaDocumentTest
@@ -85,11 +83,11 @@ public class SchemaDocumentTest
     
     private void validateNode(Node parentNode, Node node) throws Exception
     {
-        if(node.getNodeType() == Node.ELEMENT_NODE && ((CNode)node).getNodeDefinition().getNodeDefinitionType() == NodeDefinitionType.complexType)
+        if(node.getNodeType() == Node.ELEMENT_NODE && ((CNode)node).getNodeDefinition() != null && ((CNode)node).getNodeDefinition().getNodeDefinitionType() == NodeDefinitionType.complexType)
         {
             Vector<CValidationException> validationExceptions = new Vector<CValidationException>();
             System.out.println("\n\n"+XPath.getXPath(node));
-            CNodeValidator nodeValidator = new CNodeValidator((CNode) node, ((CNode)node).getNodeDefinition());
+            CNodeValidator2 nodeValidator = new CNodeValidator2((CNode) node, ((CNode)node).getNodeDefinition());
             System.out.println(nodeValidator.getNodeValidationResult());
 //            if(nodeValidator.isValid() == false)
 //            {

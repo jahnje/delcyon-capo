@@ -9,6 +9,33 @@
         </xs:complexType>
     </xs:element>
     
+    
+    <xs:element name="BASIC">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element name="A"/>
+                <xs:choice>
+                    <xs:sequence>
+                        <xs:element name="B"/>
+                        <xs:choice>
+                            <xs:element name="B"/>
+                            <xs:element name="C"/>
+                        </xs:choice>
+                    </xs:sequence>
+                    <xs:sequence>
+                        <xs:element name="C"/>
+                        <xs:element name="C"/>
+                        <xs:element name="C"/>
+                    </xs:sequence>
+                    <xs:sequence>
+                        <xs:any/>
+                    </xs:sequence>
+                </xs:choice>
+                <xs:element name="D"/>
+            </xs:sequence>
+        </xs:complexType>
+    </xs:element>
+    
     <xs:element name="root">
         <xs:complexType>
             <xs:all >
@@ -67,13 +94,13 @@
                 <xs:sequence>                    
                     <xs:element name="CHOICETEST1.D" maxOccurs="2"/>                                        
                 </xs:sequence>
-               
+                <xs:group ref="EFG_GROUP"/>
                 <xs:sequence>
                     <xs:element name="CHOICETEST1.H"></xs:element>
                     <xs:element name="CHOICETEST1.I" maxOccurs="2" minOccurs="0"/>
                     <xs:element name="CHOICETEST1.J"></xs:element>
                 </xs:sequence>
-                <xs:group ref="EFG_GROUP"/>
+               
             </xs:choice>
         </xs:complexType>
     </xs:element>
@@ -82,7 +109,7 @@
         <xs:sequence>                    
             <xs:element name="CHOICETEST1.E" maxOccurs="2"/>
             <xs:element name="CHOICETEST1.F" maxOccurs="2" minOccurs="0"/>
-            <xs:element name="CHOICETEST1.G" maxOccurs="2"/>
+            <xs:element name="CHOICETEST1.G" maxOccurs="2"/>            
         </xs:sequence>
     </xs:group>
     

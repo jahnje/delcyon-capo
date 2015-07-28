@@ -1,7 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <TestTop xmlns="test">
- <!--   
+    
+    <BASIC>
+        <A></A>        
+        <L></L>
+        <D></D>
+    </BASIC>
+    <!--
     <CHOICETEST1>
         <CHOICETEST1.B></CHOICETEST1.B> 
     </CHOICETEST1>
@@ -42,15 +48,15 @@
     <CHOICETEST1><!-\-8-\->
         <CHOICETEST1.D></CHOICETEST1.D>        
         <CHOICETEST1.D></CHOICETEST1.D>
-    </CHOICETEST1>
+    </CHOICETEST1>-->
     
-    <CHOICETEST1><!-\-9-\->
+    <!--<CHOICETEST1><!-\-9-\->
         <CHOICETEST1.E></CHOICETEST1.E>        
         <CHOICETEST1.F></CHOICETEST1.F>        
         <CHOICETEST1.G></CHOICETEST1.G>
-    </CHOICETEST1>
+    </CHOICETEST1>-->
     
-    <CHOICETEST1><!-\-10-\->
+   <!-- <CHOICETEST1><!-\-10-\->
         <CHOICETEST1.E></CHOICETEST1.E>        
         <CHOICETEST1.F></CHOICETEST1.F>
         <CHOICETEST1.F></CHOICETEST1.F>        
@@ -74,24 +80,24 @@
         <CHOICETEST1.I></CHOICETEST1.I>  
         <CHOICETEST1.I></CHOICETEST1.I>  
         <CHOICETEST1.J></CHOICETEST1.J>
-    </CHOICETEST1>
+    </CHOICETEST1>-->
     
     
-   <!-\- <root>  
+   <!-- <root>  
         <A/>    
         <Other>BOB</Other>
         <NoTextElement>    
         </NoTextElement>
         <Other />   
-    </root>-\->-->
+    </root>-->
 
     
-    <R>
+    <!--<R>
         <A>2003-12-01</A>
         <B></B>
         <B></B>
         <D></D>
-    </R>
+    </R>-->
     
   <!--  <R>
         <A>2003-12-01</A>
