@@ -12,31 +12,31 @@
     
     <xs:element name="BASIC">
         <xs:complexType>
-            <xs:sequence>
+            <xs:sequence><!-- parent/seq is satsifed when all of it children match it's initial satisfaction state? -->
                 <xs:element name="A"/><!-- next possible is [B,C,*] -->
                 <xs:choice>
                     <xs:sequence>
-                        <xs:element name="B"/>
+                        <xs:element name="B"/><!-- next possible is [B,C] -->
                         <xs:choice>
-                            <xs:element name="B"/>
-                            <xs:element name="C"/>
+                            <xs:element name="B"/><!-- next possible is [D,E,F] --><!-- run back up until we hit first unstaisfied parent-->
+                            <xs:element name="C"/><!-- next possible is [D,E,F] --><!-- run back up until we hit first unstaisfied parent-->
                         </xs:choice>
                     </xs:sequence>
                     <xs:sequence>
-                        <xs:element name="C"/>
-                        <xs:element name="C"/>
-                        <xs:element name="C"/>
+                        <xs:element name="C"/><!-- next possible is [C] --><!-- run back up until we hit first unstaisfied parent-->
+                        <xs:element name="C"/><!-- next possible is [C] --><!-- run back up until we hit first unstaisfied parent-->
+                        <xs:element name="C"/><!-- next possible is [D,E,F] --><!-- run back up until we hit first unstaisfied parent-->
                     </xs:sequence>
                     <xs:sequence>
-                        <xs:any/>
+                        <xs:any/><!-- next possible is [D,E,F] --><!-- run back up until we hit first unstaisfied parent-->
                     </xs:sequence>
                 </xs:choice>
                 <xs:choice>
-                    <xs:element name="D"/>
-                    <xs:element name="E"/>
+                    <xs:element name="D"/><!-- VALID -->
+                    <xs:element name="E"/><!-- VALID -->
                     <xs:sequence>
-                        <xs:element name="F"></xs:element>
-                        <xs:element name="G"></xs:element>
+                        <xs:element name="F"></xs:element><!-- next possible is [G] --><!-- run back up until we hit first unstaisfied parent-->
+                        <xs:element name="G"></xs:element><!-- VALID -->
                     </xs:sequence>
                 </xs:choice>
             </xs:sequence>

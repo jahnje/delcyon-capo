@@ -195,7 +195,7 @@ public class CNodeValidator2 implements NodeValidationUtilitesFI
                         //only roll back stuff if we aren't satisfied while going back up
                         if(childSatisfaction == false)
                         {
-                            currentElementIndex = modelStack.peek().idx;
+                            currentElementIndex = modelStack.peek().childIdx;
                         }
                         modelStack.pop();
                         
@@ -256,13 +256,13 @@ public class CNodeValidator2 implements NodeValidationUtilitesFI
                     
                     if(defElement.getLocalName().equals("choice"))
                     {
-                        modelStack.push(new ModelStackItem(defElementVirtualDepth, currentElementIndex, defElement,false));
+                        modelStack.push(new ModelStackItem(defElementVirtualDepth, currentElementIndex, defElement,false,definitionIndex));
                         continue definition_loop;
                     }
                     
                     if(defElement.getLocalName().equals("sequence"))
                     {
-                        modelStack.push(new ModelStackItem(defElementVirtualDepth, currentElementIndex, defElement,true));
+                        modelStack.push(new ModelStackItem(defElementVirtualDepth, currentElementIndex, defElement,true,definitionIndex));
                         continue definition_loop;
                     }
                     
@@ -272,24 +272,33 @@ public class CNodeValidator2 implements NodeValidationUtilitesFI
 
                     if(defElement.getLocalName().equals("element") || defElement.getLocalName().equals("any"))
                     {
+                        //================================MATCH===========================
                         if(defElement.getAttribute("name").equals(currentChildElement.nodeName) || defElement.getLocalName().equals("any"))
                         {
                             currentElementIndex++;
                             System.out.println("\t\t\tMATCH: D.idx="+definitionIndex+" D.vdpth="+defElementVirtualDepth);
-                            if(modelStack.peek().satified != true) //probably satisfied a choice
+                            modelStack.peek().incrementSatisfaction();
+                            //if we re satisfied, then we should stop processing this depth
+                            if(modelStack.peek().isSatisfied())
                             {
-                                //since we've satisfied a choice, we should run the tape until we reach a peer or parent of that choice
-                                //who is the current model stack node
-                                
                                 skipDefsUntilDepth = modelStack.peek().vdepth;
                                 System.out.println("\t\t\tSKIP DEFS UNTIL: "+skipDefsUntilDepth);
                             }
-                            //else
-                            {
-                                modelStack.peek().satified = true;
+//                            if(modelStack.peek().satified != true) //probably satisfied a choice
+//                            {
+//                                //since we've satisfied a choice, we should run the tape until we reach a peer or parent of that choice
+//                                //who is the current model stack node
+//                                
+//                                skipDefsUntilDepth = modelStack.peek().vdepth;
+//                                System.out.println("\t\t\tSKIP DEFS UNTIL: "+skipDefsUntilDepth);
+//                            }
+//                            //else
+//                            {
+//                                modelStack.peek().satified = true;
                                 continue child_node_loop;
-                            }
+                            //}
                         }
+                        //==============================NO MATCH============================
                         else
                         {
                             System.out.println("\t\t\tNO MATCH: D.idx="+definitionIndex+" D.vdpth="+defElementVirtualDepth+"");
@@ -331,12 +340,18 @@ public class CNodeValidator2 implements NodeValidationUtilitesFI
         	System.out.println("Current model validity = "+modelStack.peek());
         	//if we've run out of children, set the testChild to null, and run the defs out until the end.
         	//keeping track of the last valid node, take the next element test as next possible def, 
-        	//??? or the first element of each next choice if it has a parent that's not under our last 
+        	//??? or the first element of each next choice if it has a parent that's not under our last
+        	//figure out if we have a next sequence, or a series of choices, present first particle of each choice
+        	while(modelStack.isEmpty() == false)
+        	{
+        	    ModelStackItem modelStackItem = modelStack.pop();
+        	    System.out.println("popping mode stack: "+modelStackItem);
+        	}
         	valid = false;
         }
         else
         {
-        	valid = modelStack.peek().satified;
+        	valid = modelStack.peek().isSatisfied();
         }
         
         
@@ -685,12 +700,16 @@ public class CNodeValidator2 implements NodeValidationUtilitesFI
     @ToStringControl(control=Control.exclude,modifiers=Modifier.FINAL)
     private class ModelStackItem
     {
-        private int vdepth;
+        
         private int idx;
+        private int vdepth;
         private boolean satified = true;
         private boolean initialSatisfaction = true;
         //@ToStringControl(control=Control.exclude)
         private CElement defNode;
+        private int requiredSatisfactions = 1;
+        private int satisfactions = 0;
+        private int childIdx;
 
         /**
          * 
@@ -700,13 +719,36 @@ public class CNodeValidator2 implements NodeValidationUtilitesFI
          * @param initialSatisfaction if initial saisfaction changes, then we need to pop back up the tree until we get to a satisfied != current test state
          * also need to pop model stack on negative depth change   
          */
-        public ModelStackItem(int levelDepth, int currentChildNodeIndex, CElement defNode, boolean initialSatisfaction)
+        public ModelStackItem(int levelDepth, int currentChildNodeIndex, CElement defNode, boolean initialSatisfaction,int definitionIndex)
         {
             this.vdepth = levelDepth;
-            this.idx = currentChildNodeIndex;
+            this.childIdx = currentChildNodeIndex;
+            this.idx = definitionIndex;
             this.defNode = defNode;
             this.satified = initialSatisfaction;
             this.initialSatisfaction = initialSatisfaction;
+            if(defNode.getLocalName().equals("sequence"))
+            {
+                requiredSatisfactions = defNode.getChildNodes(Node.ELEMENT_NODE).size();
+            }
+        }
+        
+        public void incrementSatisfaction()
+        {
+            satisfactions++;
+        }
+        
+        @ToStringControl(control=Control.include)
+        public boolean isSatisfied()
+        {
+            if(satisfactions >= requiredSatisfactions)
+            {
+                return true;
+            }
+            else
+            {
+                return false;
+            }
         }
         
         @Override
