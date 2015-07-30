@@ -13,7 +13,7 @@
     <xs:element name="BASIC">
         <xs:complexType>
             <xs:sequence>
-                <xs:element name="A"/>
+                <xs:element name="A"/><!-- next possible is [B,C,*] -->
                 <xs:choice>
                     <xs:sequence>
                         <xs:element name="B"/>
@@ -31,7 +31,14 @@
                         <xs:any/>
                     </xs:sequence>
                 </xs:choice>
-                <xs:element name="D"/>
+                <xs:choice>
+                    <xs:element name="D"/>
+                    <xs:element name="E"/>
+                    <xs:sequence>
+                        <xs:element name="F"></xs:element>
+                        <xs:element name="G"></xs:element>
+                    </xs:sequence>
+                </xs:choice>
             </xs:sequence>
         </xs:complexType>
     </xs:element>

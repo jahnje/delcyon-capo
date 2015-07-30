@@ -312,11 +312,38 @@ public class CNodeValidator2 implements NodeValidationUtilitesFI
                 }
         }
         
+        //we finished processing, figure out why
+        if(currentElementIndex < childElementList.size())
+        {        	
+        	
+        	invalidNode = childElementList.get(currentElementIndex);
+        	System.out.println("Processed all defs, but still have children: "+XPath.getXPath(invalidNode));
+        	valid = false;
+        }
+        else if (groupStreamStack.peek().contentModelStreamIterator.hasNext())
+        {
+        	System.out.println("Processed all children, but still have defs");
+        	int defElementVirtualDepth = defElement.getDepth()+groupStreamStack.peek().depth;
+        	System.out.println("Current Def = "+defElement+" current depth = "+defElementVirtualDepth);
+        	defElement = groupStreamStack.peek().contentModelStreamIterator.next();
+        	defElementVirtualDepth = defElement.getDepth()+groupStreamStack.peek().depth;
+        	System.out.println("Next Def = "+defElement+" next depth = "+defElementVirtualDepth);
+        	System.out.println("Current model validity = "+modelStack.peek());
+        	//if we've run out of children, set the testChild to null, and run the defs out until the end.
+        	//keeping track of the last valid node, take the next element test as next possible def, 
+        	//??? or the first element of each next choice if it has a parent that's not under our last 
+        	valid = false;
+        }
+        else
+        {
+        	valid = modelStack.peek().satified;
+        }
+        
+        
         System.out.println();
         if(debug)
-        {
-            valid = modelStack.peek().satified;
-            return debug;
+        {            
+            return valid;
         }
 
         
