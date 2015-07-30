@@ -17,10 +17,12 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 package com.delcyon.capo.xml.cdom;
 
 import java.lang.reflect.Modifier;
+import java.util.List;
 import java.util.Vector;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.w3c.dom.DOMException;
@@ -237,6 +239,22 @@ public abstract class CNode implements Node, ControlledClone, NodeValidationUtil
         return nodeList;
     }
 
+    public List<CNode> getChildNodes(short...types)
+    {                
+        return nodeList.stream().filter(node->contains(types,node.getNodeType())).map(node->(CNode)node).collect(Collectors.toList());        
+    }
+    
+    private boolean contains(short[] types, short searchType)
+    {
+        for (short s : types)
+        {
+            if(s == searchType)
+            {
+                return true;
+            }
+        }
+        return false; 
+    }
     /* (non-Javadoc)
      * @see org.w3c.dom.Node#getFirstChild()
      */
