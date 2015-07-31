@@ -711,6 +711,13 @@ public class CNodeValidator2 implements NodeValidationUtilitesFI
         private int satisfactions = 0;
         private int childIdx;
 
+        private int minimumFailures = 0; //if we exceed this then we need to set failure
+        private int maximumFailures = 0; //if we exceed this then we need to set failure
+        private int minimumPasses = 0;
+        private int maximumPasses = 0;
+        private int attempts = 0;
+        private int size = 0;
+        
         /**
          * 
          * @param levelDepth
@@ -730,6 +737,11 @@ public class CNodeValidator2 implements NodeValidationUtilitesFI
             if(defNode.getLocalName().equals("sequence"))
             {
                 requiredSatisfactions = defNode.getChildNodes(Node.ELEMENT_NODE).size();
+                size = requiredSatisfactions;
+                minimumFailures = 0;
+                maximumFailures = 0;
+                minimumPasses = size;
+                maximumPasses = size;
             }
         }
         
