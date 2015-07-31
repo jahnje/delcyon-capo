@@ -393,8 +393,9 @@ public class ReflectionUtility
                 methodVector.clear();
             }
         }
+        int actualFieldCount = 0;
         
-		for (int currentField = 0,actualFieldCount = 0; currentField < fieldVector.size(); currentField++)
+		for (int currentField = 0; currentField < fieldVector.size(); currentField++)
 		{
 			Field field = fieldVector.get(currentField);
 			field.setAccessible(true);
@@ -479,8 +480,16 @@ public class ReflectionUtility
 			}
 		}
 
+		if (actualFieldCount != 0)
+        {
+            stringBuffer.append(seperator);
+        }
+		
+		int actualMethodCount = 0;
 		for (Method method : methodVector)
         {
+		    
+		    
             if(method.getAnnotation(ToStringControl.class) != null)
             {
                 if(method.getAnnotation(ToStringControl.class).control() == Control.include)
@@ -490,7 +499,12 @@ public class ReflectionUtility
                     {
                         try
                         {
+                            if(actualMethodCount > 0)
+                            {
+                                stringBuffer.append(seperator);
+                            }
                             stringBuffer.append(method.getName() + "='" + method.invoke(toStringObject, new Object[]{}) + "'");
+                            actualMethodCount++;
                         }
                         catch (Exception e)
                         {                            
