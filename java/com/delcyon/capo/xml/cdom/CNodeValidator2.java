@@ -111,41 +111,26 @@ public class CNodeValidator2 implements NodeValidationUtilitesFI
     private boolean validateComplexType() throws Exception
     {
      
-        int definitionPathIndex = 0;
-
-        int deepestChildMatch = -1;
-        int defNodeOfDeepestChildMatch = -1;
-
-        //boolean keepNextNoMatch = false;
-        CNode nextNoMatch = null;
-        CNode nextNoMatchDef = null;
-        CNode lastMatch = null;
-
+        ModelStackItem rootItem = null;
+        Vector<ModelStackItem> possibilitVector = new Vector<>();
+ 
         CElement localRootNodeDefinitionElement = nodeDefinition.getNodeDefinitionTypeElement(NodeDefinitionType.complexType);
         
-        LinkedList<CElement> childElementList =  node.nodeList.stream().filter(node->node.getNodeType() == Node.ELEMENT_NODE).map(node->(CElement)node).collect(Collectors.toCollection(LinkedList::new));//.findFirst().orElse(null);
-
-        //        System.out.println("M="+m);
-        //System.out.println("="+a);
-        if(childElementList.size() == 0)
-        {
-            return false;
-        }
+        LinkedList<CElement> childElementList =  node.nodeList.stream().filter(node->node.getNodeType() == Node.ELEMENT_NODE).map(node->(CElement)node).collect(Collectors.toCollection(LinkedList::new));
 
         //iterator stack for groups as well as some sort of depth multiplier
         //push def stream iterator onto stack
         Stack<GroupStackItem> groupStreamStack = new Stack<>();
         groupStreamStack.push(new GroupStackItem(localRootNodeDefinitionElement.getDepth(), localRootNodeDefinitionElement));
 
-
-        //choice related info
+        //def related info
         Stack<ModelStackItem> modelStack = new Stack<>();
         
+        int longestMatch = -1;
         
         //multiple node children will use the same def predicate for matching, so keep this up here
         OccurancePredicate predicate = null; 
-        boolean keepCurrentDef = false;
-        int childNodeIndex = 0;
+
         boolean getOneExtraDef = true;
 
 
@@ -155,69 +140,199 @@ public class CNodeValidator2 implements NodeValidationUtilitesFI
         
         int skipDefsUntilDepth = -1;
         
+        CElement currentChildElement = null;
+        
+        //walk child element list
         child_node_loop:
-        for(; currentElementIndex < childElementList.size() && groupStreamStack.peek().contentModelStreamIterator.hasNext(); )
-        {
-            CElement currentChildElement = childElementList.get(currentElementIndex);
-            System.out.println(XPath.getXPath(currentChildElement));
+        while(true)
+        {            
+            if((currentElementIndex < childElementList.size() && groupStreamStack.peek().contentModelStreamIterator.hasNext()) == false)
+            {
+                if(getOneExtraDef)
+                {
+                    System.out.println("+++++++++++++++++++LOOKING FOR POSSIBILITES+++++++++++++++++++++");
+                    getOneExtraDef = false;     
+                    currentChildElement = null;
+                }
+                else
+                {
+                    break; // finish up    
+                }                
+            }
+            else
+            {
+                currentChildElement = childElementList.get(currentElementIndex);
+                System.out.println(XPath.getXPath(currentChildElement));    
+            }
+            
+            
             
             //Walk definition tree
             definition_loop:
-                for(;groupStreamStack.peek().contentModelStreamIterator.hasNext();)            
+                while(true)            
                 {
+                    if(groupStreamStack.peek().contentModelStreamIterator.hasNext() == false)
+                    {                        
+                        if(currentChildElement != null)
+                        {
+                            break;
+                        }
+                    }
                     
+                    //============================GROUP POP==============================
                     
-                    defElement = groupStreamStack.peek().contentModelStreamIterator.next();
-                    definitionIndex++;
-                    
-                    //virtual depth of the def node (references make this different than actual document depth)
-                    int defElementVirtualDepth = defElement.getDepth()+groupStreamStack.peek().depth;
-
-                    String depthString =  "";for(int d = 0;d<defElementVirtualDepth;d++){depthString +="\t";};
-                    System.out.println("[D.idx="+definitionIndex+" D.vdpth="+defElementVirtualDepth+"]"+depthString+defElement);
-                    
-                    
-                    //==============POP================
+                    //pop a group reference if we've reached the end of it.
                     while(groupStreamStack.peek().contentModelStreamIterator.hasNext() == false && groupStreamStack.size() > 1)
                     {
-                        if(debug)
-                        {
-                            System.out.println("\t\t\tPOPPED GROUP");
-                        }
+                        //System.out.println("\t\t\tPOPPED GROUP");
                         groupStreamStack.pop();
                     }
 
-                    while(modelStack.isEmpty() == false && defElementVirtualDepth <= modelStack.peek().vdepth)
+                    
+                    //pop our model stack until we reach something that isn't finished 
+                    while(modelStack.isEmpty() == false && modelStack.peek().getProcessingState() == StackItemProcessingState.FINISHED)
                     {
-                        System.out.println("\t\t\tPOPPED DEF "+modelStack.peek());
-                        boolean childSatisfaction = modelStack.peek().satified;
-                        
-                        //only roll back stuff if we aren't satisfied while going back up
-                        if(childSatisfaction == false)
+                        boolean rollback = false;
+                        if(modelStack.peek().getState() == StackItemState.FAILURE)
                         {
-                            currentElementIndex = modelStack.peek().childIdx;
+                            rollback = true;
                         }
-                        modelStack.pop();
                         
-                        //if we've reached the top, see if we're transitioning and skipping and if so
-                        if((defElementVirtualDepth <= modelStack.peek().vdepth) == false)
+                        System.out.println("\t\t\tPOPPED DEF "+modelStack.peek());
+                        ModelStackItem poppedItem = modelStack.pop();
+                        if(modelStack.isEmpty())
                         {
-                            System.out.println("\t\t\tgot to top! "+modelStack.peek());
-                            if(modelStack.peek().satified != childSatisfaction)
+                            if(currentChildElement != null)
                             {
-                                modelStack.peek().satified = childSatisfaction;
-                                System.out.println("\t\t\tswitched satisfaction "+skipDefsUntilDepth+":"+modelStack.peek().vdepth);
-                                skipDefsUntilDepth = modelStack.peek().vdepth;
+                                //we processed all of the defs 
+                                continue definition_loop;
+                            }
+                            else
+                            {
+                                //we processed everything nodes and defs
+                                //cleanup any outstanding defs
+                                while(groupStreamStack.peek().contentModelStreamIterator.hasNext())
+                                {
+                                    groupStreamStack.peek().contentModelStreamIterator.next();
+                                }
+                                continue child_node_loop;
                             }
                         }
                         else
                         {
-                            modelStack.peek().satified = childSatisfaction;
+                            modelStack.peek().increment(poppedItem.getState());
+                            System.out.println("\t\t\tGOT DEF "+modelStack.peek());
+                            if(rollback == true)
+                            {
+                                System.out.println("\t\t\tRE-SETTING CHILD IDX = "+modelStack.peek().childIdx);
+                                if(currentChildElement == null && modelStack.peek().childIdx < currentElementIndex)
+                                {
+                                    System.out.println("==============STOP LOOKING FOR POSSIBILITIES=========");
+                                    continue child_node_loop;
+                                }  
+                               // if(modelStack.peek().childIdx < currentElementIndex)
+                                if(currentChildElement != null){
+                                    System.out.println("==============ROLLBACK=========");
+                                    currentElementIndex = modelStack.peek().childIdx;
+                                    if(modelStack.peek().getProcessingState() != StackItemProcessingState.FINISHED &&modelStack.peek().getState() != StackItemState.FAILURE )
+                                    {
+                                        continue child_node_loop;
+                                    }
+                                }
+                               // currentElementIndex = modelStack.peek().childIdx;
+                                
+                                
+                            }
+
+                            if(modelStack.peek().getProcessingState() == StackItemProcessingState.FINISHED)
+                            {                                       
+                                skipDefsUntilDepth = modelStack.peek().vdepth;
+                                System.out.println("\t\t\tSKIPPING UNTIL "+skipDefsUntilDepth);
+                            }
                         }
                         
                     }
                     
-                    //==============PUSH===============
+                    
+                  
+                  //==============================================DEF PUSH======================================
+                  //get a new definition if we don't have anything on the stack, or if our current item is finished 
+                    if(modelStack.isEmpty())
+                    {
+                        if(groupStreamStack.peek().contentModelStreamIterator.hasNext() == false)
+                        {
+                            continue child_node_loop;
+                        }
+                        defElement = groupStreamStack.peek().contentModelStreamIterator.next();
+                        int defElementVirtualDepth = defElement.getDepth()+groupStreamStack.peek().depth;
+                        definitionIndex++;
+                        modelStack.push(new ModelStackItem(defElementVirtualDepth, currentElementIndex, defElement,definitionIndex));
+                        if(rootItem == null)
+                        {
+                            rootItem = modelStack.peek();
+                        }
+                    }                    
+                    //if something is finished then we need the next def, this is the only place where particles can cause a def advance
+                    else if(modelStack.peek().getProcessingState() == StackItemProcessingState.FINISHED)
+                    {
+                        defElement = groupStreamStack.peek().contentModelStreamIterator.next();
+                        int defElementVirtualDepth = defElement.getDepth()+groupStreamStack.peek().depth;
+                        definitionIndex++;
+                        modelStack.push(new ModelStackItem(defElementVirtualDepth, currentElementIndex, defElement,definitionIndex));                        
+                    }
+                  //if this isn't a particle, and it's not finished, then we need to read the next def
+                    else if(modelStack.peek().isTestable() == false) 
+                    {
+                        defElement = groupStreamStack.peek().contentModelStreamIterator.next();
+                        int defElementVirtualDepth = defElement.getDepth()+groupStreamStack.peek().depth;
+                        definitionIndex++;
+                        modelStack.push(new ModelStackItem(defElementVirtualDepth, currentElementIndex, defElement,definitionIndex));
+                    }
+                  //if we're skipping, then we need to read the next def
+                    else if(skipDefsUntilDepth >= 0) 
+                    {
+                        defElement = groupStreamStack.peek().contentModelStreamIterator.next();
+                        int defElementVirtualDepth = defElement.getDepth()+groupStreamStack.peek().depth;
+                        definitionIndex++;
+                        modelStack.push(new ModelStackItem(defElementVirtualDepth, currentElementIndex, defElement,definitionIndex));
+                    }
+                    
+                    //virtual depth of the def node (references make this different than actual document depth)
+                    int defElementVirtualDepth = modelStack.peek().vdepth;
+
+                    //debugging
+                    String depthString =  "";for(int d = 0;d<modelStack.peek().vdepth;d++){depthString +="\t";};
+                    System.out.println("[D.idx="+definitionIndex+" D.vdpth="+modelStack.peek().vdepth+"]"+depthString+modelStack.peek().defNode);
+                    
+                    
+                  //============================================SKIP DEFs==========================
+                    
+                    //keep reading the tape until we get to the level we need.
+                      //make sure that we don't put anything new on our stack until we get there. 
+                      if(skipDefsUntilDepth >= 0)
+                      {
+                          
+                          if(modelStack.isEmpty() == false && modelStack.peek().vdepth > skipDefsUntilDepth )
+                          {
+                              
+                              System.out.println("\t\t\tSKIPPING [D.idx="+definitionIndex+" D.vdpth="+modelStack.peek().vdepth+"]"+modelStack.peek().defNode);
+                              modelStack.pop();
+                              continue definition_loop;
+                          }
+                          else
+                          {
+                              //reset skip
+                              System.out.println("\t\t\tSTOPPED SKIPPING DEFS");
+                              if(currentChildElement != null)
+                              {
+                                  possibilitVector.clear();
+                              }
+                              skipDefsUntilDepth = -1;                            
+                          }
+                      }
+                    
+                    
+                    //==============================================GROUP PUSH======================================
 
 
                     if(defElement.getLocalName().equals("group"))
@@ -227,105 +342,55 @@ public class CNodeValidator2 implements NodeValidationUtilitesFI
                             //find model
                             CElement groupElement = (CElement) XPath.selectNSNode(defElement.getOwnerDocument(), "//xs:group[@name = '"+defElement.getAttribute("ref")+"']","xs="+CDocument.XML_SCHEMA_NS);
                             groupStreamStack.push(new GroupStackItem(defElementVirtualDepth, groupElement));
-
-                            if(debug)
-                            {
-                                System.out.println("\t\t\tPUSHED GROUP: "+(groupStreamStack.peek().depth));
-                            }
+                            System.out.println("\t\t\tPUSHED GROUP: "+(groupStreamStack.peek().depth));
                         }
                         continue;
                     }
 
-                    //keep reading the tape until we get to the level we need.
-                    //make sure that we don't put anything new on our stack until we get there. 
-                    if(skipDefsUntilDepth >= 0)
+                    
+                    
+                    
+                    //========================================PARTICLE TEST======================================
+                    if(modelStack.peek().isTestable() == false)
                     {
-                        
-                        if(modelStack.isEmpty() == false && modelStack.peek().vdepth >= skipDefsUntilDepth)
+                        continue definition_loop;
+                    }
+                    else if(currentChildElement != null) //this will be null when we're doing some last loops looking for possibilities
+                    {
+                        if (modelStack.peek().test(currentChildElement) == true)
                         {
-                            System.out.println("\t\t\tSKIPPING DEF");                                
+                            if(currentElementIndex > longestMatch)
+                            {
+                                longestMatch = currentElementIndex;
+                            }
+                            possibilitVector.clear(); //obviously if we got a match, then we're not currently looking for possibilities, even if the last test was a failure
+                            currentElementIndex++;
                             continue child_node_loop;
                         }
                         else
                         {
-                            //reset skip
-                            System.out.println("\t\t\tSTOPPED SKIPPING DEF");
-                            skipDefsUntilDepth = -1;                            
+                            possibilitVector.add(modelStack.peek());
+                            continue definition_loop;
                         }
                     }
-                    
-                    if(defElement.getLocalName().equals("choice"))
+                    else //the only way we should hit this is if currentChildElement == null on possibility loop
                     {
-                        modelStack.push(new ModelStackItem(defElementVirtualDepth, currentElementIndex, defElement,false,definitionIndex));
+                        modelStack.peek().increment(StackItemState.FAILURE);
+                        System.out.println(modelStack.peek());
+                        possibilitVector.add(modelStack.peek());
                         continue definition_loop;
                     }
-                    
-                    if(defElement.getLocalName().equals("sequence"))
-                    {
-                        modelStack.push(new ModelStackItem(defElementVirtualDepth, currentElementIndex, defElement,true,definitionIndex));
-                        continue definition_loop;
-                    }
-                    
-                    
-                    
-                    //========================PARTICLE TEST==================
-
-                    if(defElement.getLocalName().equals("element") || defElement.getLocalName().equals("any"))
-                    {
-                        //================================MATCH===========================
-                        if(defElement.getAttribute("name").equals(currentChildElement.nodeName) || defElement.getLocalName().equals("any"))
-                        {
-                            currentElementIndex++;
-                            System.out.println("\t\t\tMATCH: D.idx="+definitionIndex+" D.vdpth="+defElementVirtualDepth);
-                            modelStack.peek().incrementSatisfaction();
-                            //if we re satisfied, then we should stop processing this depth
-                            if(modelStack.peek().isSatisfied())
-                            {
-                                skipDefsUntilDepth = modelStack.peek().vdepth;
-                                System.out.println("\t\t\tSKIP DEFS UNTIL: "+skipDefsUntilDepth);
-                            }
-//                            if(modelStack.peek().satified != true) //probably satisfied a choice
-//                            {
-//                                //since we've satisfied a choice, we should run the tape until we reach a peer or parent of that choice
-//                                //who is the current model stack node
-//                                
-//                                skipDefsUntilDepth = modelStack.peek().vdepth;
-//                                System.out.println("\t\t\tSKIP DEFS UNTIL: "+skipDefsUntilDepth);
-//                            }
-//                            //else
-//                            {
-//                                modelStack.peek().satified = true;
-                                continue child_node_loop;
-                            //}
-                        }
-                        //==============================NO MATCH============================
-                        else
-                        {
-                            System.out.println("\t\t\tNO MATCH: D.idx="+definitionIndex+" D.vdpth="+defElementVirtualDepth+"");
-                            if(modelStack.peek().satified != false) //probably failed a sequence
-                            {                                
-                                //since we've failed a sequence, we should run the tape until we reach a peer or parent of that sequence
-                                //who is the current model stack node
-                                
-                                skipDefsUntilDepth = modelStack.peek().vdepth;
-                                System.out.println("\t\t\tSKIP DEFS UNTIL: "+skipDefsUntilDepth);
-                            }
-                            //else failed a choice
-                            {
-                                modelStack.peek().satified = false;
-                                continue definition_loop;
-                            }
-                        }
-                    }
-
                 }
         }
         
         //we finished processing, figure out why
-        if(currentElementIndex < childElementList.size())
+        
+        if(longestMatch+1 < childElementList.size())
         {        	
         	
-        	invalidNode = childElementList.get(currentElementIndex);
+        	
+        	    invalidNode = childElementList.get(longestMatch+1);
+        	
         	System.out.println("Processed all defs, but still have children: "+XPath.getXPath(invalidNode));
         	valid = false;
         }
@@ -347,334 +412,28 @@ public class CNodeValidator2 implements NodeValidationUtilitesFI
         	    ModelStackItem modelStackItem = modelStack.pop();
         	    System.out.println("popping mode stack: "+modelStackItem);
         	}
+        	System.out.println();
+        	for (ModelStackItem modelStackItem : possibilitVector)
+            {
+        	    System.out.println("possibility: "+modelStackItem);
+            }
         	valid = false;
         }
         else
         {
-        	valid = modelStack.peek().isSatisfied();
+            System.out.println(rootItem);    
+        	valid = (rootItem.getState() == StackItemState.PASS);
+        	if(valid == false)
+        	{
+        	    System.out.println();
+        	    for (ModelStackItem modelStackItem : possibilitVector)
+                {
+                    System.out.println("possibility: "+modelStackItem);
+                }
+        	}
         }
         
-        
-        System.out.println();
-        if(debug)
-        {            
-            return valid;
-        }
-
-        
-//        int definitionPathIndex = 0; //debuging only at the moment
-//        //int childNodeIndex = 0;
-//        
-//        //choice related info
-//        Stack<ModelStackItem> choiceStack = new Stack<>();
-//        int returnDepth = -1;
-//        
-//        Stack<ModelStackItem> sequenceStack = new Stack<>();
-//        
-//        //multiple node children will use the same def predicate for matching, so keep this up here
-//        OccurancePredicate predicate = null; 
-//        boolean keepCurrentDef = false;
-//        int childNodeIndex = 0;
-//        boolean getOneExtraDef = true;
-//        
-//        for(; childNodeIndex < childElementList.size()|| getOneExtraDef; childNodeIndex++)
-//        //for(CElement testChild : (Iterable<CElement>) node.nodeList.stream().filter(node->node.getNodeType() == Node.ELEMENT_NODE).map(node->(CElement)node)::iterator)
-//        {
-//            CElement testChild = null;
-//            if(childNodeIndex == childElementList.size() && getOneExtraDef)
-//            {                
-//                getOneExtraDef = false;
-//                childNodeIndex--;
-//                if(groupIteratorStack.peek().hasNext() == false)
-//                {
-//                    //keepCurrentDef = true;
-//                    //currentContentDefNode = null;
-//                }
-//            }
-//            else
-//            {
-//                //childNodeIndex++;
-//                //filter out no element nodes
-//                if(childElementList.get(childNodeIndex).getNodeType() != Node.ELEMENT_NODE)
-//                {
-//                    continue;
-//                }
-//
-//                testChild = (CElement) childElementList.get(childNodeIndex);
-//                //keep next possible match 
-//                if(deepestChildMatch < childNodeIndex)
-//                {                
-//                    nextNoMatch = testChild;                
-//                }
-//            }
-//            
-//            
-//            
-//            //==============START CONTENT DEF LOOP===============
-//            search_loop:
-//            for(;groupIteratorStack.peek().hasNext() || keepCurrentDef  ;definitionPathIndex++)            
-//            {
-//                Integer depthOnLoopEntry = depthStack.peek();
-//                if(keepCurrentDef == false)
-//                {
-//                    currentContentDefNode = groupIteratorStack.peek().next();
-//                    predicate = null; //we have a new def, so clear out the current occurrence predicate
-//                    //if we've reached the end of our group start poping things off the group stack until we reach something valid or the end of the stack
-//                    while(groupIteratorStack.peek().hasNext() == false && groupIteratorStack.size() > 1)
-//                    {
-//                        if(debug)
-//                        {
-//                            System.out.println("popped group");
-//                        }
-//                        groupIteratorStack.pop();
-//                        depthStack.pop();                        
-//                    }
-//                }
-//                else
-//                {
-//                    keepCurrentDef = false;
-//                }
-//                
-//                if(debug)
-//                {
-//                    System.out.println("node = "+childNodeIndex+" TESTING: "+(testChild != null ? XPath.getXPath(testChild) : testChild));
-//                    System.out.println("pos="+definitionPathIndex+" depth="+(currentContentDefNode.getDepth()+depthOnLoopEntry) +" choiceChildLevel= "+(choiceStack.isEmpty() ? "" : choiceStack.peek().levelDepth)+" "+currentContentDefNode);
-//                }
-//                //check to see if we've just popped up to our current choice level
-//                if(choiceStack.isEmpty() == false && (currentContentDefNode.getDepth()+depthOnLoopEntry) == choiceStack.peek().levelDepth+1)
-//                {                                                            
-//                    //check to see if we're currently satisfied
-//                    if (returnDepth < 0) 
-//                    {                        
-//                        //check to see if not just the first child in a choice. if we're satisfied, we should have moved passed that point
-//                        if(childNodeIndex != choiceStack.peek().currentChildNodeIndex)
-//                        {                         
-//                           //if so, popup a choice level since we have nothing left to choose
-//                            //System.out.println("POPUP AT END OF SATISFIED CHOICE");
-//                            returnDepth = choiceStack.peek().levelDepth;
-//                            nextNoMatchDef = null;
-//                        }                              
-//                    }
-//                
-//                }
-//                
-//                //figure out if we popped out of a satisfied sequence
-//                if(sequenceStack.isEmpty() == false && (currentContentDefNode.getDepth()+depthOnLoopEntry) <= sequenceStack.peek().levelDepth)
-//                {//XXX possible error in subsequences!
-//                    if(debug)
-//                    {
-//                        System.out.println("popping out of seq stack: size = "+sequenceStack.size()+" sat? "+sequenceStack.peek().satified);
-//                    }
-//                    sequenceStack.pop();
-//                }
-//                
-//                
-//                //check to see if walked above the current depth of our choices by reaching the end.
-//                if(choiceStack.isEmpty() == false && (currentContentDefNode.getDepth()+depthOnLoopEntry) <= choiceStack.peek().levelDepth)
-//                {
-//                    //System.out.println("went so high, that we're above our last choice");
-//                    if(debug)
-//                    {
-//                        System.out.println("popping choice stack: size = "+choiceStack.size()+" sat? "+choiceStack.peek().satified);
-//                    }
-//                    childNodeIndex = choiceStack.pop().currentChildNodeIndex;                    
-//                }
-//                
-//                //going backup stack
-//                if(returnDepth >= 0)
-//                {
-//                    //System.out.println("going back up tree to level "+(returnDepth+1));
-//                    if((returnDepth+1) < (currentContentDefNode.getDepth()+depthOnLoopEntry)) //XXX might should be peek at depthStack here
-//                    {
-//                        continue; //go to next item in path
-//                    }
-//                    else
-//                    {
-//                        //System.out.println("returned to level "+(currentContentDefNode.getDepth()+depthStack.peek()));
-//                        returnDepth = -1; //done going backup, so reset flag
-//                        if(choiceStack.isEmpty() == false)
-//                        {
-//                            
-//                            if(testChild != null)
-//                            {
-//                                childNodeIndex = choiceStack.peek().currentChildNodeIndex;
-//                                testChild = (CElement) childElementList.get(childNodeIndex);//XXX possibly want to reset anything global at this level
-//                            }
-//                        }
-//                    }
-//                }
-//                
-//                
-//                //======================START PUSHES=================
-//                
-//                if(currentContentDefNode.getLocalName().equals("group"))
-//                {   
-//                    if(currentContentDefNode.hasAttribute("ref")) //don't push the stack if this group isn't a reference, such as the next iteration where we've jump to our referenced group
-//                    {
-//                        //find model
-//                        CElement groupElement = (CElement) XPath.selectNSNode(currentContentDefNode.getOwnerDocument(), "//xs:group[@name = '"+currentContentDefNode.getAttribute("ref")+"']","xs="+CDocument.XML_SCHEMA_NS);
-//                        contentModelStream = groupElement.stream().filter(node->node.getNodeType() == Node.ELEMENT_NODE).map(node->(CElement)node);
-//                        //push new stream onto the stack
-//                        groupIteratorStack.push(((Iterable<CElement>)contentModelStream::iterator).iterator());
-//                        contentModelStream = null; //get rid of stream ref outside of stack to prevent code errors 
-//                        //push new depth multiplier onto the stack
-//                        depthStack.push((currentContentDefNode.getDepth()+depthStack.peek()));
-//                        if(debug)
-//                        {
-//                            System.out.println("pushed group: "+(currentContentDefNode.getDepth()+depthStack.peek()));
-//                        }
-//                    }
-//                    continue;
-//                }
-//                
-//                
-//                //if we're a sequence, we just need to move on to the next element
-//                if(currentContentDefNode.getLocalName().equals("sequence") && testChild != null)
-//                {                    
-//                    sequenceStack.push(new ModelStackItem(currentContentDefNode.getDepth()+depthStack.peek(),childNodeIndex,currentContentDefNode));
-//                    if(debug)
-//                    {
-//                        System.out.println("pushed sequence: "+(currentContentDefNode.getDepth()+depthStack.peek()));
-//                    }
-//                    continue;
-//                }
-//                
-//                if(currentContentDefNode.getLocalName().equals("choice") && testChild != null)
-//                {
-//                    choiceStack.push(new ModelStackItem(currentContentDefNode.getDepth()+depthStack.peek(),childNodeIndex,currentContentDefNode));
-//                    //System.out.println("pushed "+(currentContentDefNode.getDepth()+depthStack.peek()));
-//                    continue;
-//                }
-//                
-//                //=============================START TESTS=======================
-//                
-//                if(currentContentDefNode.getLocalName().equals("element") || currentContentDefNode.getLocalName().equals("any"))
-//                {
-//                    
-//                    if(deepestChildMatch < childNodeIndex)
-//                    {
-//                        nextNoMatchDef = currentContentDefNode;
-//                    }
-//                    
-//                  //do a node match test here
-//                    //Occurrence predicates need to be saved until satisfied or moved beyond 
-//                    if (predicate == null)
-//                    {
-//                        if(currentContentDefNode.getLocalName().equals("element"))
-//                        {    
-//                            predicate = new OccurancePredicate(currentContentDefNode,buildElementPredicateChain(null, currentContentDefNode));
-//                        }
-//                        else if(currentContentDefNode.getLocalName().equals("any"))
-//                        {
-//                            predicate = new OccurancePredicate(currentContentDefNode,buildAnyElementPredicateChain(null,testChild,testChild.namespaceURI, currentContentDefNode));
-//                        }
-//                    }
-//                   
-//                    switch (predicate.increment(testChild))
-//                    {
-//                        case FULL: //This should probably never happen, as the match below should always cause the next def to be processed
-//                            //System.err.println("FULL = "+definitionPathIndex+" "+testChild+" "+currentContentDefNode);
-//                            continue search_loop;
-//                        case NO_MATCH:
-//                            if(debug)
-//                            {
-//                                System.out.println("NO_MATCH = "+definitionPathIndex+" "+testChild+":"+childNodeIndex+" "+currentContentDefNode+" "+(currentContentDefNode.getDepth()+depthStack.peek()));
-//                            }
-//                            if(predicate.isSatisfied()) 
-//                            { //if we're satisfied, we should check the next def
-//                                if(debug)
-//                                {
-//                                    System.out.println("IGNORE no match, but staisfied");
-//                                }
-//                                continue search_loop;
-//                            }
-//                            else
-//                            {
-//                                //System.out.println("unstaisfied");                               
-//                                if(testChild == null) //this just means we walked one past to see if our sequence was satisfied
-//                                {                                 
-//                                    if(sequenceStack.isEmpty() == false)
-//                                    {
-//                                        sequenceStack.peek().satified = false;
-//                                        if(deepestChildMatch == childNodeIndex)
-//                                        {
-//                                            nextNoMatchDef = currentContentDefNode;
-//                                            nextNoMatch = null;
-//                                        }initialSatified
-//                                    }
-//                                    break search_loop;
-//                                }
-//                            }
-//                            if(choiceStack.isEmpty() == false)
-//                            {
-//                                //System.out.println("no match, but in a choice");
-//                                //XXX along with returning to the proper depth, we also need to roll back the currently tested node to the stream position at which we started processing the choice.
-//                                returnDepth = choiceStack.peek().levelDepth;                                
-//                                continue search_loop;
-//                            }
-//                            //Wow, we are invalid!                            
-//                            break search_loop;
-//                        default:
-//                            if(debug)
-//                            {
-//                                System.out.println("MATCH = "+definitionPathIndex+" "+XPath.getXPath(testChild)+":"+childNodeIndex+" <===> "+XPath.getXPath(currentContentDefNode));
-//                            }
-//                            if(childNodeIndex > deepestChildMatch)
-//                            {
-//                                deepestChildMatch = childNodeIndex;
-//                                defNodeOfDeepestChildMatch = definitionPathIndex;                                
-//                                lastMatch = currentContentDefNode;
-//                            }                            
-//                            //if our predicate isn't full, then we need to repeat the same def again
-//                            if(predicate.isFull() == false)
-//                            {
-//                                keepCurrentDef = true; 
-//                            }
-//                            else
-//                            {
-//                                definitionPathIndex++;
-//                            }
-//                            break search_loop;
-//                    }    
-//                }
-//            }
-//        }
-//        
-////        if(sequenceStack.isEmpty() == false)
-////        {
-////           // System.out.println("seq satisfied = "+sequenceStack.peek().satified);
-////        }
-////        System.out.println("Satisfied: "+(predicate != null ? predicate.isSatisfied() : ""));
-//        boolean sequenceStaisfied = sequenceStack.isEmpty();
-//        while(sequenceStack.isEmpty() == false)
-//        {
-//            sequenceStaisfied = sequenceStack.pop().satified;
-//            if(sequenceStaisfied == false)
-//            {
-//                break;
-//            }
-//        } 
-//        if(deepestChildMatch < childElementList.size()-1 || sequenceStaisfied == false)
-//        {
-//                       
-//            //System.err.println("INVALID NODE: "+XPath.getXPath(testChild));
-//            System.out.println("Best match was for "+XPath.getXPath(childElementList.get(deepestChildMatch)));
-//            bestMatch = childElementList.get(deepestChildMatch);
-//            System.out.println("real invalid node was "+nextNoMatch +(nextNoMatch != null ? XPath.getXPath(nextNoMatch)+"" : ""));
-//            invalidNode = nextNoMatch;
-//            System.out.println("next Possible node is "+nextNoMatchDef +(nextNoMatchDef != null ? XPath.getXPath(nextNoMatchDef)+"" : ""));
-//            nextPossibleNode = nextNoMatchDef;
-//            valid = false;
-//            return false;
-//            
-//        }
-//        else
-//        {
-////            System.out.println("OK!");
-//            valid = true;
-//        }
-
-        return true;
+        return valid;
     }
     
     private class GroupStackItem
@@ -696,27 +455,48 @@ public class CNodeValidator2 implements NodeValidationUtilitesFI
         }
         
     }
+    @ToStringControl(control=Control.exclude,modifiers=Modifier.FINAL)
+    public enum StackItemState
+    {
+        PASS,
+        FAILURE,
+        UNKNOWN
+    }
     
     @ToStringControl(control=Control.exclude,modifiers=Modifier.FINAL)
+    public enum StackItemProcessingState
+    {
+        CONTINUE,
+        FINISHED
+    }
+    
+    @ToStringControl(control=Control.exclude,modifiers=Modifier.FINAL+Modifier.STATIC)
     private class ModelStackItem
     {
         
+        
         private int idx;
         private int vdepth;
-        private boolean satified = true;
-        private boolean initialSatisfaction = true;
         //@ToStringControl(control=Control.exclude)
         private CElement defNode;
-        private int requiredSatisfactions = 1;
-        private int satisfactions = 0;
         private int childIdx;
 
-        private int minimumFailures = 0; //if we exceed this then we need to set failure
-        private int maximumFailures = 0; //if we exceed this then we need to set failure
-        private int minimumPasses = 0;
-        private int maximumPasses = 0;
-        private int attempts = 0;
         private int size = 0;
+        
+        private int minimumPasses = 0; //minimum number of required passes before we are considered satisfied 
+        
+        private int allowableFailures = 0; //if we exceed this then we need to set failure
+        private int limit = 0; //maximum number of passes before we stop processing 
+        
+        private int passes = 0; //number of passes we've received
+        private int failures = 0; //number of failures we've received
+        
+        private boolean invert = false; //this allow us to handle NAND,NOR, and NXOR
+        
+        private boolean testable = false;
+        
+       
+        
         
         /**
          * 
@@ -726,42 +506,152 @@ public class CNodeValidator2 implements NodeValidationUtilitesFI
          * @param initialSatisfaction if initial saisfaction changes, then we need to pop back up the tree until we get to a satisfied != current test state
          * also need to pop model stack on negative depth change   
          */
-        public ModelStackItem(int levelDepth, int currentChildNodeIndex, CElement defNode, boolean initialSatisfaction,int definitionIndex)
+        public ModelStackItem(int levelDepth, int currentChildNodeIndex, CElement defNode,int definitionIndex)
         {
             this.vdepth = levelDepth;
             this.childIdx = currentChildNodeIndex;
             this.idx = definitionIndex;
             this.defNode = defNode;
-            this.satified = initialSatisfaction;
-            this.initialSatisfaction = initialSatisfaction;
+
             if(defNode.getLocalName().equals("sequence"))
             {
-                requiredSatisfactions = defNode.getChildNodes(Node.ELEMENT_NODE).size();
-                size = requiredSatisfactions;
-                minimumFailures = 0;
-                maximumFailures = 0;
-                minimumPasses = size;
-                maximumPasses = size;
+                 
+                size = defNode.getChildNodes(Node.ELEMENT_NODE).size();;
+                
+                allowableFailures = 0;
+                limit = size;
+                minimumPasses = size;                
+            }            
+            else if(defNode.getLocalName().equals("choice"))
+            {
+                
+                size = defNode.getChildNodes(Node.ELEMENT_NODE).size();
+                
+                allowableFailures = size;
+                limit = 1;
+                minimumPasses = 1;                
             }
-        }
-        
-        public void incrementSatisfaction()
-        {
-            satisfactions++;
+            else if(defNode.getLocalName().equals("element")) 
+            {
+                
+                
+                OccurancePredicate occurancePredicate = new OccurancePredicate(defNode, null);
+                allowableFailures = 0;
+                limit = occurancePredicate.max;
+                size = occurancePredicate.max;
+                minimumPasses = occurancePredicate.min;
+                testable = true;
+            }
+            else if(defNode.getLocalName().equals("any")) //not using this yet.
+            {                
+                size = defNode.getChildNodes(Node.ELEMENT_NODE).size();
+                OccurancePredicate occurancePredicate = new OccurancePredicate(defNode, null);
+                allowableFailures = 0;
+                limit = occurancePredicate.max;
+                size = occurancePredicate.max;
+                minimumPasses = occurancePredicate.min;
+                testable = true;
+            }
+            else //this should handle any unknown elements that might show up in the stack like xs:complexType  
+            {                 
+                size = defNode.getChildNodes(Node.ELEMENT_NODE).size();;                
+                allowableFailures = 0;
+                limit = size;
+                minimumPasses = size;                
+            }
+            
         }
         
         @ToStringControl(control=Control.include)
-        public boolean isSatisfied()
+        public StackItemState getState()
         {
-            if(satisfactions >= requiredSatisfactions)
+            if (passes >= minimumPasses && failures <= allowableFailures)
             {
-                return true;
+                if(invert)//invert results to handle logical NOT
+                {
+                    return StackItemState.FAILURE;
+                }
+                return StackItemState.PASS;
+            }
+            else 
+            {
+                if(invert) //invert results to handle logical NOT
+                {
+                    return StackItemState.PASS;
+                }
+                return StackItemState.FAILURE;
+            }
+        }
+        
+        public boolean test(CElement currentChildElement)
+        {
+           if(currentChildElement.getLocalName().equals(defNode.getAttribute("name")) || defNode.getLocalName().equals("any"))
+           {
+               System.out.println("\t\t\tMATCH: D.idx="+idx+" D.vdpth="+vdepth);
+               increment(StackItemState.PASS);
+               return true;
+           }
+           else
+           {
+               System.out.println("\t\t\tNO MATCH: D.idx="+idx+" D.vdpth="+vdepth);
+               increment(StackItemState.FAILURE);
+               return false;
+           }
+        }
+
+        @ToStringControl(control=Control.include)
+        public StackItemProcessingState getProcessingState()
+        {
+            if(passes + failures >= size) //if we've processed everything, then finish
+            {
+                return StackItemProcessingState.FINISHED;
+            }
+            else if (failures > allowableFailures) //if we have too many failures, then finish
+            {
+                return StackItemProcessingState.FINISHED;
+            }
+            else if (passes >= limit) //if we have the max number of passes, then stop using this, xor is a good example, we can only have one pass, probably the only time limit doesn't equal size
+            {
+                return StackItemProcessingState.FINISHED;
             }
             else
             {
-                return false;
+                return StackItemProcessingState.CONTINUE;
             }
         }
+        
+        public boolean isTestable()
+        {
+            return testable;
+        }
+        
+        public void incrementSatisfaction()
+        {            
+            passes++;
+        }
+        
+        public void incrementFailure()
+        {            
+            failures++;
+        }
+        
+        public void increment(StackItemState state)
+        {
+            switch (state)
+            {
+                case FAILURE:
+                    incrementFailure();
+                    break;
+                case PASS:
+                    incrementSatisfaction();
+                    break;
+                default:
+                    break;
+            }
+        }
+        
+        
+        
         
         @Override
         public String toString()

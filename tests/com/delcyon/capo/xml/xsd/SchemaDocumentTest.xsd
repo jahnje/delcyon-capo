@@ -23,13 +23,14 @@
                         </xs:choice>
                     </xs:sequence>
                     <xs:sequence>
+                        <xs:any/><!-- next possible is [D,E,F] --><!-- run back up until we hit first unstaisfied parent-->
+                    </xs:sequence>
+                    <xs:sequence>
                         <xs:element name="C"/><!-- next possible is [C] --><!-- run back up until we hit first unstaisfied parent-->
                         <xs:element name="C"/><!-- next possible is [C] --><!-- run back up until we hit first unstaisfied parent-->
                         <xs:element name="C"/><!-- next possible is [D,E,F] --><!-- run back up until we hit first unstaisfied parent-->
                     </xs:sequence>
-                    <xs:sequence>
-                        <xs:any/><!-- next possible is [D,E,F] --><!-- run back up until we hit first unstaisfied parent-->
-                    </xs:sequence>
+                    
                 </xs:choice>
                 <xs:choice>
                     <xs:element name="D"/><!-- VALID -->

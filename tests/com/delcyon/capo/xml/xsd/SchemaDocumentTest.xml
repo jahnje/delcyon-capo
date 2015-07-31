@@ -3,9 +3,10 @@
 <TestTop xmlns="test">
     
     <BASIC>
-        <A></A>        
-        <B></B>
-        <B></B>
+        <A></A>
+        <C></C> <!-- will match on any, but C is a better match, which is what it should match on
+        We're going to need the ability to order choices or process the quality of a match-->
+        <C></C>        
     </BASIC>
     <!--
     <CHOICETEST1>
