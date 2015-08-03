@@ -112,6 +112,7 @@ public class CNodeValidator2 implements NodeValidationUtilitesFI
     {
      
         ModelStackItem rootItem = null;
+        Vector<ModelStackItem> definitionRewindVector = new Vector<>();
         Vector<ModelStackItem> possibilitVector = new Vector<>();
  
         CElement localRootNodeDefinitionElement = nodeDefinition.getNodeDefinitionTypeElement(NodeDefinitionType.complexType);
@@ -267,6 +268,7 @@ public class CNodeValidator2 implements NodeValidationUtilitesFI
                         int defElementVirtualDepth = defElement.getDepth()+groupStreamStack.peek().depth;
                         definitionIndex++;
                         modelStack.push(new ModelStackItem(defElementVirtualDepth, currentElementIndex, defElement,definitionIndex));
+                        definitionRewindVector.add(modelStack.peek());
                         if(rootItem == null)
                         {
                             rootItem = modelStack.peek();
@@ -278,7 +280,8 @@ public class CNodeValidator2 implements NodeValidationUtilitesFI
                         defElement = groupStreamStack.peek().contentModelStreamIterator.next();
                         int defElementVirtualDepth = defElement.getDepth()+groupStreamStack.peek().depth;
                         definitionIndex++;
-                        modelStack.push(new ModelStackItem(defElementVirtualDepth, currentElementIndex, defElement,definitionIndex));                        
+                        modelStack.push(new ModelStackItem(defElementVirtualDepth, currentElementIndex, defElement,definitionIndex));
+                        definitionRewindVector.add(modelStack.peek());
                     }
                   //if this isn't a particle, and it's not finished, then we need to read the next def
                     else if(modelStack.peek().isTestable() == false) 
@@ -287,6 +290,7 @@ public class CNodeValidator2 implements NodeValidationUtilitesFI
                         int defElementVirtualDepth = defElement.getDepth()+groupStreamStack.peek().depth;
                         definitionIndex++;
                         modelStack.push(new ModelStackItem(defElementVirtualDepth, currentElementIndex, defElement,definitionIndex));
+                        definitionRewindVector.add(modelStack.peek());
                     }
                   //if we're skipping, then we need to read the next def
                     else if(skipDefsUntilDepth >= 0) 
@@ -295,6 +299,7 @@ public class CNodeValidator2 implements NodeValidationUtilitesFI
                         int defElementVirtualDepth = defElement.getDepth()+groupStreamStack.peek().depth;
                         definitionIndex++;
                         modelStack.push(new ModelStackItem(defElementVirtualDepth, currentElementIndex, defElement,definitionIndex));
+                        definitionRewindVector.add(modelStack.peek());
                     }
                     
                     //virtual depth of the def node (references make this different than actual document depth)
@@ -335,16 +340,17 @@ public class CNodeValidator2 implements NodeValidationUtilitesFI
                     //==============================================GROUP PUSH======================================
 
 
-                    if(defElement.getLocalName().equals("group"))
+                    if(modelStack.peek().defNode.getLocalName().equals("group"))
                     {   
-                        if(defElement.hasAttribute("ref")) //don't push the stack if this group isn't a reference, such as the next iteration where we've jump to our referenced group
+                        ModelStackItem groupModelStackItem = modelStack.pop(); 
+                        if(groupModelStackItem.defNode.hasAttribute("ref")) //don't push the stack if this group isn't a reference, such as the next iteration where we've jump to our referenced group
                         {
                             //find model
-                            CElement groupElement = (CElement) XPath.selectNSNode(defElement.getOwnerDocument(), "//xs:group[@name = '"+defElement.getAttribute("ref")+"']","xs="+CDocument.XML_SCHEMA_NS);
+                            CElement groupElement = (CElement) XPath.selectNSNode(groupModelStackItem.defNode.getOwnerDocument(), "//xs:group[@name = '"+groupModelStackItem.defNode.getAttribute("ref")+"']","xs="+CDocument.XML_SCHEMA_NS);
                             groupStreamStack.push(new GroupStackItem(defElementVirtualDepth, groupElement));
                             System.out.println("\t\t\tPUSHED GROUP: "+(groupStreamStack.peek().depth));
                         }
-                        continue;
+                        continue definition_loop;
                     }
 
                     
@@ -359,6 +365,15 @@ public class CNodeValidator2 implements NodeValidationUtilitesFI
                     {
                         if (modelStack.peek().test(currentChildElement) == true)
                         {
+                            //if we tested positive on a wildcard, we need to make sure that there are no more-accurate following matches
+                            //we do this by saving the current validation state, and position
+                            //indicating this wild card match as a false
+                            //then continuing to process until we pop-up a level
+                            //at which point we need to determine if we got an alternate match.
+                            //if we did, then we'll use that one
+                            //otherwise we'll continue with the one we have
+                            //??? or should we use the one with the longest match instead.
+                            //??? how do we save the state 
                             if(currentElementIndex > longestMatch)
                             {
                                 longestMatch = currentElementIndex;
@@ -493,9 +508,9 @@ public class CNodeValidator2 implements NodeValidationUtilitesFI
         
         private boolean invert = false; //this allow us to handle NAND,NOR, and NXOR
         
-        private boolean testable = false;
+        private boolean testable = false; //is this a particle
         
-       
+        private int branchAttempts = 0; //number of decision branches we've tried. An ALL would require we try each branch, a Seq stops on first failure, and choice requires all, and chooses best match 
         
         
         /**
@@ -542,7 +557,15 @@ public class CNodeValidator2 implements NodeValidationUtilitesFI
                 minimumPasses = occurancePredicate.min;
                 testable = true;
             }
-            else if(defNode.getLocalName().equals("any")) //not using this yet.
+            else if(defNode.getLocalName().equals("all")) //unordered sequence
+            {
+                throw new UnsupportedOperationException("we don't handle all yet");                
+            }
+            else if(defNode.getLocalName().equals("some"))  //or 
+            {
+                throw new UnsupportedOperationException("we don't handle some/or yet");
+            }
+            else if(defNode.getLocalName().equals("any")) 
             {                
                 size = defNode.getChildNodes(Node.ELEMENT_NODE).size();
                 OccurancePredicate occurancePredicate = new OccurancePredicate(defNode, null);
