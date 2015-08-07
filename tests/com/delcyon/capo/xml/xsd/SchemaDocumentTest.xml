@@ -8,6 +8,20 @@
         We're going to need the ability to order choices or process the quality of a match-->
         <C></C>        
     </BASIC>
+    
+    <BASIC>
+        <A></A>
+        <B></B>
+        <C></C>
+        <D></D>
+    </BASIC>
+    
+    
+    <BASIC>
+        <A></A>
+        <Other></Other>
+        <D></D>
+    </BASIC>
     <!--
     <CHOICETEST1>
         <CHOICETEST1.B></CHOICETEST1.B> 

@@ -42,6 +42,8 @@ public class CNodeValidator2 implements NodeValidationUtilitesFI
     private NodeValidationResult nodeValidationResult = null;
 
    
+
+   
     
     public CNodeValidator2(CNode node, CNodeDefinition definition)
     {
@@ -104,24 +106,119 @@ public class CNodeValidator2 implements NodeValidationUtilitesFI
         return valid; 
     }
     
+    private int definitionIndex = 0;
+    private Stack<GroupStackItem> groupStreamStack = new Stack<>();
+    private Vector<ModelStackItem> definitionRewindVector = new Vector<>();
+    private void init()
+    {
+        definitionIndex = 0;
+        groupStreamStack = new Stack<>();
+        definitionRewindVector = new Vector<>();
+    }
+    
+    private ModelStackItem getNextModel(int currentElementIndex) throws Exception
+    {
+     
+        definitionIndex++;
+        
+        while(true)
+        {
+            //pop a group reference if we've reached the end of it.
+            while(groupStreamStack.peek().contentModelStreamIterator.hasNext() == false && groupStreamStack.size() > 1)
+            {
+                System.out.println("\t\t\tPOPPED GROUP");
+                groupStreamStack.pop();
+            }
 
+            if(groupStreamStack.peek().contentModelStreamIterator.hasNext() == false)
+            {
+                System.out.println("RAN OUT OF DEFS");
+                return null;
+            }
+
+            CElement defElement = groupStreamStack.peek().contentModelStreamIterator.next();
+            
+
+
+            //push group 
+            if(defElement.getLocalName().equals("group"))
+            {
+                if(defElement.hasAttribute("ref")) //don't push the stack if this group isn't a reference, such as the next iteration where we've jump to our referenced group
+                {
+                    //find model                    
+                    CElement groupElement = (CElement) XPath.selectNSNode(defElement.getOwnerDocument(), "//xs:group[@name = '"+defElement.getAttribute("ref")+"']","xs="+CDocument.XML_SCHEMA_NS);
+                    //use original grep/ref element as depth of new group
+                    groupStreamStack.push(new GroupStackItem(defElement.getDepth(), groupElement));
+                    System.out.println("\t\t\tPUSHED GROUP: "+(groupStreamStack.peek().depth));
+                }
+                continue ;//loop around and get next def that's hopefully not another group definition
+            }
+            else
+            {
+                //vdepth = depth of group ref element + current element depth
+                int defElementVirtualDepth = defElement.getDepth()+groupStreamStack.peek().depth;
+                ModelStackItem modelStackItem = new ModelStackItem(defElementVirtualDepth, currentElementIndex, defElement,definitionIndex);         
+                definitionRewindVector.add(modelStackItem);
+                return modelStackItem;
+            }
+        }
+        
+        
+        
+    }
+    
+    
+    private boolean hasNextModel()
+    {
+        //this is just an inquiry, so we don't want to change anything
+        
+      //pop a group reference if we've reached the end of it.
+        if(groupStreamStack.peek().contentModelStreamIterator.hasNext() == false)
+        {
+            if(groupStreamStack.size() > 1) //some other things on the stack, so maybe
+            {
+                Iterator<GroupStackItem> groupStreamStackIterator = groupStreamStack.iterator(); 
+               while(groupStreamStackIterator.hasNext())
+               {
+                   if(groupStreamStackIterator.next().contentModelStreamIterator.hasNext())
+                   {
+                       return true; //fond something with things still on the stack, so yes
+                   }
+               }
+               return false; //never found anything, so no
+            }
+            else
+            {
+                return false; //nothing else on stack, so no possibility of next def
+            }
+        }
+        else
+        {
+            return true; //we have something just stitting there, so yes
+        }
+    }
+
+//    private ModelStackItem getModel()
+//    {
+//        
+//    }
+    
+    
     /*
      * walk through 
      */
     private boolean validateComplexType() throws Exception
     {
-     
+        init();
         ModelStackItem rootItem = null;
-        Vector<ModelStackItem> definitionRewindVector = new Vector<>();
+        
         Vector<ModelStackItem> possibilitVector = new Vector<>();
  
         CElement localRootNodeDefinitionElement = nodeDefinition.getNodeDefinitionTypeElement(NodeDefinitionType.complexType);
         
         LinkedList<CElement> childElementList =  node.nodeList.stream().filter(node->node.getNodeType() == Node.ELEMENT_NODE).map(node->(CElement)node).collect(Collectors.toCollection(LinkedList::new));
 
-        //iterator stack for groups as well as some sort of depth multiplier
-        //push def stream iterator onto stack
-        Stack<GroupStackItem> groupStreamStack = new Stack<>();
+        
         groupStreamStack.push(new GroupStackItem(localRootNodeDefinitionElement.getDepth(), localRootNodeDefinitionElement));
 
         //def related info
@@ -136,7 +233,7 @@ public class CNodeValidator2 implements NodeValidationUtilitesFI
 
 
         int currentElementIndex = 0;
-        int definitionIndex = 0;
+        
         
         
         int skipDefsUntilDepth = -1;
@@ -147,7 +244,7 @@ public class CNodeValidator2 implements NodeValidationUtilitesFI
         child_node_loop:
         while(true)
         {            
-            if((currentElementIndex < childElementList.size() && groupStreamStack.peek().contentModelStreamIterator.hasNext()) == false)
+            if((currentElementIndex < childElementList.size() && hasNextModel()) == false)
             {
                 if(getOneExtraDef)
                 {
@@ -172,7 +269,7 @@ public class CNodeValidator2 implements NodeValidationUtilitesFI
             definition_loop:
                 while(true)            
                 {
-                    if(groupStreamStack.peek().contentModelStreamIterator.hasNext() == false)
+                    if(hasNextModel() == false)
                     {                        
                         if(currentChildElement != null)
                         {
@@ -183,11 +280,11 @@ public class CNodeValidator2 implements NodeValidationUtilitesFI
                     //============================GROUP POP==============================
                     
                     //pop a group reference if we've reached the end of it.
-                    while(groupStreamStack.peek().contentModelStreamIterator.hasNext() == false && groupStreamStack.size() > 1)
-                    {
-                        //System.out.println("\t\t\tPOPPED GROUP");
-                        groupStreamStack.pop();
-                    }
+//                    while(hasNextModel() == false && groupStreamStack.size() > 1)
+//                    {
+//                        //System.out.println("\t\t\tPOPPED GROUP");
+//                        groupStreamStack.pop();
+//                    }
 
                     
                     //pop our model stack until we reach something that isn't finished 
@@ -212,9 +309,9 @@ public class CNodeValidator2 implements NodeValidationUtilitesFI
                             {
                                 //we processed everything nodes and defs
                                 //cleanup any outstanding defs
-                                while(groupStreamStack.peek().contentModelStreamIterator.hasNext())
+                                while(hasNextModel())
                                 {
-                                    groupStreamStack.peek().contentModelStreamIterator.next();
+                                    getNextModel(currentElementIndex);
                                 }
                                 continue child_node_loop;
                             }
@@ -233,10 +330,11 @@ public class CNodeValidator2 implements NodeValidationUtilitesFI
                                 }  
                                // if(modelStack.peek().childIdx < currentElementIndex)
                                 if(currentChildElement != null){
-                                    System.out.println("==============ROLLBACK=========");
+                                    
                                     currentElementIndex = modelStack.peek().childIdx;
                                     if(modelStack.peek().getProcessingState() != StackItemProcessingState.FINISHED &&modelStack.peek().getState() != StackItemState.FAILURE )
                                     {
+                                        System.out.println("==============ROLLBACK=========");
                                         continue child_node_loop;
                                     }
                                 }
@@ -258,17 +356,13 @@ public class CNodeValidator2 implements NodeValidationUtilitesFI
                   
                   //==============================================DEF PUSH======================================
                   //get a new definition if we don't have anything on the stack, or if our current item is finished 
-                    if(modelStack.isEmpty())
+                    if(modelStack.isEmpty() || hasNextModel() == false)
                     {
-                        if(groupStreamStack.peek().contentModelStreamIterator.hasNext() == false)
+                        if(hasNextModel() == false)
                         {
                             continue child_node_loop;
                         }
-                        defElement = groupStreamStack.peek().contentModelStreamIterator.next();
-                        int defElementVirtualDepth = defElement.getDepth()+groupStreamStack.peek().depth;
-                        definitionIndex++;
-                        modelStack.push(new ModelStackItem(defElementVirtualDepth, currentElementIndex, defElement,definitionIndex));
-                        definitionRewindVector.add(modelStack.peek());
+                        modelStack.push(getNextModel(currentElementIndex));
                         if(rootItem == null)
                         {
                             rootItem = modelStack.peek();
@@ -277,33 +371,22 @@ public class CNodeValidator2 implements NodeValidationUtilitesFI
                     //if something is finished then we need the next def, this is the only place where particles can cause a def advance
                     else if(modelStack.peek().getProcessingState() == StackItemProcessingState.FINISHED)
                     {
-                        defElement = groupStreamStack.peek().contentModelStreamIterator.next();
-                        int defElementVirtualDepth = defElement.getDepth()+groupStreamStack.peek().depth;
-                        definitionIndex++;
-                        modelStack.push(new ModelStackItem(defElementVirtualDepth, currentElementIndex, defElement,definitionIndex));
-                        definitionRewindVector.add(modelStack.peek());
+                        
+                        modelStack.push(getNextModel(currentElementIndex));
                     }
                   //if this isn't a particle, and it's not finished, then we need to read the next def
                     else if(modelStack.peek().isTestable() == false) 
-                    {
-                        defElement = groupStreamStack.peek().contentModelStreamIterator.next();
-                        int defElementVirtualDepth = defElement.getDepth()+groupStreamStack.peek().depth;
-                        definitionIndex++;
-                        modelStack.push(new ModelStackItem(defElementVirtualDepth, currentElementIndex, defElement,definitionIndex));
-                        definitionRewindVector.add(modelStack.peek());
+                    {                        
+                        modelStack.push(getNextModel(currentElementIndex));                        
                     }
                   //if we're skipping, then we need to read the next def
                     else if(skipDefsUntilDepth >= 0) 
                     {
-                        defElement = groupStreamStack.peek().contentModelStreamIterator.next();
-                        int defElementVirtualDepth = defElement.getDepth()+groupStreamStack.peek().depth;
-                        definitionIndex++;
-                        modelStack.push(new ModelStackItem(defElementVirtualDepth, currentElementIndex, defElement,definitionIndex));
-                        definitionRewindVector.add(modelStack.peek());
+                        modelStack.push(getNextModel(currentElementIndex));
                     }
                     
                     //virtual depth of the def node (references make this different than actual document depth)
-                    int defElementVirtualDepth = modelStack.peek().vdepth;
+                    //int defElementVirtualDepth = modelStack.peek().vdepth;
 
                     //debugging
                     String depthString =  "";for(int d = 0;d<modelStack.peek().vdepth;d++){depthString +="\t";};
@@ -342,15 +425,16 @@ public class CNodeValidator2 implements NodeValidationUtilitesFI
 
                     if(modelStack.peek().defNode.getLocalName().equals("group"))
                     {   
-                        ModelStackItem groupModelStackItem = modelStack.pop(); 
-                        if(groupModelStackItem.defNode.hasAttribute("ref")) //don't push the stack if this group isn't a reference, such as the next iteration where we've jump to our referenced group
-                        {
-                            //find model
-                            CElement groupElement = (CElement) XPath.selectNSNode(groupModelStackItem.defNode.getOwnerDocument(), "//xs:group[@name = '"+groupModelStackItem.defNode.getAttribute("ref")+"']","xs="+CDocument.XML_SCHEMA_NS);
-                            groupStreamStack.push(new GroupStackItem(defElementVirtualDepth, groupElement));
-                            System.out.println("\t\t\tPUSHED GROUP: "+(groupStreamStack.peek().depth));
-                        }
-                        continue definition_loop;
+//                        ModelStackItem groupModelStackItem = modelStack.pop(); 
+//                        if(groupModelStackItem.defNode.hasAttribute("ref")) //don't push the stack if this group isn't a reference, such as the next iteration where we've jump to our referenced group
+//                        {
+//                            //find model
+//                            CElement groupElement = (CElement) XPath.selectNSNode(groupModelStackItem.defNode.getOwnerDocument(), "//xs:group[@name = '"+groupModelStackItem.defNode.getAttribute("ref")+"']","xs="+CDocument.XML_SCHEMA_NS);
+//                            groupStreamStack.push(new GroupStackItem(defElementVirtualDepth, groupElement));
+//                            System.out.println("\t\t\tPUSHED GROUP: "+(groupStreamStack.peek().depth));
+//                        }
+//                        continue definition_loop;
+                        throw new UnsupportedOperationException("Shouldn't see group element");
                     }
 
                     
@@ -398,6 +482,7 @@ public class CNodeValidator2 implements NodeValidationUtilitesFI
                 }
         }
         
+        //===========================================END MAIN LOOP=================================================================================
         //we finished processing, figure out why
         
         if(longestMatch+1 < childElementList.size())
@@ -407,15 +492,20 @@ public class CNodeValidator2 implements NodeValidationUtilitesFI
         	    invalidNode = childElementList.get(longestMatch+1);
         	
         	System.out.println("Processed all defs, but still have children: "+XPath.getXPath(invalidNode));
+        	while(modelStack.isEmpty() == false)
+            {
+                ModelStackItem modelStackItem = modelStack.pop();
+                System.out.println("popping mode stack: "+modelStackItem);
+            }
         	valid = false;
         }
-        else if (groupStreamStack.peek().contentModelStreamIterator.hasNext())
+        else if (hasNextModel())
         {
-        	System.out.println("Processed all children, but still have defs");
-        	int defElementVirtualDepth = defElement.getDepth()+groupStreamStack.peek().depth;
-        	System.out.println("Current Def = "+defElement+" current depth = "+defElementVirtualDepth);
+//        	System.out.println("Processed all children, but still have defs");
+//        	int defElementVirtualDepth = defElement.getDepth()+groupStreamStack.peek().depth;
+//        	System.out.println("Current Def = "+defElement+" current depth = "+defElementVirtualDepth);
         	defElement = groupStreamStack.peek().contentModelStreamIterator.next();
-        	defElementVirtualDepth = defElement.getDepth()+groupStreamStack.peek().depth;
+        	int defElementVirtualDepth = defElement.getDepth()+groupStreamStack.peek().depth;
         	System.out.println("Next Def = "+defElement+" next depth = "+defElementVirtualDepth);
         	System.out.println("Current model validity = "+modelStack.peek());
         	//if we've run out of children, set the testChild to null, and run the defs out until the end.
