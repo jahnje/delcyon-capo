@@ -6,7 +6,8 @@
         <A></A>
         <C></C> <!-- will match on any, but C is a better match, which is what it should match on
         We're going to need the ability to order choices or process the quality of a match-->
-        <C></C>        
+        <C></C>
+        <!-- The only possibility should be C -->        
     </BASIC>
     
     <BASIC>
@@ -22,6 +23,26 @@
         <Other></Other>
         <D></D>
     </BASIC>
+    
+    
+    <BASIC>
+        <A></A>
+        <Other></Other>
+        <!-- The possibility should be D,E,F -->        
+    </BASIC>
+    
+    <BASIC>
+        <A></A>
+        <B></B>
+        <!-- The possibility should be B,C -->        
+    </BASIC>
+    
+    <BASIC>
+        <A></A>
+        <C></C>
+        <!-- The only possibility should be C -->        
+    </BASIC>
+    
     <!--
     <CHOICETEST1>
         <CHOICETEST1.B></CHOICETEST1.B> 

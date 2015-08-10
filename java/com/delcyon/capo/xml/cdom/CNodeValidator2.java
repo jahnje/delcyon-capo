@@ -9,6 +9,7 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.apache.lucene.search.MultiTermQuery.RewriteMethod;
 import org.w3c.dom.Node;
 
 import com.delcyon.capo.util.ReflectionUtility;
@@ -119,59 +120,79 @@ public class CNodeValidator2 implements NodeValidationUtilitesFI
     private ModelStackItem getNextModel(int currentElementIndex) throws Exception
     {
      
-        definitionIndex++;
-        
-        while(true)
+        System.out.println(definitionRewindVector.size()+"==>"+definitionIndex);
+        //if we're not 
+        if(definitionIndex != definitionRewindVector.size())
         {
-            //pop a group reference if we've reached the end of it.
-            while(groupStreamStack.peek().contentModelStreamIterator.hasNext() == false && groupStreamStack.size() > 1)
-            {
-                System.out.println("\t\t\tPOPPED GROUP");
-                groupStreamStack.pop();
-            }
-
-            if(groupStreamStack.peek().contentModelStreamIterator.hasNext() == false)
-            {
-                System.out.println("RAN OUT OF DEFS");
-                return null;
-            }
-
-            CElement defElement = groupStreamStack.peek().contentModelStreamIterator.next();
-            
-
-
-            //push group 
-            if(defElement.getLocalName().equals("group"))
-            {
-                if(defElement.hasAttribute("ref")) //don't push the stack if this group isn't a reference, such as the next iteration where we've jump to our referenced group
-                {
-                    //find model                    
-                    CElement groupElement = (CElement) XPath.selectNSNode(defElement.getOwnerDocument(), "//xs:group[@name = '"+defElement.getAttribute("ref")+"']","xs="+CDocument.XML_SCHEMA_NS);
-                    //use original grep/ref element as depth of new group
-                    groupStreamStack.push(new GroupStackItem(defElement.getDepth(), groupElement));
-                    System.out.println("\t\t\tPUSHED GROUP: "+(groupStreamStack.peek().depth));
-                }
-                continue ;//loop around and get next def that's hopefully not another group definition
-            }
-            else
-            {
-                //vdepth = depth of group ref element + current element depth
-                int defElementVirtualDepth = defElement.getDepth()+groupStreamStack.peek().depth;
-                ModelStackItem modelStackItem = new ModelStackItem(defElementVirtualDepth, currentElementIndex, defElement,definitionIndex);         
-                definitionRewindVector.add(modelStackItem);
-                return modelStackItem;
-            }
+            return definitionRewindVector.get(definitionIndex++);
         }
-        
-        
+        else
+        {
+            definitionIndex++;
+
+            while(true)
+            {
+                //pop a group reference if we've reached the end of it.
+                while(groupStreamStack.peek().contentModelStreamIterator.hasNext() == false && groupStreamStack.size() > 1)
+                {
+                    System.out.println("\t\t\tPOPPED GROUP");
+                    groupStreamStack.pop();
+                }
+
+                if(groupStreamStack.peek().contentModelStreamIterator.hasNext() == false)
+                {
+                    System.out.println("RAN OUT OF DEFS");
+                    return null;
+                }
+
+                CElement defElement = groupStreamStack.peek().contentModelStreamIterator.next();
+
+
+
+                //push group 
+                if(defElement.getLocalName().equals("group"))
+                {
+                    if(defElement.hasAttribute("ref")) //don't push the stack if this group isn't a reference, such as the next iteration where we've jump to our referenced group
+                    {
+                        //find model                    
+                        CElement groupElement = (CElement) XPath.selectNSNode(defElement.getOwnerDocument(), "//xs:group[@name = '"+defElement.getAttribute("ref")+"']","xs="+CDocument.XML_SCHEMA_NS);
+                        //use original grep/ref element as depth of new group
+                        groupStreamStack.push(new GroupStackItem(defElement.getDepth(), groupElement));
+                        System.out.println("\t\t\tPUSHED GROUP: "+(groupStreamStack.peek().depth));
+                    }
+                    continue ;//loop around and get next def that's hopefully not another group definition
+                }
+                else
+                {
+                    //vdepth = depth of group ref element + current element depth
+                    int defElementVirtualDepth = defElement.getDepth()+groupStreamStack.peek().depth;
+                    ModelStackItem modelStackItem = new ModelStackItem(defElementVirtualDepth, currentElementIndex, defElement,definitionIndex);         
+                    definitionRewindVector.add(modelStackItem);
+
+                    return modelStackItem;
+                }
+            }
+
+        }
         
     }
     
+    
+    private ModelStackItem resetModelIndexTo(int newDefinitionIndex)
+    {
+        definitionIndex = newDefinitionIndex;
+        return definitionRewindVector.get(definitionIndex);
+    }
     
     private boolean hasNextModel()
     {
         //this is just an inquiry, so we don't want to change anything
         
+        //if we've rewound, then we're going to be true.
+        if(definitionIndex < definitionRewindVector.size())
+        {
+            return true;
+        }
       //pop a group reference if we've reached the end of it.
         if(groupStreamStack.peek().contentModelStreamIterator.hasNext() == false)
         {
@@ -223,6 +244,9 @@ public class CNodeValidator2 implements NodeValidationUtilitesFI
 
         //def related info
         Stack<ModelStackItem> modelStack = new Stack<>();
+        
+        //branch realted info
+        Stack<ModelStackItem> branchStack = new Stack<>();
         
         int longestMatch = -1;
         
@@ -286,7 +310,7 @@ public class CNodeValidator2 implements NodeValidationUtilitesFI
 //                        groupStreamStack.pop();
 //                    }
 
-                    
+                  //============================DEF POP==============================
                     //pop our model stack until we reach something that isn't finished 
                     while(modelStack.isEmpty() == false && modelStack.peek().getProcessingState() == StackItemProcessingState.FINISHED)
                     {
@@ -404,6 +428,7 @@ public class CNodeValidator2 implements NodeValidationUtilitesFI
                           {
                               
                               System.out.println("\t\t\tSKIPPING [D.idx="+definitionIndex+" D.vdpth="+modelStack.peek().vdepth+"]"+modelStack.peek().defNode);
+                              //TODO, we need to be branch aware here
                               modelStack.pop();
                               continue definition_loop;
                           }
@@ -437,10 +462,52 @@ public class CNodeValidator2 implements NodeValidationUtilitesFI
                         throw new UnsupportedOperationException("Shouldn't see group element");
                     }
 
+                    //================================START BRANCH CODE=================================
+                    //pop branch
+                    if (branchStack.isEmpty() == false)
+                    {
+                        if((branchStack.peek().vdepth+1) == modelStack.peek().vdepth)
+                        {
+                            System.out.println("\t\t\tBRANCH CHILD: "+modelStack.peek());
+                            //in theory only failed items will ever trigger this here, and only at beginning of branch. We need a place that will trigger at the end of a branch regardless of of final state.
+                            branchStack.peek().incrementBranchAttempt();
+                        }
+                        else if(branchStack.peek().vdepth >= modelStack.peek().vdepth)
+                        {
+                            if(branchStack.peek().isBranchFinished())
+                            {
+                                System.out.println("\t\t\tPOPPED BRANCH ROOT: "+branchStack.pop());
+                            }
+                            else
+                            {
+                                //reset branch to end of last attempt
+                                ModelStackItem branch = branchStack.pop();
+                                System.out.println("\t\t\tSHOULD SET TO NEXT BRANCH CHILD: "+branch);
+                                if(branch.getState() != StackItemState.PASS || branch.getProcessingState() != StackItemProcessingState.FINISHED)
+                                {
+                                    System.err.println("expected to only see branches that have passed everything here, only finished/passed things should be here: "+branch);
+                                }
+                            }
+                        }
+                    }
                     
-                    
+                    //push branch
+                    if (modelStack.peek().isBranchRoot())
+                    {
+                        branchStack.push(modelStack.peek());
+                        System.out.println("\t\t\tPUSH BRANCH ROOT: "+modelStack.peek());
+                    }
                     
                     //========================================PARTICLE TEST======================================
+                    //we need to do some branch checking here to decide if we're in a branch
+                        //hmm.....
+                    //if we SHOULD start a branch
+                        //check branch max and attempts and if > 1 and 0, save the state, and push us ionto the branch stack 
+                    //if we're at the end of a branch and need to make a decision.
+                        //we're at the end of a branch when our level is greater than or equal to our brnach start
+                        //check branch and see if > 1 and == max; need to do this while heading up depth above branch depth
+                        //reset the model vector to the end of this, and the tape to the end of it as well.
+                    
                     if(modelStack.peek().isTestable() == false)
                     {
                         continue definition_loop;
@@ -601,7 +668,7 @@ public class CNodeValidator2 implements NodeValidationUtilitesFI
         private boolean testable = false; //is this a particle
         
         private int branchAttempts = 0; //number of decision branches we've tried. An ALL would require we try each branch, a Seq stops on first failure, and choice requires all, and chooses best match 
-        
+        private int maxBranchAttempts = 1;//number of decision branches we are ALLOWED to try. a sequence would be one, while a choice would be equal to the number of children.  
         
         /**
          * 
@@ -631,7 +698,7 @@ public class CNodeValidator2 implements NodeValidationUtilitesFI
             {
                 
                 size = defNode.getChildNodes(Node.ELEMENT_NODE).size();
-                
+                maxBranchAttempts = size;
                 allowableFailures = size;
                 limit = 1;
                 minimumPasses = 1;                
@@ -649,10 +716,12 @@ public class CNodeValidator2 implements NodeValidationUtilitesFI
             }
             else if(defNode.getLocalName().equals("all")) //unordered sequence
             {
+                maxBranchAttempts = size;
                 throw new UnsupportedOperationException("we don't handle all yet");                
             }
             else if(defNode.getLocalName().equals("some"))  //or 
             {
+                maxBranchAttempts = size;
                 throw new UnsupportedOperationException("we don't handle some/or yet");
             }
             else if(defNode.getLocalName().equals("any")) 
@@ -675,6 +744,36 @@ public class CNodeValidator2 implements NodeValidationUtilitesFI
             
         }
         
+        public boolean isBranchFinished()
+        {
+            if(branchAttempts >= maxBranchAttempts)
+            {
+                return true;
+            }
+            else
+            {
+                return false;
+            }
+        }
+
+        public void incrementBranchAttempt()
+        {
+            branchAttempts++;
+            
+        }
+
+        public boolean isBranchRoot()
+        {
+            if(maxBranchAttempts > 1)
+            {
+                return true;
+            }
+            else
+            {
+                return false;
+            }
+        }
+
         @ToStringControl(control=Control.include)
         public StackItemState getState()
         {
