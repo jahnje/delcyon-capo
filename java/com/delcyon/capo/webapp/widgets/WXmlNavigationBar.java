@@ -5,6 +5,7 @@ import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Vector;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -19,6 +20,7 @@ import eu.webtoolkit.jwt.WLayoutItem;
 import eu.webtoolkit.jwt.WLink;
 import eu.webtoolkit.jwt.WMenu;
 import eu.webtoolkit.jwt.WMenuItem;
+import eu.webtoolkit.jwt.WMouseEvent;
 import eu.webtoolkit.jwt.WNavigationBar;
 import eu.webtoolkit.jwt.WPopupMenu;
 import eu.webtoolkit.jwt.WPushButton;
@@ -50,14 +52,15 @@ public class WXmlNavigationBar extends WNavigationBar
     private HashMap<String, Boolean> permissionsHashMap = new HashMap<>();
     private HashMap<String, List<String>> permissionPathHashMap = new HashMap<>();
     private HashMap<String, WMenuItem> pathMenuItemHashMap = new HashMap<>();
-    
+    private Vector<MenuHolder> menuHolderVector = new Vector<>();
+    private boolean ignoreNavBarClick = false;
     /**
      *  instantiate this with the root element of a menu/permission tree
      * @param menuRootElement
      */
     public WXmlNavigationBar(Element menuRootElement)
     {
-        super();
+        super();        
         //do this as soon as possible or all hell can break loose.  items visible checks will return true even though they are about to be swapped out for example.
         WApplication.getInstance().internalPathChanged().addListener(this, this::internalPathChanged);
         NodeList menuList = menuRootElement.getChildNodes();
@@ -88,14 +91,113 @@ public class WXmlNavigationBar extends WNavigationBar
                 
                 //process submenus
                 buildSubMenuItems(popupMenu,menu);
-                
                 //add button to nav menu
-                addWidget(menuButton);                
+                addWidget(menuButton);
+                //keep track of root menus so we can do decent mouse event processing
+                menuHolderVector.add(new MenuHolder(popupMenu,menuButton));
             }
         }
+        
+        //walk list of root menus and close them if the click event wasn't heard by one of them
+        //this listener must come after we've made all of the menu holders, or the events will fire in the wrong order 
+        clicked().addListener(this, (e)->{
+            if(ignoreNavBarClick == false)
+            {
+                menuHolderVector.forEach((menuHolder)->menuHolder.popupMenu.hide());
+            }
+            ignoreNavBarClick = false;
+        });
 
     }
    
+    /**
+     * Used for mouse event type filtering, since it doesn't exist in WMouseEvent
+     * @author jeremiah
+     *
+     */
+    private enum MouseEventType
+    {
+        DOWN,
+        CLICKED,
+        UP,
+        OVER
+    }
+    
+    /**
+     * used to associated a menu with it's button with it's visual state, and perform event filtering 
+     * @author jeremiah
+     *
+     */
+    private class MenuHolder
+    {
+        
+        WPopupMenu popupMenu = null;
+        WPushButton menuButton = null;
+        boolean isHidden = true;
+        public MenuHolder(WPopupMenu popupMenu, WPushButton menuButton)
+        {
+            this.popupMenu = popupMenu;
+            this.menuButton = menuButton;
+            //all of these are done here since mouse event doesn't have a source nor an event type
+            menuButton.mouseWentDown().addListener(WXmlNavigationBar.this, (event)->processMouseEvent(event, MouseEventType.DOWN, popupMenu, menuButton));
+            menuButton.clicked().addListener(WXmlNavigationBar.this, (event)->processMouseEvent(event, MouseEventType.CLICKED, popupMenu, menuButton));
+            menuButton.mouseWentOver().addListener(WXmlNavigationBar.this, (event)->processMouseEvent(event, MouseEventType.OVER, popupMenu, menuButton));
+        }
+        
+        
+        
+        private void processMouseEvent(WMouseEvent mouseEvent,MouseEventType eventType, WPopupMenu menu, WPushButton menuButton)
+        {
+            
+            //use mouse down to track initial hidden state before clicked gets processed (by listeners that are queued up before us), and possible changes state.
+            if(eventType == MouseEventType.DOWN)
+            {
+                isHidden = menu.isHidden();
+                return;
+            }
+            //if we're processing a click, then the navbar shouldn't
+            if(eventType == MouseEventType.CLICKED)
+            {
+                ignoreNavBarClick = true;
+            }
+            
+            //run through all of the root menu items that aren't us, and see if we need to hide any of them, keep track if we do. 
+            boolean askedSomeoneToHide = false;
+            for (MenuHolder mh : menuHolderVector)
+            {
+                if(menu != mh.popupMenu)
+                {
+                    if(mh.popupMenu.isHidden() == false)
+                    {
+                        mh.popupMenu.hide();
+                        //not needed, but left here for reference later
+                        //mh.popupMenu.doJavaScript("$.data("+ mh.popupMenu.getJsRef()+").obj.setHidden(true);");                                                        
+                        mh.menuButton.toggleStyleClass("active", false,true);
+                        askedSomeoneToHide = true;
+                    }                            
+                }
+            }
+            
+            //if we're not hidden, and we didn't ask anyone else to hide, then we got clicked to close, so do so
+            if(isHidden == false && askedSomeoneToHide == false) 
+            {                
+                menu.hide();
+                //not needed, but left here for reference later
+                //menuButton.getMenu()("$.data("+ b.getJsRef()+").obj.setHidden(true);");
+                //on force hides, toggle the style since it's only done when the js in the browsers hides it
+                menuButton.toggleStyleClass("active", false,true);
+            }
+            
+            
+            //if we're a mouse over and we've asked someone else to hide, and we're hidden, then show ourselves
+            if(eventType == MouseEventType.OVER && askedSomeoneToHide == true && isHidden == true)
+            {                
+                //use popup, show doesn't know where we should popup, so it won't work.
+                menu.popup(menuButton);               
+            } 
+        }
+    }
+    
     /**
      * disable all of the menu made by this class
      */
