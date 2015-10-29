@@ -125,7 +125,12 @@ public class WebResourcesServlet extends AbstractResourceServlet
 	{
 		if (this.lastModified == 0)
 		{
-			File file = new File(servletConfig.getServletContext().getRealPath(resourceJARPath));
+		    String realPath = servletConfig.getServletContext().getRealPath(resourceJARPath);
+		    if(realPath == null)
+		    {
+		        return System.currentTimeMillis();
+		    }
+			File file = new File(realPath);
 			if (file.exists() == true)
 			{
 				this.lastModified = file.lastModified();

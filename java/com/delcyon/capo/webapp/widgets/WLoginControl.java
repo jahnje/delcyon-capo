@@ -81,7 +81,6 @@ public class WLoginControl extends WCompositeWidget
         implementationWidget.addWidget(loginButton);
         loginButton.clicked().addListener(this,this::fireLoginEvent);
         passwordNameFieldTextEdit.enterPressed().addListener(this, this::fireLoginEvent);
-        
         setLoginSate(LoginState.LOGGED_OUT);
         
     }
@@ -194,6 +193,8 @@ public class WLoginControl extends WCompositeWidget
     	{
     		this.loginSate = loginSate;
     	}
-	    
+    	//make sure any state change doesn't kill the echo nature of the box, not sure if it's me or if there is a bug somewhere.
+    	passwordNameFieldTextEdit.setEchoMode(EchoMode.Normal);
+    	passwordNameFieldTextEdit.setEchoMode(EchoMode.Password);
 	}
 }
