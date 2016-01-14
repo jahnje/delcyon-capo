@@ -15,13 +15,44 @@ public class WTailFileWidget extends WConsoleWidget
 {
     
 	private TailingThread tailingThread;
-
-
+	private boolean limitInitialReadSize = false;
+	private long limitMultiplier = 120l;
+	
+	/**
+	 * File to tail
+	 * @param filename
+	 */
 	public WTailFileWidget(String filename)
 	{
 		super();		
 		tailingThread = new TailingThread(new File(filename));		
 	}
+	
+	/**
+	 * 
+	 * @param filename
+	 * @param limitInitialReadSize default to false, can be used against large files to only scan against end of file. Will use limitMultiplier  to determines number of bytes from end to start showing
+	 */
+	public WTailFileWidget(String filename, boolean limitInitialReadSize)
+    {
+        super();        
+        this.limitInitialReadSize = limitInitialReadSize;
+        tailingThread = new TailingThread(new File(filename));      
+    }
+	
+	public long getLimitMultiplier()
+    {
+        return limitMultiplier;
+    }
+	
+	/**
+	 * multipler to use against buffer size control initial size of dump of tailed file default = 120
+	 * @param limitMultiplier
+	 */
+	public void setLimitMultiplier(long limitMultiplier)
+    {
+        this.limitMultiplier = limitMultiplier;
+    }
 	
 	/**
 	 * terminate the file tailing
@@ -72,9 +103,9 @@ public class WTailFileWidget extends WConsoleWidget
 			        long len = file.length();
 			        //don't bother sending anything that would just be scrolled off the buffer, so just skip ahead
 			        //assuming 120 char per line
-			        if(filePosition == 0l && len > (((long)getBufferSize())*120l))
+			        if(limitInitialReadSize && filePosition == 0l && len > (((long)getBufferSize())*limitMultiplier))
 			        {
-			            filePosition = len - (((long)getBufferSize())*120l);
+			            filePosition = len - (((long)getBufferSize())*limitMultiplier);
 			        }
 			        
 			        if (len < filePosition) {
