@@ -71,9 +71,10 @@ public class WTailFileWidget extends WConsoleWidget
 
 			        long len = file.length();
 			        //don't bother sending anything that would just be scrolled off the buffer, so just skip ahead
-			        if(filePosition == 0l && len > ((long)getBufferSize()))
+			        //assuming 120 char per line
+			        if(filePosition == 0l && len > (((long)getBufferSize())*120l))
 			        {
-			            filePosition = len - ((long)getBufferSize());
+			            filePosition = len - (((long)getBufferSize())*120l);
 			        }
 			        
 			        if (len < filePosition) {
