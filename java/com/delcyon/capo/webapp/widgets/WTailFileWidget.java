@@ -70,6 +70,12 @@ public class WTailFileWidget extends WConsoleWidget
 			    {
 
 			        long len = file.length();
+			        //don't bother sending anything that would just be scrolled off the buffer, so just skip ahead
+			        if(filePosition == 0l && len > ((long)getBufferSize()))
+			        {
+			            filePosition = len - ((long)getBufferSize());
+			        }
+			        
 			        if (len < filePosition) {
 			            // Log must have been jibbled or deleted.
 			            append("Log file was reset. Restarting logging from start of file.",TextFormat.PlainText);
