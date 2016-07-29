@@ -3,12 +3,18 @@ package com.delcyon.capo.webapp.widgets;
 import java.util.EnumSet;
 
 import eu.webtoolkit.jwt.AlignmentFlag;
+import eu.webtoolkit.jwt.AnchorTarget;
 import eu.webtoolkit.jwt.Signal1;
+import eu.webtoolkit.jwt.TextFormat;
+import eu.webtoolkit.jwt.WAnchor;
 import eu.webtoolkit.jwt.WBoxLayout;
 import eu.webtoolkit.jwt.WBoxLayout.Direction;
 import eu.webtoolkit.jwt.WContainerWidget;
+import eu.webtoolkit.jwt.WImage;
 import eu.webtoolkit.jwt.WLayout;
 import eu.webtoolkit.jwt.WLength;
+import eu.webtoolkit.jwt.WLink;
+import eu.webtoolkit.jwt.WLink.Type;
 import eu.webtoolkit.jwt.WMouseEvent;
 import eu.webtoolkit.jwt.WPushButton;
 import eu.webtoolkit.jwt.WScrollArea;
@@ -27,7 +33,11 @@ public class WBoundedContainerWidget extends WContainerWidget
 
     
     private WText title = new WText();
+    private WLink helpLink = new WLink(Type.Url,"http:");
+    private WAnchor helpAnchor = new WAnchor();
     private WBoxLayout internalLayout = new WBoxLayout(Direction.TopToBottom);
+    private WContainerWidget titleLayout = new WContainerWidget();
+    
     private WBoxLayout layout = new WBoxLayout(Direction.TopToBottom);
     private WToolBar toolBar = new WToolBar();
     private WContainerWidget internalContainer = new WContainerWidget();
@@ -52,14 +62,22 @@ public class WBoundedContainerWidget extends WContainerWidget
         
         layout.setSpacing(0);
         layout.addWidget(toolBar,0);
-        layout.addWidget(title,0);
+        layout.addWidget(titleLayout,0);
+        helpAnchor.setLink(helpLink);
+        helpAnchor.setImage(new WImage(new WLink("help_icon.png")));
+        helpAnchor.setHidden(true);
+        helpAnchor.setTarget(AnchorTarget.TargetNewWindow);
+        helpAnchor.setMargin(8);
+        titleLayout.addWidget(title);
+        titleLayout.addWidget(helpAnchor);                
         layout.addWidget(internalContainer,1);
         
         super.addStyleClass("bounded_container",false);
         setLayoutSizeAware(true);
-        title.setTextAlignment(AlignmentFlag.AlignCenter);
-        title.setInline(false);
-        title.addStyleClass("h2");
+        titleLayout.setContentAlignment(AlignmentFlag.AlignCenter);
+        title.setInline(true);
+        titleLayout.addStyleClass("h2");
+        title.setTextFormat(TextFormat.XHTMLText);
         
     }
 
@@ -213,6 +231,20 @@ public class WBoundedContainerWidget extends WContainerWidget
     public void setTitle(String title)
     {
         this.title.setText(title);
+    }
+   
+    /** can be internal or external url that points to help page. Null will hide image **/
+    public void setHelpLinkRef(String url)
+    {
+        helpLink.setUrl(url);        
+        if(url == null)
+        {
+            helpAnchor.setHidden(true);
+        }
+        else
+        {
+            helpAnchor.setHidden(false);
+        }
     }
     
     /**
