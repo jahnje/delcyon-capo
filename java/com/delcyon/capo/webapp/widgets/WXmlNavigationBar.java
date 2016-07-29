@@ -54,6 +54,8 @@ public class WXmlNavigationBar extends WNavigationBar
     private HashMap<String, WMenuItem> pathMenuItemHashMap = new HashMap<>();
     private Vector<MenuHolder> menuHolderVector = new Vector<>();
     private boolean ignoreNavBarClick = false;
+    private boolean reloadWidgetOnMenuReselection = false;
+    private boolean internalPathChanged = false;
     /**
      *  instantiate this with the root element of a menu/permission tree
      * @param menuRootElement
@@ -64,6 +66,10 @@ public class WXmlNavigationBar extends WNavigationBar
         //do this as soon as possible or all hell can break loose.  items visible checks will return true even though they are about to be swapped out for example.
         WApplication.getInstance().internalPathChanged().addListener(this, this::internalPathChanged);
         NodeList menuList = menuRootElement.getChildNodes();
+        if("true".equalsIgnoreCase(menuRootElement.getAttribute("reloadWidgetOnMenuReselection")))
+        {
+            reloadWidgetOnMenuReselection = true;
+        }
         for(int index = 0 ; index < menuList.getLength(); index++)
         {
             if(menuList.item(index) instanceof Element)
@@ -231,6 +237,7 @@ public class WXmlNavigationBar extends WNavigationBar
                 if(menuElement.hasChildNodes() == false)
                 {
                     WMenuItem subMenuItem = parentMenu.addItem(menuElement.getAttribute("name"));
+                    subMenuItem.triggered().addListener(this, this::menuItemTriggered);
                     subMenuItem.setInternalPathEnabled(true);               
                     if(menuElement.hasAttribute("path"))
                     {
@@ -284,6 +291,36 @@ public class WXmlNavigationBar extends WNavigationBar
                 }                                
             }
         }
+    }
+    
+    /** 
+     * Called to see if we need to reload the widget on menu item reselection.
+     * It will be a case where the internal path hasn't "changed" and yet our menuitem is being triggered.
+     * This only works because the IPC method always get called first, before our own added triggers on the menu item 
+     * @param menuItem
+     */
+    private void menuItemTriggered(WMenuItem menuItem)
+    {
+        
+        if(reloadWidgetOnMenuReselection == true && internalPathChanged == false)
+        {            
+            internalPathChanged();
+        }
+        internalPathChanged = false;        
+    }
+    
+    /**
+     * forces a widget reload even when the internal path hasn't changed
+     * @param reloadWidgetOnMenuReselection
+     */
+    public void setReloadWidgetOnMenuReselection(boolean reloadWidgetOnMenuReselection)
+    {
+        this.reloadWidgetOnMenuReselection = reloadWidgetOnMenuReselection;
+    }
+
+    public boolean isReloadWidgetOnMenuReselection()
+    {
+        return reloadWidgetOnMenuReselection;
     }
     
     /**
@@ -416,7 +453,8 @@ public class WXmlNavigationBar extends WNavigationBar
      * Process internal path changes. This basically will add any widget to the grid layout at the same position every time based on the internal path changes
      */
     private void internalPathChanged()
-    {
+    {        
+        internalPathChanged = true;
     	if (this.layoutItem == null)
     	{
     		return;
