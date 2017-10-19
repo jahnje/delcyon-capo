@@ -54,7 +54,15 @@ public abstract class AbstractResourceServlet extends HttpServlet
 	    return AbstractResourceServlet.resourceServlet;
 	}
 	
-	
+	@SuppressWarnings("rawtypes")
+	/**
+	 * This can be overridden to if your resource were loaded from a different jar file than the main class's   
+	 * @return
+	 */
+    public Class getResourceClass()
+	{
+	    return AbstractResourceServlet.class;
+	}
 	
 	/**
 	 * define the collection of MimeTypes the servlet will serve up
@@ -96,7 +104,7 @@ public abstract class AbstractResourceServlet extends HttpServlet
 	
 	public boolean exists(String requestURI)
 	{
-	    return (AbstractResourceServlet.class.getResource(getResourcePath(requestURI)) != null);
+	    return (getResourceClass().getResource(getResourcePath(requestURI)) != null);
 	}
 	/**
 	 * Takes a request, attempts to locate the resource requested and stream it to the response 
@@ -118,7 +126,7 @@ public abstract class AbstractResourceServlet extends HttpServlet
 		
 		InputStream inputStream = null;
 
-		inputStream = AbstractResourceServlet.class.getResourceAsStream(resourcePath);
+		inputStream = getResourceClass().getResourceAsStream(resourcePath);
 		if (inputStream == null)
 		{
 		    Logger.getGlobal().log(Level.INFO, "Resource not found at '" + resourcePath + "'. Sending 'not found' response - ");
