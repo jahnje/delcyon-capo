@@ -76,6 +76,7 @@ public class JWTResourcesServlet extends AbstractResourceServlet
         mimeTypes.put("gif", "image/gif");
         mimeTypes.put("gif", "image/gif");
         mimeTypes.put("html", "text/html");
+        mimeTypes.put("map", "application/json");
 	}
 
 	@Override
