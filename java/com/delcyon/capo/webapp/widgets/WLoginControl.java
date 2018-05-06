@@ -164,8 +164,8 @@ public class WLoginControl extends WCompositeWidget
 				loginButton.setText("Logout");
                 passwordNameFieldTextEdit.hide();
                 userNameFieldTextEdit.disable();
-                userNameFieldTextEdit.setStyleClass("valid");                
-                passwordNameFieldTextEdit.setStyleClass("valid");
+                userNameFieldTextEdit.setStyleClass("valid form-control");                
+                passwordNameFieldTextEdit.setStyleClass("valid form-control");
                 wasLoggedIn = true;
 				break;
 			case LOGGED_OUT:
@@ -174,18 +174,18 @@ public class WLoginControl extends WCompositeWidget
 				userNameFieldTextEdit.enable();
 				if(wasLoggedIn == true)
 				{
-				    userNameFieldTextEdit.setStyleClass("required");
-                    passwordNameFieldTextEdit.setStyleClass("required");
+				    userNameFieldTextEdit.setStyleClass("required  form-control");
+                    passwordNameFieldTextEdit.setStyleClass("required  form-control");
 				}
 				else
 				{
-				    userNameFieldTextEdit.setStyleClass("required Wt-edit-emptyText");
-				    passwordNameFieldTextEdit.setStyleClass("required Wt-edit-emptyText");
+				    userNameFieldTextEdit.setStyleClass("required  form-control");
+				    passwordNameFieldTextEdit.setStyleClass("required  form-control");
 				}
 				break;
 			case INVALID:
-				userNameFieldTextEdit.setStyleClass("invalid");
-				passwordNameFieldTextEdit.setStyleClass("invalid");
+				userNameFieldTextEdit.setStyleClass("invalid form-control");
+				passwordNameFieldTextEdit.setStyleClass("invalid form-control");
 				break;
 			}
     	}
