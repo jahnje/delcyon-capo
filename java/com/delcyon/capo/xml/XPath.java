@@ -239,7 +239,7 @@ public class XPath
 		return selectSingleNodeValue(node, path, null,namespaces);
 	}
 	
-	public static String selectSingleNodeValue(Element node, String path, String prefix,String... namespaces) throws Exception
+	private static String selectSingleNodeValue(Element node, String path, String prefix,String... namespaces) throws Exception
 	{
 		try 
 		{

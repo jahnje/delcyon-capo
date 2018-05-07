@@ -197,4 +197,24 @@ public class WLoginControl extends WCompositeWidget
     	passwordNameFieldTextEdit.setEchoMode(EchoMode.Normal);
     	passwordNameFieldTextEdit.setEchoMode(EchoMode.Password);
 	}
+    
+    public String getUsername()
+    {
+    	return userNameFieldTextEdit.getText();
+    }
+    
+    public void setUsername(String username)
+    {
+    	userNameFieldTextEdit.setText(username);
+    }
+    
+    public String getPassword()
+    {
+    	return passwordNameFieldTextEdit.getText();
+    }
+    
+    public void setPassword(String password)
+    {
+    	passwordNameFieldTextEdit.setText(password);
+    }
 }

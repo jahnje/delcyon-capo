@@ -7,6 +7,7 @@ package com.delcyon.capo.webapp.servlets.resource;
  */
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Vector;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -25,6 +26,7 @@ public abstract class AbstractResourceServlet extends HttpServlet
 
 	private boolean caching;	// allow the client to cache resources sent by this servlet? defaults to true but can be overridden by setting a 'caching' init-param with value 'false' in web.xml
 	private long oneYear = 31363200000L;
+	private String forwarder = null;
 
 	@Override
 	public void init(ServletConfig config) throws ServletException
@@ -41,6 +43,11 @@ public abstract class AbstractResourceServlet extends HttpServlet
 			Logger.getGlobal().log(Level.FINEST, "Caching of Resources is enabled - resources are loaded from classpath");
 		}
 
+		if(config.getInitParameter("missingResourceServlet") != null)
+		{
+			forwarder = config.getInitParameter("missingResourceServlet");
+		}
+		
 		initMimeTypes();
 		initResourceStreamers();
 		if(AbstractResourceServlet.resourceServlet == null)
@@ -119,6 +126,11 @@ public abstract class AbstractResourceServlet extends HttpServlet
 		
 		if (resourcePath == null)
 		{
+			if(forwarder != null)
+			{
+				request.getRequestDispatcher(forwarder).forward(request, response);
+				return;
+			}
 		    Logger.getGlobal().log(Level.INFO, "resourcePath '" + resourcePath + "' does not map to a valid resource. Sending 'not found' response - ");
 			response.sendError(HttpServletResponse.SC_NOT_FOUND);
 			return;
@@ -129,9 +141,17 @@ public abstract class AbstractResourceServlet extends HttpServlet
 		inputStream = getResourceClass().getResourceAsStream(resourcePath);
 		if (inputStream == null)
 		{
-		    Logger.getGlobal().log(Level.INFO, "Resource not found at '" + resourcePath + "'. Sending 'not found' response - ");
-			response.sendError(HttpServletResponse.SC_NOT_FOUND);
-			return;
+			if(forwarder != null)
+			{
+				request.getRequestDispatcher(forwarder).forward(request, response);
+				return;
+			}
+			if(inputStream == null)
+			{
+				Logger.getGlobal().log(Level.INFO, "Resource not found at '" + resourcePath + "'. Sending 'not found' response - ");
+				response.sendError(HttpServletResponse.SC_NOT_FOUND);
+				return;
+			}
 		}
 		
 		String mimeType = getResourceContentType(resourcePath);

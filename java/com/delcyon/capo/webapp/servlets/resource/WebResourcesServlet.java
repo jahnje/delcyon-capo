@@ -9,6 +9,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -20,15 +21,21 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import com.delcyon.capo.CapoApplication;
-
-
+/**
+ * 
+ * @author jeremiah
+ * init parameters
+ * defaultVersion = add version number to path. Probably doesn't really work
+ * resourceJARPath = locate of jar file containing data. Only used for caching default = ""
+ * resourcePattern = should match servlet request path. default = "/wr/" 
+ * resourceFolder = actual internal path of resources. default = "/web_resources/"
+ */
 public class WebResourcesServlet extends AbstractResourceServlet
 {
-	private static final String resourceJARPath = "";
+	private  String resourceJARPath = "";
 	
-	private final static String resourcePattern = "/wr/";
-	private final static String resourceFolder = "/web_resources/";
+	private  String resourcePattern = "/wr/";
+	private  String resourceFolder = "/web_resources/";
 
 
 	private static Map<String, String> mimeTypes;
@@ -46,6 +53,35 @@ public class WebResourcesServlet extends AbstractResourceServlet
 		if (defaultVersion == null || defaultVersion.trim().length() == 0)
 		{
 			defaultVersion = "";
+		}
+		
+		resourceJARPath = getInitParameter("resourceJARPath");
+		if (resourceJARPath == null || resourceJARPath.trim().length() == 0)
+		{
+			resourceJARPath = "";
+		}
+		
+		resourcePattern = getInitParameter("resourcePattern");
+		if (resourcePattern == null || resourcePattern.trim().length() == 0)
+		{
+			resourcePattern = "/wr/";
+		}
+		
+		resourceFolder = getInitParameter("resourceFolder");
+		if (resourceFolder == null || resourceFolder.trim().length() == 0)
+		{
+			resourceFolder = "/web_resources/";
+		}
+		
+		Enumeration<String> parameterNames = getInitParameterNames();
+		while(parameterNames.hasMoreElements())
+		{
+			String parameterName = parameterNames.nextElement();
+			if(parameterName.startsWith("mimetype+"))
+			{
+				String key = parameterName.replaceFirst("mimetype\\+", "");
+				mimeTypes.put(key, getInitParameter(parameterName));
+			}
 		}
 		
 		Logger.getGlobal().log(Level.FINEST, "Using default version: '" + defaultVersion+"'");
