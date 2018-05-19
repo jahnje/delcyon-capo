@@ -104,6 +104,12 @@ public class CElement extends CNode implements Element
         cascadeDOMEvent(prepareEvent(EventType.UPDATE, this));
     }
 
+    public CElement addAttribute(String name, String value) throws DOMException
+    {
+    	setAttribute(name, value);
+    	return this;
+    }
+    
     /* (non-Javadoc)
      * @see org.w3c.dom.Element#removeAttribute(java.lang.String)
      */
