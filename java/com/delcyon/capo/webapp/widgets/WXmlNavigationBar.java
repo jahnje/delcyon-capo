@@ -51,6 +51,8 @@ public class WXmlNavigationBar extends WNavigationBar
     private WLayoutItem originalLayoutItem;
     private HashMap<String, Boolean> permissionsHashMap = new HashMap<>();
     private HashMap<String, List<String>> permissionPathHashMap = new HashMap<>();
+    private HashMap<String, List<WMenuItem>> permissionMenuHashMap = new HashMap<>();
+    private HashMap<String, List<WPushButton>> permissionMenuButtonHashMap = new HashMap<>();
     private HashMap<String, WMenuItem> pathMenuItemHashMap = new HashMap<>();
     private Vector<MenuHolder> menuHolderVector = new Vector<>();
     private boolean ignoreNavBarClick = false;
@@ -74,8 +76,9 @@ public class WXmlNavigationBar extends WNavigationBar
         {
             if(menuList.item(index) instanceof Element)
             {
-                Element menu = (Element) menuList.item(index);
-                WPushButton menuButton = new WPushButton(menu.getAttribute("name"));
+                Element menuElement = (Element) menuList.item(index);
+                WPushButton menuButton = new WPushButton(menuElement.getAttribute("name"));
+               
                 enableMenuSignal.addListener(menuButton, ()-> menuButton.enable());
                 disableMenuSignal.addListener(menuButton, ()-> menuButton.disable());
                 if(menuRootElement.hasAttribute("styleClass"))
@@ -83,20 +86,30 @@ public class WXmlNavigationBar extends WNavigationBar
                     menuButton.setStyleClass(menuRootElement.getAttribute("styleClass"));
                 }
                 
+                if(menuElement.hasAttribute("styleClass"))
+                {
+                    menuButton.addStyleClass(menuElement.getAttribute("styleClass"));
+                }
+                
                 //process path attributes
                 WPopupMenu popupMenu = new WPopupMenu();
-                if(menu.hasAttribute("path"))
+                if(menuElement.hasAttribute("path"))
                 {
-                    popupMenu.setInternalPathEnabled(menu.getAttribute("path"));    
+                    popupMenu.setInternalPathEnabled(menuElement.getAttribute("path"));    
                 }
                 else
                 {
-                    popupMenu.setInternalPathEnabled(menu.getAttribute("name").toLowerCase());
+                    popupMenu.setInternalPathEnabled(menuElement.getAttribute("name").toLowerCase());
                 }                
                 menuButton.setMenu(popupMenu);
                 
+                if(menuElement.hasAttribute("perm"))
+                {
+                	initPermissions(menuElement, null, menuButton);
+                }
+                
                 //process submenus
-                buildSubMenuItems(popupMenu,menu);
+                buildSubMenuItems(popupMenu,menuElement);
                 //add button to nav menu
                 addWidget(menuButton);
                 //keep track of root menus so we can do decent mouse event processing
@@ -165,6 +178,7 @@ public class WXmlNavigationBar extends WNavigationBar
             if(eventType == MouseEventType.CLICKED)
             {
                 ignoreNavBarClick = true;
+                
             }
             
             //run through all of the root menu items that aren't us, and see if we need to hide any of them, keep track if we do. 
@@ -266,9 +280,10 @@ public class WXmlNavigationBar extends WNavigationBar
                 {
                     WPopupMenu subMenu = new WPopupMenu();
                     
-                    parentMenu.addMenu(menuElement.getAttribute("name"),subMenu);
+                    WMenuItem menuItem = parentMenu.addMenu(menuElement.getAttribute("name"),subMenu);
                     //make sure the this submenu is not considered a valid place to go. It should have no internal path, but apparently one get created when you use addMenu 
                     subMenu.getParentItem().setInternalPathEnabled(false);
+                    initPermissions(menuElement,menuItem,null);
                     if(menuElement.hasAttribute("path"))
                     {
                     	String path = menuElement.getAttribute("path");
@@ -293,7 +308,9 @@ public class WXmlNavigationBar extends WNavigationBar
         }
     }
     
-    /** 
+    
+
+	/** 
      * Called to see if we need to reload the widget on menu item reselection.
      * It will be a case where the internal path hasn't "changed" and yet our menuitem is being triggered.
      * This only works because the IPC method always get called first, before our own added triggers on the menu item 
@@ -324,6 +341,57 @@ public class WXmlNavigationBar extends WNavigationBar
     }
     
     /**
+     * This set permissions on submenus.
+     * @param subMenu
+     * @param menuElement
+     * @param menuItem 
+     * @param subMenuButton 
+     */
+    private void initPermissions(Element menuElement, WMenuItem menuItem, WPushButton subMenuButton)
+	{
+    	//menuItem.get
+    	if(menuElement.hasAttribute("perm"))
+        {
+            String[] perms = menuElement.getAttribute("perm").split(",");
+            if(menuItem != null)
+            {
+            	menuItem.getMenu().setDisabled(true);
+            }
+            if(subMenuButton != null)
+            {
+            	subMenuButton.setDisabled(true);
+            }
+            for (String perm : perms)
+            {
+                List<WMenuItem> menuList =  permissionMenuHashMap.get(perm);
+                if(menuList == null)
+                {
+                    menuList = new ArrayList<>();
+                    permissionMenuHashMap.put(perm, menuList);
+                }
+                if(menuItem != null)
+                {
+                	menuList.add(menuItem);
+                }
+                
+                List<WPushButton> menuButtonList =  permissionMenuButtonHashMap.get(perm);
+                if(menuButtonList == null)
+                {
+                	menuButtonList = new ArrayList<>();
+                	permissionMenuButtonHashMap.put(perm, menuButtonList);
+                }
+                if(subMenuButton != null)
+                {
+                	menuButtonList.add(subMenuButton);
+                }
+            }                        
+        }
+		
+	}
+    
+   
+
+	/**
      * initialize any menu permissions that are found while processing the xml
      * @param subMenuItem
      * @param menuElement
@@ -348,6 +416,7 @@ public class WXmlNavigationBar extends WNavigationBar
     }
 
 
+    
     /**
      * get the associated internal path for a menu item 
      * @param menuItem
@@ -606,6 +675,8 @@ public class WXmlNavigationBar extends WNavigationBar
     {
         //clear all permissions, by setting them all to false
         this.permissionsHashMap.forEach((perm,path)->setPermission(perm, false));        
+        this.permissionMenuHashMap.forEach((perm,path)->setPermission(perm, false));
+        this.permissionMenuButtonHashMap.forEach((perm,path)->setPermission(perm, false));
         if(permissionsHashMap != null)
         {
             permissionsHashMap.forEach(this::setPermission);
@@ -633,6 +704,25 @@ public class WXmlNavigationBar extends WNavigationBar
                 {
                     menuItem.setDisabled(!bool); //reverse the meaning of the boolean since this is to setDisabled not Enabled        
                 }
+            }
+        }
+        List<WMenuItem> menus = permissionMenuHashMap.get(perm);
+        if(menus != null)
+        {
+            for (WMenuItem menuItem : menus)
+            {
+            		//System.out.println(menu.getCurrentItem()+"-->"+menu.getJsRef());
+                	menuItem.getMenu().setDisabled(!bool); //reverse the meaning of the boolean since this is to setDisabled not Enabled
+                	menuItem.getAnchor().setDisabled(!bool);                	
+            }
+        }
+        List<WPushButton> buttons = permissionMenuButtonHashMap.get(perm);
+        if(buttons != null)
+        {
+            for (WPushButton menuButton : buttons)
+            {
+            		//System.out.println(menu.getCurrentItem()+"-->"+menu.getJsRef());
+            	menuButton.setDisabled(!bool); //reverse the meaning of the boolean since this is to setDisabled not Enabled                	                	
             }
         }
         storePermission(perm, bool);
