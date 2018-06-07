@@ -24,6 +24,7 @@ import eu.webtoolkit.jwt.WMouseEvent;
 import eu.webtoolkit.jwt.WNavigationBar;
 import eu.webtoolkit.jwt.WPopupMenu;
 import eu.webtoolkit.jwt.WPushButton;
+import eu.webtoolkit.jwt.WSplitButton;
 import eu.webtoolkit.jwt.WWidget;
 
 /**
@@ -74,31 +75,76 @@ public class WXmlNavigationBar extends WNavigationBar
         {
             if(menuList.item(index) instanceof Element)
             {
-                Element menu = (Element) menuList.item(index);
-                WPushButton menuButton = new WPushButton(menu.getAttribute("name"));
+                Element menuElement = (Element) menuList.item(index);
+                WPushButton _menuButton = null;
+                WSplitButton wSplitButton = null;
+                if(menuElement.hasAttribute("actionPath"))
+                {
+                     wSplitButton = new WSplitButton(menuElement.getAttribute("name"));
+                    _menuButton = wSplitButton.getDropDownButton();
+                    wSplitButton.getActionButton().clicked().addListener(this, ()->{
+                        WApplication.getInstance().setInternalPath(menuElement.getAttribute("actionPath"), true);
+                    });
+                }
+                else
+                {
+                    _menuButton = new WPushButton(menuElement.getAttribute("name"));
+                }
+                
+                WPushButton menuButton = _menuButton;
+                
+               // WPushButton 
                 enableMenuSignal.addListener(menuButton, ()-> menuButton.enable());
                 disableMenuSignal.addListener(menuButton, ()-> menuButton.disable());
                 if(menuRootElement.hasAttribute("styleClass"))
                 {
-                    menuButton.setStyleClass(menuRootElement.getAttribute("styleClass"));
+                    
+                    if(wSplitButton != null)
+                    {
+                        wSplitButton.getActionButton().setStyleClass(menuRootElement.getAttribute("styleClass"));                        
+                    }
+                    else
+                    {
+                        menuButton.setStyleClass(menuRootElement.getAttribute("styleClass"));    
+                    }
+                }
+                
+                if(menuElement.hasAttribute("styleClass"))
+                {
+                    
+                    if(wSplitButton != null)
+                    {
+                        wSplitButton.getActionButton().addStyleClass(menuElement.getAttribute("styleClass"),true);
+                    }
+                    else
+                    {
+                        menuButton.addStyleClass(menuElement.getAttribute("styleClass"),true);    
+                    }
                 }
                 
                 //process path attributes
                 WPopupMenu popupMenu = new WPopupMenu();
-                if(menu.hasAttribute("path"))
+                if(menuElement.hasAttribute("path"))
                 {
-                    popupMenu.setInternalPathEnabled(menu.getAttribute("path"));    
+                    popupMenu.setInternalPathEnabled(menuElement.getAttribute("path"));    
                 }
                 else
                 {
-                    popupMenu.setInternalPathEnabled(menu.getAttribute("name").toLowerCase());
+                    popupMenu.setInternalPathEnabled(menuElement.getAttribute("name").toLowerCase());
                 }                
                 menuButton.setMenu(popupMenu);
                 
                 //process submenus
-                buildSubMenuItems(popupMenu,menu);
+                buildSubMenuItems(popupMenu,menuElement);
                 //add button to nav menu
-                addWidget(menuButton);
+                if(wSplitButton != null)
+                {
+                    addWidget(wSplitButton);
+                }
+                else
+                {
+                    addWidget(menuButton);
+                }
                 //keep track of root menus so we can do decent mouse event processing
                 menuHolderVector.add(new MenuHolder(popupMenu,menuButton));
             }
