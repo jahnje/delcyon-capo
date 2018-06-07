@@ -24,6 +24,7 @@ import eu.webtoolkit.jwt.WMouseEvent;
 import eu.webtoolkit.jwt.WNavigationBar;
 import eu.webtoolkit.jwt.WPopupMenu;
 import eu.webtoolkit.jwt.WPushButton;
+import eu.webtoolkit.jwt.WSplitButton;
 import eu.webtoolkit.jwt.WWidget;
 
 /**
@@ -75,12 +76,50 @@ public class WXmlNavigationBar extends WNavigationBar
             if(menuList.item(index) instanceof Element)
             {
                 Element menu = (Element) menuList.item(index);
-                WPushButton menuButton = new WPushButton(menu.getAttribute("name"));
+                WPushButton _menuButton = null;
+                WSplitButton wSplitButton = null;
+                if(menu.hasAttribute("actionPath"))
+                {
+                     wSplitButton = new WSplitButton(menu.getAttribute("name"));
+                    _menuButton = wSplitButton.getDropDownButton();
+                    wSplitButton.getActionButton().clicked().addListener(this, ()->{
+                        WApplication.getInstance().setInternalPath(menu.getAttribute("actionPath"), true);
+                    });
+                }
+                else
+                {
+                    _menuButton = new WPushButton(menu.getAttribute("name"));
+                }
+                
+                WPushButton menuButton = _menuButton;
+                
+               // WPushButton 
                 enableMenuSignal.addListener(menuButton, ()-> menuButton.enable());
                 disableMenuSignal.addListener(menuButton, ()-> menuButton.disable());
                 if(menuRootElement.hasAttribute("styleClass"))
                 {
-                    menuButton.setStyleClass(menuRootElement.getAttribute("styleClass"));
+                    
+                    if(wSplitButton != null)
+                    {
+                        wSplitButton.getActionButton().setStyleClass(menuRootElement.getAttribute("styleClass"));                        
+                    }
+                    else
+                    {
+                        menuButton.setStyleClass(menuRootElement.getAttribute("styleClass"));    
+                    }
+                }
+                
+                if(menu.hasAttribute("styleClass"))
+                {
+                    
+                    if(wSplitButton != null)
+                    {
+                        wSplitButton.getActionButton().addStyleClass(menu.getAttribute("styleClass"),true);
+                    }
+                    else
+                    {
+                        menuButton.addStyleClass(menu.getAttribute("styleClass"),true);    
+                    }
                 }
                 
                 //process path attributes
@@ -98,7 +137,14 @@ public class WXmlNavigationBar extends WNavigationBar
                 //process submenus
                 buildSubMenuItems(popupMenu,menu);
                 //add button to nav menu
-                addWidget(menuButton);
+                if(wSplitButton != null)
+                {
+                    addWidget(wSplitButton);
+                }
+                else
+                {
+                    addWidget(menuButton);
+                }
                 //keep track of root menus so we can do decent mouse event processing
                 menuHolderVector.add(new MenuHolder(popupMenu,menuButton));
             }
