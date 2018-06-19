@@ -3,6 +3,7 @@ package com.delcyon.capo.webapp.widgets;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Vector;
@@ -53,10 +54,13 @@ public class WXmlNavigationBar extends WNavigationBar
     private HashMap<String, Boolean> permissionsHashMap = new HashMap<>();
     private HashMap<String, List<String>> permissionPathHashMap = new HashMap<>();
     private HashMap<String, WMenuItem> pathMenuItemHashMap = new HashMap<>();
+    private HashMap<String, Element> pathMenuElementHashMap = new HashMap<>();
     private Vector<MenuHolder> menuHolderVector = new Vector<>();
     private boolean ignoreNavBarClick = false;
     private boolean reloadWidgetOnMenuReselection = false;
     private boolean internalPathChanged = false;
+    private String[] titleAttributes = null;
+    private Element currentMenuElement = null;
     /**
      *  instantiate this with the root element of a menu/permission tree
      * @param menuRootElement
@@ -70,6 +74,10 @@ public class WXmlNavigationBar extends WNavigationBar
         if("true".equalsIgnoreCase(menuRootElement.getAttribute("reloadWidgetOnMenuReselection")))
         {
             reloadWidgetOnMenuReselection = true;
+        }
+        if(menuRootElement.hasAttribute("titleAttributes"))
+        {
+            titleAttributes = menuRootElement.getAttribute("titleAttributes").split(",");
         }
         for(int index = 0 ; index < menuList.getLength(); index++)
         {
@@ -304,6 +312,7 @@ public class WXmlNavigationBar extends WNavigationBar
                         subMenuItem.setPathComponent(menuElement.getAttribute("name").toLowerCase()); 
                     }
                     pathMenuItemHashMap.put(getPath(subMenuItem), subMenuItem);
+                    pathMenuElementHashMap.put(getPath(subMenuItem),menuElement);
                     loadPathClass(getPath(subMenuItem),menuElement);
                     loadPathMethod(getPath(subMenuItem),menuElement);
                     initPermissions(subMenuItem,menuElement);
@@ -540,9 +549,36 @@ public class WXmlNavigationBar extends WNavigationBar
             gridLayout.addItem(originalLayoutItem, row, column);
             e.printStackTrace();            
         }
+        if(pathMenuElementHashMap.containsKey(iternalPath))
+        {
+            this.currentMenuElement  = pathMenuElementHashMap.get(iternalPath);
+            if(titleAttributes != null)
+            {
+                
+                String attrName = Arrays.stream(titleAttributes).filter(atr->getCurrentMenuElement().hasAttribute(atr)).findFirst().orElse("name");
+                setTitle(getCurrentMenuElement().getAttribute(attrName));
+            }
+        }
+        
         this.layoutItem  = gridLayout.getItemAt(index);
         this.layoutItem.getWidget().refresh();
         
+    }
+    
+    public void setTitleAttributes(String...titleAttributes)
+    {
+        this.titleAttributes = titleAttributes;
+    }
+    
+    public String[] getTitleAttributes()
+    {
+        return titleAttributes;
+    }
+   
+    
+    public Element getCurrentMenuElement()
+    {
+        return currentMenuElement;
     }
     
     /**
