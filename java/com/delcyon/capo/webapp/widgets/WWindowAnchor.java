@@ -1,5 +1,7 @@
 package com.delcyon.capo.webapp.widgets;
 
+import java.util.HashMap;
+
 import eu.webtoolkit.jwt.AnchorTarget;
 import eu.webtoolkit.jwt.Icon;
 import eu.webtoolkit.jwt.JSignal;
@@ -17,10 +19,12 @@ import eu.webtoolkit.jwt.WPushButton;
  */
 public class WWindowAnchor extends WAnchor
 {
+    
     private JSignal openError = new JSignal(this, "openError") { };
     private String alertMessageTitle = "Please enable popups in your browser";
     private String alertMessage = "You must disable popup blocking for this application to open things in other tabs or windows.";
     private boolean unhideOnError = false;
+    private boolean attached = false;
     
     public WWindowAnchor()
     {
@@ -40,6 +44,57 @@ public class WWindowAnchor extends WAnchor
         doJavaScript("win = window.open('"+getLink().getUrl()+"','_blank'); if(win == null || typeof win === \"undefined\") {"+openError.createCall()+";}");
     }
     
+    public void openPost(HashMap<String, String> parameters)
+    {
+    
+        //convert parameters to json string for doJavaScript 
+        /*
+         
+         openWindowWithPost("http://www.example.com/index.php", {
+            p: "view.map",
+            coords: encodeURIComponent(coords)
+         });
+          
+         */
+        final StringBuffer jsonArray = new StringBuffer();
+        parameters.entrySet().forEach(entry->{
+            jsonArray.append((jsonArray.length() != 0 ? ",\n" : "")+ entry.getKey()+": '"+entry.getValue()+"'");           
+        });
+        jsonArray.append("\n");
+        
+        if(attached == false)
+        {
+            attachJS();
+            attached = true;
+        }
+        doJavaScript(getJsRef()+".openWindowWithPost('"+getLink().getUrl()+"', {"+jsonArray+"});");
+        
+    }
+    
+    private void attachJS()
+    {
+               
+        setJavaScriptMember("openWindowWithPost","function(url, data) { "
+                +"var form = document.createElement(\"form\"); "
+                +"form.target = \"_blank\"; "
+                +"form.method = \"POST\"; "
+                +"form.action = url; "
+            +"form.style.display = \"none\"; "
+            +" "
+            +"for (var key in data) { "
+            +"var input = document.createElement(\"input\"); "
+            +"input.type = \"hidden\"; "
+            +"input.name = key; "
+                +"input.value = data[key]; "
+                +"form.appendChild(input); "
+                +"} "
+            +" "
+            +"document.body.appendChild(form); "
+            +"form.submit(); "
+            +"document.body.removeChild(form); "
+            +"} "
+        );
+    }
     public void setAlertMessageTitle(String alertMessage)
     {
         this.alertMessageTitle = alertMessage;
