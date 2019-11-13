@@ -675,6 +675,18 @@ public class WXmlNavigationBar extends WNavigationBar
                     return (WXmlNavigationBar) field.get(application);
                 }
             }
+            Method[] methods = application.getClass().getMethods();
+            for (Method method : methods)
+            {
+                if(method.getReturnType() == WXmlNavigationBar.class)
+                {                    
+                    method.setAccessible(true);
+                    if(method.getParameterCount() == 0)
+                    {
+                        return (WXmlNavigationBar) method.invoke(application, (Object[])null);
+                    }
+                }
+            }
         }
         return null;
     }
