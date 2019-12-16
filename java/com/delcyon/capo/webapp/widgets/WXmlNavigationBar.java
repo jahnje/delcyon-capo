@@ -61,6 +61,8 @@ public class WXmlNavigationBar extends WNavigationBar
     private boolean internalPathChanged = false;
     private String[] titleAttributes = null;
     private Element currentMenuElement = null;
+    private boolean setPageTitle = false;
+    private boolean setNavbarTitle = true;
     /**
      *  instantiate this with the root element of a menu/permission tree
      * @param menuRootElement
@@ -79,6 +81,15 @@ public class WXmlNavigationBar extends WNavigationBar
         {
             titleAttributes = menuRootElement.getAttribute("titleAttributes").split(",");
         }
+        if(menuRootElement.hasAttribute("setPageTitle"))
+        {
+            setPageTitle = "true".equalsIgnoreCase(menuRootElement.getAttribute("setPageTitle"));
+        }
+        if(menuRootElement.hasAttribute("setNavbarTitle"))
+        {
+            setNavbarTitle = "true".equalsIgnoreCase(menuRootElement.getAttribute("setNavbarTitle"));
+        }
+        
         for(int index = 0 ; index < menuList.getLength(); index++)
         {
             if(menuList.item(index) instanceof Element)
@@ -556,7 +567,14 @@ public class WXmlNavigationBar extends WNavigationBar
             {
                 
                 String attrName = Arrays.stream(titleAttributes).filter(atr->getCurrentMenuElement().hasAttribute(atr)).findFirst().orElse("name");
-                setTitle(getCurrentMenuElement().getAttribute(attrName));
+                if(setNavbarTitle)
+                {
+                    setTitle(getCurrentMenuElement().getAttribute(attrName));
+                }
+                if(setPageTitle)
+                {
+                    WApplication.getInstance().setTitle(getCurrentMenuElement().getAttribute(attrName));
+                }
             }
         }
         
@@ -565,6 +583,10 @@ public class WXmlNavigationBar extends WNavigationBar
         
     }
     
+    /**
+     * This can be an empty array
+     * @param titleAttributes
+     */
     public void setTitleAttributes(String...titleAttributes)
     {
         this.titleAttributes = titleAttributes;
@@ -575,6 +597,35 @@ public class WXmlNavigationBar extends WNavigationBar
         return titleAttributes;
     }
    
+    /**
+     * if true this will cause the page title to be set if there is a title attribute name set
+     * the default is false
+     * @param setPageTitle
+     */
+    public void setPageTitle(boolean setPageTitle)
+    {
+        this.setPageTitle = setPageTitle;
+    }
+    
+    public boolean isSetPageTitle()
+    {
+        return setPageTitle;
+    }
+    
+    /**
+     * if true this will cause the navbar title to be set if there is a title attribute name set
+     * the default is true
+     * @param setPageTitle
+     */
+    public void setNavbarTitle(boolean setNavbarTitle)
+    {
+        this.setNavbarTitle = setNavbarTitle;
+    }    
+    
+    public boolean isSetNavbarTitle()
+    {
+        return setNavbarTitle;
+    }
     
     public Element getCurrentMenuElement()
     {
