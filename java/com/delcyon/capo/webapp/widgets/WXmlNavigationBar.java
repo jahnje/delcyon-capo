@@ -885,14 +885,6 @@ public class WXmlNavigationBar extends WNavigationBar
     }
     
     /**
-     * Clear out any cached values that might want to be different the next time this navmenu is used. For example by a different user or something. 
-     */
-    public void clearCache()
-    {
-        pathInstanceMap.clear();
-    }
-    
-    /**
      * interface to be used by anything that gets instantiated automatically and wants to process permission changes
      * @author jeremiah
      *
