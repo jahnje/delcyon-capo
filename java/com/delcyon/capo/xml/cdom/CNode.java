@@ -17,6 +17,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 package com.delcyon.capo.xml.cdom;
 
 import java.lang.reflect.Modifier;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Vector;
 import java.util.logging.Level;
@@ -75,6 +76,7 @@ public abstract class CNode implements Node, ControlledClone, NodeValidationUtil
     @CloneControl(filter=Clone.exclude)
     private transient CDOMEvent preparedEvent = null;
     
+    private HashMap<String, Object> userDataHashMap = null;
     
     public void setParent(CNode parentNode)
     {
@@ -977,9 +979,11 @@ public abstract class CNode implements Node, ControlledClone, NodeValidationUtil
     @Override
     public Object setUserData(String key, Object data, UserDataHandler handler)
     {
-        // TODO Auto-generated method stub
-        Thread.dumpStack();
-        throw new UnsupportedOperationException();
+        if(data != null && userDataHashMap == null)
+        {
+            userDataHashMap = new HashMap<>();
+        }
+        return userDataHashMap.put(key, data);
     }
 
     /* (non-Javadoc)
@@ -988,9 +992,14 @@ public abstract class CNode implements Node, ControlledClone, NodeValidationUtil
     @Override
     public Object getUserData(String key)
     {
-        // TODO Auto-generated method stub
-        Thread.dumpStack();
-        throw new UnsupportedOperationException();
+        if(userDataHashMap != null)
+        {
+            return userDataHashMap.get(key);
+        }
+        else
+        {
+            return null;
+        }
     }
 
     @Override
