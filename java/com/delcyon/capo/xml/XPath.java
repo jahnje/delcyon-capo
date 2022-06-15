@@ -20,6 +20,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.OutputStream;
 import java.util.logging.Level;
 
+import javax.xml.namespace.QName;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.transform.OutputKeys;
@@ -30,7 +31,6 @@ import javax.xml.transform.stream.StreamResult;
 import javax.xml.xpath.XPathConstants;
 import javax.xml.xpath.XPathExpression;
 import javax.xml.xpath.XPathFactory;
-import javax.xml.xpath.XPathFactoryConfigurationException;
 import javax.xml.xpath.XPathFunctionResolver;
 
 import org.w3c.dom.Attr;
@@ -107,6 +107,26 @@ public class XPath
         XPathExpression xPathExpression = xPath.compile(path);
         return (Boolean) xPathExpression.evaluate(node,XPathConstants.BOOLEAN);
 	}
+	/**
+	 * 
+	 * @param node
+	 * @param path
+	 * @param xPathConstants One of the types listed in XPathConstants.*
+	 * @return
+	 * @throws Exception
+	 */
+	public static Object evaluate(Node node,String path, QName xPathConstants) throws Exception
+    {
+        javax.xml.xpath.XPath xPath = xPathFactory.newXPath();
+        
+        NamespaceContextMap namespaceContextMap = new NamespaceContextMap();
+        namespaceContextMap.addNamespace("server", CapoApplication.SERVER_NAMESPACE_URI);
+        namespaceContextMap.addNamespace("client", CapoApplication.CLIENT_NAMESPACE_URI);
+        xPath.setNamespaceContext(namespaceContextMap);
+        //String parsedXpath = processFunctions(path,prefix);
+        XPathExpression xPathExpression = xPath.compile(path);
+        return xPathExpression.evaluate(node,xPathConstants);
+    }
 	
 	public static Node selectSingleNode(Node node, String path,String prefix) throws Exception
 	{
