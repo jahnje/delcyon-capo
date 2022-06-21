@@ -17,6 +17,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 package com.delcyon.capo.xml.cdom;
 
 import java.lang.reflect.Modifier;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.w3c.dom.Attr;
 import org.w3c.dom.DOMException;
@@ -25,8 +27,6 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.w3c.dom.TypeInfo;
 
-import com.delcyon.capo.controller.elements.ResourceControlElement.Attributes;
-import com.delcyon.capo.resourcemanager.ResourceDescriptor.LifeCycle;
 import com.delcyon.capo.util.EqualityProcessor;
 import com.delcyon.capo.util.ToStringControl;
 import com.delcyon.capo.util.ToStringControl.Control;
@@ -119,6 +119,13 @@ public class CElement extends CNode implements Element
         getAttributes().removeNamedItem(name);
         cascadeDOMEvent(prepareEvent(EventType.UPDATE, this));
     }
+    
+    public CAttr removeAttributeNode(String name) throws DOMException
+    {
+        CAttr attribute = (CAttr) getAttributes().removeNamedItem(name);
+        cascadeDOMEvent(prepareEvent(EventType.UPDATE, this));
+        return attribute;
+    }
 
     /* (non-Javadoc)
      * @see org.w3c.dom.Element#getAttributeNode(java.lang.String)
@@ -158,6 +165,84 @@ public class CElement extends CNode implements Element
         return null;
     }
 
+    /**
+     * Utility method to get parent element, if it's parent is not an CElement it will return null for example if it's a CDocument;
+     * @return
+     */
+    public CElement getParent()
+    {
+        Node parent = getParentNode();
+        if(parent != null && parent instanceof CElement)
+        {
+            return (CElement) parent;
+        }
+        else
+        {
+            return null;
+        }
+    }
+    
+    /**
+     * Utility method to get all element child in walkable list
+     * @return
+     */
+    public List<CElement> getChildren()
+    {
+        ArrayList<CElement> children = new ArrayList<CElement>();
+        List<CNode> nodeList = getChildNodes(Node.ELEMENT_NODE);
+        for(int index = 0; index < nodeList.size();index++)
+        {
+            children.add((CElement) nodeList.get(index));
+        }
+        return children;
+    }
+    
+    /**
+     * Utility Method to get all children with a particular element name in a walkable list
+     * @param localName
+     * @return
+     */
+    public List<CElement> getChildren(String localName)
+    {
+        ArrayList<CElement> children = new ArrayList<CElement>();
+        List<CNode> nodeList = getChildNodes(Node.ELEMENT_NODE);
+        for(int index = 0; index < nodeList.size();index++)
+        {
+            CElement child =  (CElement) nodeList.get(index);
+            if(child.getLocalName().equals(localName))
+            {
+                children.add(child);
+            }
+        }
+        return children;
+    }
+    
+    
+    /**
+     * Utility Method to get all children with a particular element name in a walkable list
+     * @param namespaceURI defaults to NS of parent element if null;
+     * @param localName
+     * @return
+     */
+    public List<CElement> getChildrenNS(String namespaceURI,String localName)
+    {
+        if(namespaceURI == null)
+        {
+            namespaceURI = getNamespaceURI();
+        }
+        ArrayList<CElement> children = new ArrayList<CElement>();
+        List<CNode> nodeList = getChildNodes(Node.ELEMENT_NODE);
+        for(int index = 0; index < nodeList.size();index++)
+        {
+            CElement child =  (CElement) nodeList.get(index);
+            if(child.getLocalName().equals(localName) && EqualityProcessor.areSame(namespaceURI, child.getNamespaceURI()))
+            {
+                children.add(child);
+            }
+        }
+        return children;
+    }
+    
     /* (non-Javadoc)
      * @see org.w3c.dom.Element#getElementsByTagNameNS(java.lang.String, java.lang.String)
      */
