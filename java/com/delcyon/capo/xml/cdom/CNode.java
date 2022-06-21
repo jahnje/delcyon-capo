@@ -26,6 +26,7 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.w3c.dom.Attr;
 import org.w3c.dom.DOMException;
 import org.w3c.dom.Document;
 import org.w3c.dom.NamedNodeMap;
@@ -955,11 +956,98 @@ public abstract class CNode implements Node, ControlledClone, NodeValidationUtil
      * @see org.w3c.dom.Node#isEqualNode(org.w3c.dom.Node)
      */
     @Override
-    public boolean isEqualNode(Node arg)
+    public boolean isEqualNode(Node testNode)
     {
-        // TODO Auto-generated method stub
-        Thread.dumpStack();
-        throw new UnsupportedOperationException();
+        
+        if(!EqualityProcessor.areSame(testNode.getNamespaceURI(),getNamespaceURI()))
+        {
+            return false;
+        }
+        
+        if(!EqualityProcessor.areSame(getNodeName(),testNode.getNodeName()))
+        {
+            return false;
+        }
+        
+        if(!EqualityProcessor.areSame(getNodeValue(),testNode.getNodeValue()))
+        {
+            return false;
+        }
+        if(hasAttributes())
+        {
+            if(testNode.hasAttributes())
+            {
+                NamedNodeMap thisNamedNodeMap = getAttributes();
+                NamedNodeMap testNamedNodeMap = testNode.getAttributes();
+                if(thisNamedNodeMap.getLength() == testNamedNodeMap.getLength())
+                {
+                    for(int currentAttribute = 0; currentAttribute < thisNamedNodeMap.getLength(); currentAttribute++)
+                    {
+                        Attr thisAttr = (Attr) thisNamedNodeMap.item(currentAttribute);
+                        if(testNamedNodeMap.getNamedItem(thisAttr.getNodeName()) != null)
+                        {
+                            
+                            if(EqualityProcessor.areSame(thisAttr.getNodeValue(),testNamedNodeMap.getNamedItem(thisAttr.getNodeName()).getNodeValue()) == false)
+                            {
+                                return false;
+                            }
+                        }
+                        else
+                        {
+                            return false;
+                        }
+                    }
+                }
+                else
+                {
+                    return false;
+                }
+            }
+            else
+            {
+                return false;
+            }
+        }
+        else if(testNode.hasAttributes())
+        {
+            return false;
+        }
+        if(hasChildNodes())
+        {
+            if(testNode.hasChildNodes())
+            {
+                NodeList thisNodeList = getChildNodes();
+                NodeList testNodeList = testNode.getChildNodes();
+                if(thisNodeList.getLength() == testNodeList.getLength())
+                {
+                    for(int currentNodeIndex = 0; currentNodeIndex < thisNodeList.getLength(); currentNodeIndex++)
+                    {
+                        Node node = thisNodeList.item(currentNodeIndex);
+                        if(node.isEqualNode(testNodeList.item(currentNodeIndex)) == false)
+                        {
+                            return false;
+                        }
+                    }
+                }
+                else
+                {
+                    return false;
+                }
+            }
+            else
+            {
+                return false;
+            }
+        }
+        else if(testNode.hasChildNodes())
+        {
+            return false;
+        }
+        if(EqualityProcessor.areSame(getNodeValue(), testNode.getNodeValue()) == false)
+        {
+            return false;
+        }
+        return true;
     }
 
     /* (non-Javadoc)
@@ -1060,7 +1148,7 @@ public abstract class CNode implements Node, ControlledClone, NodeValidationUtil
     }
 
 
-    public void detach()
+    public CNode detach()
     {
        if(getParentNode() != null)
        {
@@ -1069,6 +1157,7 @@ public abstract class CNode implements Node, ControlledClone, NodeValidationUtil
        ownerDocument = null;
        parentNode = null;
        cascadeDOMEvent(prepareEvent(EventType.UPDATE, this));
+       return this;
     }
 
     /**
