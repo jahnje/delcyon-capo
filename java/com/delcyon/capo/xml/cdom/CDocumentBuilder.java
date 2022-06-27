@@ -45,8 +45,18 @@ public class CDocumentBuilder extends DocumentBuilder
     private ErrorHandler errorHandler;
     private static final SAXParserFactory saxParserFactory = SAXParserFactory.newInstance();
     
-    
-    
+    /**
+     * CDocumentBuilder.toCDocument(new JDOMSource(xmlAnnotationProcessor.export(submissionVector)).getInputSource())
+     * @param domSource
+     * @return
+     * @throws SAXException
+     * @throws IOException
+     */
+    public static CDocument toCDocument(InputSource domSource) throws SAXException, IOException
+    {        
+        CDocumentBuilder documentBuilder = new CDocumentBuilder();
+        return (CDocument) documentBuilder.parse(domSource);
+    }
     
     @Override
     public Document parse(String uri) throws SAXException, IOException
