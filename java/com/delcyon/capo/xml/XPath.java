@@ -284,15 +284,28 @@ public class XPath
 			//keep this from looping out of control when things are weird
 			if (exception.getCause() == null || exception.getCause().getMessage() == null)
 			{
-				CapoServer.logger.log(Level.SEVERE, "Error evaluating xpath '"+path+"'");
+				if(CapoServer.logger != null)
+				{
+					CapoServer.logger.log(Level.SEVERE, "Error evaluating xpath '"+path+"'");
+				}
 				throw exception;
 			}
 			if (exception.getCause().getMessage().matches(".*context.*item.*for.*axis.*step.*is.*undefined.*"))
 			{
-				CapoServer.logger.log(Level.SEVERE, "Error evaluating xpath '"+path+"'");
+				if(CapoServer.logger != null)
+				{
+					CapoServer.logger.log(Level.SEVERE, "Error evaluating xpath '"+path+"'");
+				}
 				throw exception;
 			}
-			CapoServer.logger.log(Level.SEVERE, "Error evaluating xpath '"+path+"' on "+getPathToRoot(node));
+			if(CapoServer.logger != null)
+			{
+				CapoServer.logger.log(Level.SEVERE, "Error evaluating xpath '"+path+"' on "+getPathToRoot(node));
+			}
+			else
+			{
+				exception = new Exception("Error evaluating xpath '"+path+"' on "+getPathToRoot(node), exception);
+			}
 			throw exception;
 		}
 	}
