@@ -13,6 +13,7 @@ import java.util.logging.Logger;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 
+import eu.webtoolkit.jwt.AlignmentFlag;
 import eu.webtoolkit.jwt.Signal;
 import eu.webtoolkit.jwt.Signal2;
 import eu.webtoolkit.jwt.WApplication;
@@ -26,6 +27,7 @@ import eu.webtoolkit.jwt.WNavigationBar;
 import eu.webtoolkit.jwt.WPopupMenu;
 import eu.webtoolkit.jwt.WPushButton;
 import eu.webtoolkit.jwt.WSplitButton;
+import eu.webtoolkit.jwt.WText;
 import eu.webtoolkit.jwt.WWidget;
 
 /**
@@ -63,10 +65,18 @@ public class WXmlNavigationBar extends WNavigationBar
     private Element currentMenuElement = null;
     private boolean setPageTitle = false;
     private boolean setNavbarTitle = true;
+    private boolean setHomeButton = false;
+    private PermissionType permissionType = PermissionType.ALL;  
     /**
      *  instantiate this with the root element of a menu/permission tree
      * @param menuRootElement
      */
+    
+    public enum PermissionType
+    {
+        ALL,ANY
+    }
+    
     public WXmlNavigationBar(Element menuRootElement)
     {
         super();        
@@ -88,6 +98,10 @@ public class WXmlNavigationBar extends WNavigationBar
         if(menuRootElement.hasAttribute("setNavbarTitle"))
         {
             setNavbarTitle = "true".equalsIgnoreCase(menuRootElement.getAttribute("setNavbarTitle"));
+        }
+        if(menuRootElement.hasAttribute("permissionType"))
+        {
+            permissionType = PermissionType.valueOf(menuRootElement.getAttribute("permissionType"));
         }
         
         for(int index = 0 ; index < menuList.getLength(); index++)
@@ -399,6 +413,11 @@ public class WXmlNavigationBar extends WNavigationBar
         if(menuElement.hasAttribute("perm"))
         {
             String[] perms = menuElement.getAttribute("perm").split(",");
+            if(menuElement.hasAttribute("hideOnPerm") && menuElement.getAttribute("hideOnPerm").equalsIgnoreCase("true"))
+            {
+                subMenuItem.setHidden(true);
+            }
+            
             subMenuItem.setDisabled(true);
             for (String perm : perms)
             {
@@ -525,8 +544,7 @@ public class WXmlNavigationBar extends WNavigationBar
     	{
     		return;
     	}
-        String iternalPath = WApplication.getInstance().getInternalPath();
-        
+        String iternalPath = WApplication.getInstance().getInternalPath();        
         //check permissions
         if(hasPermission(getPermissionsForPath(iternalPath)) == false)
         {
@@ -774,8 +792,13 @@ public class WXmlNavigationBar extends WNavigationBar
             for (String path : paths)
             {
                 WMenuItem menuItem = pathMenuItemHashMap.get(path);
+                Element menuElement = pathMenuElementHashMap.get(path);
                 if(menuItem != null)
                 {
+                    if(menuElement.hasAttribute("hideOnPerm") && menuElement.getAttribute("hideOnPerm").equalsIgnoreCase("true"))
+                    {
+                        menuItem.setHidden(!bool);
+                    }
                     menuItem.setDisabled(!bool); //reverse the meaning of the boolean since this is to setDisabled not Enabled        
                 }
             }
@@ -827,7 +850,7 @@ public class WXmlNavigationBar extends WNavigationBar
     }
     
     /**
-     * check a list of permissions to see if all are met. 
+     * check a list of permissions to see if ANY or ALL are met. based on Root menu having permissionType attribute set 
      * @param permissions
      * @return (true on empty list, false if any single permission is not met, true if all permissions are met)
      */
@@ -836,10 +859,21 @@ public class WXmlNavigationBar extends WNavigationBar
         boolean hasPermission = true;
         for (String perm : permissions)
         {
-            if(hasPermission(perm) == false)
+            if(permissionType == PermissionType.ALL)
             {
-                hasPermission = false;
-                break;
+                if(hasPermission(perm) == false)
+                {
+                    hasPermission = false;
+                    break;
+                }
+            }
+            else //permissionType == PermissionType.ANY
+            {
+                if(hasPermission(perm) == true)
+                {
+                    hasPermission = true;
+                    break;
+                }
             }
         }
         
