@@ -1,6 +1,7 @@
 package com.delcyon.capo.xml.cdom;
 
 import java.lang.reflect.Modifier;
+import java.util.Arrays;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.Stack;
@@ -16,7 +17,7 @@ import com.delcyon.capo.util.ReflectionUtility;
 import com.delcyon.capo.util.ToStringControl;
 import com.delcyon.capo.util.ToStringControl.Control;
 import com.delcyon.capo.xml.XPath;
-import com.delcyon.capo.xml.cdom.CNodeDefinition.NodeDefinitionType;
+import com.delcyon.capo.xml.cdom.CXSDNodeDefinition.NodeDefinitionType;
 
 public class CNodeValidator2 implements NodeValidationUtilitesFI
 {
@@ -33,7 +34,7 @@ public class CNodeValidator2 implements NodeValidationUtilitesFI
     private CElement defElement = null;
     //private CNode currentChildNode = null;
     private CNode node = null;
-    private CNodeDefinition nodeDefinition = null;
+    private CXSDNodeDefinition nodeDefinition = null;
     private CElement nodeDefinitionTypeElement = null;
     private Boolean valid = null;
     
@@ -46,7 +47,7 @@ public class CNodeValidator2 implements NodeValidationUtilitesFI
 
    
     
-    public CNodeValidator2(CNode node, CNodeDefinition definition)
+    public CNodeValidator2(CNode node, CXSDNodeDefinition definition)
     {
         this.node = node;
         this.nodeDefinition = definition;
@@ -322,6 +323,7 @@ public class CNodeValidator2 implements NodeValidationUtilitesFI
                         
                         System.out.println("\t\t\tPOPPED DEF "+modelStack.peek());
                         ModelStackItem poppedItem = modelStack.pop();
+                        
                         if(modelStack.isEmpty())
                         {
                             if(currentChildElement != null)
@@ -342,7 +344,45 @@ public class CNodeValidator2 implements NodeValidationUtilitesFI
                         }
                         else
                         {
+                            
+                          //TODO need to be branch aware here.
+                            if(branchStack.isEmpty() == false && branchStack.peek().vdepth == modelStack.peek().vdepth-1)
+                            {
+                                System.out.println("Child of CurrentBranch:"+branchStack.peek());
+                                System.out.println("End Child of Last CurrentBranch:"+poppedItem);
+                                
+                            }
+                            //roll state up the tree as we pop things                            
                             modelStack.peek().increment(poppedItem.getState());
+                            
+                            //update the score of the current branch if we need to
+                            if(branchStack.isEmpty() == false)
+                            {
+                                if(poppedItem.getState() == StackItemState.PASS)
+                                {
+                                    branchStack.peek().branchInfos[branchStack.peek().branchAttempts-1].score  += poppedItem.scoringIncrmentor;
+                                }
+                                if(poppedItem.vdepth <= branchStack.peek().vdepth-1)
+                                {
+                                    if(branchStack.peek().isBranchFinished())
+                                    {
+                                        
+                                        ModelStackItem poppedBranchItem = branchStack.pop();
+                                        System.out.println("\t\t\tPOPPED BRANCH ROOT: "+poppedBranchItem);
+                                        for (BranchInfo branchInfo : poppedBranchItem.branchInfos)
+                                        {
+                                            System.out.println(branchInfo);
+                                        }
+                                    }
+                                    else
+                                    {
+                                        System.out.println("hmmm:"+branchStack.pop());
+                                    }
+                                    
+                                }
+                            }
+                            
+                            
                             System.out.println("\t\t\tGOT DEF "+modelStack.peek());
                             if(rollback == true)
                             {
@@ -356,7 +396,7 @@ public class CNodeValidator2 implements NodeValidationUtilitesFI
                                 if(currentChildElement != null){
                                     
                                     currentElementIndex = modelStack.peek().childIdx;
-                                    if(modelStack.peek().getProcessingState() != StackItemProcessingState.FINISHED &&modelStack.peek().getState() != StackItemState.FAILURE )
+                                    if(modelStack.peek().getProcessingState() != StackItemProcessingState.FINISHED && modelStack.peek().getState() != StackItemState.FAILURE )
                                     {
                                         System.out.println("==============ROLLBACK=========");
                                         continue child_node_loop;
@@ -369,8 +409,19 @@ public class CNodeValidator2 implements NodeValidationUtilitesFI
 
                             if(modelStack.peek().getProcessingState() == StackItemProcessingState.FINISHED)
                             {                                       
-                                skipDefsUntilDepth = modelStack.peek().vdepth;
-                                System.out.println("\t\t\tSKIPPING UNTIL "+skipDefsUntilDepth);
+                                if(branchStack.isEmpty() == false && branchStack.peek().idx == modelStack.peek().idx && modelStack.peek().isBranchFinished() == false)
+                                {
+                                    
+                                    System.out.println("BranchID = "+modelStack.peek().branchAttempts);
+                                    System.out.println("\t\t\tNOT SKIPPING UNTIL "+skipDefsUntilDepth+" STILL IN BRANCH");
+                                    //reset tape to start of branch
+                                    currentElementIndex = branchStack.peek().childIdx;
+                                }
+                                else
+                                {
+                                    skipDefsUntilDepth = modelStack.peek().vdepth;
+                                    System.out.println("\t\t\tSKIPPING UNTIL "+skipDefsUntilDepth);
+                                }
                             }
                         }
                         
@@ -429,7 +480,14 @@ public class CNodeValidator2 implements NodeValidationUtilitesFI
                               
                               System.out.println("\t\t\tSKIPPING [D.idx="+definitionIndex+" D.vdpth="+modelStack.peek().vdepth+"]"+modelStack.peek().defNode);
                               //TODO, we need to be branch aware here
-                              modelStack.pop();
+                              ModelStackItem poppedItem = modelStack.pop();
+                              if(branchStack.isEmpty() == false && branchStack.peek().vdepth < poppedItem.vdepth)
+                              {
+                                  System.out.println("2.Child of CurrentBranch:"+branchStack.peek());
+                                  System.out.println("2.Possible End Child of Last CurrentBranch:"+poppedItem);
+                                  branchStack.peek().branchInfos[branchStack.peek().branchAttempts-1].stopChildIdx = currentElementIndex;
+                                  branchStack.peek().branchInfos[branchStack.peek().branchAttempts-1].stopModelIdx = poppedItem.idx;
+                              }
                               continue definition_loop;
                           }
                           else
@@ -440,7 +498,8 @@ public class CNodeValidator2 implements NodeValidationUtilitesFI
                               {
                                   possibilitVector.clear();
                               }
-                              skipDefsUntilDepth = -1;                            
+                              skipDefsUntilDepth = -1;
+                              
                           }
                       }
                     
@@ -471,12 +530,19 @@ public class CNodeValidator2 implements NodeValidationUtilitesFI
                             System.out.println("\t\t\tBRANCH CHILD: "+modelStack.peek());
                             //in theory only failed items will ever trigger this here, and only at beginning of branch. We need a place that will trigger at the end of a branch regardless of of final state.
                             branchStack.peek().incrementBranchAttempt();
+                            branchStack.peek().branchInfos[branchStack.peek().branchAttempts-1].startChildIdx = currentElementIndex;
+                            branchStack.peek().branchInfos[branchStack.peek().branchAttempts-1].startModelIdx = modelStack.peek().idx;
                         }
                         else if(branchStack.peek().vdepth >= modelStack.peek().vdepth)
                         {
                             if(branchStack.peek().isBranchFinished())
                             {
-                                System.out.println("\t\t\tPOPPED BRANCH ROOT: "+branchStack.pop());
+                                ModelStackItem poppedBranchItem = branchStack.pop();
+                                System.out.println("\t\t\tPOPPED BRANCH ROOT: "+poppedBranchItem);
+                                for (BranchInfo branchInfo : poppedBranchItem.branchInfos)
+                                {
+                                    System.out.println(branchInfo);
+                                }
                             }
                             else
                             {
@@ -668,8 +734,10 @@ public class CNodeValidator2 implements NodeValidationUtilitesFI
         private boolean testable = false; //is this a particle
         
         private int branchAttempts = 0; //number of decision branches we've tried. An ALL would require we try each branch, a Seq stops on first failure, and choice requires all, and chooses best match 
-        private int maxBranchAttempts = 1;//number of decision branches we are ALLOWED to try. a sequence would be one, while a choice would be equal to the number of children.  
-        
+        private int maxBranchAttempts = 1;//number of decision branches we are ALLOWED to try. a sequence would be one, while a choice would be equal to the number of children.
+        private int scoringIncrmentor = 0;
+        //branch[start.m.Idx,Stop.m.Idx,Start.c.Idx,Stop.c.Idx,score]
+        private BranchInfo[] branchInfos = null;
         /**
          * 
          * @param levelDepth
@@ -713,6 +781,7 @@ public class CNodeValidator2 implements NodeValidationUtilitesFI
                 size = occurancePredicate.max;
                 minimumPasses = occurancePredicate.min;
                 testable = true;
+                scoringIncrmentor = 1;
             }
             else if(defNode.getLocalName().equals("all")) //unordered sequence
             {
@@ -741,6 +810,9 @@ public class CNodeValidator2 implements NodeValidationUtilitesFI
                 limit = size;
                 minimumPasses = size;                
             }
+            
+            branchInfos = new BranchInfo[maxBranchAttempts];
+            Arrays.fill(branchInfos, new BranchInfo());
             
         }
         
@@ -872,6 +944,22 @@ public class CNodeValidator2 implements NodeValidationUtilitesFI
         }
     }
     
+    @ToStringControl(control=Control.exclude,modifiers=Modifier.FINAL+Modifier.STATIC)
+    private class BranchInfo
+    {
+        int score = -1;
+        int startChildIdx = -1;
+        int stopChildIdx = -1;
+        int startModelIdx = -1;
+        int stopModelIdx = -1;
+        
+        @Override
+        public String toString()
+        {
+            return ReflectionUtility.processToString(this);
+        }
+    }
+    
     
     private Predicate<CElement> buildAnyElementPredicateChain(Predicate<CElement> chain, CNode node,String namespaceURI,CElement def)
     {
@@ -902,7 +990,7 @@ public class CNodeValidator2 implements NodeValidationUtilitesFI
                     }                                
                 case "strict": //make sure that we can find a definition for this element                                
                 default:
-                    if(CNodeDefinition.getDefinitionForNode(_node) == null)
+                    if(CXSDNodeDefinition.getDefinitionForNode(_node) == null)
                     {
                         return false;
                     }

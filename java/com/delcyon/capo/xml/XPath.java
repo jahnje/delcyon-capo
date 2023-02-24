@@ -310,14 +310,24 @@ public class XPath
 		}
 	}
 
+	public static String getXPath(Node node, boolean includePosition, String...includeAttributeNames) throws Exception
+    {
+        //example
+        // /server:Capo/server:group[1]/server:choose[1]/server:when[1]
+        return getPathToRoot(node,includePosition,includeAttributeNames);     
+    }
+	
 	public static String getXPath(Node node) throws Exception
 	{
 		//example
 		// /server:Capo/server:group[1]/server:choose[1]/server:when[1]
-		return getPathToRoot(node);		
+		return getXPath(node, true);		
 	}
-	
 	private static String getPathToRoot(Node node) throws Exception
+	{
+	    return getPathToRoot(node, true);
+	}
+	private static String getPathToRoot(Node node,boolean includePosition, String...includeAttributeNames) throws Exception
 	{
 		if(node.getOwnerDocument() == null)
 		{
@@ -329,10 +339,10 @@ public class XPath
 		String name = node.getNodeName();
 		if (node instanceof Element)
 		{
-			String nameAttributeValue = ((Element) node).getAttribute("name");
+		    
 			
 			
-			//if (nameAttributeValue.isEmpty() == true )
+			if (includePosition)
 			{	
 				if (node.getParentNode() != null)
 				{
@@ -350,9 +360,18 @@ public class XPath
 					name += "[ORPHAN_NODE]";
 				}
 			}
-			if(nameAttributeValue.isEmpty() == false)
+			
+			if(includeAttributeNames == null || includeAttributeNames.length == 0)
+            {
+                includeAttributeNames = new String[]{"name"};
+            }
+			for(int i = 0; i < includeAttributeNames.length;i++)
 			{
-				name += "[@name = '"+nameAttributeValue+"']";
+			    String nameAttributeValue = ((Element) node).getAttribute(includeAttributeNames[i]);
+			    if(nameAttributeValue.isEmpty() == false)
+			    {
+			        name += "[@"+includeAttributeNames[i]+" = '"+nameAttributeValue+"']";
+			    }
 			}
 		}
 		if(node instanceof Attr)
@@ -362,7 +381,7 @@ public class XPath
 		if (node.getParentNode() != null && node.getParentNode().getNodeName() != null && node.getParentNode() instanceof Element)
 		{
 			
-			return getPathToRoot(node.getParentNode())+"/"+name;
+			return getPathToRoot(node.getParentNode(),includePosition,includeAttributeNames)+"/"+name;
 		}
 		else
 		{

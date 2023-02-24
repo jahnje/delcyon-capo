@@ -11,7 +11,7 @@ import java.util.stream.Stream;
 import org.w3c.dom.Node;
 
 import com.delcyon.capo.xml.XPath;
-import com.delcyon.capo.xml.cdom.CNodeDefinition.NodeDefinitionType;
+import com.delcyon.capo.xml.cdom.CXSDNodeDefinition.NodeDefinitionType;
 
 public class CNodeValidator implements NodeValidationUtilitesFI
 {
@@ -28,7 +28,7 @@ public class CNodeValidator implements NodeValidationUtilitesFI
     private CElement currentContentDefNode = null;
     //private CNode currentChildNode = null;
     private CNode node = null;
-    private CNodeDefinition nodeDefinition = null;
+    private CXSDNodeDefinition nodeDefinition = null;
     private CElement nodeDefinitionTypeElement = null;
     private Boolean valid = null;
     
@@ -37,7 +37,7 @@ public class CNodeValidator implements NodeValidationUtilitesFI
     private CNode nextPossibleNode;
     private NodeValidationResult nodeValidationResult = null;
     
-    public CNodeValidator(CNode node, CNodeDefinition definition)
+    public CNodeValidator(CNode node, CXSDNodeDefinition definition)
     {
         this.node = node;
         this.nodeDefinition = definition;
@@ -553,7 +553,7 @@ public class CNodeValidator implements NodeValidationUtilitesFI
                     }                                
                 case "strict": //make sure that we can find a definition for this element                                
                 default:
-                    if(CNodeDefinition.getDefinitionForNode(_node) == null)
+                    if(CXSDNodeDefinition.getDefinitionForNode(_node) == null)
                     {
                         return false;
                     }

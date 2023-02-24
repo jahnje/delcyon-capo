@@ -58,8 +58,18 @@ public class CElement extends CNode implements Element
     
     public CElement(String namespaceURI,String prefix,String localName)
     {
-    	setNamespaceURI(namespaceURI);
-        setNodeName(prefix+":"+localName);
+        if(namespaceURI != null)
+        {
+            setNamespaceURI(namespaceURI);
+        }
+        if(prefix != null)
+        {
+            setNodeName(prefix+":"+localName);
+        }
+        else
+        {
+            setNodeName(localName);
+        }
     }
     
     @Override
@@ -182,6 +192,23 @@ public class CElement extends CNode implements Element
         }
     }
     
+    public CElement addChild(String namespaceURI,String localName)
+    {
+        return addChild(namespaceURI,getPrefix(),localName);
+    }
+    
+    public CElement addChild(String namespaceURI,String prefix,String localName)
+    {
+        CElement child = new CElement(namespaceURI,prefix,localName);
+        return (CElement) appendChild(child);
+    }
+    
+    
+    public CElement addChild(String localName)
+    {
+        return addChild(getNamespaceURI(),getPrefix(),localName);        
+    }
+    
     /**
      * Utility method to get all element child in walkable list
      * @return
@@ -198,9 +225,10 @@ public class CElement extends CNode implements Element
     }
     
     /**
-     * Utility Method to get all children with a particular element name in a walkable list
+     * Utility Method to get all children with a particular element name in a walkable list.
+     * Ignores prefix and works on local-name only, 
      * @param localName
-     * @return
+     * @return List<CElement> never null
      */
     public List<CElement> getChildren(String localName)
     {

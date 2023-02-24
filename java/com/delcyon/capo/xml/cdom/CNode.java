@@ -346,6 +346,80 @@ public abstract class CNode implements Node, ControlledClone, NodeValidationUtil
         }
     }
 
+    /**
+     * get the next sibling of the same type
+     * @return
+     */
+    public CNode getNextTypePeer()
+    {
+        NodeList siblingList = parentNode.getChildNodes();
+        int myPosition = getPosition();
+        for (int i = myPosition+1 ; i < siblingList.getLength(); i++)
+        {
+            if(siblingList.item(i).getNodeType() == getNodeType())
+            {
+                return (CNode) siblingList.item(i);
+            }
+        }        
+        return null;        
+    }
+
+    /**
+     * get the previous sibling of the same type
+     * @return
+     */
+    public CNode getPreviousTypePeer()
+    {
+        NodeList siblingList = parentNode.getChildNodes();
+        int myPosition = getPosition();
+        for (int i = myPosition-1 ; i > 0; i--)
+        {
+            if(siblingList.item(i).getNodeType() == getNodeType())
+            {
+                return (CNode) siblingList.item(i);
+            }
+        }        
+        return null;        
+    }
+    
+    /**
+     * get the next sibling with the same local name
+     * @return
+     */
+    public CNode getNextLocalNamePeer()
+    {
+        NodeList siblingList = parentNode.getChildNodes();
+        int myPosition = getPosition();
+        for (int i = myPosition+1 ; i < siblingList.getLength(); i++)
+        {
+            if(siblingList.item(i).getLocalName().equals(getLocalName()))
+            {
+                return (CNode) siblingList.item(i);
+            }
+        }        
+        return null;        
+    }
+    
+    /**
+     * get the previous sibling with the same local name
+     * @return
+     */
+    
+    public CNode getPreviousLocalNamePeer()
+    {
+        NodeList siblingList = parentNode.getChildNodes();
+        int myPosition = getPosition();
+        for (int i = myPosition-1 ; i > 0; i--)
+        {
+            if(siblingList.item(i).getLocalName().equals(getLocalName()))
+            {
+                return (CNode) siblingList.item(i);
+            }
+        }        
+        return null;        
+    }
+    
+    
     /* (non-Javadoc)
      * @see org.w3c.dom.Node#getAttributes()
      */

@@ -191,9 +191,11 @@ public class CDocument extends CNode implements Document, NodeValidationUtilites
      */
     @Override
     public Comment createComment(String data)
-    {
-        Thread.dumpStack();
-        throw new UnsupportedOperationException();
+    {        
+        CComment comment = new CComment();
+        comment.setData(data);
+        comment.setOwnerDocument(this);
+        return comment;
     }
 
     /* (non-Javadoc)
@@ -655,7 +657,7 @@ public class CDocument extends CNode implements Document, NodeValidationUtilites
             System.out.println(schemaDeclElement);
             if(schemaDeclElement != null)
             {
-                node.setNodeDefinition(new CNodeDefinition(schemaDeclElement));
+                node.setNodeDefinition(new CXSDNodeDefinition(schemaDeclElement));
                 node.isValid(deep,exceptionVector);
             }
             else
