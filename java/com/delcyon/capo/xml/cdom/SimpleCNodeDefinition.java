@@ -107,5 +107,16 @@ public class SimpleCNodeDefinition extends CElement implements CNodeDefinition
         
     }
 
+    public boolean hasEnumerationMap()
+    {
+        return enumMap != null;
+    }
+
+    public HashMap<String,String> getEnumerationMap()
+    {
+        return enumMap;
+        
+    }
+
     
 }

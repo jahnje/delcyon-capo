@@ -1164,6 +1164,12 @@ public abstract class CNode implements Node, ControlledClone, NodeValidationUtil
         }
     }
 
+    
+    public HashMap<String, Object> getUserDataHashMap()
+    {
+        return userDataHashMap;
+    }
+    
     @Override
     public String toString()
     {

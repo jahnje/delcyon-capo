@@ -110,7 +110,18 @@ public class CElement extends CNode implements Element
     @Override
     public void setAttribute(String name, String value) throws DOMException
     {
-        ((CNamedNodeMap) getAttributes()).setNamedItemNS(new CAttr(this, null, name, value));
+        //don't lose user data
+        CAttr attribute = (CAttr) getAttributeNode(name);
+        if(attribute == null)
+        {
+            attribute = new CAttr(this, null, name, value);
+        }
+        else
+        {
+            attribute.setNodeValue(value);
+        }
+        
+        ((CNamedNodeMap) getAttributes()).setNamedItemNS(attribute);
         cascadeDOMEvent(prepareEvent(EventType.UPDATE, this));
     }
 
