@@ -77,6 +77,7 @@ public abstract class CNode implements Node, ControlledClone, NodeValidationUtil
     @CloneControl(filter=Clone.exclude)
     private transient CDOMEvent preparedEvent = null;
     
+    @CloneControl(filter=Clone.exclude)
     private HashMap<String, Object> userDataHashMap = null;
     
     public void setParent(CNode parentNode)
@@ -593,7 +594,30 @@ public abstract class CNode implements Node, ControlledClone, NodeValidationUtil
             }
             nodeList.add(newChild);
             ((CNode) newChild).setParent(this);
-            ((CNode) newChild).setOwnerDocument(getOwnerDocument());
+            //set the owner document for all children if this child was built using fragments
+            if(((CNode) newChild).hasChildNodes() && ((CNode) newChild).getOwnerDocument() == null)
+            {
+                ((CNode) newChild).setOwnerDocument(getOwnerDocument());
+                try
+                {
+                    walkTree(null, newChild, (p,c)->{
+                        if(((CNode)c).ownerDocument == null && ((CNode)p).ownerDocument != null)
+                        {
+                            ((CNode)c).ownerDocument = ((CNode)p).ownerDocument;
+                        }
+                    }, false);
+                }
+                catch (Exception e)
+                {
+                    // TODO Auto-generated catch block
+                    e.printStackTrace();
+                }    
+            }
+            else
+            {
+                ((CNode) newChild).setOwnerDocument(getOwnerDocument());
+            }
+            
             cascadeDOMEvent(cdomEvent);
             return newChild;
         }

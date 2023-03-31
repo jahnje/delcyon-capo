@@ -16,6 +16,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 package com.delcyon.capo.xml.cdom;
 
+import java.io.ByteArrayOutputStream;
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.List;
@@ -30,6 +31,7 @@ import org.w3c.dom.TypeInfo;
 import com.delcyon.capo.util.EqualityProcessor;
 import com.delcyon.capo.util.ToStringControl;
 import com.delcyon.capo.util.ToStringControl.Control;
+import com.delcyon.capo.xml.XPath;
 import com.delcyon.capo.xml.cdom.CDOMEvent.EventType;
 
 /**
@@ -119,6 +121,10 @@ public class CElement extends CNode implements Element
         else
         {
             attribute.setNodeValue(value);
+            if(attribute.getParentNode() == null)
+            {
+                System.out.println("WTF");
+            }
         }
         
         ((CNamedNodeMap) getAttributes()).setNamedItemNS(attribute);
@@ -241,17 +247,21 @@ public class CElement extends CNode implements Element
      * @param localName
      * @return List<CElement> never null
      */
-    public List<CElement> getChildren(String localName)
+    public List<CElement> getChildren(String...localNames)
     {
         ArrayList<CElement> children = new ArrayList<CElement>();
         List<CNode> nodeList = getChildNodes(Node.ELEMENT_NODE);
         for(int index = 0; index < nodeList.size();index++)
         {
             CElement child =  (CElement) nodeList.get(index);
-            if(child.getLocalName().equals(localName))
+            for (String localName : localNames)
             {
-                children.add(child);
+                if(child.getLocalName().equals(localName))
+                {
+                    children.add(child);
+                }    
             }
+            
         }
         return children;
     }
@@ -477,5 +487,17 @@ public class CElement extends CNode implements Element
 	{
 		setAttribute(name.toString(), value.toString());		
 	}
+
+	/**
+	 * This will return the content of this element as a string including xml  as oppsed to getText() while only returns the text content of the element
+	 * @return
+	 * @throws Exception 
+	 */
+    public String getContentAsText() throws Exception
+    {
+        ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+        XPath.dumpNodeContent(this, buffer);
+        return new String(buffer.toByteArray());        
+    }
 
 }

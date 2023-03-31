@@ -583,26 +583,29 @@ public class ReflectionUtility
 
 	public static Object getMarshalWrapperInstance(String className) throws InstantiationException, IllegalAccessException
     {
-        
-        Object instanceObject = null;
-        Set<String> marshalWrapperSet = CapoApplication.getAnnotationMap().get(MarshalWrapper.class.getCanonicalName());
-        for (String wrapperClassName : marshalWrapperSet)
-        {
-            try
-            {
-                MarshalWrapper marshalWrapper = Class.forName(wrapperClassName).getAnnotation(MarshalWrapper.class);
-                if(marshalWrapper.marshalledClass().getCanonicalName().equals(className))
-                {
-                    MarshalWrapperInterface marshalWrapperInterface = (MarshalWrapperInterface) Class.forName(wrapperClassName).newInstance();
-                    return marshalWrapperInterface.getInstance();
-                }
-            
-            } catch (ClassNotFoundException classNotFoundException)
-            {
-                CapoApplication.logger.log(Level.WARNING, "Error getting document providers",classNotFoundException);
-            }
-            
-        }
+
+	    Object instanceObject = null;
+	    if(CapoApplication.getAnnotationMap() != null)
+	    {
+	        Set<String> marshalWrapperSet = CapoApplication.getAnnotationMap().get(MarshalWrapper.class.getCanonicalName());
+	        for (String wrapperClassName : marshalWrapperSet)
+	        {
+	            try
+	            {
+	                MarshalWrapper marshalWrapper = Class.forName(wrapperClassName).getAnnotation(MarshalWrapper.class);
+	                if(marshalWrapper.marshalledClass().getCanonicalName().equals(className))
+	                {
+	                    MarshalWrapperInterface marshalWrapperInterface = (MarshalWrapperInterface) Class.forName(wrapperClassName).newInstance();
+	                    return marshalWrapperInterface.getInstance();
+	                }
+
+	            } catch (ClassNotFoundException classNotFoundException)
+	            {
+	                CapoApplication.logger.log(Level.WARNING, "Error getting document providers",classNotFoundException);
+	            }
+
+	        }
+	    }
         return instanceObject;
     }
 	

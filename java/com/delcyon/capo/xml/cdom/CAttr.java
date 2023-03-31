@@ -20,6 +20,7 @@ import java.lang.reflect.Modifier;
 
 import org.w3c.dom.Attr;
 import org.w3c.dom.DOMException;
+import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.TypeInfo;
@@ -75,6 +76,20 @@ public class CAttr extends CNode implements Attr
     	{
     		return null;
     	}
+    }
+    
+    @Override
+    public Document getOwnerDocument()
+    {
+        // TODO Auto-generated method stub
+        if(super.getOwnerDocument() == null && getParentNode() != null)
+        {
+            return getParentNode().getOwnerDocument();
+        }
+        else
+        {
+            return super.getOwnerDocument();
+        }
     }
     
 //    @Override

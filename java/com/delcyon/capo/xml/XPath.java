@@ -469,20 +469,20 @@ public class XPath
         DocumentBuilderFactory documentBuilderFactory = DocumentBuilderFactory.newInstance();
         documentBuilderFactory.setNamespaceAware(true);
         DocumentBuilder documentBuilder = documentBuilderFactory.newDocumentBuilder();      
-        Document indentityTransforDocument = documentBuilder.parse(XPath.class.getClassLoader().getResourceAsStream("defaults/identity_transform.xsl"));
+        Document indentityTransforDocument = documentBuilder.parse(XPath.class.getClassLoader().getResourceAsStream("defaults/content_identity_transform.xsl"));
         Transformer transformer = tFactory.newTransformer(new DOMSource(indentityTransforDocument));
         transformer.setOutputProperty(OutputKeys.INDENT, "yes");
         //transformer.setOutputProperty(SaxonOutputKeys.INDENT_SPACES,"4");
-//      if(node.getOwnerDocument() == null)
+//      if(node.getOwnerDocument() != null)
 //      {
 //          Document tempDocument = documentBuilder.newDocument();
 //          node = tempDocument.adoptNode(node.cloneNode(true));
 //      }
-        NodeList nodes = node.getChildNodes();
-        for(int i = 0; i < nodes.getLength(); i++)
-        {
-            transformer.transform(new DOMSource(nodes.item(i)), new StreamResult(outputStream));    
-        }
+//        NodeList nodes = node.getChildNodes();
+//        for(int i = 0; i < nodes.getLength(); i++)
+//        {
+        transformer.transform(new DOMSource(node), new StreamResult(outputStream));    
+//        }
         
         if(outputStream == System.out || outputStream == System.err)
         {

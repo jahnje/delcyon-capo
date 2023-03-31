@@ -43,6 +43,7 @@ public class CDocumentBuilder extends DocumentBuilder
    
     private EntityResolver entityResolver;
     private ErrorHandler errorHandler;
+    private boolean namespaceAware = true;
     private static final SAXParserFactory saxParserFactory = SAXParserFactory.newInstance();
     
     /**
@@ -95,13 +96,21 @@ public class CDocumentBuilder extends DocumentBuilder
         //System.setProperty("javax.xml.parsers.SAXParserFactory", "com.delcyon.capo.xml.cdom.CSAXParserFactory");
 //        String systemSAXParserFactoryName = System.getProperty("javax.xml.parsers.SAXParserFactory");
 //        System.clearProperty("javax.xml.parsers.SAXParserFactory");
-        //SAXParserFactory saxParserFactory = SAXParserFactory.newInstance();
-        saxParserFactory.setNamespaceAware(true);
+        SAXParserFactory _saxParserFactory = null;
+        if(namespaceAware == false) {
+            _saxParserFactory = SAXParserFactory.newInstance();
+            _saxParserFactory.setNamespaceAware(false);
+        }
+        else
+        {
+            _saxParserFactory = saxParserFactory;
+            _saxParserFactory.setNamespaceAware(true);
+        }
         
         CDOMHandler cdomHandler = new CDOMHandler(entityResolver,errorHandler);
         try
         {
-            SAXParser saxParser = saxParserFactory.newSAXParser(); 
+            SAXParser saxParser = _saxParserFactory.newSAXParser(); 
             saxParser.getXMLReader().setProperty("http://xml.org/sax/properties/lexical-handler", cdomHandler);
             saxParser.parse(is, cdomHandler);
             return cdomHandler.getDocument();
@@ -165,6 +174,12 @@ public class CDocumentBuilder extends DocumentBuilder
     public DOMImplementation getDOMImplementation()
     {
         return new CDOMImplementation();
+    }
+
+    public void setNamespaceAware(boolean namespaceAware)
+    {
+        this.namespaceAware = namespaceAware;
+        
     }
 
 }
