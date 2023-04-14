@@ -169,6 +169,7 @@ public class CDOMHandler extends DefaultHandler2
     {
         try
         {
+            System.err.println(saxParseException.getMessage());
             XPath.dumpNode(document, System.err);
         }
         catch (Exception e)
