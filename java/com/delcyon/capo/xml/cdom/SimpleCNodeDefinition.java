@@ -58,55 +58,103 @@ public class SimpleCNodeDefinition extends CElement implements CNodeDefinition
         return getLocalName()+" e="+enumMap+" r="+requiredMap+" p="+pattern+" t="+type;
     }
 
+    
+    public String getType()
+	{
+		return type;
+	}
+    
     public void setType(String type)
     {
         this.type = type;
     }
 
+    public String getPattern()
+	{
+		return pattern;
+	}
+    
     public void setPattern(String pattern)
     {
         this.pattern = pattern;
     }
 
+    public Integer getMaxLength()
+	{
+		return maxLength;
+	}
+    
     public void setMaxLength(int maxLength)
     {
         this.maxLength = maxLength;
     }
 
+    public String getSchemaVersion()
+	{
+		return schemaVersion;
+	}
+    
     public void setSchemaVersion(String schemaVersion)
     {
         this.schemaVersion = schemaVersion;
         
     }
 
+    public String getEntityType()
+	{
+		return entityType;
+	}
+    
     public void setEntityType(String entityType)
     {
         this.entityType = entityType;
         
     }
 
+    public String getDescription()
+	{
+		return description;
+	}
+    
     public void setDescription(String description)
     {
        this.description = description;
         
     }
 
+    public String getTitle()
+	{
+		return title;
+	}
+    
     public void setTitle(String title)
     {
         this.title = title;
     }
 
+    public String getVersion()
+	{
+		return version;
+	}
+    
     public void setVersion(String version)
     {
         this.version = version;
     }
 
+    public Boolean getAdditionalProperties()
+	{
+		return additionalProperties;
+	}
+    
     public void setAdditionalProperties(boolean additionalProperties)
     {
         this.additionalProperties = additionalProperties;
         
     }
 
+    
+    
     public boolean hasEnumerationMap()
     {
         return enumMap != null;
@@ -118,5 +166,8 @@ public class SimpleCNodeDefinition extends CElement implements CNodeDefinition
         
     }
 
-    
+    public HashMap<String, String> getRequiredMap()
+	{
+		return requiredMap;
+	}
 }
