@@ -298,7 +298,7 @@ public abstract class CNode implements Node, ControlledClone, NodeValidationUtil
         for(int index = 0; index < siblingList.getLength(); index++)
         {
             Node siblingNode = siblingList.item(index);
-            if (siblingNode.isSameNode(this))
+            if (siblingNode == this)
             {
                 myPosition = index;
                 break;
@@ -688,7 +688,23 @@ public abstract class CNode implements Node, ControlledClone, NodeValidationUtil
     {
         CNode clonednode = (CNode) clonedObject;
         //we treat these differently, because we don't want them to recurse
-        clonednode.ownerDocument = ownerDocument;        
+        clonednode.ownerDocument = ownerDocument;
+        
+        //make sure to set the document element correctly as during the cloning process they will become dissassociated
+        if(clonedObject instanceof CDocument)
+        {
+            CNodeList nodeList = (CNodeList) clonednode.getChildNodes();
+            for (Node node : nodeList)
+            {
+                if (node instanceof CElement)
+                {
+                    ((CDocument) clonedObject).documentElement = (CElement) node;
+                    break;
+                }
+            }
+
+            
+        }
     }
     
     /* (non-Javadoc)

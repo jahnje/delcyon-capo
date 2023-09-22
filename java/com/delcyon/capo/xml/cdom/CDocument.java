@@ -59,7 +59,7 @@ public class CDocument extends CNode implements Document, NodeValidationUtilites
 		documentIDCounter++;
 		return documentIDCounter;
 	}
-    private CElement documentElement = null;
+    protected CElement documentElement = null;
     private String documentURI = null;
     private DocumentType doctype;
     private String defaultNamespace;
