@@ -26,12 +26,50 @@ public class SimpleCNodeDefinition extends CElement implements CNodeDefinition
     }
 
     @Override
-    public boolean isValid(CNode node, Vector<CValidationException> exceptionVector) throws Exception
+    public boolean isValid(String nodeValue, Vector<CValidationException> exceptionVector) throws Exception
     {
-        // TODO Auto-generated method stub
-        return false;
+        boolean isValid = true;
+        if(nodeValue == null)
+        {
+            if(isRequired())
+            {
+                exceptionVector.add(new CValidationException("Missing required value", null));
+                return false;
+            }
+            return true;
+        }
+        
+        if(getMaxLength() != null)
+        {
+            if(nodeValue.length() > getMaxLength())
+            {
+                isValid = false;
+                exceptionVector.add(new CValidationException(nodeValue+" is longer than "+getMaxLength(), null));
+            }
+            
+        }
+        if (getPattern() != null)
+        {
+            if(nodeValue.matches(getPattern()) == false)
+            {
+                isValid = false;
+                exceptionVector.add(new CValidationException(nodeValue+" doesn't match pattern "+getPattern(), null));
+            }
+        }
+        if(hasEnumerationMap())
+        {
+            if(getEnumerationMap().containsKey(nodeValue) == false)
+            {
+                isValid = false;
+                String enums = String.join(",",getEnumerationMap().keySet());
+                exceptionVector.add(new CValidationException(nodeValue+" not a valid enumeration "+enums, null));
+            }
+        }
+        return isValid;
     }
 
+    
+    
     
     @Override
     public SimpleCNodeDefinition addChild(String localName)
@@ -166,8 +204,35 @@ public class SimpleCNodeDefinition extends CElement implements CNodeDefinition
         
     }
 
+    public boolean isRequired()
+    {
+        HashMap<String, String> requiredMap = getRequiredMap();
+        if(requiredMap != null)
+        {
+            return requiredMap.containsKey(getRequiredTestPropertyName());
+        }
+        return false;
+    }
+    
+    public String getRequiredTestPropertyName()
+    {
+        return getLocalName();
+    }
+
     public HashMap<String, String> getRequiredMap()
 	{
-		return requiredMap;
+        if(requiredMap != null)
+        {
+            return requiredMap;
+        }
+        else if(getParentNode() != null && getParentNode() instanceof SimpleCNodeDefinition)
+        {
+            return ((SimpleCNodeDefinition) getParentNode()).getRequiredMap();
+        }
+        else
+        {
+            return null;    
+        }
+		
 	}
 }
