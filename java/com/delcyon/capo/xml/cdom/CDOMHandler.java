@@ -172,6 +172,10 @@ public class CDOMHandler extends DefaultHandler2
             System.err.println(saxParseException.getMessage());
             XPath.dumpNode(document, System.err);
         }
+        catch (NullPointerException npe)
+        {    
+            System.err.println("Unable to dump node on error, meh");
+        }
         catch (Exception e)
         {    
             e.printStackTrace();

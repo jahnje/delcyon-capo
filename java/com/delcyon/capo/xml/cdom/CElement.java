@@ -112,23 +112,31 @@ public class CElement extends CNode implements Element
     @Override
     public void setAttribute(String name, String value) throws DOMException
     {
+        boolean modified = false;
         //don't lose user data
         CAttr attribute = (CAttr) getAttributeNode(name);
         if(attribute == null)
         {
             attribute = new CAttr(this, null, name, value);
+            modified = true;
         }
         else
         {
-            attribute.setNodeValue(value);
-            if(attribute.getParentNode() == null)
+            if(EqualityProcessor.areSame(value, attribute.nodeValue) == false)
             {
-                System.out.println("WTF");
+                attribute.setNodeValue(value);
+                modified = true;
+                if(attribute.getParentNode() == null)
+                {
+                    System.out.println("WTF");
+                }
             }
         }
-        
-        ((CNamedNodeMap) getAttributes()).setNamedItemNS(attribute);
-        cascadeDOMEvent(prepareEvent(EventType.UPDATE, this));
+        if(modified) //don't send events if nothing changed
+        {
+            ((CNamedNodeMap) getAttributes()).setNamedItemNS(attribute);
+            cascadeDOMEvent(prepareEvent(EventType.UPDATE, this));
+        }
     }
 
     public CElement addAttribute(String name, String value) throws DOMException

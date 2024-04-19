@@ -144,8 +144,15 @@ public class XPath
 			return (Node) xPathExpression.evaluate(node,XPathConstants.NODE);
 			
 		} catch (Exception exception)
-		{
-			CapoServer.logger.log(Level.SEVERE, "Error evaluating '"+path+"' on "+getPathToRoot(node));
+		{			
+			if (CapoServer.logger != null)
+            {
+                CapoServer.logger.log(Level.SEVERE, "Error evaluating xpath '"+path+"' on "+getPathToRoot(node));
+            }
+			else
+			{
+			    System.err.println( "Error evaluating xpath '"+path+"' on "+getPathToRoot(node));
+			}
 			throw exception;
 		}
 	}
