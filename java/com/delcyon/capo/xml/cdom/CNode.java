@@ -876,15 +876,16 @@ public abstract class CNode implements Node, ControlledClone, NodeValidationUtil
             {
                 break;
             }
-            int precedingSiblingCount = 0;
+           // int precedingSiblingCount = 0;
             Node precedingSiblingNode = parentNode;
-            while(precedingSiblingNode != null)
-            {
-                precedingSiblingCount++;
-                precedingSiblingNode = precedingSiblingNode.getPreviousSibling();
-            }
+//            while(precedingSiblingNode != null)
+//            {
+//                precedingSiblingCount++;
+                //precedingSiblingNode = precedingSiblingNode.getPreviousSibling();
+//            }
             depth--;
-            positionIndexArray[depth] = precedingSiblingCount;           
+            //positionIndexArray[depth] = precedingSiblingCount;
+            positionIndexArray[depth] = ((CNode) precedingSiblingNode).getPosition();
             parentNode = parentNode.getParentNode();
         }
         

@@ -6,6 +6,7 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -22,6 +23,7 @@ import com.delcyon.capo.util.CloneControl.Clone;
 public abstract class EqualityProcessor {
 
     private static volatile ConcurrentHashMap<Integer, Object> systemFieldCloneControlHashMap = new ConcurrentHashMap<Integer, Object>();
+    private static volatile ConcurrentHashMap<Class, Boolean> elementTestHashMap = new ConcurrentHashMap<Class, Boolean>();
 	/**
 	 * Compares to objects to see if they are equal. It also does null comparisons
 	 * @param object1
@@ -184,8 +186,18 @@ public abstract class EqualityProcessor {
 							}
 
 							//
+							
+							
+							//can be expensive during full CDoc clone
+							Boolean isElementAssignableFrom = elementTestHashMap.get(field.getType());
+							if(isElementAssignableFrom == null)
+							{
+							    isElementAssignableFrom = Element.class.isAssignableFrom(field.getType());
+							    elementTestHashMap.put(field.getType(), isElementAssignableFrom);
+							}
+							
 							//do a standard element clone, and don't trust any of these types cloning methods, as the don't call clone on their contained objects
-							if (Element.class.isAssignableFrom(field.getType()))
+							if (isElementAssignableFrom)
 							{								
 								field.set(clone, ((Element)cloneableFieldInstance).cloneNode(true));
 							}

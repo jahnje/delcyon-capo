@@ -223,7 +223,7 @@ public class ReflectionUtility
     @SuppressWarnings({ "unchecked", "rawtypes" })
     public static Vector<Method> getMethodVector(Object object)
     {
-        Vector<Class> classVector = new Vector<Class>();
+        
         
 
         Class currentClass = object.getClass();
@@ -236,6 +236,9 @@ public class ReflectionUtility
         {
             methodVector = new Vector<Method>();
         }
+        
+        Vector<Class> classVector = new Vector<Class>();
+        
         while (currentClass != null)
         {
             classVector.insertElementAt(currentClass, 0);
