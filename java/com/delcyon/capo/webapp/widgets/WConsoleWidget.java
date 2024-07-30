@@ -17,12 +17,12 @@ import org.w3c.dom.Document;
 import com.delcyon.capo.parsers.GrammarParser;
 
 import eu.webtoolkit.jwt.Orientation;
+import eu.webtoolkit.jwt.Overflow;
 import eu.webtoolkit.jwt.Signal1;
 import eu.webtoolkit.jwt.TextFormat;
 import eu.webtoolkit.jwt.WApplication;
 import eu.webtoolkit.jwt.WCompositeWidget;
 import eu.webtoolkit.jwt.WContainerWidget;
-import eu.webtoolkit.jwt.WContainerWidget.Overflow;
 import eu.webtoolkit.jwt.WLayout;
 import eu.webtoolkit.jwt.WLength;
 import eu.webtoolkit.jwt.WMouseEvent;
@@ -61,8 +61,8 @@ public class WConsoleWidget extends WCompositeWidget
        implemetationWidget.addLayoutWidget(textContainerWidget,1);       
        
        empty.addStyleClass("empty-console-msgs");       
-       textContainerWidget.setOverflow(Overflow.OverflowAuto,Orientation.Vertical);
-       textContainerWidget.setOverflow(Overflow.OverflowVisible,Orientation.Horizontal);
+       textContainerWidget.setOverflow(Overflow.Auto,Orientation.Vertical);
+       textContainerWidget.setOverflow(Overflow.Visible,Orientation.Horizontal);
        
     }
     
@@ -170,7 +170,7 @@ public class WConsoleWidget extends WCompositeWidget
         {
             if(patternStyleHolder.matches(message))
             {
-                textFormat = TextFormat.XHTMLText;
+                textFormat = TextFormat.XHTML;
                 message = patternStyleHolder.format(message);
                 break;
             }
@@ -189,7 +189,7 @@ public class WConsoleWidget extends WCompositeWidget
                 {                    
                     
                     message = new String(byteArrayOutputStream.toByteArray());
-                    textFormat = TextFormat.XHTMLText;
+                    textFormat = TextFormat.XHTML;
                     break;
                 }
             }            

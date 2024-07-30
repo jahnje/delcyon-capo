@@ -21,8 +21,8 @@ public class WCapoXmlTreeView extends CapoWTreeView
         setLayoutSizeAware(true);
         setColumnResizeEnabled(false);        
         setWidth(new WLength(250));
-        setSelectionMode(SelectionMode.SingleSelection);
-        setSelectionBehavior(SelectionBehavior.SelectItems);
+        setSelectionMode(SelectionMode.Single);
+        setSelectionBehavior(SelectionBehavior.Items);
         setSelectable(true);
         setAlternatingRowColors(true);
 

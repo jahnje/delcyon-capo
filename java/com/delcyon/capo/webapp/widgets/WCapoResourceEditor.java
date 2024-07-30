@@ -34,7 +34,7 @@ import com.delcyon.capo.xml.XMLDiff;
 import com.delcyon.capo.xml.XPath;
 
 import eu.webtoolkit.jwt.AlignmentFlag;
-import eu.webtoolkit.jwt.AnchorTarget;
+import eu.webtoolkit.jwt.LinkTarget;
 import eu.webtoolkit.jwt.SelectionMode;
 import eu.webtoolkit.jwt.Signal;
 import eu.webtoolkit.jwt.WAbstractItemView;
@@ -142,7 +142,8 @@ public class WCapoResourceEditor extends WTabWidget
         else if (mimeType != null && mimeType.startsWith(MIMETYPE_IMAGE_PREFIX))
         {
             WResourceDescriptor wResourceDescriptor = new WResourceDescriptor((ResourceDescriptor) this.model);
-            this.addTab(new WImage(wResourceDescriptor, "Content"), "Content");
+            
+            this.addTab(new WImage(new WLink(wResourceDescriptor.generateUrl()), "Content"), "Content");
         }
 
         // update the download link with the new mode data
@@ -419,8 +420,8 @@ public class WCapoResourceEditor extends WTabWidget
         {
             detailsContainerWidget = new WContainerWidget();
             WAnchor anchor = new WAnchor(getDownloadLink(), "Download"); // this is a link so "save as" will work
-
-            anchor.setTarget(AnchorTarget.TargetNewWindow);
+            getDownloadLink().setTarget(LinkTarget.NewWindow);
+            //anchor.setTarget(AnchorTarget.TargetNewWindow);
             upload = new WFileUpload();
             upload.setFileTextSize(10000); // needed to get a basic starting point on the progress apparently
             upload.setProgressBar(new WProgressBar());
@@ -631,9 +632,9 @@ public class WCapoResourceEditor extends WTabWidget
             historyTableView.setSelectable(true);
             historyTableView.setAlternatingRowColors(true);
             historyTableView.setColumnResizeEnabled(true);
-            historyTableView.setColumnAlignment(0, AlignmentFlag.AlignRight);
+            historyTableView.setColumnAlignment(0, AlignmentFlag.Right);
             historyTableView.setColumnWidth(1, new WLength(500));
-            historyTableView.setSelectionMode(SelectionMode.SingleSelection);
+            historyTableView.setSelectionMode(SelectionMode.Single);
             historyTableView.doubleClicked().addListener(this,this::historyDoubleClicked);
         }
         return historyTableView;
@@ -796,9 +797,9 @@ public class WCapoResourceEditor extends WTabWidget
             attributeTableView.setSelectable(true);
             attributeTableView.setAlternatingRowColors(true);
             attributeTableView.setColumnResizeEnabled(true);
-            attributeTableView.setColumnAlignment(0, AlignmentFlag.AlignRight);
+            attributeTableView.setColumnAlignment(0, AlignmentFlag.Right);
             attributeTableView.setColumnWidth(1, new WLength(500));
-            attributeTableView.setSelectionMode(SelectionMode.SingleSelection);
+            attributeTableView.setSelectionMode(SelectionMode.Single);
         }
         return attributeTableView;
     }

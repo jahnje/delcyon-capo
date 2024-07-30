@@ -10,6 +10,8 @@ import javax.jcr.query.RowIterator;
 import com.delcyon.capo.webapp.servlets.CapoWebApplication;
 
 import eu.webtoolkit.jwt.AlignmentFlag;
+import eu.webtoolkit.jwt.LengthUnit;
+import eu.webtoolkit.jwt.LinkType;
 import eu.webtoolkit.jwt.Utils;
 import eu.webtoolkit.jwt.WAnchor;
 import eu.webtoolkit.jwt.WApplication;
@@ -17,10 +19,8 @@ import eu.webtoolkit.jwt.WCompositeWidget;
 import eu.webtoolkit.jwt.WContainerWidget;
 import eu.webtoolkit.jwt.WDialog;
 import eu.webtoolkit.jwt.WLength;
-import eu.webtoolkit.jwt.WLength.Unit;
 import eu.webtoolkit.jwt.WLineEdit;
 import eu.webtoolkit.jwt.WLink;
-import eu.webtoolkit.jwt.WLink.Type;
 import eu.webtoolkit.jwt.WPushButton;
 import eu.webtoolkit.jwt.WTable;
 import eu.webtoolkit.jwt.WText;
@@ -93,7 +93,7 @@ public class WCapoSearchControl extends WCompositeWidget
           table.getElementAt(0, 0).addWidget(new WText("Path"));                  
           table.getElementAt(0, 1).addWidget(new WText("Excerpt"));
           table.getElementAt(0, 2).addWidget(new WText("Score"));
-          table.getElementAt(0, 2).setContentAlignment(AlignmentFlag.AlignRight);
+          table.getElementAt(0, 2).setContentAlignment(AlignmentFlag.Right);
 
           int rowNumber = 0;
           while ( rows.hasNext() ) {
@@ -129,12 +129,12 @@ public class WCapoSearchControl extends WCompositeWidget
               
               System.out.println("===>"+_node.getPath()+" type:"+_node.getPrimaryNodeType().getName()+" score="+row.getScore()+" exrp = '"+excerpt+"'");
               //dump(_node);new WLink(Type.InternalPath, "/legend")
-              table.getElementAt(rowNumber, 0).addWidget(new WAnchor(new WLink(Type.InternalPath, _node.getPath()),_node.getPath(),CapoWebApplication.getInstance().getRoot()));
+              table.getElementAt(rowNumber, 0).addWidget(new WAnchor(new WLink(LinkType.InternalPath, _node.getPath()),_node.getPath(),CapoWebApplication.getInstance().getRoot()));
               table.getElementAt(rowNumber,1).addWidget(new WText(Utils.htmlEncode(excerpt)));
               table.getElementAt(rowNumber,1).setAttributeValue("width", "80%");
-              table.getElementAt(rowNumber,1).setContentAlignment(AlignmentFlag.AlignCenter);
+              table.getElementAt(rowNumber,1).setContentAlignment(AlignmentFlag.Center);
               table.getElementAt(rowNumber, 2).addWidget(new WText(row.getScore()+""));                      
-              table.getElementAt(rowNumber,2).setContentAlignment(AlignmentFlag.AlignRight);                      
+              table.getElementAt(rowNumber,2).setContentAlignment(AlignmentFlag.Right);                      
           }
           
           searchResultsDialog.show();
@@ -150,7 +150,7 @@ public class WCapoSearchControl extends WCompositeWidget
         if(searchResultsDialog == null)
         {
             searchResultsDialog = new WDialog("Search Results");
-            searchResultsDialog.setWidth(new WLength(80d, Unit.Percentage));
+            searchResultsDialog.setWidth(new WLength(80d, LengthUnit.Percentage));
             searchResultsDialog.setClosable(true);
             searchResultsDialog.rejectWhenEscapePressed(true);
         }

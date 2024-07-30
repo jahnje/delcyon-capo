@@ -3,15 +3,16 @@
  */
 package com.delcyon.capo.webapp.widgets;
 
+import eu.webtoolkit.jwt.EchoMode;
+import eu.webtoolkit.jwt.LengthUnit;
 import eu.webtoolkit.jwt.Signal;
 import eu.webtoolkit.jwt.Signal2;
+import eu.webtoolkit.jwt.ValidationState;
 import eu.webtoolkit.jwt.WCompositeWidget;
 import eu.webtoolkit.jwt.WContainerWidget;
 import eu.webtoolkit.jwt.WLabel;
 import eu.webtoolkit.jwt.WLength;
-import eu.webtoolkit.jwt.WLength.Unit;
 import eu.webtoolkit.jwt.WLineEdit;
-import eu.webtoolkit.jwt.WLineEdit.EchoMode;
 import eu.webtoolkit.jwt.WPushButton;
 import eu.webtoolkit.jwt.WValidator;
 import eu.webtoolkit.jwt.WValidator.Result;
@@ -57,7 +58,7 @@ public class WLoginControl extends WCompositeWidget
         userNameFieldTextEdit = new WLineEdit();
         userNameFieldTextEdit.setAutoComplete(true);
         userNameFieldTextEdit.setValidator(WValidatorFactory.validator(this::validate));
-        userNameFieldTextEdit.setWidth(new WLength(100,Unit.Pixel));
+        userNameFieldTextEdit.setWidth(new WLength(100,LengthUnit.Pixel));
         userNameFieldTextEdit.setPlaceholderText(userNameLabel.getText());
         userNameLabel.setBuddy(userNameFieldTextEdit);
         
@@ -68,10 +69,10 @@ public class WLoginControl extends WCompositeWidget
         WLabel passwordLabel = new WLabel("Password");
         passwordLabel.addStyleClass("sr-only");
         passwordNameFieldTextEdit = new WLineEdit();
-        passwordNameFieldTextEdit.setEchoMode(EchoMode.Password);
+        passwordNameFieldTextEdit.setEchoMode(eu.webtoolkit.jwt.EchoMode.Password);
         passwordNameFieldTextEdit.setAutoComplete(true);  
         passwordNameFieldTextEdit.setValidator(WValidatorFactory.validator(this::validate));
-        passwordNameFieldTextEdit.setWidth(new WLength(100,Unit.Pixel));
+        passwordNameFieldTextEdit.setWidth(new WLength(100,LengthUnit.Pixel));
         passwordNameFieldTextEdit.setPlaceholderText(passwordLabel.getText());
         passwordLabel.setBuddy(passwordNameFieldTextEdit);
         implementationWidget.addWidget(passwordLabel);
@@ -94,15 +95,15 @@ public class WLoginControl extends WCompositeWidget
     {
     	if(getLoginSate() == LoginState.LOGGED_OUT)
         {
-            return new WValidator.Result(WValidator.State.InvalidEmpty,"Empty");
+            return new WValidator.Result(ValidationState.InvalidEmpty,"Empty");
         }
         else if(getLoginSate() == LoginState.LOGGED_IN)
         {
-            return new WValidator.Result(WValidator.State.Valid);
+            return new WValidator.Result(ValidationState.Valid);
         }
         else
         {
-            return new WValidator.Result(WValidator.State.Invalid,"Invalid Username or Password");
+            return new WValidator.Result(ValidationState.Invalid,"Invalid Username or Password");
         } 
     }
     

@@ -66,13 +66,14 @@ public class WAceEditor extends WContainerWidget
     
     public WAceEditor()
     {
-        contentWText = new WText("",TextFormat.XHTMLUnsafeText);
+        contentWText = new WText("",TextFormat.UnsafeXHTML);
         contentWText.setStyleClass("editorArea");
         attachEditorJS();
         saveButton = new WPushButton("Save");
         save.addListener(this, ()->{}); //add BS listener, So that createCall will generate emit code. Emit code generator checks to see if signal exposed. This is done by checking to see if number of listeners is greater than 1 
         saveButton.setJavaScriptMember("onclick", "function (){"+this.save().createCall(contentWText.getJsRef()+".editor.getValue()")+"}");
-        WGridLayout gridLayout = new WGridLayout(this);
+        WGridLayout gridLayout = new WGridLayout();
+        setLayout(gridLayout);
         gridLayout.addWidget(contentWText,0,0);
         gridLayout.addWidget(saveButton,1,0);                
         gridLayout.setRowStretch(0, 100);

@@ -14,13 +14,13 @@ import com.delcyon.capo.webapp.models.ResourceDescriptorItemModel;
 import com.delcyon.capo.webapp.servlets.CapoWebApplication;
 
 import eu.webtoolkit.jwt.AlignmentFlag;
+import eu.webtoolkit.jwt.LinkType;
 import eu.webtoolkit.jwt.MatchOptions;
 import eu.webtoolkit.jwt.WApplication;
 import eu.webtoolkit.jwt.WCompositeWidget;
 import eu.webtoolkit.jwt.WContainerWidget;
 import eu.webtoolkit.jwt.WGridLayout;
 import eu.webtoolkit.jwt.WLink;
-import eu.webtoolkit.jwt.WLink.Type;
 import eu.webtoolkit.jwt.WModelIndex;
 import eu.webtoolkit.jwt.WMouseEvent;
 import eu.webtoolkit.jwt.WPushButton;
@@ -49,8 +49,8 @@ public class WCapoResourceExplorer extends WCompositeWidget
         //container.setAttributeValue("style", "background-image: url('/wr/images/background.png'); background-repeat: no-repeat; background-position: bottom right; background-size: contain;");
         getResourceExplorerLayout().addWidget(getCapoResourceTreeView(), 0, 0,1,0);
         getResourceExplorerLayout().addWidget(getResourceEditor(), 0, 1);
-        getResourceExplorerLayout().addWidget(getSaveButton(), 2, 0, 1, 1, AlignmentFlag.AlignTop); 
-        getResourceExplorerLayout().addWidget(getResetButton(), 3, 0, 1, 1, AlignmentFlag.AlignTop);
+        getResourceExplorerLayout().addWidget(getSaveButton(), 2, 0, 1, 1, AlignmentFlag.Top); 
+        getResourceExplorerLayout().addWidget(getResetButton(), 3, 0, 1, 1, AlignmentFlag.Top);
         WApplication.getInstance().internalPathChanged().addListener(this,this::processInternalPathChange);
     }
     
@@ -174,7 +174,7 @@ public class WCapoResourceExplorer extends WCompositeWidget
        if(resetButton == null)
        {
            resetButton = new WPushButton("Reset");
-           resetButton.setLink(new WLink(Type.InternalPath, "/"));
+           resetButton.setLink(new WLink(LinkType.InternalPath, "/"));
            resetButton.clicked().addListener(this, this::reset);           
        }
        return resetButton;

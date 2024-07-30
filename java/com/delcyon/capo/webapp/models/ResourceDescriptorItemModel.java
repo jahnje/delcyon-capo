@@ -24,7 +24,8 @@ optionally, getFlags() to indicate data options
  */
 public class ResourceDescriptorItemModel extends WAbstractItemModel
 {
-    public static int ResourceURI_ROLE = 64; 
+    public static ItemDataRole ResourceURI_ROLE = new ItemDataRole(64);
+    
 	int indexCounter = 0;
 	private ResourceDescriptor topLevelResourceDescriptor;
 	private DomUse domUse = null;
@@ -48,9 +49,9 @@ public class ResourceDescriptorItemModel extends WAbstractItemModel
     }
 	
 	@Override
-    public Object getHeaderData(int section, Orientation orientation, int role)
+    public Object getHeaderData(int section, Orientation orientation, ItemDataRole role)
     {
-        if (section == 0 && role == ItemDataRole.DisplayRole)
+        if (section == 0 && role.getValue() == ItemDataRole.Display.getValue())
         {
             return topLevelResourceDescriptor.getLocalName();
         }
@@ -204,9 +205,9 @@ public class ResourceDescriptorItemModel extends WAbstractItemModel
 	}
 
 	@Override
-	public Object getData(WModelIndex index, int role)
+	public Object getData(WModelIndex index, ItemDataRole role)
 	{
-	    if (role == ItemDataRole.DisplayRole)
+	    if (role.getValue() == ItemDataRole.Display.getValue())
 	    {	
 	        if (domUse == DomUse.ATTRIBUTES)
 	        {
@@ -233,7 +234,7 @@ public class ResourceDescriptorItemModel extends WAbstractItemModel
 	            return ((ResourceDescriptor)index.getInternalPointer()).getLocalName();
 	        }
 	    }
-	    else if (role == ItemDataRole.MimeTypeRole)
+	    else if (role.getValue() == ItemDataRole.MimeType.getValue())
 	    {
 	        if (domUse == DomUse.ATTRIBUTES)
 	        {

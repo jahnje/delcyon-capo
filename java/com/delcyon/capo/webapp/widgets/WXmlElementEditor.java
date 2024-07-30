@@ -8,10 +8,10 @@ import com.delcyon.capo.webapp.models.DomItemModel;
 import com.delcyon.capo.webapp.models.DomItemModel.DomUse;
 
 import eu.webtoolkit.jwt.AlignmentFlag;
+import eu.webtoolkit.jwt.LengthUnit;
 import eu.webtoolkit.jwt.SelectionMode;
 import eu.webtoolkit.jwt.WContainerWidget;
 import eu.webtoolkit.jwt.WLength;
-import eu.webtoolkit.jwt.WLength.Unit;
 import eu.webtoolkit.jwt.WLineEdit;
 import eu.webtoolkit.jwt.WTabWidget;
 import eu.webtoolkit.jwt.WTableView;
@@ -79,9 +79,9 @@ public class WXmlElementEditor extends WTabWidget
             attributeTableView.setSelectable(true);
             attributeTableView.setAlternatingRowColors(true);
             attributeTableView.setColumnResizeEnabled(true);
-            attributeTableView.setColumnAlignment(0, AlignmentFlag.AlignRight);
+            attributeTableView.setColumnAlignment(0, AlignmentFlag.Right);
             attributeTableView.setColumnWidth(1, new WLength(500));
-            attributeTableView.setSelectionMode(SelectionMode.SingleSelection);
+            attributeTableView.setSelectionMode(SelectionMode.Single);
         }
         return attributeTableView;
     }
@@ -103,7 +103,7 @@ public class WXmlElementEditor extends WTabWidget
 		if(commentEditor == null)
 		{
 			commentEditor = new WLineEdit();
-			commentEditor.setWidth(new WLength(95,Unit.Percentage));
+			commentEditor.setWidth(new WLength(95,LengthUnit.Percentage));
 			commentEditor.setMargin(5);
 		}
 		return commentEditor;

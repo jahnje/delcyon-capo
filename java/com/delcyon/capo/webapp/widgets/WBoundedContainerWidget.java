@@ -3,21 +3,21 @@ package com.delcyon.capo.webapp.widgets;
 import java.util.EnumSet;
 
 import eu.webtoolkit.jwt.AlignmentFlag;
-import eu.webtoolkit.jwt.AnchorTarget;
+import eu.webtoolkit.jwt.LayoutDirection;
+import eu.webtoolkit.jwt.LinkTarget;
+import eu.webtoolkit.jwt.LinkType;
+import eu.webtoolkit.jwt.Overflow;
 import eu.webtoolkit.jwt.Signal1;
 import eu.webtoolkit.jwt.TextFormat;
 import eu.webtoolkit.jwt.WAnchor;
 import eu.webtoolkit.jwt.WBoxLayout;
-import eu.webtoolkit.jwt.WBoxLayout.Direction;
 import eu.webtoolkit.jwt.WContainerWidget;
 import eu.webtoolkit.jwt.WImage;
 import eu.webtoolkit.jwt.WLayout;
 import eu.webtoolkit.jwt.WLength;
 import eu.webtoolkit.jwt.WLink;
-import eu.webtoolkit.jwt.WLink.Type;
 import eu.webtoolkit.jwt.WMouseEvent;
 import eu.webtoolkit.jwt.WPushButton;
-import eu.webtoolkit.jwt.WScrollArea;
 import eu.webtoolkit.jwt.WText;
 import eu.webtoolkit.jwt.WToolBar;
 import eu.webtoolkit.jwt.WWidget;
@@ -33,12 +33,12 @@ public class WBoundedContainerWidget extends WContainerWidget
 
     
     private WText title = new WText();
-    private WLink helpLink = new WLink(Type.Url,"http:");
+    private WLink helpLink = new WLink(LinkType.Url,"http:");
     private WAnchor helpAnchor = new WAnchor();
-    private WBoxLayout internalLayout = new WBoxLayout(Direction.TopToBottom);
+    private WBoxLayout internalLayout = new WBoxLayout(LayoutDirection.TopToBottom);
     private WContainerWidget titleLayout = new WContainerWidget();
     
-    private WBoxLayout layout = new WBoxLayout(Direction.TopToBottom);
+    private WBoxLayout layout = new WBoxLayout(LayoutDirection.TopToBottom);
     private WToolBar toolBar = new WToolBar();
     private WContainerWidget internalContainer = new WContainerWidget();
     private WLength scrollWidth;
@@ -66,7 +66,7 @@ public class WBoundedContainerWidget extends WContainerWidget
         helpAnchor.setLink(helpLink);
         helpAnchor.setImage(new WImage(new WLink("help_icon.png")));
         helpAnchor.setHidden(true);
-        helpAnchor.setTarget(AnchorTarget.TargetNewWindow);
+        helpLink.setTarget(LinkTarget.NewWindow);
         helpAnchor.setMargin(8);
         titleLayout.addWidget(title);
         titleLayout.addWidget(helpAnchor);                
@@ -74,10 +74,10 @@ public class WBoundedContainerWidget extends WContainerWidget
         
         super.addStyleClass("bounded_container",false);
         setLayoutSizeAware(true);
-        titleLayout.setContentAlignment(AlignmentFlag.AlignCenter);
+        titleLayout.setContentAlignment(AlignmentFlag.Center);
         title.setInline(true);
         titleLayout.addStyleClass("h2");
-        title.setTextFormat(TextFormat.XHTMLText);
+        title.setTextFormat(TextFormat.XHTML);
         
     }
 
@@ -137,12 +137,13 @@ public class WBoundedContainerWidget extends WContainerWidget
         for(int currentChild = 0; currentChild < internalLayout.getCount(); currentChild++)
         {
             WWidget widget = internalLayout.getItemAt(currentChild).getWidget();
-            if(widget != null && widget instanceof WScrollArea)
-            {
-                widget.setHeight(scrollHeight);
-                widget.addStyleClass("scroll-post-height");
-            }
-            else if(widget != null && widget instanceof WContainerWidget)
+//            if(widget != null && widget instanceof WScrollArea)
+//            {
+//                widget.setHeight(scrollHeight);
+//                widget.addStyleClass("scroll-post-height");
+//            }
+//            else
+            	if(widget != null && widget instanceof WContainerWidget)
             {
                 widget.setHeight(scrollHeight);
                 widget.addStyleClass("scroll-post-height");
@@ -162,12 +163,13 @@ public class WBoundedContainerWidget extends WContainerWidget
         for(int currentChild = 0; currentChild < internalLayout.getCount(); currentChild++)
         {
             WWidget widget = internalLayout.getItemAt(currentChild).getWidget();
-            if(widget != null && widget instanceof WScrollArea)
-            {
-                widget.setWidth(scrollWidth);
-                widget.addStyleClass("scroll-post-width");
-            }
-            else if(widget != null && widget instanceof WContainerWidget)
+//            if(widget != null && widget instanceof WScrollArea)
+//            {
+//                widget.setWidth(scrollWidth);
+//                widget.addStyleClass("scroll-post-width");
+//            }
+//            else 
+            	if(widget != null && widget instanceof WContainerWidget)
             {
                 widget.setWidth(scrollWidth);
                 widget.addStyleClass("scroll-post-width");
@@ -189,7 +191,7 @@ public class WBoundedContainerWidget extends WContainerWidget
             //as well as any sizes that might have been set. 
             if(widget instanceof WContainerWidget)
             {
-                ((WContainerWidget) widget).setOverflow(Overflow.OverflowAuto);
+                ((WContainerWidget) widget).setOverflow(Overflow.Auto);
                 widget.addStyleClass("scrollarea-overflow");
                 if(scrollWidth != null)
                 {
@@ -202,23 +204,23 @@ public class WBoundedContainerWidget extends WContainerWidget
                     widget.addStyleClass("scroll-height");
                 }
             }
-            else
-            {
-                WScrollArea scrollArea = new WScrollArea();
-                scrollArea.setWidget(widget);
-                scrollArea.addStyleClass("scrollarea");
-                if(scrollWidth != null)
-                {
-                    scrollArea.setWidth(scrollWidth);
-                    scrollArea.addStyleClass("scroll-width");
-                }
-                if(scrollHeight != null)
-                {
-                    scrollArea.setHeight(scrollHeight);
-                    scrollArea.addStyleClass("scroll-height");
-                }
-                widget = scrollArea;
-            }
+//            else
+//            {
+//                WScrollArea scrollArea = new WScrollArea();
+//                scrollArea.setWidget(widget);
+//                scrollArea.addStyleClass("scrollarea");
+//                if(scrollWidth != null)
+//                {
+//                    scrollArea.setWidth(scrollWidth);
+//                    scrollArea.addStyleClass("scroll-width");
+//                }
+//                if(scrollHeight != null)
+//                {
+//                    scrollArea.setHeight(scrollHeight);
+//                    scrollArea.addStyleClass("scroll-height");
+//                }
+//                widget = scrollArea;
+//            }
             
         }
         internalLayout.addWidget(widget, stretch);

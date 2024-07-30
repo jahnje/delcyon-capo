@@ -13,7 +13,7 @@ import java.util.logging.Logger;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 
-import eu.webtoolkit.jwt.AlignmentFlag;
+import eu.webtoolkit.jwt.LinkType;
 import eu.webtoolkit.jwt.Signal;
 import eu.webtoolkit.jwt.Signal2;
 import eu.webtoolkit.jwt.WApplication;
@@ -27,7 +27,6 @@ import eu.webtoolkit.jwt.WNavigationBar;
 import eu.webtoolkit.jwt.WPopupMenu;
 import eu.webtoolkit.jwt.WPushButton;
 import eu.webtoolkit.jwt.WSplitButton;
-import eu.webtoolkit.jwt.WText;
 import eu.webtoolkit.jwt.WWidget;
 
 /**
@@ -324,7 +323,7 @@ public class WXmlNavigationBar extends WNavigationBar
                     	if(path.startsWith("/"))
                     	{
                     		subMenuItem.setInternalPathEnabled(false);               
-                    		subMenuItem.setLink(new WLink(WLink.Type.InternalPath, path));
+                    		subMenuItem.setLink(new WLink(LinkType.InternalPath, path));
                     	}
                     	else
                     	{
@@ -557,7 +556,7 @@ public class WXmlNavigationBar extends WNavigationBar
         int index = gridLayout.indexOf(layoutItem);
         int row = index / gridLayout.getColumnCount();
         int column = index % gridLayout.getColumnCount();
-        gridLayout.removeItem(layoutItem);
+       // gridLayout.removeItem(layoutItem);
         try
         {
         	if( pathMethodMap.containsKey(iternalPath))

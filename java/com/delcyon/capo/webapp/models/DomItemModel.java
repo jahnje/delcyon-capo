@@ -63,9 +63,9 @@ public class DomItemModel extends WAbstractItemModel
 	}
 	
 	@Override
-	public Object getHeaderData(int column, Orientation orientation, int role)
+	public Object getHeaderData(int column, Orientation orientation, ItemDataRole role)
 	{
-		if(domUse == DomUse.ATTRIBUTES && ItemDataRole.DisplayRole == role)
+		if(domUse == DomUse.ATTRIBUTES && ItemDataRole.Display.getValue() == role.getValue())
 		{
 			if(column == 0)
 			{
@@ -76,7 +76,7 @@ public class DomItemModel extends WAbstractItemModel
 				return "value";
 			}
 		}
-	    else if(rootElement != null && ItemDataRole.DisplayRole == role)
+	    else if(rootElement != null && ItemDataRole.Display.getValue() == role.getValue())
 	    {
 	        return rootElement.getLocalName();
 	    }
@@ -167,9 +167,9 @@ public class DomItemModel extends WAbstractItemModel
 	}
 
 	@Override
-	public Object getData(WModelIndex index, int role)
+	public Object getData(WModelIndex index, ItemDataRole role)
 	{
-		if (role == ItemDataRole.DisplayRole)
+		if (role.getValue() == ItemDataRole.Display.getValue())
 		{	
 			if (domUse == DomUse.ATTRIBUTES)
 			{

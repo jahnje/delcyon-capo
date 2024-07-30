@@ -23,6 +23,7 @@ import com.delcyon.capo.webapp.widgets.WXmlNavigationBar;
 import com.delcyon.capo.xml.dom.ResourceDocument;
 
 import eu.webtoolkit.jwt.AlignmentFlag;
+import eu.webtoolkit.jwt.LinkType;
 import eu.webtoolkit.jwt.PositionScheme;
 import eu.webtoolkit.jwt.Signal1.Listener;
 import eu.webtoolkit.jwt.StandardButton;
@@ -34,7 +35,6 @@ import eu.webtoolkit.jwt.WEnvironment;
 import eu.webtoolkit.jwt.WGridLayout;
 import eu.webtoolkit.jwt.WLength;
 import eu.webtoolkit.jwt.WLink;
-import eu.webtoolkit.jwt.WLink.Type;
 import eu.webtoolkit.jwt.WMessageBox;
 
 public class CapoWebApplication extends WApplication {
@@ -123,11 +123,11 @@ public class CapoWebApplication extends WApplication {
 	        	if(input.startsWith("["))
 	        	{
 	        		input = input.replaceFirst("(\\[.+\\]) ([a-zA-Z0-9]+) ([a-zA-Z0-9\\.]+) - (.*)", "<span class='console-msg-tsrc'>$1</span> <span class='console-msg-level'>$2</span> <span class='console-msg-jsrc'>$3</span> - $4");
-	        		getConsoleWidget().append(input,TextFormat.XHTMLText);
+	        		getConsoleWidget().append(input,TextFormat.XHTML);
 	        	}
 	        	else
 	        	{
-	        	    getConsoleWidget().append(input,TextFormat.PlainText);
+	        	    getConsoleWidget().append(input,TextFormat.Plain);
 	        	}
             };
             CapoServer.errConsole.output().addListener(this, consoleListener);
@@ -157,9 +157,9 @@ public class CapoWebApplication extends WApplication {
 	        //create and make nav container and nav bar widget
 	        Document menuDocument  = CapoApplication.getDocumentBuilder().parse(CapoWebApplication.class.getClassLoader().getResource("main_navigation_menu.xml").openStream());
 	        navigation = new WXmlNavigationBar(menuDocument.getDocumentElement());
-	        navigation.addWidget(getSearchControl(),AlignmentFlag.AlignRight);
+	        navigation.addWidget(getSearchControl(),AlignmentFlag.Right);
 	        navigation.setResponsive(false);
-	        navigation.setTitle("Capo",new WLink(Type.InternalPath,"/"));
+	        navigation.setTitle("Capo",new WLink(LinkType.InternalPath,"/"));
 	        navigation.setPopup(true);
 	        navigation.setHeight(new WLength(5));
 	        navigation.setMargin(0);

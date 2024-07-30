@@ -93,7 +93,7 @@ public class CapoWTreeView extends WTreeView
 	protected void layoutSizeChanged(int width, int height)
 	{				
 		setColumnWidth(0, new WLength(width-24));
-		setColumnBorder(new WColor(255,0,0));
+		//setColumnBorder(new WColor(255,0,0));
 	}
 	
 	

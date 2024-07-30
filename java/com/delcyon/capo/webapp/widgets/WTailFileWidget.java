@@ -110,7 +110,7 @@ public class WTailFileWidget extends WConsoleWidget
 			        
 			        if (len < filePosition) {
 			            // Log must have been jibbled or deleted.
-			            append("Log file was reset. Restarting logging from start of file.",TextFormat.PlainText);
+			            append("Log file was reset. Restarting logging from start of file.",TextFormat.Plain);
 			            filePosition = len;
 			        }
 			        else if (len > filePosition) {
@@ -120,7 +120,7 @@ public class WTailFileWidget extends WConsoleWidget
 			            String line = null;
 			            while ((line = raf.readLine()) != null)
 			            {		                    
-			                append(line,TextFormat.PlainText);		                	
+			                append(line,TextFormat.Plain);		                	
 			            }
 			            filePosition = raf.getFilePointer();
 			            raf.close();
@@ -130,7 +130,7 @@ public class WTailFileWidget extends WConsoleWidget
 			}
 			catch (Exception e) {
 			    e.printStackTrace();
-			    append("Fatal error reading log file, log tailing has stopped."+e.getMessage(),TextFormat.PlainText);
+			    append("Fatal error reading log file, log tailing has stopped."+e.getMessage(),TextFormat.Plain);
 			}
 			
 		}

@@ -50,9 +50,9 @@ public class WContentMetaDataItemModel extends WAbstractItemModel
 	}
 
 	@Override
-	public Object getHeaderData(int section, Orientation orientation, int role)
+	public Object getHeaderData(int section, Orientation orientation, ItemDataRole role)
 	{
-		if(role == ItemDataRole.DisplayRole)
+		if(role.getValue() == ItemDataRole.Display.getValue())
 		{
 			return getColumnName(section);
 		}
@@ -82,9 +82,9 @@ public class WContentMetaDataItemModel extends WAbstractItemModel
 	}
 	
 	@Override
-	public Object getData(WModelIndex index, int role)
+	public Object getData(WModelIndex index, ItemDataRole role)
 	{
-		if (role == ItemDataRole.DisplayRole)
+		if (role.getValue() == ItemDataRole.Display.getValue())
 	    {
 			return contentMetaDataList.get(index.getRow()).getValue(getColumnValue(index.getColumn()));
 			

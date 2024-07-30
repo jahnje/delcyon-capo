@@ -13,6 +13,7 @@ import eu.webtoolkit.jwt.SelectionMode;
 import eu.webtoolkit.jwt.Signal;
 import eu.webtoolkit.jwt.Signal1;
 import eu.webtoolkit.jwt.Signal2;
+import eu.webtoolkit.jwt.ValidationState;
 import eu.webtoolkit.jwt.WDialog;
 import eu.webtoolkit.jwt.WLabel;
 import eu.webtoolkit.jwt.WLength;
@@ -22,7 +23,6 @@ import eu.webtoolkit.jwt.WMouseEvent;
 import eu.webtoolkit.jwt.WPopupMenu;
 import eu.webtoolkit.jwt.WPushButton;
 import eu.webtoolkit.jwt.WRegExpValidator;
-import eu.webtoolkit.jwt.WValidator;
 
 /**
  * This class lets a user navigate a tree of resource descriptors, as well as provide a few node editing methods
@@ -43,8 +43,8 @@ public class WCapoResourceTreeView extends CapoWTreeView
         setLayoutSizeAware(true);
         setColumnResizeEnabled(false);        
         setWidth(new WLength(250));
-        setSelectionMode(SelectionMode.SingleSelection);
-        setSelectionBehavior(SelectionBehavior.SelectItems);
+        setSelectionMode(SelectionMode.Single);
+        setSelectionBehavior(SelectionBehavior.Items);
         setSelectable(true);
         setAlternatingRowColors(true);
 
@@ -138,7 +138,7 @@ public class WCapoResourceTreeView extends CapoWTreeView
             //watch the nodeNameLineEdit and only enable the ok button when the entered text is valid
             nodeNameLineEdit.keyWentUp().addListener(this, new Signal.Listener() {
                 public void trigger() {
-                    okPushButton.setDisabled(nodeNameLineEdit.validate() != WValidator.State.Valid);
+                    okPushButton.setDisabled(nodeNameLineEdit.validate() != ValidationState.Valid);
                 }
             });
             

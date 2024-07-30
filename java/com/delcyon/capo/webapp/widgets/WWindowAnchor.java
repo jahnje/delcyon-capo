@@ -2,9 +2,9 @@ package com.delcyon.capo.webapp.widgets;
 
 import java.util.HashMap;
 
-import eu.webtoolkit.jwt.AnchorTarget;
 import eu.webtoolkit.jwt.Icon;
 import eu.webtoolkit.jwt.JSignal;
+import eu.webtoolkit.jwt.LinkTarget;
 import eu.webtoolkit.jwt.StandardButton;
 import eu.webtoolkit.jwt.WAnchor;
 import eu.webtoolkit.jwt.WLength;
@@ -28,25 +28,27 @@ public class WWindowAnchor extends WAnchor
     
     public WWindowAnchor()
     {
-        setTarget(AnchorTarget.TargetNewWindow);
+        //setTarget(AnchorTarget.TargetNewWindow);
         openError.addListener(this, this::openError);
     }
     
     public WWindowAnchor(WLink wLink, String text)
     {
         super(wLink, text);
-        setTarget(AnchorTarget.TargetNewWindow);
+        wLink.setTarget(LinkTarget.NewWindow);        
         openError.addListener(this, this::openError);
     }
 
     public void open()
     {                
+    	getLink().setTarget(LinkTarget.NewWindow);
         doJavaScript("win = window.open('"+getLink().getUrl()+"','_blank'); if(win == null || typeof win === \"undefined\") {"+openError.createCall()+";}");
     }
     
     public void openPost(HashMap<String, String> parameters)
     {
     
+    	getLink().setTarget(LinkTarget.NewWindow);
         //convert parameters to json string for doJavaScript 
         /*
          
@@ -136,7 +138,7 @@ public class WWindowAnchor extends WAnchor
         messageBox.setIcon(Icon.Warning);
         WPushButton button = new WPushButton("Open in New Window");
         button.setLink(getLink());
-        button.setLinkTarget(AnchorTarget.TargetNewWindow);
+        getLink().setTarget(LinkTarget.NewWindow);
         //button.setDefault(true);
         messageBox.addButton(button, StandardButton.Ok);
         messageBox.setDefaultButton(button);        
