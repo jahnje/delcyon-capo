@@ -7,6 +7,7 @@ package com.delcyon.capo.webapp.servlets.resource;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URL;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -19,8 +20,6 @@ import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-
-import com.delcyon.capo.CapoApplication;
 
 import eu.webtoolkit.jwt.WtServlet;
 
@@ -120,6 +119,41 @@ public class JWTResourcesServlet extends AbstractResourceServlet
 			path = resourceFolder + defaultVersion + "/" + requestURI.substring(resourcePattern.length());
 		}
 		
+		//sanity check for developement environment
+		String newPath = path;
+		while(true)
+		{
+		    if(newPath.indexOf("/") >= 0)
+		    {
+		        InputStream inputStream = getResourceClass().getResourceAsStream(newPath); 
+		        if(inputStream == null )
+		        {
+		            newPath = newPath.substring(newPath.indexOf("/")+1);
+		        }
+		        else
+		        {
+		            try
+                    {
+                        inputStream.close();
+                    }
+                    catch (IOException e)
+                    {
+                        // TODO Auto-generated catch block
+                        e.printStackTrace();
+                    }
+		            path = newPath; 
+		            break;
+		        }
+		    }
+		    else
+		    {
+		        break;
+		    }
+		}
+//		if(path.startsWith("/") == false)
+//		{
+//		    path = "/"+path;
+//		}
 		return path;
 	}
 	
