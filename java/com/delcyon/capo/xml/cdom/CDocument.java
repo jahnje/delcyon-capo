@@ -83,6 +83,26 @@ public class CDocument extends CNode implements Document, NodeValidationUtilites
         this.doctype = doctype;
     }
 
+    /**
+     * 
+     * @param rootElement
+     */
+    public CDocument(CElement rootElement)
+    {
+        this();
+        appendChild(rootElement);
+    }
+    
+    /**
+     * 
+     * @param rootElementName
+     */
+    public CDocument(String rootElementName)
+    {
+        this();
+        appendChild(new CElement(rootElementName));
+    }
+    
     @Override
     public Node removeChild(Node oldChild) throws DOMException
     {

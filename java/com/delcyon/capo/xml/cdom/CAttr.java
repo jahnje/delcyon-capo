@@ -172,8 +172,7 @@ public class CAttr extends CNode implements Attr
     @Override
     public boolean isId()
     {
-        Thread.dumpStack();
-        throw new UnsupportedOperationException();
+        return getLocalName().equals("ID");
     }
     
     @Override
