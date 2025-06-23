@@ -228,6 +228,10 @@ public class CElement extends CNode implements Element
         return (CElement) appendChild(child);
     }
     
+    public CElement addChild(Element child)
+    {
+        return (CElement) appendChild(child);
+    }
     
     public CElement addChild(String localName)
     {

@@ -134,6 +134,11 @@ public class CDocument extends CNode implements Document, NodeValidationUtilites
         }
     }
     
+    public CElement setDocumentElement(CElement child)
+    {
+        return (CElement) appendChild(child);
+    }
+    
     @Override
     public String getNodeName()
     {
