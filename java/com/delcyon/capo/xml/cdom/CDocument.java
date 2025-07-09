@@ -43,6 +43,7 @@ import org.xml.sax.InputSource;
 
 import com.delcyon.capo.util.CloneControl;
 import com.delcyon.capo.util.CloneControl.Clone;
+import com.delcyon.capo.util.NamespaceContextMap;
 import com.delcyon.capo.xml.XPath;
 
 /**
@@ -71,6 +72,7 @@ public class CDocument extends CNode implements Document, NodeValidationUtilites
 	private boolean onlyAllowValidNodeNames = false;
     
 	private HashMap<String, CDocument> namespaceSchemaMap = new HashMap<String, CDocument>();
+	private NamespaceContextMap namespaceContextMap = new NamespaceContextMap();
 	
     public CDocument()
     {
@@ -380,8 +382,14 @@ public class CDocument extends CNode implements Document, NodeValidationUtilites
     @Override
     public NodeList getElementsByTagNameNS(String namespaceURI, String localName)
     {
-        Thread.dumpStack();
-        throw new UnsupportedOperationException();
+       if(documentElement != null)
+       {
+           return documentElement.getElementsByTagNameNS(namespaceURI, localName);
+       }
+       else
+       {
+           return null;
+       }
     }
 
     /* (non-Javadoc)
@@ -703,5 +711,11 @@ public class CDocument extends CNode implements Document, NodeValidationUtilites
     public HashMap<String, CDocument> getNamespaceSchemaMap()
     {
         return namespaceSchemaMap;
+    }
+
+    public NamespaceContextMap getNamespaceContextMap()
+    {
+        return namespaceContextMap;
+        
     }
 }

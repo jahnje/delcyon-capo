@@ -109,7 +109,7 @@ public class CDocumentBuilder extends DocumentBuilder
         
         CDOMHandler cdomHandler = new CDOMHandler(entityResolver,errorHandler);
         try
-        {
+        {            
             SAXParser saxParser = _saxParserFactory.newSAXParser(); 
             saxParser.getXMLReader().setProperty("http://xml.org/sax/properties/lexical-handler", cdomHandler);
             saxParser.parse(is, cdomHandler);

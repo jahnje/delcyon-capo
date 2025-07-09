@@ -47,6 +47,7 @@ import com.delcyon.capo.datastream.stream_attribute_filter.MD5FilterOutputStream
 import com.delcyon.capo.server.CapoServer;
 import com.delcyon.capo.util.NamespaceContextMap;
 import com.delcyon.capo.xml.cdom.CDocument;
+import com.delcyon.capo.xml.cdom.CNode;
 
 /**
  * @author jeremiah
@@ -55,7 +56,8 @@ import com.delcyon.capo.xml.cdom.CDocument;
 public class XPath
 {
 
-	private static XPathFactory xPathFactory = null;;
+	private static XPathFactory xPathFactory = null;
+    private static Transformer indentityTransformer;
 	static
 	{
 		try
@@ -164,16 +166,23 @@ public class XPath
 	
 	public static Node selectNSNode(Node node, String path,String... namespaces) throws Exception
 	{
+	    NamespaceContextMap namespaceContextMap = new NamespaceContextMap();
 		try 
 		{
 			
 			javax.xml.xpath.XPath xPath = xPathFactory.newXPath();
-			NamespaceContextMap namespaceContextMap = new NamespaceContextMap();			
+						
 			for (String namespace : namespaces)
 			{
 				String[] namespaceDecl = namespace.split("=");
 				namespaceContextMap.addNamespace(namespaceDecl[0], namespaceDecl[1]);
 			}
+			
+			if(namespaces.length == 0)
+            {			 
+                findNameSpaces(node, namespaceContextMap);               
+            }
+			
 			xPath.setNamespaceContext(namespaceContextMap);
 			XPathExpression xPathExpression = xPath.compile(path);
 			return (Node) xPathExpression.evaluate(node,XPathConstants.NODE);
@@ -183,6 +192,10 @@ public class XPath
 			if (CapoServer.logger != null)
 			{
 				CapoServer.logger.log(Level.SEVERE, "Error evaluating xpath '"+path+"' on "+getPathToRoot(node));
+			}
+			else
+			{
+			    System.err.println("Error evaluating xpath '"+path+"' on "+getPathToRoot(node)+" NS="+namespaceContextMap);
 			}
 			throw exception;
 		}
@@ -200,6 +213,13 @@ public class XPath
 				String[] namespaceDecl = namespace.split("=");
 				namespaceContextMap.addNamespace(namespaceDecl[0], namespaceDecl[1]);
 			}
+			
+			if(namespaces.length == 0)
+            {
+                findNameSpaces(node, namespaceContextMap);
+               
+            }
+			
 			xPath.setNamespaceContext(namespaceContextMap);
 			XPathExpression xPathExpression = xPath.compile(path);
 			return (NodeList) xPathExpression.evaluate(node,XPathConstants.NODESET);
@@ -261,6 +281,44 @@ public class XPath
 		}
 	}
 
+	private static void findNameSpaces(Node node, NamespaceContextMap namespaceContextMap)
+	{
+	    Node localNode = node;
+	    
+	    if(node instanceof CNode)
+	    {
+	        CDocument document = (CDocument) node.getOwnerDocument();
+	        if(document.getNamespaceContextMap().isEmpty() == false)
+	        {
+	            namespaceContextMap.addAll(document.getNamespaceContextMap());
+	            return;
+	        }
+	    }
+	    
+	    
+        do
+        {
+            if(localNode.getNamespaceURI() != null && localNode.getPrefix() != null)
+            {
+                namespaceContextMap.addNamespace(localNode.getPrefix(), localNode.getNamespaceURI());
+            }
+            
+            if(localNode.hasAttributes())
+            {
+                NamedNodeMap namedNodeMap = localNode.getAttributes();
+                for(int attrIndex = 0; attrIndex < namedNodeMap.getLength(); attrIndex++)
+                {
+                    if("xmlns".equals(namedNodeMap.item(attrIndex).getPrefix()))
+                    {
+                        namespaceContextMap.addNamespace(namedNodeMap.item(attrIndex).getLocalName(), namedNodeMap.item(attrIndex).getNodeValue());
+                    }
+                }                       
+            }                   
+            localNode = localNode.getParentNode();
+        }
+        while(localNode != null);
+	}
+	
 	public static String selectSingleNodeValue(Element node, String path,String... namespaces) throws Exception
 	{
 		return selectSingleNodeValue(node, path, null,namespaces);
@@ -276,11 +334,19 @@ public class XPath
 			namespaceContextMap.addNamespace("server", CapoApplication.SERVER_NAMESPACE_URI);
 			namespaceContextMap.addNamespace("client", CapoApplication.CLIENT_NAMESPACE_URI);
 			namespaceContextMap.addNamespace("resource", CapoApplication.RESOURCE_NAMESPACE_URI);
+			
 			for (String namespace : namespaces)
 			{
 				String[] namespaceDecl = namespace.split("=");
 				namespaceContextMap.addNamespace(namespaceDecl[0], namespaceDecl[1]);
 			}
+			
+			if(namespaces.length == 0)
+			{
+			    findNameSpaces(node, namespaceContextMap);
+			   
+			}
+			
 			xPath.setNamespaceContext(namespaceContextMap);
 			XPathExpression xPathExpression = xPath.compile(path);			
 			return  xPathExpression.evaluate(node);
@@ -449,24 +515,31 @@ public class XPath
 
 	public static void dumpNode(Node node, OutputStream outputStream) throws Exception
 	{
-		TransformerFactory tFactory = TransformerFactory.newInstance();
-		DocumentBuilderFactory documentBuilderFactory = DocumentBuilderFactory.newInstance();
-		documentBuilderFactory.setNamespaceAware(true);
-		DocumentBuilder documentBuilder = documentBuilderFactory.newDocumentBuilder();		
-		Document indentityTransforDocument = documentBuilder.parse(XPath.class.getClassLoader().getResourceAsStream("defaults/identity_transform.xsl"));
-		Transformer transformer = tFactory.newTransformer(new DOMSource(indentityTransforDocument));
-		transformer.setOutputProperty(OutputKeys.INDENT, "yes");
-		//transformer.setOutputProperty(SaxonOutputKeys.INDENT_SPACES,"4");
-//		if(node.getOwnerDocument() == null)
-//		{
-//		    Document tempDocument = documentBuilder.newDocument();
-//		    node = tempDocument.adoptNode(node.cloneNode(true));
-//		}
-		transformer.transform(new DOMSource(node), new StreamResult(outputStream));
-		if(outputStream == System.out || outputStream == System.err)
-		{
-		    outputStream.write(new String("\n").getBytes());
-		}
+	   
+	    if(indentityTransformer == null)
+	    {
+	        TransformerFactory tFactory = TransformerFactory.newInstance();
+	        DocumentBuilderFactory documentBuilderFactory = DocumentBuilderFactory.newInstance();
+	        documentBuilderFactory.setNamespaceAware(true);
+	        DocumentBuilder documentBuilder = documentBuilderFactory.newDocumentBuilder();		
+	        Document indentityTransforDocument = documentBuilder.parse(XPath.class.getClassLoader().getResourceAsStream("defaults/identity_transform.xsl"));
+	        indentityTransformer = tFactory.newTransformer(new DOMSource(indentityTransforDocument));
+	        indentityTransformer.setOutputProperty(OutputKeys.INDENT, "yes");
+	    }
+	    synchronized (indentityTransformer)
+	    {
+	        //transformer.setOutputProperty(SaxonOutputKeys.INDENT_SPACES,"4");
+	        //		if(node.getOwnerDocument() == null)
+	        //		{
+	        //		    Document tempDocument = documentBuilder.newDocument();
+	        //		    node = tempDocument.adoptNode(node.cloneNode(true));
+	        //		}
+	        indentityTransformer.transform(new DOMSource(node), new StreamResult(outputStream));
+	        if(outputStream == System.out || outputStream == System.err)
+	        {
+	            outputStream.write(new String("\n").getBytes());
+	        }
+	    }
 	}
 
 	

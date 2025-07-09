@@ -107,4 +107,21 @@ public class NamespaceContextMap implements NamespaceContext
 		return null;
 	}
 
+	@Override
+	public String toString()
+	{
+	   return prefixHashMap.toString();
+	}
+
+    public void addAll(NamespaceContextMap namespaceContextMap)
+    {
+        namespaceContextMap.prefixHashMap.forEach((p,u)->{addNamespace(p, u);});
+        
+    }
+    
+    public boolean isEmpty()
+    {
+        return prefixHashMap.isEmpty();
+    }
+	
 }

@@ -56,7 +56,7 @@ public class CDOMHandler extends DefaultHandler2
     public Document getDocument()
     {
         this.document.normalizeDocument();
-        this.document.setSilenceEvents(false);
+        this.document.setSilenceEvents(false);        
         return this.document;
     }
     
@@ -70,10 +70,9 @@ public class CDOMHandler extends DefaultHandler2
     
     @Override
     public void startPrefixMapping(String prefix, String uri) throws SAXException
-    {
-        
-       //System.out.println(prefix+"==>"+uri);
-       prefixHashMap.put(prefix, uri); 
+    {               
+       prefixHashMap.put(prefix, uri);
+       document.getNamespaceContextMap().addNamespace(prefix, uri);
     }
     
     @Override
