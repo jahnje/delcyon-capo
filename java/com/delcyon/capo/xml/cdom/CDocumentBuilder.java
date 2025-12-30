@@ -33,6 +33,7 @@ import org.xml.sax.EntityResolver;
 import org.xml.sax.ErrorHandler;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
+import org.xml.sax.SAXParseException;
 
 /**
  * @author jeremiah
@@ -106,6 +107,31 @@ public class CDocumentBuilder extends DocumentBuilder
             _saxParserFactory = saxParserFactory;
             _saxParserFactory.setNamespaceAware(true);
         }
+        
+		if (errorHandler == null)
+		{
+			errorHandler = new ErrorHandler()
+			{
+				public void error(SAXParseException exception)
+						throws SAXException
+				{
+					throw exception;
+				}
+
+				public void fatalError(SAXParseException exception)
+						throws SAXException
+				{
+					throw exception;
+				}
+
+				public void warning(SAXParseException exception)
+						throws SAXException
+				{
+					System.err.println("Warning: " + exception.getMessage());
+				}
+
+			};
+		}
         
         CDOMHandler cdomHandler = new CDOMHandler(entityResolver,errorHandler);
         try
