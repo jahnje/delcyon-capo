@@ -110,17 +110,21 @@ public class WXmlNavigationBar extends WNavigationBar
                 Element menuElement = (Element) menuList.item(index);
                 WPushButton _menuButton = null;
                 WSplitButton wSplitButton = null;
+                String name = menuElement.getAttribute("name");
                 if(menuElement.hasAttribute("actionPath"))
                 {
-                     wSplitButton = new WSplitButton(menuElement.getAttribute("name"));
+                     wSplitButton = new WSplitButton(name);
                     _menuButton = wSplitButton.getDropDownButton();
                     wSplitButton.getActionButton().clicked().addListener(this, ()->{
                         WApplication.getInstance().setInternalPath(menuElement.getAttribute("actionPath"), true);
                     });
+                    wSplitButton.getActionButton().setId(getClass().getCanonicalName()+".menu.action."+name);
+                    wSplitButton.getDropDownButton().setId(getClass().getCanonicalName()+".menu.dropdown."+name);
                 }
                 else
                 {
-                    _menuButton = new WPushButton(menuElement.getAttribute("name"));
+                    _menuButton = new WPushButton(name);
+                    _menuButton.setId(getClass().getCanonicalName()+".menu."+name);
                 }
                 
                 WPushButton menuButton = _menuButton;
@@ -156,6 +160,7 @@ public class WXmlNavigationBar extends WNavigationBar
                 
                 //process path attributes
                 WPopupMenu popupMenu = new WPopupMenu();
+                popupMenu.setId(getClass().getCanonicalName()+".popmenu."+name);
                 if(menuElement.hasAttribute("path"))
                 {
                     popupMenu.setInternalPathEnabled(menuElement.getAttribute("path"));    
@@ -315,6 +320,8 @@ public class WXmlNavigationBar extends WNavigationBar
                 if(menuElement.hasChildNodes() == false)
                 {
                     WMenuItem subMenuItem = parentMenu.addItem(menuElement.getAttribute("name"));
+                    subMenuItem.getAnchor().setId(getClass().getCanonicalName()+".subMenuItem.anchor."+menuElement.getAttribute("name"));
+                    subMenuItem.setId(getClass().getCanonicalName()+".subMenuItem."+menuElement.getAttribute("name"));
                     subMenuItem.triggered().addListener(this, this::menuItemTriggered);
                     subMenuItem.setInternalPathEnabled(true);               
                     if(menuElement.hasAttribute("path"))
@@ -344,7 +351,7 @@ public class WXmlNavigationBar extends WNavigationBar
                 else //otherwise we're a submenu with our own menu items and we need to be created differently
                 {
                     WPopupMenu subMenu = new WPopupMenu();
-                    
+                    subMenu.setId(getClass().getCanonicalName()+".subMenu."+menuElement.getAttribute("name"));
                     parentMenu.addMenu(menuElement.getAttribute("name"),subMenu);
                     //make sure the this submenu is not considered a valid place to go. It should have no internal path, but apparently one get created when you use addMenu 
                     subMenu.getParentItem().setInternalPathEnabled(false);

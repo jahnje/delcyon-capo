@@ -12,6 +12,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
 
 import com.delcyon.capo.xml.XMLDiff;
 import com.delcyon.capo.xml.XPath;
@@ -106,6 +107,34 @@ public class CDocumentTest
         }
         Assert.assertEquals(XMLDiff.EQUALITY, diffDocument.getDocumentElement().getAttribute(XMLDiff.XDIFF_PREFIX+":"+XMLDiff.XDIFF_ELEMENT_ATTRIBUTE_NAME));
         
+    }
+
+    /**
+     * FB23628 regression: CDocument.getElementsByTagName(String) used to
+     * unconditionally throw UnsupportedOperationException -- only the
+     * NS-qualified Document method (and both Element methods) were actually
+     * implemented -- which broke any caller that queried a parsed CDocument
+     * (e.g. the security-transform output in gal-reflector's case viewer)
+     * the same way code already does against a standard DOM Document.
+     */
+    @Test
+    public void getElementsByTagNameOnTheDocumentMatchesTheStandardDOM() throws Exception
+    {
+        String file = "test-data/cdom_test_data/parse1.xml";
+
+        DocumentBuilderFactory systemDocumentBuilderFactory = DocumentBuilderFactory.newInstance();
+        systemDocumentBuilderFactory.setNamespaceAware(true);
+        Document systemDocument = systemDocumentBuilderFactory.newDocumentBuilder().parse(new File(file));
+        NodeList systemVars = systemDocument.getElementsByTagName("var");
+        Assert.assertTrue("fixture must contain at least one <var>", systemVars.getLength() > 0);
+
+        CDocumentBuilderFactory cDocumentBuilderFactory = new CDocumentBuilderFactory();
+        cDocumentBuilderFactory.setNamespaceAware(true);
+        CDocument cDocument = (CDocument) cDocumentBuilderFactory.newDocumentBuilder().parse(new File(file));
+
+        NodeList cVars = cDocument.getElementsByTagName("var");
+
+        Assert.assertEquals(systemVars.getLength(), cVars.getLength());
     }
 
     @Test

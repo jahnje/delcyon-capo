@@ -271,8 +271,14 @@ public class CDocument extends CNode implements Document, NodeValidationUtilites
     @Override
     public NodeList getElementsByTagName(String tagname)
     {
-        Thread.dumpStack();
-        throw new UnsupportedOperationException();
+       if(documentElement != null)
+       {
+           return documentElement.getElementsByTagName(tagname);
+       }
+       else
+       {
+           return null;
+       }
     }
 
     /* (non-Javadoc)
@@ -548,6 +554,11 @@ public class CDocument extends CNode implements Document, NodeValidationUtilites
     public void setDefaultNamespace(String defaultNamespace)
     {
         this.defaultNamespace = defaultNamespace;
+        if(documentElement != null)
+        {
+            documentElement.setAttribute("xmlns", defaultNamespace);
+            setNamespaceURI(defaultNamespace);
+        }
     }
     
     @Override
