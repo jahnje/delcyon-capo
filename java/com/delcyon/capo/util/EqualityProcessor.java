@@ -74,6 +74,41 @@ public abstract class EqualityProcessor {
 				return  (T) ReflectionUtility.getPrimitiveInstance(cloneable.getClass(), ReflectionUtility.getSerializedString(cloneable));
 			}
 
+			//copy collections and maps by their contents, like the collection and map fields below, since reflecting into
+			//the java.util internals fails on java 9+ without an --add-opens (FB24556)
+			if(cloneable instanceof Collection || cloneable instanceof Map)
+			{
+				Constructor<T> publicDefaultConstructor = null;
+				try
+				{
+					publicDefaultConstructor = (Constructor<T>) cloneable.getClass().getConstructor();
+				}
+				catch (NoSuchMethodException noSuchMethodException)
+				{
+					//fall through to the reflective clone below
+				}
+				if(publicDefaultConstructor != null)
+				{
+					T clone = publicDefaultConstructor.newInstance();
+					if(cloneable instanceof Collection)
+					{
+						for (Object object : (Collection) cloneable)
+						{
+							((Collection) clone).add(clone(clonedParent,object));
+						}
+					}
+					else
+					{
+						Set<Entry> entrySet = ((Map) cloneable).entrySet();
+						for (Entry entry : entrySet)
+						{
+							((Map) clone).put(clone(clonedParent,entry.getKey()), clone(clonedParent,entry.getValue()));
+						}
+					}
+					return clone;
+				}
+			}
+
 			T clone = null;
 			if (ReflectionUtility.hasDefaultContructor(cloneable.getClass()))
 			{

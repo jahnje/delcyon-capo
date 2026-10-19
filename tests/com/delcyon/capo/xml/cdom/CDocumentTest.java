@@ -145,6 +145,26 @@ public class CDocumentTest
         CDocument cDocument = (CDocument) cDocumentBuilderFactory.newDocumentBuilder().parse(new File("test-data/cdom_test_data/simple.xml"));
         Assert.assertTrue(cDocument instanceof CDocument);
     }
-    
-    
+
+    /**
+     * FB24556: cloning a document that declares a namespace has to work without an --add-opens for java.util
+     */
+    @Test
+    public void testCloneNamespacedDocument() throws Exception
+    {
+        CDocumentBuilderFactory cDocumentBuilderFactory = new CDocumentBuilderFactory();
+        cDocumentBuilderFactory.setNamespaceAware(true);
+        CDocument cDocument = (CDocument) cDocumentBuilderFactory.newDocumentBuilder().parse(new File("test-data/cdom_test_data/parse1.xml"));
+        Assert.assertEquals("fixture must declare the server namespace", "http://www.delcyon.com/capo-server", cDocument.getNamespaceContextMap().getNamespaceURI("server"));
+
+        CDocument clonedDocument = (CDocument) cDocument.cloneNode(true);
+        Assert.assertNotNull("namespaced document didn't clone", clonedDocument);
+        Assert.assertNotSame(cDocument.getDocumentElement(), clonedDocument.getDocumentElement());
+        Assert.assertEquals(cDocument.getNamespaceContextMap().toString(), clonedDocument.getNamespaceContextMap().toString());
+        Assert.assertEquals("server", clonedDocument.getNamespaceContextMap().getPrefix("http://www.delcyon.com/capo-server"));
+
+        Document diffDocument = new XMLDiff().getDifferences(cDocument, clonedDocument);
+        Assert.assertEquals(XMLDiff.EQUALITY, diffDocument.getDocumentElement().getAttribute(XMLDiff.XDIFF_PREFIX+":"+XMLDiff.XDIFF_ELEMENT_ATTRIBUTE_NAME));
+    }
+
 }
