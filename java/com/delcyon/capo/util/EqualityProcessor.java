@@ -67,6 +67,12 @@ public abstract class EqualityProcessor {
 				return null;
 			}
 
+			//strings can't change, so a clone can share them (FB24546)
+			if(cloneable instanceof String)
+			{
+				return cloneable;
+			}
+
 
 
 			if(ReflectionUtility.isPrimitive(cloneable.getClass()))
@@ -198,7 +204,7 @@ public abstract class EqualityProcessor {
 					Object cloneableFieldInstance = field.get(cloneable);
 					if(cloneableFieldInstance != null)
 					{
-					    if(field.getType().isPrimitive()) //check for pure primitives, which can be copied straight across
+					    if(field.getType().isPrimitive() || cloneableFieldInstance instanceof String) //check for pure primitives and strings, which can be copied straight across
                         {
                             field.set(clone, cloneableFieldInstance);
                         }

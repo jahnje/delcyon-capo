@@ -114,7 +114,7 @@ public class CNodeValidator implements NodeValidationUtilitesFI
         CNode lastMatch = null;
         
         CElement m = nodeDefinition.getNodeDefinitionTypeElement(NodeDefinitionType.complexType);
-        LinkedList<CElement> elementList =  node.nodeList.stream().filter(node->node.getNodeType() == Node.ELEMENT_NODE).map(node->(CElement)node).collect(Collectors.toCollection(LinkedList::new));//.findFirst().orElse(null);
+        LinkedList<CElement> elementList =  node.getNodeList().stream().filter(node->node.getNodeType() == Node.ELEMENT_NODE).map(node->(CElement)node).collect(Collectors.toCollection(LinkedList::new));//.findFirst().orElse(null);
         
 //        System.out.println("M="+m);
         //System.out.println("="+a);

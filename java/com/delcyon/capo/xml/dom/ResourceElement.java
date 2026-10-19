@@ -478,7 +478,20 @@ public class ResourceElement extends CElement implements ControlledClone,Resourc
         {
         	return  new CNamedNodeMap();
         }
-        
+
+    }
+
+    //our children and attributes are worked out by getChildNodes() and getAttributes(), so walkTree() has to use them
+    @Override
+    protected NodeList getChildNodesForWalk()
+    {
+    	return getChildNodes();
+    }
+
+    @Override
+    protected NamedNodeMap getAttributesForWalk()
+    {
+    	return getAttributes();
     }
 
     
@@ -595,24 +608,24 @@ public class ResourceElement extends CElement implements ControlledClone,Resourc
 	public void setResourceAttribute(String name, String value)
 	{
 		
-		attributeList.setNamedItemNS(new CAttr(this, null, name, value));
+		getAttributeList().setNamedItemNS(new CAttr(this, null, name, value));
 	}
 
 	public String getResourceAttribute(String name)
 	{
-		if (attributeList.getNamedItem(name) == null)
+		if (getAttributeList().getNamedItem(name) == null)
         {
             return "";
         }
         else
         {
-            return attributeList.getNamedItem(name).getNodeValue();
+            return getAttributeList().getNamedItem(name).getNodeValue();
         }
 	}
 
 	public CAttr setResourceAttributeNode(CAttr attr)
 	{
-		 attributeList.setNamedItem(attr);	        
+		 getAttributeList().setNamedItem(attr);	        
 		 return attr;
 	}
 

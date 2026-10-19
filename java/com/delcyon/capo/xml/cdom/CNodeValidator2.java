@@ -238,7 +238,7 @@ public class CNodeValidator2 implements NodeValidationUtilitesFI
  
         CElement localRootNodeDefinitionElement = nodeDefinition.getNodeDefinitionTypeElement(NodeDefinitionType.complexType);
         
-        LinkedList<CElement> childElementList =  node.nodeList.stream().filter(node->node.getNodeType() == Node.ELEMENT_NODE).map(node->(CElement)node).collect(Collectors.toCollection(LinkedList::new));
+        LinkedList<CElement> childElementList =  node.getNodeList().stream().filter(node->node.getNodeType() == Node.ELEMENT_NODE).map(node->(CElement)node).collect(Collectors.toCollection(LinkedList::new));
 
         
         groupStreamStack.push(new GroupStackItem(localRootNodeDefinitionElement.getDepth(), localRootNodeDefinitionElement));

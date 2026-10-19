@@ -38,7 +38,7 @@ public class CXSDNodeDefinition implements NodeValidationUtilitesFI, CNodeDefini
     
     public NodeDefinitionType getNodeDefinitionType()
     {
-        for (Node  childNode : def.nodeList)
+        for (Node  childNode : def.getNodeList())
         {
             if(childNode.getNodeType() == Node.ELEMENT_NODE)
             {
@@ -66,7 +66,7 @@ public class CXSDNodeDefinition implements NodeValidationUtilitesFI, CNodeDefini
     
     public CElement getNodeDefinitionTypeElement(NodeDefinitionType nodeDefinitionType)
     {
-        for (Node  childNode : def.nodeList)
+        for (Node  childNode : def.getNodeList())
         {
             if(childNode.getNodeType() == Node.ELEMENT_NODE)
             {
@@ -97,7 +97,7 @@ public class CXSDNodeDefinition implements NodeValidationUtilitesFI, CNodeDefini
             case Node.ELEMENT_NODE:
             case Node.ATTRIBUTE_NODE:
             default:
-                for (Node  childNode : def.nodeList)
+                for (Node  childNode : def.getNodeList())
                 {
                     switch (childNode.getLocalName())
                     {
@@ -149,7 +149,7 @@ public class CXSDNodeDefinition implements NodeValidationUtilitesFI, CNodeDefini
         // TODO Auto-generated method stub
         System.out.println(node+":"+complexNodeDef);
         
-        for (Node  childDefNode : complexNodeDef.nodeList)
+        for (Node  childDefNode : complexNodeDef.getNodeList())
         {
             switch (childDefNode.getLocalName())
             {
@@ -190,7 +190,7 @@ public class CXSDNodeDefinition implements NodeValidationUtilitesFI, CNodeDefini
         
         //TODO verify/find elements and attributes NOT mentioned in schema
         
-        for (Node attributeNode : node.attributeList)
+        for (Node attributeNode : node.getAttributeList())
         {
             if(attributeNode.getPrefix() == null && attributeNode.getLocalName().equals("xmlns"))
             {
@@ -254,7 +254,7 @@ public class CXSDNodeDefinition implements NodeValidationUtilitesFI, CNodeDefini
         
         
         Vector<OccurancePredicate> functionVector = new Vector<>();
-        for (Node  childDefNode : nodeDef.nodeList)
+        for (Node  childDefNode : nodeDef.getNodeList())
         {
             if(childDefNode.getNodeType() != Node.ELEMENT_NODE)
             {
@@ -295,7 +295,7 @@ public class CXSDNodeDefinition implements NodeValidationUtilitesFI, CNodeDefini
         } 
         //DOCUMENT ME 
         //Verify each child of this node according to the rules from above 
-        for (Node  childNode : node.nodeList)
+        for (Node  childNode : node.getNodeList())
         {
             //we're only interested in element nodes for the moment, text nodes will also be an option
             if(childNode.getNodeType() != Node.ELEMENT_NODE)
@@ -371,7 +371,7 @@ public class CXSDNodeDefinition implements NodeValidationUtilitesFI, CNodeDefini
         //NodeList nodeList = XPath.selectNSNodes(node, "child::"+prefix+":"+((CElement)childNode).getAttributeNS(XML_SCHEMA_NS, "name"), prefix+"="+namespaceURI);
         //build tests
         Vector<OccurancePredicate> functionVector = new Vector<>();
-        for (Node  childDefNode : allNode.nodeList)
+        for (Node  childDefNode : allNode.getNodeList())
         {
             if(childDefNode.getNodeType() != Node.ELEMENT_NODE)
             {
@@ -405,7 +405,7 @@ public class CXSDNodeDefinition implements NodeValidationUtilitesFI, CNodeDefini
             
         }
         
-        for (Node  childNode : node.nodeList)
+        for (Node  childNode : node.getNodeList())
         {
             if(childNode.getNodeType() != Node.ELEMENT_NODE)
             {

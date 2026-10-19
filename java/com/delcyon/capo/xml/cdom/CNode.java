@@ -17,6 +17,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 package com.delcyon.capo.xml.cdom;
 
 import java.lang.reflect.Modifier;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Vector;
@@ -62,14 +63,16 @@ public abstract class CNode implements Node, ControlledClone, NodeValidationUtil
     @ToStringControl(control=Control.exclude)
     protected CDocument ownerDocument = null;
     
+    //the listener vector, child list and attribute list are only created when first needed, since almost every node in a large document
+    //(every text node and attribute, and most elements) would otherwise carry its own empty copies of all three (FB24546)
     @CloneControl(filter=Clone.exclude)
-    protected Vector<CDOMEventListener> cdomEventListenerVector = new Vector<CDOMEventListener>();
-    
+    protected Vector<CDOMEventListener> cdomEventListenerVector = null;
+
     @CloneControl(filter=Clone.exclude)
     protected CNodeDefinition nodeDefinition = null;
-    
-    protected CNodeList nodeList = new CNodeList();
-    protected CNamedNodeMap attributeList = new CNamedNodeMap();
+
+    protected CNodeList nodeList = null;
+    protected CNamedNodeMap attributeList = null;
     protected String nodeName = null;
     protected String nodeValue = null;
     protected String namespaceURI = null;
@@ -88,7 +91,7 @@ public abstract class CNode implements Node, ControlledClone, NodeValidationUtil
     
     public boolean hasEventListeners()
     {
-    	if(cdomEventListenerVector.size() > 0)
+    	if(cdomEventListenerVector != null && cdomEventListenerVector.size() > 0)
     	{
     		return true;
     	}
@@ -157,17 +160,24 @@ public abstract class CNode implements Node, ControlledClone, NodeValidationUtil
     
     public Vector<CDOMEventListener> getCDOMEventListeners()
 	{
+    	if(cdomEventListenerVector == null)
+    	{
+    		cdomEventListenerVector = new Vector<CDOMEventListener>();
+    	}
 		return cdomEventListenerVector;
 	}
 
 	public void addCDOMEventListener(CDOMEventListener eventListener)
     {
-    	cdomEventListenerVector.add(eventListener);
+		getCDOMEventListeners().add(eventListener);
     }
-    
+
     public void removeCDOMEventListener(CDOMEventListener eventListener)
     {
-    	cdomEventListenerVector.remove(eventListener);
+    	if(cdomEventListenerVector != null)
+    	{
+    		cdomEventListenerVector.remove(eventListener);
+    	}
     }
     
     
@@ -240,12 +250,56 @@ public abstract class CNode implements Node, ControlledClone, NodeValidationUtil
     @Override
     public NodeList getChildNodes()
     {
+        return getNodeList();
+    }
+
+    /**
+     * this node's own child list, created the first time it's needed
+     */
+    protected final CNodeList getNodeList()
+    {
+        if(nodeList == null)
+        {
+            nodeList = new CNodeList();
+        }
         return nodeList;
     }
 
+    /**
+     * this node's own attribute list, created the first time it's needed
+     */
+    protected final CNamedNodeMap getAttributeList()
+    {
+        if(attributeList == null)
+        {
+            attributeList = new CNamedNodeMap();
+        }
+        return attributeList;
+    }
+
     public List<CNode> getChildNodes(short...types)
-    {                
-        return nodeList.stream().filter(node->contains(types,node.getNodeType())).map(node->(CNode)node).collect(Collectors.toList());        
+    {
+        if(nodeList == null)
+        {
+            return new ArrayList<CNode>();
+        }
+        return nodeList.stream().filter(node->contains(types,node.getNodeType())).map(node->(CNode)node).collect(Collectors.toList());
+    }
+
+    /**
+     * the children walkTree() should visit, null when this node has never had any, so walking a tree doesn't create empty child lists
+     */
+    protected NodeList getChildNodesForWalk()
+    {
+        return nodeList;
+    }
+
+    /**
+     * the attributes walkTree() should visit, null when this node has never had any, so walking a tree doesn't create empty attribute lists
+     */
+    protected NamedNodeMap getAttributesForWalk()
+    {
+        return attributeList;
     }
     
     private boolean contains(short[] types, short searchType)
@@ -265,7 +319,7 @@ public abstract class CNode implements Node, ControlledClone, NodeValidationUtil
     @Override
     public Node getFirstChild()
     {
-        if(nodeList.size() > 0)
+        if(nodeList != null && nodeList.size() > 0)
         {
             return nodeList.item(0);
         }
@@ -281,7 +335,7 @@ public abstract class CNode implements Node, ControlledClone, NodeValidationUtil
     @Override
     public Node getLastChild()
     {
-        if(nodeList.size() > 0)
+        if(nodeList != null && nodeList.size() > 0)
         {
             return nodeList.item(nodeList.size()-1);
         }
@@ -427,13 +481,13 @@ public abstract class CNode implements Node, ControlledClone, NodeValidationUtil
     @Override
     public NamedNodeMap getAttributes()
     {
-        return attributeList;
+        return getAttributeList();
     }
 
-    
+
     public void removeAttributes()
     {
-        while(attributeList.isEmpty() == false)
+        while(attributeList != null && attributeList.isEmpty() == false)
         {
             attributeList.remove(0);
         }
@@ -534,7 +588,7 @@ public abstract class CNode implements Node, ControlledClone, NodeValidationUtil
     @Override
     public Node removeChild(Node oldChild) throws DOMException
     {        
-       if(nodeList.remove(oldChild) == true)
+       if(nodeList != null && nodeList.remove(oldChild) == true)
        {
     	   if(oldChild instanceof CNode)
     	   {
@@ -553,17 +607,20 @@ public abstract class CNode implements Node, ControlledClone, NodeValidationUtil
 
     public void removeChildrenAll()
     {
-    	for (Node node : nodeList)
-		{
-    		((CNode) node).setParent(null);
-		}
-        nodeList.clear();
+    	if(nodeList != null)
+    	{
+    		for (Node node : nodeList)
+    		{
+    			((CNode) node).setParent(null);
+    		}
+    		nodeList.clear();
+    	}
         cascadeDOMEvent(prepareEvent(EventType.DELETE, this));
     }
-    
+
     public void removeNodeTypeChildrenAll(short nodeType)
     {
-        for(int index = 0; index < nodeList.getLength(); index++)
+        for(int index = 0; nodeList != null && index < nodeList.getLength(); index++)
         {
             if(nodeList.item(index).getNodeType() == nodeType)
             {
@@ -592,7 +649,7 @@ public abstract class CNode implements Node, ControlledClone, NodeValidationUtil
             	}
                 newChild.getParentNode().removeChild(newChild);               
             }
-            nodeList.add(newChild);
+            getNodeList().add(newChild);
             ((CNode) newChild).setParent(this);
             //set the owner document for all children if this child was built using fragments
             if(((CNode) newChild).hasChildNodes() && ((CNode) newChild).getOwnerDocument() == null)
@@ -635,7 +692,7 @@ public abstract class CNode implements Node, ControlledClone, NodeValidationUtil
     @Override
     public boolean hasChildNodes()
     {
-        return nodeList.size() > 0;
+        return nodeList != null && nodeList.size() > 0;
     }
 
     /* (non-Javadoc)
@@ -715,7 +772,7 @@ public abstract class CNode implements Node, ControlledClone, NodeValidationUtil
     {
     	
         Text textNode = null;
-        for(int index = 0; index < nodeList.size(); index++)
+        for(int index = 0; nodeList != null && index < nodeList.size(); index++)
         {
             Node node = nodeList.get(index);
             if(node.getNodeType() == Node.TEXT_NODE)
@@ -835,7 +892,7 @@ public abstract class CNode implements Node, ControlledClone, NodeValidationUtil
     @Override
     public boolean hasAttributes()
     {
-        return attributeList.size() > 0;
+        return attributeList != null && attributeList.size() > 0;
     }
 
     /* (non-Javadoc)
@@ -983,7 +1040,10 @@ public abstract class CNode implements Node, ControlledClone, NodeValidationUtil
     public String getTextContent() throws DOMException
     {
         StringBuilder stringBuilder = new StringBuilder();
-        
+        if(nodeList == null)
+        {
+            return stringBuilder.toString();
+        }
         for (Node node : nodeList)
         {
             if(node instanceof Text)
@@ -1214,7 +1274,7 @@ public abstract class CNode implements Node, ControlledClone, NodeValidationUtil
     @Override
     public String toString()
     {
-        return getNodeName()+" @"+attributeList.toString();
+        return getNodeName()+" @"+(attributeList == null ? "[]" : attributeList.toString());
     }
     
     /**
@@ -1226,8 +1286,8 @@ public abstract class CNode implements Node, ControlledClone, NodeValidationUtil
         return Stream.concat(
                 Stream.of(this).map((node)->(CNode)node),
                 Stream.concat(
-                        attributeList.stream().map(node->(CNode)node),
-                        nodeList.stream().map(node->(CNode)node).flatMap(CNode::stream)));
+                        attributeList == null ? Stream.empty() : attributeList.stream().map(node->(CNode)node),
+                        nodeList == null ? Stream.empty() : nodeList.stream().map(node->(CNode)node).flatMap(CNode::stream)));
     }
     
     public int getDepth()
@@ -1254,15 +1314,15 @@ public abstract class CNode implements Node, ControlledClone, NodeValidationUtil
         if(startWithChildren == false)
         {
             processor.process(parentNode, node);
-            NamedNodeMap attributes = node.getAttributes();
-            for(int index = 0; index < attributes.getLength(); index++)
+            NamedNodeMap attributes = node instanceof CNode ? ((CNode) node).getAttributesForWalk() : node.getAttributes();
+            for(int index = 0; attributes != null && index < attributes.getLength(); index++)
             {
                 processor.process(node,attributes.item(index));
             }
         }
-        
-        NodeList children = node.getChildNodes();
-        for(int index = 0; index < children.getLength(); index++)
+
+        NodeList children = node instanceof CNode ? ((CNode) node).getChildNodesForWalk() : node.getChildNodes();
+        for(int index = 0; children != null && index < children.getLength(); index++)
         {            
             walkTree(node,children.item(index), processor,false);
         }
