@@ -17,7 +17,10 @@ package eu.medsea.util;
 
 import java.io.UnsupportedEncodingException;
 import java.util.Collection;
+import java.util.LinkedHashSet;
+import java.util.Set;
 import java.util.Vector;
+import java.util.stream.Collectors;
 
 /**
  * A string utility class with various string manipulation functions
@@ -66,4 +69,40 @@ public class StringUtil {
 		}
 		return c.toString();
 	}
+	
+	/**
+     * Merge two strings like "'A','B','C'" and "'B','D'"
+     * into "'A','B','C','D'" (no duplicates, original order).
+     */
+    public static String merge(String s1, String s2) {
+        Set<String> set = new LinkedHashSet<>();
+
+        // add tokens from the first list, then the second
+        addTokens(s1, set);
+        addTokens(s2, set);
+
+        // rebuild the list in the original quoted format
+        return set.stream()
+                  .map(v -> "'" + v + "'")
+                  .collect(Collectors.joining(","));
+    }
+
+    /* ------------------------------------------------------------------ */
+    /* helpers                                                            */
+    /* ------------------------------------------------------------------ */
+
+    private static void addTokens(String src, Set<String> out) {
+        if (src == null || src.trim().isEmpty()) return;
+
+        // split on commas that may have optional whitespace
+        String[] parts = src.split("\\s*,\\s*");
+        for (String p : parts) {
+            p = p.trim();
+            if (p.startsWith("'") && p.endsWith("'") && p.length() >= 2) {
+                p = p.substring(1, p.length() - 1);       // strip quotes
+            }
+            if (!p.isEmpty()) out.add(p);
+        }
+    }
+	
 }
