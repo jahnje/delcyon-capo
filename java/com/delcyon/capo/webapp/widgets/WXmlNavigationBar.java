@@ -320,8 +320,6 @@ public class WXmlNavigationBar extends WNavigationBar
                 if(menuElement.hasChildNodes() == false)
                 {
                     WMenuItem subMenuItem = parentMenu.addItem(menuElement.getAttribute("name"));
-                    subMenuItem.getAnchor().setId(getClass().getCanonicalName()+".subMenuItem.anchor."+menuElement.getAttribute("name"));
-                    subMenuItem.setId(getClass().getCanonicalName()+".subMenuItem."+menuElement.getAttribute("name"));
                     subMenuItem.triggered().addListener(this, this::menuItemTriggered);
                     subMenuItem.setInternalPathEnabled(true);               
                     if(menuElement.hasAttribute("path"))
@@ -342,6 +340,10 @@ public class WXmlNavigationBar extends WNavigationBar
                     {
                         subMenuItem.setPathComponent(menuElement.getAttribute("name").toLowerCase()); 
                     }
+                    // ids come from the item's path, not its name: two menus can each have an item with the same name
+                    // (e.g. TimeTracker > Reports and Inventory > Reports), and a shared id routes a click to the wrong one
+                    subMenuItem.getAnchor().setId(getClass().getCanonicalName()+".subMenuItem.anchor."+getPath(subMenuItem));
+                    subMenuItem.setId(getClass().getCanonicalName()+".subMenuItem."+getPath(subMenuItem));
                     pathMenuItemHashMap.put(getPath(subMenuItem), subMenuItem);
                     pathMenuElementHashMap.put(getPath(subMenuItem),menuElement);
                     loadPathClass(getPath(subMenuItem),menuElement);
@@ -351,7 +353,6 @@ public class WXmlNavigationBar extends WNavigationBar
                 else //otherwise we're a submenu with our own menu items and we need to be created differently
                 {
                     WPopupMenu subMenu = new WPopupMenu();
-                    subMenu.setId(getClass().getCanonicalName()+".subMenu."+menuElement.getAttribute("name"));
                     parentMenu.addMenu(menuElement.getAttribute("name"),subMenu);
                     //make sure the this submenu is not considered a valid place to go. It should have no internal path, but apparently one get created when you use addMenu 
                     subMenu.getParentItem().setInternalPathEnabled(false);
@@ -372,6 +373,8 @@ public class WXmlNavigationBar extends WNavigationBar
                         subMenu.setInternalPathEnabled(parentMenu.getInternalBasePath()+menuElement.getAttribute("name").toLowerCase());
                     }
                     
+                    // by its path too, as the items are
+                    subMenu.setId(getClass().getCanonicalName()+".subMenu."+subMenu.getInternalBasePath());
                     //recursively call our children since we have some
                     buildSubMenuItems(subMenu, menuElement);  
                 }                                
@@ -862,28 +865,16 @@ public class WXmlNavigationBar extends WNavigationBar
      */
     public boolean hasPermission(List<String> permissions)
     {
-        boolean hasPermission = true;
-        for (String perm : permissions)
+        if(permissions.isEmpty())
         {
-            if(permissionType == PermissionType.ALL)
-            {
-                if(hasPermission(perm) == false)
-                {
-                    hasPermission = false;
-                    break;
-                }
-            }
-            else //permissionType == PermissionType.ANY
-            {
-                if(hasPermission(perm) == true)
-                {
-                    hasPermission = true;
-                    break;
-                }
-            }
+            return true;
         }
-        
-        return hasPermission;
+        // ANY used to start out true and never turn false, so it let everyone in
+        if(permissionType == PermissionType.ANY)
+        {
+            return permissions.stream().anyMatch(this::hasPermission);
+        }
+        return permissions.stream().allMatch(this::hasPermission);
     }
     
     /** given a path, this will return a list of required permissions for that path
