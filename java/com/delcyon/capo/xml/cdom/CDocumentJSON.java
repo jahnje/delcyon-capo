@@ -279,7 +279,18 @@ public final class CDocumentJSON
                     String content = v.substring(1, v.length() - 1);  // drop outer quotes
                     String[] parts = content.split("'\\s*,\\s*'");
                     JsonArray arr = new JsonArray();
-                    for (String p : parts) arr.add(parsePrimitive(unescape(p)));
+                    List<JsonElement> values = new ArrayList<JsonElement>();
+                    boolean strings = false;
+                    for (String p : parts) {
+                        JsonElement value = parsePrimitive(unescape(p));
+                        values.add(value);
+                        // a list with a value JSON couldn't have written as a number ("001", "abc") was a list of strings
+                        strings |= (value.getAsJsonPrimitive().isNumber() == false && "null".equals(p) == false);
+                    }
+                    for (int i = 0; i < parts.length; i++) {
+                        JsonElement value = values.get(i);
+                        arr.add(strings && value.getAsJsonPrimitive().isNumber() ? new JsonPrimitive(unescape(parts[i])) : value);
+                    }
                     return arr;
                 }
                 // single quoted scalar
@@ -292,10 +303,12 @@ public final class CDocumentJSON
             if ("true".equalsIgnoreCase(s) || "false".equalsIgnoreCase(s)) {
                 return new JsonPrimitive(Boolean.parseBoolean(s));
             }
-            if (s.matches("-?\\d+")) {                         // integer
+            // only what JSON could have written as a number: it has no leading zeros, so "001" (an AOIC county FIPS) was a
+            // string and stays one - the 'a','b' list encoding doesn't keep strings and numbers apart (FB24788)
+            if (s.matches("-?(0|[1-9]\\d*)")) {                // integer
                 return new JsonPrimitive(new BigDecimal(s));
             }
-            if (s.matches("-?\\d+\\.\\d+")) {                  // decimal
+            if (s.matches("-?(0|[1-9]\\d*)\\.\\d+")) {         // decimal
                 return new JsonPrimitive(new BigDecimal(s));
             }
             return new JsonPrimitive(s);                       // fallback: string
